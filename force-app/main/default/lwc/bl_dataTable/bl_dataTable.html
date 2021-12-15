@@ -1,0 +1,26 @@
+<template>
+    {tabSelected}
+    <!--SPINNER TO LOAD START-->
+    <lightning-spinner if:true={spinnerLoading} alternative-text="Loading" size="medium"></lightning-spinner>
+    <!--SPINNER TO LOAD END-->
+    <!--PAGINATION CONTROL START-->
+    <div>
+        <p class="slds-align_absolute-center"><b> Auxiliar: {auxiliar}</b></p>
+        <p class="slds-align_absolute-center"><b> Quotelines: {quotelinesLength}</b></p>
+        <p class="slds-align_absolute-center"><b> Page {page} of {totalPage}</b></p>
+        <lightning-button-group class="slds-align_absolute-center">
+            <lightning-button label="First" icon-name="utility:chevronleft" onclick={firstHandler} ></lightning-button>
+            <lightning-button label="Previous" icon-name="utility:chevronleft" onclick={previousHandler} ></lightning-button>
+            <lightning-button label="Next" icon-name="utility:chevronright" icon-position="right" onclick={nextHandler} ></lightning-button>
+            <lightning-button label="Last" icon-name="utility:chevronright" icon-position="right" onclick={lastHandler} ></lightning-button>
+        </lightning-button-group>
+    </div>
+    <!--PAGINATION CONTROL END-->
+    <!--DATATABLE START-->
+    <div class="slds-align_absolute-center">
+        <lightning-datatable style="width:100%;" key-field="id" draft-values={draftValues} data={dataPages} columns={columns} 
+        onrowaction={handleRowAction} onrowselection={handleRowSelection} onsave={handleSave}
+        sorted-by={sortBy} sorted-direction={sortDirection} onsort={handleSortData}></lightning-datatable>
+    </div>
+    <!--DATATABLE END-->
+</template>
