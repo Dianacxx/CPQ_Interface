@@ -1,0 +1,16 @@
+<template>
+    <div class="slds-form slds-var-m-around_xx-large">
+        <c-bl_lookup
+            selection={initialSelection}
+            errors={errors}
+            onsearch={handleLookupSearch}
+            onselectionchange={handleLookupSelectionChange}
+            label="Search"
+            placeholder="Search Product"
+            is-multi-entry={isMultiEntry}
+            new-record-options={newRecordOptions}
+            required
+        >
+        </c-bl_lookup>
+    </div>
+</template>

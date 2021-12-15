@@ -1,5 +1,8 @@
 import { LightningElement, api, track} from 'lwc';
 import displayFieldSet from '@salesforce/apex/QuoteController.displayFieldSet'; //--LOOK IF THE NAME CAHNGES
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+
+const DELAY = 100;
 
 export default class Bl_dataTable extends LightningElement {
 
@@ -9,33 +12,41 @@ export default class Bl_dataTable extends LightningElement {
     @api tabSelected; //To display fields depending on tab
     @api spinnerLoading = false; //To show loading when changes
     //QuoteLines information 
-    @api quotelinesLength; //Quotelines quantity
+    @api quotelinesLength = 0; //Quotelines quantity
+    @api quotelinesString; //Quotelines information in string
+    @api quoteLines; //Quotelines information as object
 
     //QuoteLines fieldSet
     @track fieldSetLength;
-
 
     connectedCallback(){
         //DEPENDING ON TAB, CHANGE COLUMS VALUES
         //--WORKING TO GET THE FIELDS DEPENDING ON IT
         this.spinnerLoading = true; 
-        const COLUMNS_HOME = [];
-        const COLUMNS_DETAIL = [];
-        const COLUMNS_NOTES = [];
+        const COLUMNS_HOME = [ { label: 'Quote Name', fieldName: 'name', sortable: true, },];
+        const COLUMNS_DETAIL = [ { label: 'Quote Name', fieldName: 'name', sortable: true, },];
+        const COLUMNS_NOTES = [ { label: 'Quote Name', fieldName: 'name', sortable: true, },];
+        this.quoteLines = JSON.parse(this.quotelinesString);
+        this.quotelinesLength = this.quoteLines.length;
+        this.updateTable();
+        console.log(Object.getOwnPropertyNames(this.quoteLines[0])); 
+
         displayFieldSet({tabName: this.tabSelected})
         .then((data) => {
             this.error = undefined;
             this.fieldSet = JSON.parse(data); 
-            console.log('fieldSet '+ Object.getOwnPropertyNames(this.fieldSet)); 
+            console.log('fieldSet Prop '+ Object.getOwnPropertyNames(this.fieldSet[0])); 
             this.fieldSetLength = this.fieldSet.length;
             console.log('Length '+ this.fieldSetLength); 
         })
         .then(() => {
+            
             for (let i=0; i<this.fieldSetLength;i++){
                 if (this.tabSelected == 'Home'){
                     if (this.fieldSet[i].key == 'HOME'){
                         console.log('Label '+this.fieldSet[i].label);
-                        COLUMNS_HOME.unshift( { label: this.fieldSet[i].label, fieldName: this.fieldSet[i].label, sortable: true},);
+                        //console.log('Required '+this.fieldSet[i].required)
+                        COLUMNS_HOME.push( { label: this.fieldSet[i].label, fieldName: this.fieldSet[i].property, editable: true ,sortable: true, },);
                         console.log('added: '+COLUMNS_HOME.length); 
                     }
                     this.columns = COLUMNS_HOME; 
@@ -43,15 +54,19 @@ export default class Bl_dataTable extends LightningElement {
                 } else if (this.tabSelected == 'Detail'){
                     if (this.fieldSet[i].key == 'DETAIL'){
                         console.log('Label '+this.fieldSet[i].label);
-                        COLUMNS_DETAIL.unshift( { label: this.fieldSet[i].label, fieldName: this.fieldSet[i].label, sortable: true},);
+                        //console.log('Required '+this.fieldSet[i].required)
+                        let labelName;
+                        this.fieldSet[i].required ? labelName = '*'+this.fieldSet[i].label: labelName = this.fieldSet[i].label;
+                        COLUMNS_DETAIL.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: true, sortable: true, },);
                         console.log('added: '+COLUMNS_DETAIL.length); 
                     }
                     this.columns = COLUMNS_DETAIL; 
                     this.auxiliar = 2;
                 } else if (this.tabSelected == 'Notes'){
-                    if (this.fieldSet[i].key == 'NOTES'){ //CHANGE THIS VALUE WHEN DIANA SENDS THE OTHER ONE
+                    if (this.fieldSet[i].key == 'NOTES'){ 
                         console.log('Label '+this.fieldSet[i].label);
-                        COLUMNS_NOTES.unshift( { label: this.fieldSet[i].label, fieldName: this.fieldSet[i].label, sortable: true},);
+                        //console.log('Required '+this.fieldSet[i].required)
+                        COLUMNS_NOTES.push( { label: this.fieldSet[i].label, fieldName: this.fieldSet[i].property, sortable: true, editable: true,},);
                         console.log('added: '+COLUMNS_NOTES.length); 
                     }
                     this.columns = COLUMNS_NOTES; 
@@ -69,6 +84,41 @@ export default class Bl_dataTable extends LightningElement {
             this.fieldSet = undefined; 
             console.log('Error displaying field sets');
         })
+    }
+
+    updateTable(){
+        this.totalRecountCount = this.quoteLines.length;  
+        this.totalPage = Math.ceil(this.totalRecountCount / this.pageSize); 
+        this.dataPages = this.quoteLines.slice(0,this.pageSize); 
+        this.endingRecord = this.pageSize;
+    }
+
+    //Delete Row and See Tiers/Contracts - when click row buttons
+    handleRowAction(event){
+        switch (event.detail.action.name){
+            case 'Delete':
+                let dataRow = event.detail.row;
+                let quoteLinesDeleted = this.quoteLines; 
+                let row = quoteLinesDeleted.findIndex(x => x.id === dataRow.id);
+                console.log("Eliminado: " + dataRow.name + "- Row: " + row);
+                if (quoteLinesDeleted.length > 1){
+                    quoteLinesDeleted.splice(row,1); 
+                }
+                else {
+                    quoteLinesDeleted = []; 
+                }
+                this.quoteLines = quoteLinesDeleted;
+                this.quotelinesString = JSON.stringify(this.quoteLines);
+                this.updateTable();
+                this.dispatchEvent(new CustomEvent('deletedvalues', { detail: this.quotelinesString }));
+            break;
+            case 'Tiers':
+                alert('Tiers');
+            break;
+            default: 
+                alert('There is an error trying to complete this action');
+        }
+
     }
 
     //Pagination
@@ -105,7 +155,7 @@ export default class Bl_dataTable extends LightningElement {
         this.endingRecord = (this.pageSize * page);
         this.endingRecord = (this.endingRecord > this.totalRecountCount) 
                             ? this.totalRecountCount : this.endingRecord; 
-        this.dataPages = this.quoteLinesCopy.slice(this.startingRecord, this.endingRecord);
+        this.dataPages = this.quoteLines.slice(this.startingRecord, this.endingRecord);
         this.startingRecord = this.startingRecord + 1;
     }    
 

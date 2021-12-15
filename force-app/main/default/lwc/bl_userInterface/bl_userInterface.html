@@ -1,7 +1,7 @@
 <template>
     <!--THIS IS THE USER INTERFACE FOR AFL CPQ QUOTELINE EDITOR-->
     <lightning-card>
-        USER INTERFACE IN PROCESS... ID: {recordId}
+        USER INTERFACE IN PROCESS... QuoteLinesString: {quotelinesString.length}
         <!--HEADER START-->
         <div class="slds-border_top slds-border_right slds-border_bottom slds-border_left slds-m-left_large slds-m-right_large">
            <c-bl_header record-id={recordId}></c-bl_header>
@@ -17,13 +17,13 @@
         <div class="slds-border_top slds-border_right slds-border_bottom slds-border_left slds-m-left_large slds-m-right_large">
             <lightning-tabset>
                 <lightning-tab label="Quote Home">
-                    <c-bl_data-table tab-selected="Home"></c-bl_data-table>
+                    <c-bl_data-table tab-selected="Home" quotelines-string={quotelinesString} ondeletedvalues={updateTableData}></c-bl_data-table>
                 </lightning-tab>
                 <lightning-tab label="Detail View">
-                    <c-bl_data-table tab-selected="Detail"></c-bl_data-table>
+                    <c-bl_data-table tab-selected="Detail" quotelines-string={quotelinesString} ondeletedvalues={updateTableData}></c-bl_data-table>
                 </lightning-tab>
                 <lightning-tab label="Product Notes">
-                    <c-bl_data-table tab-selected="Notes"></c-bl_data-table>
+                    <c-bl_data-table tab-selected="Notes" quotelines-string={quotelinesString} ondeletedvalues={updateTableData}></c-bl_data-table>
                 </lightning-tab>
             </lightning-tabset>
         </div>

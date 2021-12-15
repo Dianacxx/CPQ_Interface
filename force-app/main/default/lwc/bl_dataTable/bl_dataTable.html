@@ -1,5 +1,5 @@
 <template>
-    {tabSelected}
+    <lightning-card>
     <!--SPINNER TO LOAD START-->
     <lightning-spinner if:true={spinnerLoading} alternative-text="Loading" size="medium"></lightning-spinner>
     <!--SPINNER TO LOAD END-->
@@ -9,10 +9,10 @@
         <p class="slds-align_absolute-center"><b> Quotelines: {quotelinesLength}</b></p>
         <p class="slds-align_absolute-center"><b> Page {page} of {totalPage}</b></p>
         <lightning-button-group class="slds-align_absolute-center">
-            <lightning-button label="First" icon-name="utility:chevronleft" onclick={firstHandler} ></lightning-button>
-            <lightning-button label="Previous" icon-name="utility:chevronleft" onclick={previousHandler} ></lightning-button>
-            <lightning-button label="Next" icon-name="utility:chevronright" icon-position="right" onclick={nextHandler} ></lightning-button>
-            <lightning-button label="Last" icon-name="utility:chevronright" icon-position="right" onclick={lastHandler} ></lightning-button>
+            <lightning-button label="First" icon-name="utility:chevronleft" onclick={firstHandler} class="stretchButton"></lightning-button>
+            <lightning-button label="Previous" icon-name="utility:chevronleft" onclick={previousHandler} class="stretchButton"></lightning-button>
+            <lightning-button label="Next" icon-name="utility:chevronright" icon-position="right" onclick={nextHandler} class="stretchButton"></lightning-button>
+            <lightning-button label="Last" icon-name="utility:chevronright" icon-position="right" onclick={lastHandler} class="stretchButton"></lightning-button>
         </lightning-button-group>
     </div>
     <!--PAGINATION CONTROL END-->
@@ -23,4 +23,8 @@
         sorted-by={sortBy} sorted-direction={sortDirection} onsort={handleSortData}></lightning-datatable>
     </div>
     <!--DATATABLE END-->
+    <!--LOOK UP FIELD START-->
+    <c-bl_sample-lookup-container></c-bl_sample-lookup-container>
+    <!--LOOK UP FIELD END-->
+    </lightning-card>
 </template>

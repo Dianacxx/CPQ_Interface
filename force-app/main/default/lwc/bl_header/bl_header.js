@@ -11,7 +11,7 @@ import DATE_FIELD from '@salesforce/schema/SBQQ__Quote__c.SBQQ__StartDate__c';
 import END_USER_ACC_FIELD  from '@salesforce/schema/SBQQ__Quote__c.SBQQ__Opportunity2__r.AccountId';
 import END_USER_ACC_NAME_FIELD  from '@salesforce/schema/Account.Name';
 
-//import REVISION_NUMBER_FIELD from '';
+import REVISION_NUMBER_FIELD from '@salesforce/schema/SBQQ__Quote__c.Review__c';
 
 //To show error message
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
@@ -32,7 +32,7 @@ export default class Bl_header extends LightningElement {
     @api account; //Account from the opportunity
 
     //GET QUOTE INFORMATION
-    @wire(getRecord, { recordId: '$recordId', fields: [ACCOUNT_NAME_FIELD, NAME_FIELD, CONTACT_NAME_FIELD, STATUS_FIELD, DATE_FIELD,END_USER_PROJECT_FIELD,END_USER_ACC_FIELD]})
+    @wire(getRecord, { recordId: '$recordId', fields: [ACCOUNT_NAME_FIELD, NAME_FIELD, CONTACT_NAME_FIELD, STATUS_FIELD, DATE_FIELD,END_USER_PROJECT_FIELD,END_USER_ACC_FIELD, REVISION_NUMBER_FIELD]})
     quoteData({error, data}){
         if (data){
             this.quote = data;
@@ -51,8 +51,12 @@ export default class Bl_header extends LightningElement {
             //console.log('this.opportEndUserProject '+this.opportEndUserProject);
             this.opportEndUserID = getFieldValue(this.quote, END_USER_ACC_FIELD );
             //console.log('this.opportEndUser '+ this.opportEndUserID);
-            //this.quoteRevision = getFieldValue(this.quote, REVISION_NUMBER_FIELD );
+            this.quoteRevision = getFieldValue(this.quote, REVISION_NUMBER_FIELD );
             //console.log('this.quoteRevision '+ this.quoteRevision);
+            if (!(this.opportEndUserID)){
+                this.isLoadingHeader = false;
+            }
+            
         } else if (error) {
             this.quote = undefined;
             this.error = error;
