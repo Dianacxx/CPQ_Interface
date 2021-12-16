@@ -107,6 +107,7 @@ export default class Bl_dataTable extends LightningElement {
         })
     }
 
+    
     @wire(MessageContext)
     messageContext;
     subscribeToMessageChannel() {
@@ -119,11 +120,15 @@ export default class Bl_dataTable extends LightningElement {
 
     handleMessage(message) {
         if (message.auxiliar == 'updatetable'){
-            this.quotelinesString = message.dataString;
-            this.quoteLines = JSON.parse(this.quotelinesString);
-            this.updateTable();
+            if (!(this.tabSelected=='Notes')){
+                this.quotelinesString = message.dataString;
+                this.quoteLines = JSON.parse(this.quotelinesString);
+                this.updateTable();
+            } 
         }
         else if (message.auxiliar == 'deletenotesfromquoteline'){
+            console.log('quoteNotesString '+ this.quoteNotesString);
+            /*
             if (this.tabSelected=='Notes'){
                 let quotelineNameNotes = message.dataString;
                 console.log('quotelineNameNotes: '+ quotelineNameNotes); 
@@ -133,10 +138,14 @@ export default class Bl_dataTable extends LightningElement {
                 for (let j=0;j< this.quoteNotesLength;j++){
                     let row = quoteLinesDeleted.findIndex(x => x.linename === quotelineNameNotes);
                     console.log('rows to be deleted: '+row);
-                }*/
-            }
+                }
+            }*/
         }
         
+    }
+
+    handleSaveEdition(event){
+        console.log(event.detail.draftValues);
     }
 
     updateTable(){
@@ -207,12 +216,19 @@ export default class Bl_dataTable extends LightningElement {
                 this.dataRow = event.detail.row;
             break;
             case 'Tiers':
-                alert('Tiers');
+                this.popUpTiers = true;
             break;
             default: 
                 alert('There is an error trying to complete this action');
         }
 
+    }
+
+    //Tiers Pop Up 
+    @track popUpTiers = false;
+
+    closeTiers(){
+        this.popUpTiers = false;
     }
 
     //Pagination

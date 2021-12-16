@@ -24,6 +24,7 @@ export default class UserInterface extends LightningElement {
 
     updateTableDataNotes(event){
         console.log('Deleted Notes Values');
+        this.quoteNotesString = event.detail;
     }
 
     updateTableDataNotesDelete(event){
@@ -43,11 +44,11 @@ export default class UserInterface extends LightningElement {
     handleActive(event){
         if (event.target.value=='Notes'){
             //this.quoteNotesString = this.quoteNotesString; 
-            console.log('Reset Notes');
+            console.log('Notes');
         }
         else {
             //this.quotelinesString =  this.quotelinesString; 
-            console.log('Reset Quotelines');
+            console.log('Quotelines');
         }      
     }
 }

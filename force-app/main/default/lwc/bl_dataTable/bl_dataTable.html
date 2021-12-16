@@ -20,7 +20,7 @@
     <!--DATATABLE START-->
     <div class="slds-align_absolute-center">
         <lightning-datatable style="width:100%;" key-field="id" draft-values={draftValues} data={dataPages} columns={columns} 
-        onrowaction={handleRowAction} onrowselection={handleRowSelection} onsave={handleSave}
+        onrowaction={handleRowAction} onrowselection={handleRowSelection} onsave={handleSaveEdition}
         sorted-by={sortBy} sorted-direction={sortDirection} onsort={handleSortData}></lightning-datatable>
     </div>
         <!--POP UP WARNING DELETE START-->
@@ -45,6 +45,27 @@
             <div class="slds-backdrop slds-backdrop_open"></div>
         </template>
         <!--POP UP WARNING DELETE END-->
+        <!--POP UP TIERS AND CONTRACTS START-->
+        <template if:true={popUpTiers}>
+            <section aria-modal="true" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container ">
+                    <header class="slds-modal__header">
+                        <h2 class="slds-text-heading_medium slds-hyphenate">Available Discounts</h2>
+                        <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeTiers}></lightning-icon>
+                    </header>
+                    <div class="slds-modal__content">
+                        <div class="slds-p-around_small slds-align_absolute-center">
+                            <p style="font-size:160%;">HERE GOES THE TIERS AND CONTRACTS AVAILABLE</p>
+                        </div>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning-button variant="brand" label="Close" onclick={closeTiers} class="slds-p-around_x-small slds-m-right_small"></lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+        <!--POP UP TIERS AND CONTRACTS END-->
     <!--DATATABLE END-->
     <!--LOOK UP FIELD START-->
     <c-bl_sample-lookup-container></c-bl_sample-lookup-container>

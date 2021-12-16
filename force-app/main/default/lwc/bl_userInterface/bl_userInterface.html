@@ -23,7 +23,7 @@
                     <c-bl_data-table tab-selected="Detail" quotelines-string={quotelinesString} quote-notes-string={quoteNotesString} ondeletedvalues={updateTableData} ondeletedid={updateTableDataNotesDelete} ></c-bl_data-table>
                 </lightning-tab>
                 <lightning-tab label="Product Notes" value="Notes" onactive={handleActive}>
-                    <c-bl_data-table tab-selected="Notes" quotelines-string={quotelinesString} quote-notes-string={quoteNotesString}></c-bl_data-table>
+                    <c-bl_data-table tab-selected="Notes" quotelines-string={quotelinesString} quote-notes-string={quoteNotesString} ondeletednotevalues={updateTableDataNotes}></c-bl_data-table>
                 </lightning-tab>
             </lightning-tabset>
         </div>
