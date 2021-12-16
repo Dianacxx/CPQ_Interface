@@ -66,17 +66,18 @@ public with sharing class QuoteController {
             quoteLineIDs.add(line.record.Id);
         }
         List<WrappersClass.QuoteLineWrapperClass> displayQuoteLine = new List<WrappersClass.QuoteLineWrapperClass> ();
+        
+        //Handle the notes info
         List<AFL_Note__c> noteList = [SELECT ID, BL_Quote_Line__r.Name, BL_Quote_Line__r.SBQQ__Product__c, Note_Text__c FROM AFL_Note__c WHERE BL_Quote_Line__r.Id IN : quoteLineIDs];
         List<WrappersClass.NoteWrapperClass> noteWrapperList = new List<WrappersClass.NoteWrapperClass>();
         Map<String, WrappersClass.NoteWrapperClass> noteMap = new Map<String, WrappersClass.NoteWrapperClass>();
-        List<AFL_Note__c> noteLineList = new List<AFL_Note__c> ();
-
+        //Converts every note related to the quote lines into a wrapper
         for (AFL_Note__c note : noteList) {
             WrappersClass.NoteWrapperClass wrapper = new WrappersClass.NoteWrapperClass();
             wrapper.id = note.Id;
             wrapper.linename = note.BL_Quote_Line__r.Name;
             wrapper.product = note.BL_Quote_Line__r.SBQQ__Product__c;
-            wrapper.text = note.Note_Text__c;
+            wrapper.notetext = note.Note_Text__c;
 
             noteWrapperList.add(wrapper);
             noteMap.put(wrapper.linename, wrapper);
@@ -85,6 +86,7 @@ public with sharing class QuoteController {
         for (QuoteLineModel line : quoteLines) {
             WrappersClass.QuoteLineWrapperClass wrapper = new WrappersClass.QuoteLineWrapperClass();
             WrappersClass.DiscountTierWrapperClass tierWrapper = new WrappersClass.DiscountTierWrapperClass();
+            //Check if there is a note in the map related to the same name as the line record
             WrappersClass.NoteWrapperClass relatedNotes = noteMap.get(line.record.Name);
             Id discountTier = line.record.SBQQ__DiscountTier__c;
             wrapper.id = line.record.id;
@@ -116,11 +118,8 @@ public with sharing class QuoteController {
                 wrapper.notes = json.serialize(relatedNotes);
             }
 
-            //system.debug(wrapper);
-            System.debug('products - '+ line.record.SBQQ__Product__r.Name);
-            System.debug('Quantity - '+ line.record.SBQQ__Quantity__c);
-            // System.debug('tiers - '+ line.record.SBQQ__DiscountTier__c);
-            // System.debug('tiers information- ' + wrapper.tiers);
+            System.debug('notes - '+ wrapper.notes);
+ 
             displayQuoteLine.add (wrapper);
         }
 
@@ -145,7 +144,7 @@ public with sharing class QuoteController {
             wrapper.id = note.Id;
             wrapper.linename = note.BL_Quote_Line__r.Name;
             wrapper.product = note.BL_Quote_Line__r.SBQQ__Product__c;
-            wrapper.text = note.Note_Text__c;
+            wrapper.notetext = note.Note_Text__c;
 
             noteWrapperList.add(wrapper);
         }

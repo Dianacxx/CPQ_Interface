@@ -7,6 +7,7 @@
     <div>
         <p class="slds-align_absolute-center"><b> Auxiliar: {auxiliar}</b></p>
         <p class="slds-align_absolute-center"><b> Quotelines: {quotelinesLength}</b></p>
+        <p class="slds-align_absolute-center"><b> QuoteNotes: {quoteNotesLength}</b></p>
         <p class="slds-align_absolute-center"><b> Page {page} of {totalPage}</b></p>
         <lightning-button-group class="slds-align_absolute-center">
             <lightning-button label="First" icon-name="utility:chevronleft" onclick={firstHandler} class="stretchButton"></lightning-button>
@@ -22,6 +23,28 @@
         onrowaction={handleRowAction} onrowselection={handleRowSelection} onsave={handleSave}
         sorted-by={sortBy} sorted-direction={sortDirection} onsort={handleSortData}></lightning-datatable>
     </div>
+        <!--POP UP WARNING DELETE START-->
+        <template if:true={deleteClick}>
+            <section aria-modal="true" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container ">
+                    <header class="slds-modal__header">
+                        <h2 class="slds-text-heading_medium slds-hyphenate">WARNING</h2>
+                        <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeModal}></lightning-icon>
+                    </header>
+                    <div class="slds-modal__content">
+                        <div class="slds-p-around_small slds-align_absolute-center">
+                            <p style="font-size:160%;">Are you sure you want to delete this?</p>
+                        </div>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning-button variant="brand" label="Cancel" onclick={closeModal} class="slds-p-around_x-small slds-m-right_small"></lightning-button>
+                        <lightning-button variant="brand" label="Confirm" onclick={deleteModal} class="slds-p-around_x-small"></lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+        <!--POP UP WARNING DELETE END-->
     <!--DATATABLE END-->
     <!--LOOK UP FIELD START-->
     <c-bl_sample-lookup-container></c-bl_sample-lookup-container>
