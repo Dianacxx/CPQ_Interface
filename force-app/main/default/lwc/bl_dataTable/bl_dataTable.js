@@ -119,6 +119,7 @@ export default class Bl_dataTable extends LightningElement {
     }
 
     handleMessage(message) {
+        //Message when table has changed
         if (message.auxiliar == 'updatetable'){
             if (!(this.tabSelected=='Notes')){
                 this.quotelinesString = message.dataString;
@@ -126,6 +127,8 @@ export default class Bl_dataTable extends LightningElement {
                 this.updateTable();
             } 
         }
+        //Message when quote is delete, to delete notes 
+        //--IN PROGRESS 
         else if (message.auxiliar == 'deletenotesfromquoteline'){
             console.log('quoteNotesString '+ this.quoteNotesString);
             /*
@@ -141,11 +144,60 @@ export default class Bl_dataTable extends LightningElement {
                 }
             }*/
         }
+        //Message when lookupfield is add 
+        else if (message.auxiliar == 'AddNewProduct'){
+            console.log('Product Id: '+ message.dataString);
+            //WORK HERE TO ADD THE PRODUCT AS QUOTELINES
+        }
         
     }
 
+    //Lookup search 
+    handleProductSelection(event){
+        console.log("the selected record id is"+event.detail);
+    }
+
+
+    @track quoteLinesEdit;
+    //Save when table is edited and clicked in save button.
     handleSaveEdition(event){
-        console.log(event.detail.draftValues);
+        this.quoteLinesEdit = event.detail.draftValues; 
+        if (!(this.tabSelected == 'Notes')){
+            for (let i =0; i< this.quoteLinesEdit.length; i++){
+                console.log('Id editada: '+this.quoteLinesEdit[i].id);
+                const index = this.quoteLines.findIndex(x => x.id === this.quoteLinesEdit[i].id);
+                console.log('Index en quoteLines '+index); 
+                const inputsItems = this.quoteLinesEdit.slice().map(draft => {
+                    const fields = Object.assign({}, draft);
+                    return { fields };
+                });
+                console.log('inputsItems '+ Object.getOwnPropertyNames(inputsItems[i].fields));
+                let prop = Object.getOwnPropertyNames(inputsItems[i].fields); 
+                console.log('prop '+ Object.getOwnPropertyNames(prop)); 
+                for(let j= 0; j<prop.length-1; j++){
+                    console.log('Value before edition: '+this.quoteLines[index][prop[j]]);
+                    console.log('Value after edition: ' +inputsItems[i].fields[prop[j]]);
+                    this.quoteLines[index][prop[j]] = inputsItems[i].fields[prop[j]];
+                }               
+            }
+            this.quotelinesString = JSON.stringify(this.quoteLines); 
+            this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
+            
+            const evt = new ShowToastEvent({
+                title: 'Edits in Table saved',
+                message: 'Changes are sucessfully saved',
+                variant: 'success',
+                mode: 'dismissable'
+            });
+            this.dispatchEvent(evt);
+        }
+        //MISSING WHEN UPDATE FIELDS IN NOTES
+        /*
+        *
+        *
+        * 
+        * 
+        */ 
     }
 
     updateTable(){
@@ -172,7 +224,7 @@ export default class Bl_dataTable extends LightningElement {
         if (this.tabSelected=='Notes') {
             let quoteLinesDeleted = this.quoteNotes; 
             let row = quoteLinesDeleted.findIndex(x => x.id === this.dataRow.id);
-            console.log("Eliminado: " + this.dataRow.name + "- Row: " + row);
+            console.log("Deleted: " + this.dataRow.name + "- Row: " + row);
             if (quoteLinesDeleted.length > 1){
                 quoteLinesDeleted.splice(row,1); 
             }

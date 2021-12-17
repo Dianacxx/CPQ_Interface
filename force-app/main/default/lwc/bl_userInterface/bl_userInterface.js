@@ -12,7 +12,7 @@ export default class UserInterface extends LightningElement {
     messageContext;
 
     updateTableData(event){
-        console.log('Deleted Values');
+        console.log('Deleted OR Edited Values');
         this.quotelinesString = event.detail; 
         console.log('Updated');
         const payload = { 
