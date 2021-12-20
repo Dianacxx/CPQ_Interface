@@ -5,11 +5,7 @@
       "default": true
     }
   ],
-<<<<<<< HEAD
   "name": "AFL_CPQ",
-=======
-  "name": "AFL_Sandbox",
->>>>>>> d2353eed3f320fa0a924b1479976de6433560430
   "namespace": "",
   "sfdcLoginUrl": "https://login.salesforce.com",
   "sourceApiVersion": "52.0"

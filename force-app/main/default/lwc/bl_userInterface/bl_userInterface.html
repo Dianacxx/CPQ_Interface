@@ -9,7 +9,7 @@
         <!--HEADER END-->
         <!--BODY START-->
         <!--ADD PRODUCTS SECTION START-->
-        <lightning-layout multiple-rows class="slds-border_top slds-border_right slds-border_bottom slds-border_left slds-m-left_large slds-m-right_large"> 
+        <lightning-layout multiple-rows class="slds-border_top slds-border_right slds-border_left slds-m-left_large slds-m-right_large"> 
             <!--Title and Discount fields-->
             <lightning-layout-item size="12" small-device-size="8" padding="around-small">
               <span class="slds-page-header__title slds-truncate">
@@ -32,8 +32,8 @@
             <!--Button Set-->
             <lightning-layout-item size="12" small-device-size="6" padding="around-small">
                <div class="slds-align_absolute-center">
-                       <lightning-button class="stretchButton slds-m-right_small" variant="brand" label="Reorder Lines" onclick={openModal}></lightning-button>
-                       <lightning-button class="stretchButton slds-m-right_small" variant="brand-outline" label="Save & Calculate"></lightning-button>
+                       <lightning-button class="stretchButton slds-m-right_small" variant="brand" label="Reorder Lines" onclick={handleReorder}></lightning-button>
+                       <lightning-button class="stretchButton slds-m-right_small" variant="brand-outline" label="Save & Calculate" onclick={handleSaveAndCalculate}></lightning-button>
                        <lightning-button class="stretchButton" variant="brand" label="Save & Exit" onclick={navigateToQuoteRecordPage}></lightning-button>
                </div>
                <div class="slds-align_absolute-center slds-m-top_small">
@@ -47,7 +47,7 @@
         </lightning-layout>
         <!--ADD PRODUCTS SECTION END-->
         <!--TAB SET SECTION START-->
-        <div class="slds-border_top slds-border_right slds-border_bottom slds-border_left slds-m-left_large slds-m-right_large">
+        <div class="slds-border_right slds-border_bottom slds-border_left slds-m-left_large slds-m-right_large">
             <lightning-tabset>
                 <lightning-tab label="Quote Home" value="Home" onactive={handleActive}>
                     <c-bl_data-table tab-selected="Home" quotelines-string={quotelinesString} quote-notes-string={quoteNotesString} ondeletedvalues={updateTableData} ondeletedid={updateTableDataNotesDelete} oneditedtable={updateTableData}></c-bl_data-table>
@@ -57,6 +57,9 @@
                 </lightning-tab>
                 <lightning-tab label="Product Notes" value="Notes" onactive={handleActive}>
                     <c-bl_data-table tab-selected="Notes" quotelines-string={quotelinesString} quote-notes-string={quoteNotesString} ondeletednotevalues={updateTableDataNotes}></c-bl_data-table>
+                </lightning-tab>
+                <lightning-tab label="Line Notes" value="Line" onactive={handleActive}>
+                    HERE GOES LINE NOTES
                 </lightning-tab>
             </lightning-tabset>
         </div>

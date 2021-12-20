@@ -66,13 +66,73 @@
             <div class="slds-backdrop slds-backdrop_open"></div>
         </template>
         <!--POP UP TIERS AND CONTRACTS END-->
+        <!--POP UP REORDER LINES START-->
+        <template if:true={popUpReorder}>
+            <!-- Modal/Popup Box LWC starts here -->
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <!-- Modal/Popup Box LWC header here -->
+                    <header class="slds-modal__header">
+                        <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={closeReorder}>
+                            <lightning-icon icon-name="utility:close" alternative-text="close" variant="inverse" size="small" ></lightning-icon>
+                            <span class="slds-assistive-text">Close</span>
+                        </button>
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Reorder Lines of products</h2>
+                    </header>
+                    <!-- Modal/Popup Box LWC body starts here -->
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                        <p style="color:red;"><b>MISSING THIS TO WORK !!!!!</b></p>
+                        <!--START TABLE TO REORDER -->
+                        <p class="slds-align_absolute-center" style="color: blue;">Number of QuoteLines: {quotelinesLength}</p>
+                        <div class="slds-grid slds-grid_vertical">
+                          <div class="slds-scrollable slds-grow">
+                            <div class="slds-scrollable_none">
+                              <table aria-multiselectable="true" class=" slds-table slds-no-row-hover
+                                  slds-table_bordered slds-table_fixed-layout slds-table_resizable-cols " role="grid" >
+                                <thead>
+                                  <tr class="slds-line-height_reset">
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <template for:each={ElementList} for:item="acc" for:index="index">
+                                    <tr key={acc.Id} onchange={Change}  draggable="true" ondrop={Drop}
+                                      ondragstart={DragStart} ondragover={DragOver} title={index}  >
+                                      <td role="gridcell">
+                                        <div class="slds-cell-wrap" title="name">{acc.name}</div>
+                                      </td>
+                                      <td role="gridcell">
+                                        <div class="slds-cell-wrap" title="description">{acc.description}</div>
+                                      </td>
+                                    </tr>
+                                  </template>
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        </div>
+                        <!--END TABLE TO REORDER-->
+                    </div>
+                    <!-- Modal/Popup Box LWC footer starts here -->
+                    <footer class="slds-modal__footer">
+                        <button class="slds-button slds-button_neutral" onclick={closeReorder} title="Cancel">Cancel</button>
+                        <button class="slds-button slds-button_brand" onclick={submitDetails} title="OK">Save</button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+        <!--POP UP REORDER LINES END-->
     <!--DATATABLE END-->
     <!--LOOK UP FIELD START-->
     <div class="slds-align_absolute-center slds-m-top_small slds-m-bottom_small">
         <lightning-input type="toggle" label="Customer Part" onchange={handleLookupTypeChange}></lightning-input>
         <lightning-helptext content="Active to change the search as Customer Part"></lightning-helptext>
     </div>
-    <c-bl_custom-lookup option-is-customer-part={isCustomerPart} search-placeholder="Search Product" icon-name="standard:products" onlookupselected={handleProductSelection}> </c-bl_custom-lookup>
+    <div class="slds-m-left_small slds-m-right_small">
+        <c-bl_custom-lookup option-is-customer-part={isCustomerPart} search-placeholder="Search Product" icon-name="standard:products" onlookupselected={handleProductSelection}> </c-bl_custom-lookup>
+    </div>
     <!--LOOK UP FIELD END-->
     </lightning-card>
 </template>

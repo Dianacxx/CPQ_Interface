@@ -25,6 +25,8 @@ export default class Bl_dataTable extends LightningElement {
     //QuoteLines fieldSet
     @track fieldSetLength;
 
+
+
     connectedCallback(){
         this.subscribeToMessageChannel();
 
@@ -148,7 +150,46 @@ export default class Bl_dataTable extends LightningElement {
             console.log('Product Id: '+ message.dataString);
             //WORK HERE TO ADD THE PRODUCT AS QUOTELINES
         }
+        else if (message.auxiliar == 'reordertable'){
+            this.popUpReorder = true; 
+            if (!(this.tabSelected == 'Notes')){
+                this.ElementList = this.quoteLines;
+            } else {
+                this.ElementList = this.quoteNotes;
+            }
+        }
         
+    }
+
+    //Reorder quotelines + Drag and Drop 
+    @track popUpReorder = false;
+    @track dragStart;
+    @track ElementList = []; 
+    closeReorder(){
+        this.popUpReorder = false;
+    }
+    DragStart(event) {
+        this.dragStart = event.target.title;
+        event.target.classList.add("drag");
+    }
+    DragOver(event) {
+        event.preventDefault();
+        return false;
+    }
+    Drop(event) {
+        event.stopPropagation();
+        const DragValName = this.dragStart;
+        const DropValName = event.target.title;
+        if (DragValName === DropValName) {
+          return false;
+        }
+        const index = DropValName;
+        const currentIndex = DragValName;
+        const newIndex = DropValName;
+        Array.prototype.move = function (from, to) {
+          this.splice(to, 0, this.splice(from, 1)[0]);
+        };
+        this.ElementList.move(currentIndex, newIndex);
     }
 
     @track isCustomerPart = ''; 
