@@ -86,4 +86,5 @@ export default class Bl_customLookup extends LightningElement {
         console.log('optionIsCustomerPart: '+ this.optionIsCustomerPart);
     }
 
+    @api hola;
 }
