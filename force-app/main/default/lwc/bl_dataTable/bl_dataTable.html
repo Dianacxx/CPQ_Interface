@@ -126,12 +126,8 @@
         <!--POP UP REORDER LINES END-->
     <!--DATATABLE END-->
     <!--LOOK UP FIELD START-->
-    <div class="slds-align_absolute-center slds-m-top_small slds-m-bottom_small">
-        <lightning-input type="toggle" label="Customer Part" onchange={handleLookupTypeChange}></lightning-input>
-        <lightning-helptext content="Active to change the search as Customer Part"></lightning-helptext>
-    </div>
-    <div class="slds-m-left_small slds-m-right_small">
-        <c-bl_custom-lookup option-is-customer-part={isCustomerPart} search-placeholder="Search Product" icon-name="standard:products" onlookupselected={handleProductSelection}> </c-bl_custom-lookup>
+    <div class="slds-m-left_small slds-m-right_small slds-m-top_small">
+        <c-bl_custom-lookup record-id={recordId} option-is-customer-part={isCustomerPart} search-placeholder="Search Product" icon-name="standard:products" onlookupselected={handleProductSelection}> </c-bl_custom-lookup>
     </div>
     <!--LOOK UP FIELD END-->
     </lightning-card>

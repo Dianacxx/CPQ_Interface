@@ -1,4 +1,4 @@
-import { LightningElement, api, wire } from 'lwc';
+import { LightningElement, api, wire, track } from 'lwc';
 import { publish, MessageContext } from 'lightning/messageService';
 import UPDATE_INTERFACE_CHANNEL from '@salesforce/messageChannel/update_Interface__c';
 import { NavigationMixin } from 'lightning/navigation';
@@ -10,10 +10,16 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     @api quotelinesString; //Quotelines information in string
     @api quoteNotesString; //Quotelines Notes in string 
 
+    @api disableButton; //To active clone button
+
+    //Initialize UI
+    connectedCallback(){
+        this.disableButton = true; 
+    }
     //Connect channel
     @wire(MessageContext)
     messageContext;
-
+    
     //WHEN TABLE OF QUOTELINES IS CHANGED
     updateTableData(event){
         console.log('Deleted OR Edited Values');
@@ -52,11 +58,34 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         if (event.target.value=='Notes'){
             //this.quoteNotesString = this.quoteNotesString; 
             console.log('Notes');
+            const payload = { 
+                dataString: null,
+                auxiliar: 'closereorder'
+              };
+            publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload);  
         }
         else {
             //this.quotelinesString =  this.quotelinesString; 
             console.log('Quotelines');
+            const payload = { 
+                dataString: null,
+                auxiliar: 'closereorder'
+              };
+            publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload);  
         }      
+    }
+
+    //TO CLONE BUTTON ACTIVE
+    
+    activeCloneButton(){
+        this.disableButton = false;
+    }
+    handleClone(){
+        const payload = { 
+            dataString: null,
+            auxiliar: 'letsclone'
+          };
+        publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
     }
 
     //TO OPEN REORDER LINES POP UP
@@ -83,7 +112,6 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     }
 
 
-
     //NAVIGATE TO QUOTE RECORD PAGE (MISSING SAVING INFORMATION)
     navigateToQuoteRecordPage() {
         this[NavigationMixin.Navigate]({
@@ -95,4 +123,25 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             },
         });
     }
+
+    //NAVIGATE TO PRODUCT SELECTION PAGE (MISSING SENDING INFO)
+    navitageToProductSelection(){
+        let compDefinition = {
+            componentDef: "c:bl_productSelection",
+            attributes: {
+                recordId: this.recordId,
+                quotelinesString: this.quotelinesString,
+                quoteNotesString: this.quoteNotesString,
+            }
+        };
+        // Base64 encode the compDefinition JS object
+        let encodedCompDef = btoa(JSON.stringify(compDefinition));
+        this[NavigationMixin.Navigate]({
+            type: 'standard__webPage',
+            attributes: {
+                url: '/one/one.app#' + encodedCompDef
+            }
+        });
+    }
+    
 }

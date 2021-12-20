@@ -30,7 +30,7 @@ public with sharing class QuoteController {
             wrapper.required = fieldSetMember.getRequired();
             wrapper.property = labelWithoutSpaces.toLowerCase();
             wrapper.apiName = fieldSetMember.getFieldPath();
-
+            
             // wrapper.type =fieldSetMember.getType();
 
             fieldsToPrint.add(wrapper);
@@ -44,6 +44,11 @@ public with sharing class QuoteController {
             wrapper.required = fieldSetMember.getRequired();
             wrapper.property = labelWithoutSpaces.toLowerCase();
             wrapper.apiName = fieldSetMember.getFieldPath();
+            if (labelWithoutSpaces.toLowerCase() == 'linename') {
+                System.debug('entered');
+                wrapper.property = 'name';
+            }
+            System.debug(wrapper.property);
 
             // wrapper.type =fieldSetMember.getType();
 
@@ -161,7 +166,7 @@ public with sharing class QuoteController {
         for (AFL_Note__c note : [SELECT ID, BL_Quote_Line__r.Name, BL_Quote_Line__r.SBQQ__Product__c, Note_Text__c FROM AFL_Note__c WHERE BL_Quote_Line__r.Id IN : quoteLineIDs]) {
             WrappersClass.NoteWrapperClass wrapper = new WrappersClass.NoteWrapperClass();
             wrapper.id = note.Id;
-            wrapper.linename = note.BL_Quote_Line__r.Name;
+            wrapper.name = note.BL_Quote_Line__r.Name;
             wrapper.product = note.BL_Quote_Line__r.SBQQ__Product__c;
             wrapper.notetext = note.Note_Text__c;
 

@@ -68,7 +68,7 @@ export default class ButtonOpenUi extends NavigationMixin(LightningElement) {
             console.log('No quotelines yet');
         }
         if (this.quoteNotesString == '[]'){
-            this.quoteNotesString = '[linename: \"none\"]';
+            this.quoteNotesString = '[name: \"none\"]';
             console.log(this.quoteNotesString);
             console.log('No quotes Notes yet');
         }

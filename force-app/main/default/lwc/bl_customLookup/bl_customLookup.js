@@ -5,7 +5,7 @@ import { subscribe, publish, MessageContext } from 'lightning/messageService';
 import UPDATE_INTERFACE_CHANNEL from '@salesforce/messageChannel/update_Interface__c';
 
 export default class Bl_customLookup extends LightningElement {
-
+    @api recordId; 
     @api objName;
     @api iconName;
     @api filter = '';
@@ -44,14 +44,16 @@ export default class Bl_customLookup extends LightningElement {
     }
 
     //CHANGE THE OPTION HERE WHEN TOGGLE CLANGE!!!!!
-    @wire(search, {searchTerm : '$searchTerm', option : '$optionIsCustomerPart'})
+    @wire(search, {searchTerm : '$searchTerm', quoteId: '$recordId'})
     wiredRecords({ error, data }) {
         if (data) {
             this.error = undefined;
             this.records = data;
+            console.log('Lookup DATA: ' + this.records);
         } else if (error) {
             this.error = error;
             this.records = undefined;
+            console.log('Lookup ERROR: ' + this.error);
         }
     }
     handleClick() {
@@ -86,5 +88,4 @@ export default class Bl_customLookup extends LightningElement {
         console.log('optionIsCustomerPart: '+ this.optionIsCustomerPart);
     }
 
-    @api hola;
 }

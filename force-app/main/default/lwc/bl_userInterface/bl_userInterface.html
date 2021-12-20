@@ -49,18 +49,20 @@
         <!--TAB SET SECTION START-->
         <div class="slds-border_right slds-border_bottom slds-border_left slds-m-left_large slds-m-right_large">
             <lightning-tabset>
+                
                 <lightning-tab label="Quote Home" value="Home" onactive={handleActive}>
-                    <c-bl_data-table tab-selected="Home" quotelines-string={quotelinesString} quote-notes-string={quoteNotesString} ondeletedvalues={updateTableData} ondeletedid={updateTableDataNotesDelete} oneditedtable={updateTableData}></c-bl_data-table>
+                    <c-bl_data-table record-id={recordId} tab-selected="Home" quotelines-string={quotelinesString} quote-notes-string={quoteNotesString} ondeletedvalues={updateTableData} ondeletedid={updateTableDataNotesDelete} oneditedtable={updateTableData} onclone={activeCloneButton}></c-bl_data-table>
                 </lightning-tab>
                 <lightning-tab label="Detail View" value="Detail" onactive={handleActive}>
-                    <c-bl_data-table tab-selected="Detail" quotelines-string={quotelinesString} quote-notes-string={quoteNotesString} ondeletedvalues={updateTableData} ondeletedid={updateTableDataNotesDelete} oneditedtable={updateTableData}></c-bl_data-table>
+                    <c-bl_data-table record-id={recordId} tab-selected="Detail" quotelines-string={quotelinesString} quote-notes-string={quoteNotesString} ondeletedvalues={updateTableData} ondeletedid={updateTableDataNotesDelete} oneditedtable={updateTableData} onclone={activeCloneButton}></c-bl_data-table>
                 </lightning-tab>
                 <lightning-tab label="Product Notes" value="Notes" onactive={handleActive}>
-                    <c-bl_data-table tab-selected="Notes" quotelines-string={quotelinesString} quote-notes-string={quoteNotesString} ondeletednotevalues={updateTableDataNotes}></c-bl_data-table>
+                    <c-bl_data-table record-id={recordId} tab-selected="Notes" quotelines-string={quotelinesString} quote-notes-string={quoteNotesString} ondeletednotevalues={updateTableDataNotes}></c-bl_data-table>
                 </lightning-tab>
                 <lightning-tab label="Line Notes" value="Line" onactive={handleActive}>
                     HERE GOES LINE NOTES
                 </lightning-tab>
+            
             </lightning-tabset>
         </div>
         <!--TAB SET SECTION END-->

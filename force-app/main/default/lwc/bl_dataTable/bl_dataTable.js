@@ -8,7 +8,7 @@ import UPDATE_INTERFACE_CHANNEL from '@salesforce/messageChannel/update_Interfac
 const DELAY = 100;
 
 export default class Bl_dataTable extends LightningElement {
-
+    @api recordId;
     @api auxiliar; //Auxiliar variable to see how informaton works
 
     @api tabSelected; //To display fields depending on tab
@@ -37,7 +37,7 @@ export default class Bl_dataTable extends LightningElement {
         const COLUMNS_DETAIL = [ { label: 'Quote Name', fieldName: 'name', sortable: true, },];
         const COLUMNS_NOTES = [];
         if (this.tabSelected == 'Notes'){
-            if(this.quoteNotesString=='[linename: \"none\"]'){
+            if(this.quoteNotesString=='[name: \"none\"]'){
                 console.log('THERE IS NO NOTES');
             } else {
                 this.quoteNotes = JSON.parse(this.quoteNotesString);
@@ -63,30 +63,32 @@ export default class Bl_dataTable extends LightningElement {
             for (let i=0; i<this.fieldSetLength;i++){
                 if (this.tabSelected == 'Home'){
                     if (this.fieldSet[i].key == 'HOME'){
-                        console.log('Label '+this.fieldSet[i].label);
+                        console.log('Label: '+this.fieldSet[i].label);
                         //console.log('Required '+this.fieldSet[i].required)
+                        console.log('Editable: '+this.fieldSet[i].editable);
                         let labelName;
                         this.fieldSet[i].required ? labelName = '*'+this.fieldSet[i].label: labelName = this.fieldSet[i].label;
-                        COLUMNS_HOME.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: true ,sortable: true, },);
+                        COLUMNS_HOME.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, },);
                         //console.log('added: '+COLUMNS_HOME.length); 
                     }
                     this.columns = COLUMNS_HOME; 
                     this.auxiliar = 1;
                 } else if (this.tabSelected == 'Detail'){
                     if (this.fieldSet[i].key == 'DETAIL'){
-                        console.log('Label '+this.fieldSet[i].label);
+                        console.log('Label: '+this.fieldSet[i].label);
+                        console.log('Editable: '+this.fieldSet[i].editable);
                         //console.log('Required '+this.fieldSet[i].required)
                         let labelName;
                         this.fieldSet[i].required ? labelName = '*'+this.fieldSet[i].label: labelName = this.fieldSet[i].label;
-                        COLUMNS_DETAIL.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: true, sortable: true, },);
+                        COLUMNS_DETAIL.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable, sortable: true, },);
                         //console.log('added: '+COLUMNS_DETAIL.length); 
                     }
                     this.columns = COLUMNS_DETAIL; 
                     this.auxiliar = 2;
                 } else if (this.tabSelected == 'Notes'){
                     if (this.fieldSet[i].key == 'NOTES'){ 
-                        console.log('Label '+this.fieldSet[i].label);
-                        //console.log('Property '+ this.fieldSet[i].property)
+                        console.log('Label: '+this.fieldSet[i].label);
+                        console.log('Property: '+ this.fieldSet[i].property)
                         let labelName;
                         this.fieldSet[i].required ? labelName = '*'+this.fieldSet[i].label: labelName = this.fieldSet[i].label;
                         COLUMNS_NOTES.push( { label: labelName, fieldName: this.fieldSet[i].property, sortable: true, editable: true,},);
@@ -158,8 +160,35 @@ export default class Bl_dataTable extends LightningElement {
                 this.ElementList = this.quoteNotes;
             }
         }
+        else if (message.auxiliar == 'closereorder'){
+            this.popUpReorder = false;
+        }
+        else if (message.auxiliar =='letsclone'){
+            //GET QUOTELINES SELECTED
+            //CLONE QUOTELINES AND NOTES FROM THE OTHER OBJECT
+            console.log('HEY CLONE');
+            const evt = new ShowToastEvent({
+                title: 'MISSING CLONE ACTION HERE',
+                message: 'MISSING CLONE ACTION HERE',
+                variant: 'info',
+                mode: 'dismissable'
+            });
+            this.dispatchEvent(evt);
+        }
         
     }
+
+    //Cloning rows
+    @api selectedRows;
+    handleRowSelection(event){
+        //TO ALERT THAT A ROW HAS BEEN SELECTED
+        this.dispatchEvent(new CustomEvent('clone'));
+        console.log('Rows selected '+ event.detail.selectedRows.length);
+        this.selectedRows = event.detail.selectedRows;
+    }
+
+
+
 
     //Reorder quotelines + Drag and Drop 
     @track popUpReorder = false;
@@ -276,6 +305,10 @@ export default class Bl_dataTable extends LightningElement {
         this.dataPages = this.quoteNotes.slice(0,this.pageSize); 
         this.endingRecord = this.pageSize;
     }
+
+
+
+
     
     @track deleteClick = false; 
     @track dataRow; 
