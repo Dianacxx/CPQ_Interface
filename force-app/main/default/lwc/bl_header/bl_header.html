@@ -1,0 +1,21 @@
+<template>
+    <lightning-card icon-name="standard:quotes">
+        <lightning-spinner if:true={isLoadingHeader} alternative-text="Loading" size="medium"></lightning-spinner>
+        <template if:true={quote}>
+            <header slot="title" class="slds-page-header">
+                <h1><span style="font-size:100%;" class="slds-page-header__title slds-truncate">{quoteAccount} - {quoteNumber}</span></h1>
+            </header>
+            <div class="slds-m-around_medium slds-box slds-box_x-small">
+                CONTACT: {quoteContact} •   
+                STATUS: {quoteStatus}  • 
+                END USER: {opportEndUserName} • 
+                PROJECT NAME: {opportEndUserProject} • 
+                START DATE: {quoteDate}  • 
+                REVISION: {quoteRevision}
+            </div>
+        </template>
+        <template if:false={quote}>
+            lOADING... 
+        </template>
+    </lightning-card>
+</template>

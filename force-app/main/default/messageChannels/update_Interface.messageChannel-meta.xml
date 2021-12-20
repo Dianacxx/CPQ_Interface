@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningMessageChannel xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Message Channel to pass values</description>
+    <isExposed>true</isExposed>
+    <lightningMessageFields>
+        <description>string data</description>
+        <fieldName>dataString</fieldName>
+    </lightningMessageFields>
+    <lightningMessageFields>
+        <description>Auxiliar variable</description>
+        <fieldName>auxiliar</fieldName>
+    </lightningMessageFields>
+    <masterLabel>updateInterface</masterLabel>
+</LightningMessageChannel>

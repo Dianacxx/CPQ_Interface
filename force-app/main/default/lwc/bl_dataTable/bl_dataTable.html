@@ -1,0 +1,78 @@
+<template>
+    <lightning-card>
+    <!--SPINNER TO LOAD START-->
+    <lightning-spinner if:true={spinnerLoading} alternative-text="Loading" size="medium"></lightning-spinner>
+    <!--SPINNER TO LOAD END-->
+    <!--PAGINATION CONTROL START-->
+    <div>
+        <p class="slds-align_absolute-center"><b> Auxiliar: {auxiliar}</b></p>
+        <p class="slds-align_absolute-center"><b> Quotelines: {quotelinesLength}</b></p>
+        <p class="slds-align_absolute-center"><b> QuoteNotes: {quoteNotesLength}</b></p>
+        <p class="slds-align_absolute-center"><b> Page {page} of {totalPage}</b></p>
+        <lightning-button-group class="slds-align_absolute-center">
+            <lightning-button label="First" icon-name="utility:chevronleft" onclick={firstHandler} class="stretchButton"></lightning-button>
+            <lightning-button label="Previous" icon-name="utility:chevronleft" onclick={previousHandler} class="stretchButton"></lightning-button>
+            <lightning-button label="Next" icon-name="utility:chevronright" icon-position="right" onclick={nextHandler} class="stretchButton"></lightning-button>
+            <lightning-button label="Last" icon-name="utility:chevronright" icon-position="right" onclick={lastHandler} class="stretchButton"></lightning-button>
+        </lightning-button-group>
+    </div>
+    <!--PAGINATION CONTROL END-->
+    <!--DATATABLE START-->
+    <div class="slds-align_absolute-center">
+        <lightning-datatable style="width:100%;" key-field="id" draft-values={draftValues} data={dataPages} columns={columns} 
+        onrowaction={handleRowAction} onrowselection={handleRowSelection} onsave={handleSaveEdition}
+        sorted-by={sortBy} sorted-direction={sortDirection} onsort={handleSortData}></lightning-datatable>
+    </div>
+        <!--POP UP WARNING DELETE START-->
+        <template if:true={deleteClick}>
+            <section aria-modal="true" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container ">
+                    <header class="slds-modal__header">
+                        <h2 class="slds-text-heading_medium slds-hyphenate">WARNING</h2>
+                        <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeModal}></lightning-icon>
+                    </header>
+                    <div class="slds-modal__content">
+                        <div class="slds-p-around_small slds-align_absolute-center">
+                            <p style="font-size:160%;">Are you sure you want to delete this?</p>
+                        </div>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning-button variant="brand" label="Cancel" onclick={closeModal} class="slds-p-around_x-small slds-m-right_small"></lightning-button>
+                        <lightning-button variant="brand" label="Confirm" onclick={deleteModal} class="slds-p-around_x-small"></lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+        <!--POP UP WARNING DELETE END-->
+        <!--POP UP TIERS AND CONTRACTS START-->
+        <template if:true={popUpTiers}>
+            <section aria-modal="true" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container ">
+                    <header class="slds-modal__header">
+                        <h2 class="slds-text-heading_medium slds-hyphenate">Available Discounts</h2>
+                        <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeTiers}></lightning-icon>
+                    </header>
+                    <div class="slds-modal__content">
+                        <div class="slds-p-around_small slds-align_absolute-center">
+                            <p style="font-size:160%;">HERE GOES THE TIERS AND CONTRACTS AVAILABLE</p>
+                        </div>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning-button variant="brand" label="Close" onclick={closeTiers} class="slds-p-around_x-small slds-m-right_small"></lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+        <!--POP UP TIERS AND CONTRACTS END-->
+    <!--DATATABLE END-->
+    <!--LOOK UP FIELD START-->
+    <div class="slds-align_absolute-center slds-m-top_small slds-m-bottom_small">
+        <lightning-input type="toggle" label="Customer Part" onchange={handleLookupTypeChange}></lightning-input>
+        <lightning-helptext content="Active to change the search as Customer Part"></lightning-helptext>
+    </div>
+    <c-bl_custom-lookup option-is-customer-part={isCustomerPart} search-placeholder="Search Product" icon-name="standard:products" onlookupselected={handleProductSelection}> </c-bl_custom-lookup>
+    <!--LOOK UP FIELD END-->
+    </lightning-card>
+</template>
