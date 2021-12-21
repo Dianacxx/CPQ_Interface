@@ -1,5 +1,6 @@
 import { LightningElement, api, track, wire} from 'lwc';
-import displayFieldSet from '@salesforce/apex/QuoteController.displayFieldSet'; //--LOOK IF THE NAME CAHNGES
+import displayFieldSet from '@salesforce/apex/QuoteController.displayFieldSet'; 
+import addQuoteLine from '@salesforce/apex/QuoteController.addQuoteLine';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 import { subscribe, publish, MessageContext } from 'lightning/messageService';
@@ -41,8 +42,8 @@ export default class Bl_dataTable extends LightningElement {
                 console.log('THERE IS NO NOTES');
             } else {
                 this.quoteNotes = JSON.parse(this.quoteNotesString);
-                console.log(Object.getOwnPropertyNames(this.quoteNotes));
-                console.log('Notes Length: '+this.quoteNotesLength);
+                //console.log(Object.getOwnPropertyNames(this.quoteNotes));
+                //console.log('Notes Length: '+this.quoteNotesLength);
                 this.updateTableNotes();
             }
         }
@@ -63,9 +64,10 @@ export default class Bl_dataTable extends LightningElement {
             for (let i=0; i<this.fieldSetLength;i++){
                 if (this.tabSelected == 'Home'){
                     if (this.fieldSet[i].key == 'HOME'){
-                        console.log('Label: '+this.fieldSet[i].label);
+                        //console.log('Label: '+this.fieldSet[i].label);
+                        console.log('Property: '+ this.fieldSet[i].property)
                         //console.log('Required '+this.fieldSet[i].required)
-                        console.log('Editable: '+this.fieldSet[i].editable);
+                        //console.log('Editable: '+this.fieldSet[i].editable);
                         let labelName;
                         this.fieldSet[i].required ? labelName = '*'+this.fieldSet[i].label: labelName = this.fieldSet[i].label;
                         COLUMNS_HOME.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, },);
@@ -75,8 +77,8 @@ export default class Bl_dataTable extends LightningElement {
                     this.auxiliar = 1;
                 } else if (this.tabSelected == 'Detail'){
                     if (this.fieldSet[i].key == 'DETAIL'){
-                        console.log('Label: '+this.fieldSet[i].label);
-                        console.log('Editable: '+this.fieldSet[i].editable);
+                        //console.log('Label: '+this.fieldSet[i].label);
+                        //console.log('Editable: '+this.fieldSet[i].editable);
                         //console.log('Required '+this.fieldSet[i].required)
                         let labelName;
                         this.fieldSet[i].required ? labelName = '*'+this.fieldSet[i].label: labelName = this.fieldSet[i].label;
@@ -87,8 +89,8 @@ export default class Bl_dataTable extends LightningElement {
                     this.auxiliar = 2;
                 } else if (this.tabSelected == 'Notes'){
                     if (this.fieldSet[i].key == 'NOTES'){ 
-                        console.log('Label: '+this.fieldSet[i].label);
-                        console.log('Property: '+ this.fieldSet[i].property)
+                        //console.log('Label: '+this.fieldSet[i].label);
+                        //console.log('Property: '+ this.fieldSet[i].property)
                         let labelName;
                         this.fieldSet[i].required ? labelName = '*'+this.fieldSet[i].label: labelName = this.fieldSet[i].label;
                         COLUMNS_NOTES.push( { label: labelName, fieldName: this.fieldSet[i].property, sortable: true, editable: true,},);
@@ -187,9 +189,6 @@ export default class Bl_dataTable extends LightningElement {
         this.selectedRows = event.detail.selectedRows;
     }
 
-
-
-
     //Reorder quotelines + Drag and Drop 
     @track popUpReorder = false;
     @track dragStart;
@@ -221,17 +220,44 @@ export default class Bl_dataTable extends LightningElement {
         this.ElementList.move(currentIndex, newIndex);
     }
 
-    @track isCustomerPart = ''; 
+    //@track isCustomerPart = ''; 
     //Lookup search 
     handleProductSelection(event){
+        this.spinnerLoading = true;
         console.log("the selected record id is"+event.detail);
+        let productId = event.detail; 
+        let newQuoteline; //New quoteline
+        let randomId;     //Random Id for new quoteline
+        let randomName;   //Random Name for new quoteline
+        addQuoteLine({quoteId: this.recordId, productId: productId})
+        .then((data) => {
+            console.log('Add Product DATA: '+ data); 
+            newQuoteline = JSON.parse(data); 
+            console.log('New product object: '+ Object.getOwnPropertyNames(newQuoteline[0]));
+            //To create auxiliar ID and Name
+            randomId = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 10);
+            randomName = Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 10);//Math.random().toFixed(36).substring(0, 7)); 
+            newQuoteline[0].id = randomId; 
+            newQuoteline[0].name = 'New QL-'+randomName; 
+            this.quoteLines = [...this.quoteLines, newQuoteline[0]];
+            this.updateTable();
+            this.quotelinesString = JSON.stringify(this.quoteLines); 
+            this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
+            this.spinnerLoading = false;
+        })
+        .catch((error) =>{
+            console.log('Add Product ERROR: '+ error);
+            this.spinnerLoading = false;
+            const evt = new ShowToastEvent({
+                title: 'Error creating QuoteLine',
+                message: 'The product selected cannot turn into a quoteline',
+                variant: 'error',
+                mode: 'dismissable'
+            });
+            this.dispatchEvent(evt);
+        }) 
     }
-    //Lookup field toggle
     /*
-    The ability to add customer parts depends on the “End User Account”. 
-    If the end user or billing account has a customer part which matches the search, 
-    the customer part is made available for search/select.
-    */
     handleLookupTypeChange(event){
         console.log('Toggle: '+event.target.checked); 
         if (event.target.checked){
@@ -246,6 +272,7 @@ export default class Bl_dataTable extends LightningElement {
         publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload);  
         console.log('isCustomerPart: '+this.isCustomerPart);
     }
+    */
 
     @track quoteLinesEdit;
     //Save when table is edited and clicked in save button.
@@ -307,9 +334,6 @@ export default class Bl_dataTable extends LightningElement {
     }
 
 
-
-
-    
     @track deleteClick = false; 
     @track dataRow; 
     //Message to delete row

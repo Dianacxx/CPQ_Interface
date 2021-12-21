@@ -19,10 +19,10 @@
             <lightning-layout-item size="9" small-device-size="6" padding="around-small">
                 <div class="slds-grid">
                    <div class="slds-col slds-m-right_medium">
-                       <lightning-input  class="slds-m-left_medium" type="number" label="Number field" placeholder="50%" value={porcentageDiscount} onchange={handlePorcentageDiscount}></lightning-input>
+                       <lightning-input  class="slds-m-left_medium" type="number" label="Line Discount" placeholder="50% - $50" value={porcentageDiscount} onchange={handlePorcentageDiscount}></lightning-input>
                    </div>
                    <div class="slds-col">
-                       <lightning-combobox name={fieldLabel}  label="Discount Type" value={typeDiscount} placeholder="Select an Option" options={optionsExample} onchange={handleTypeDiscount}></lightning-combobox>
+                       <lightning-combobox name="discountType"  label="Discount Type" value={typeDiscount} placeholder="Select an Option" options={optionsExample} onchange={handleTypeDiscount}></lightning-combobox>
                    </div>
                    <div class="slds-col slds-var-m-top_large ">
                        <lightning-button class="stretchButton slds-m-left_small" variant="brand" label="Apply" onclick={handleApplyDiscount}></lightning-button>
@@ -67,5 +67,6 @@
         </div>
         <!--TAB SET SECTION END-->
         <!--BODY END-->
+        <div class="slds-m-bottom_large"></div>
     </lightning-card>
 </template>

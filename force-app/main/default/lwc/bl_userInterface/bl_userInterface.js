@@ -125,23 +125,29 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     }
 
     //NAVIGATE TO PRODUCT SELECTION PAGE (MISSING SENDING INFO)
-    navitageToProductSelection(){
-        let compDefinition = {
+    navitageToProductSelection(event){
+        event.preventDefault();
+        let quotelinesStringSave = JSON.stringify(this.quotelinesString);
+        let quoteNotesStringSave = JSON.stringify(this.quoteNotesString);
+        console.log('Q'+quotelinesStringSave);
+        console.log('N'+quoteNotesStringSave);
+        let componentDef = {
             componentDef: "c:bl_productSelection",
             attributes: {
-                recordId: this.recordId,
-                quotelinesString: this.quotelinesString,
-                quoteNotesString: this.quoteNotesString,
-            }
-        };
-        // Base64 encode the compDefinition JS object
-        let encodedCompDef = btoa(JSON.stringify(compDefinition));
+                recordId: this.recordId, 
+                quotelinesString: quotelinesStringSave,
+                quoteNotesString: quoteNotesStringSave,
+            } //Whatch description there is something weird about it
+        }
+        // Encode the componentDefinition JS object to Base64 format to make it url addressable
+        let encodedComponentDef = btoa(JSON.stringify(componentDef));
         this[NavigationMixin.Navigate]({
             type: 'standard__webPage',
             attributes: {
-                url: '/one/one.app#' + encodedCompDef
+                url: '/one/one.app#' + encodedComponentDef
             }
         });
+        
     }
     
 }

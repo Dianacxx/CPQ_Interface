@@ -8,6 +8,7 @@ public with sharing class WrappersClass {
         public String apiName {get;set;}
         public Boolean required {get;set;}
         public String property {get;set;}
+        public Boolean editable {get;set;}
         // public Schema.DisplayType type {get;set;}
          
     }

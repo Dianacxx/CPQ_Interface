@@ -2,16 +2,33 @@ public with sharing class QuoteController {
     @AuraEnabled (cacheable = true)
     public static String displayFieldSet(){
      
-        List<Schema.FieldSetMember> homeFieldSetMemberList =  FieldSetHandler.getQuote('BL_Quote_Home','SBQQ__QuoteLine__c');
+        List<Schema.FieldSetMember> homeFieldSetMemberListEditable =  FieldSetHandler.getQuote('BL_Quote_Home','SBQQ__QuoteLine__c');
+        List<Schema.FieldSetMember> homeFieldSetMemberListNonEditable =  FieldSetHandler.getQuote('BL_Quote_Home_Non_Edit','SBQQ__QuoteLine__c');
         List<Schema.FieldSetMember> detailViewFieldSetMemberList =  FieldSetHandler.getQuote('BL_Detail_View','SBQQ__QuoteLine__c');
         List<Schema.FieldSetMember> notesFieldSetMemberList =  FieldSetHandler.getQuote('BL_Notes_View','AFL_Note__c');
         List<WrappersClass.FieldSetWrapperClass> fieldsToPrint = new List<WrappersClass.FieldSetWrapperClass>();
         
-        for (Schema.FieldSetMember fieldSetMember : homeFieldSetMemberList) {
+        for (Schema.FieldSetMember fieldSetMember : homeFieldSetMemberListEditable) {
             WrappersClass.FieldSetWrapperClass wrapper = new WrappersClass.FieldSetWrapperClass();
             String labelWithoutSpaces = fieldSetMember.getLabel().replaceAll( '\\s+', '');
 
             wrapper.key = 'HOME';
+            wrapper.editable= true;
+            wrapper.label = fieldSetMember.getLabel();
+            wrapper.required = fieldSetMember.getRequired();
+            wrapper.property = labelWithoutSpaces.toLowerCase();
+            wrapper.apiName = fieldSetMember.getFieldPath();
+
+            // wrapper.type =fieldSetMember.getType();
+
+            fieldsToPrint.add(wrapper);
+        }
+        for (Schema.FieldSetMember fieldSetMember : homeFieldSetMemberListNonEditable) {
+            WrappersClass.FieldSetWrapperClass wrapper = new WrappersClass.FieldSetWrapperClass();
+            String labelWithoutSpaces = fieldSetMember.getLabel().replaceAll( '\\s+', '');
+
+            wrapper.key = 'HOME';
+            wrapper.editable= false;
             wrapper.label = fieldSetMember.getLabel();
             wrapper.required = fieldSetMember.getRequired();
             wrapper.property = labelWithoutSpaces.toLowerCase();
@@ -26,6 +43,7 @@ public with sharing class QuoteController {
             String labelWithoutSpaces = fieldSetMember.getLabel().replaceAll( '\\s+', '');
 
             wrapper.key = 'DETAIL';
+            wrapper.editable = true;
             wrapper.label = fieldSetMember.getLabel();
             wrapper.required = fieldSetMember.getRequired();
             wrapper.property = labelWithoutSpaces.toLowerCase();

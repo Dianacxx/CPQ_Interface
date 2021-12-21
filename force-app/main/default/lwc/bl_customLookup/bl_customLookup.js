@@ -4,6 +4,8 @@ import search from '@salesforce/apex/SearchLookupController.search';
 import { subscribe, publish, MessageContext } from 'lightning/messageService';
 import UPDATE_INTERFACE_CHANNEL from '@salesforce/messageChannel/update_Interface__c';
 
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+
 export default class Bl_customLookup extends LightningElement {
     @api recordId; 
     @api objName;
@@ -43,8 +45,21 @@ export default class Bl_customLookup extends LightningElement {
         console.log('optionIsCustomerPart: '+this.optionIsCustomerPart);
     }
 
+    //Lookup field combobox options, ganlde change
+    get productOptions() {
+        return [
+            { label: 'Part Number', value: 'customerPart' },
+            { label: 'Product Name', value: 'name' },
+            //{ label: 'Competitor', value: 'competitor' },
+        ];
+    }
+    @track productSelected = 'customerPart';
+    handleProductSelected(event) {
+        this.productSelected = event.detail.value;
+    }
+
     //CHANGE THE OPTION HERE WHEN TOGGLE CLANGE!!!!!
-    @wire(search, {searchTerm : '$searchTerm', quoteId: '$recordId'})
+    @wire(search, {searchTerm : '$searchTerm', quoteId: '$recordId', option: '$productSelected'})
     wiredRecords({ error, data }) {
         if (data) {
             this.error = undefined;
@@ -54,6 +69,13 @@ export default class Bl_customLookup extends LightningElement {
             this.error = error;
             this.records = undefined;
             console.log('Lookup ERROR: ' + this.error);
+            const evt = new ShowToastEvent({
+                title: 'No products found',
+                message: 'This quote has no associated products',
+                variant: 'warning',
+                mode: 'dismissable'
+            });
+            this.dispatchEvent(evt);
         }
     }
     handleClick() {
