@@ -4,6 +4,10 @@ import UPDATE_INTERFACE_CHANNEL from '@salesforce/messageChannel/update_Interfac
 import { NavigationMixin } from 'lightning/navigation';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
+//Quote Total functions
+import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
+import QUOTE_OBJECT from '@salesforce/schema/SBQQ__Quote__c';
+import TOTAL_FIELD from '@salesforce/schema/SBQQ__Quote__c.SBQQ__NetAmount__c';
 
 export default class UserInterface extends NavigationMixin(LightningElement) {
     @api recordId; //Quote Record Id that opens the UI
@@ -16,10 +20,20 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     connectedCallback(){
         this.disableButton = true; 
     }
+
+    //Get total value 
+    @wire(getRecord,{ recordId: '$recordId', fields: [TOTAL_FIELD] })
+    totalValueRecord; 
+    get totalValue(){
+        return this.totalValueRecord.data ? getFieldValue(this.totalValueRecord.data, TOTAL_FIELD) : '';
+    }
+
     //Connect channel
     @wire(MessageContext)
     messageContext;
     
+
+
     //WHEN TABLE OF QUOTELINES IS CHANGED
     updateTableData(event){
         console.log('Deleted OR Edited Values');
@@ -53,6 +67,8 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload);*/
     }
 
+    
+    @track disableReorder; //Only reorder quotelines
     //WHEN CHANGE FROM TAB TO TAB - MAYBE TO DELETE
     handleActive(event){
         if (event.target.value=='Notes'){
@@ -63,6 +79,10 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 auxiliar: 'closereorder'
               };
             publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload);  
+            this.disableReorder = true;
+        }
+        else if (event.target.value=='Line'){
+            this.disableReorder = true;
         }
         else {
             //this.quotelinesString =  this.quotelinesString; 
@@ -72,6 +92,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 auxiliar: 'closereorder'
               };
             publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload);  
+            this.disableReorder = false;
         }      
     }
 
@@ -150,4 +171,24 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         
     }
     
+    //APPLY BUTTON WITH DISCOUNT VALUES
+    get optionsDiscount(){
+        return [
+            { label: '$', value: 'Currency' },
+            { label: '%', value: 'Percentage' },
+        ];
+    }
+    @track valueDiscount;
+    @track typeDiscount; 
+    handleValueDiscount(event) {
+        this.valueDiscount = event.detail.value;
+    }
+    handleTypeDiscount(event) {
+        this.typeDiscount = event.detail.value;
+    }
+    handleApplyDiscount(){
+        alert('Yo have selected the valueDiscount ' + this.valueDiscount);
+        alert('Yo have selected the typeDiscount ' + this.typeDiscount);
+    }
+
 }

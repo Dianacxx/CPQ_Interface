@@ -25,7 +25,8 @@ export default class Bl_dataTable extends LightningElement {
 
     //QuoteLines fieldSet
     @track fieldSetLength;
-
+    //Lookup field available if quotelines tabs
+    @track isQuoteLinesTab;
 
 
     connectedCallback(){
@@ -37,6 +38,8 @@ export default class Bl_dataTable extends LightningElement {
         const COLUMNS_HOME = [ { label: 'Quote Name', fieldName: 'name', sortable: true, },];
         const COLUMNS_DETAIL = [ { label: 'Quote Name', fieldName: 'name', sortable: true, },];
         const COLUMNS_NOTES = [];
+
+        //If there are no notes in products
         if (this.tabSelected == 'Notes'){
             if(this.quoteNotesString=='[name: \"none\"]'){
                 console.log('THERE IS NO NOTES');
@@ -50,6 +53,12 @@ export default class Bl_dataTable extends LightningElement {
         else {
             this.quoteLines = JSON.parse(this.quotelinesString);
             this.updateTable();
+        }
+        //Make available the look up field
+        if (this.tabSelected == 'Home' || this.tabSelected == 'Detail'){
+            this.isQuoteLinesTab = true; 
+        } else {
+            this.isQuoteLinesTab = false; 
         }
         //console.log(Object.getOwnPropertyNames(this.quoteLines[0])); 
         displayFieldSet({tabName: this.tabSelected})
@@ -101,8 +110,9 @@ export default class Bl_dataTable extends LightningElement {
                 }
             }
             this.columns.push(
-                { type: 'button-icon',initialWidth: 34,typeAttributes:{iconName: 'action:description', name: 'Tiers', variant:'brand'}},
-                { type: 'button-icon',initialWidth: 34,typeAttributes:{iconName: 'action:delete', name: 'Delete', variant:'brand'}}
+                { type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:new_note', name: 'NSP', variant:'brand', size:'xx-small'}},
+                { type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:description', name: 'Tiers', variant:'brand', size:'xx-small'}},
+                { type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:delete', name: 'Delete', variant:'border-filled', size:'xx-small'}}
             );
             this.spinnerLoading = false; 
         })
@@ -220,7 +230,6 @@ export default class Bl_dataTable extends LightningElement {
         this.ElementList.move(currentIndex, newIndex);
     }
 
-    //@track isCustomerPart = ''; 
     //Lookup search 
     handleProductSelection(event){
         this.spinnerLoading = true;
@@ -257,22 +266,6 @@ export default class Bl_dataTable extends LightningElement {
             this.dispatchEvent(evt);
         }) 
     }
-    /*
-    handleLookupTypeChange(event){
-        console.log('Toggle: '+event.target.checked); 
-        if (event.target.checked){
-            this.isCustomerPart = 'product name'; 
-        } else {
-            this.isCustomerPart = ''; 
-        }
-        const payload = { 
-            dataString: this.isCustomerPart,
-            auxiliar: 'toggle'
-          };
-        publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload);  
-        console.log('isCustomerPart: '+this.isCustomerPart);
-    }
-    */
 
     @track quoteLinesEdit;
     //Save when table is edited and clicked in save button.
@@ -377,7 +370,7 @@ export default class Bl_dataTable extends LightningElement {
         this.deleteClick = false;
     }
 
-    //Delete Row and See Tiers/Contracts - when click row buttons
+    //Delete Row, NSP and See Tiers/Contracts - when click row buttons
     handleRowAction(event){
         switch (event.detail.action.name){
             case 'Delete':
@@ -386,6 +379,9 @@ export default class Bl_dataTable extends LightningElement {
             break;
             case 'Tiers':
                 this.popUpTiers = true;
+            break;
+            case 'NSP':
+                alert('Working to see if is NSP');
             break;
             default: 
                 alert('There is an error trying to complete this action');

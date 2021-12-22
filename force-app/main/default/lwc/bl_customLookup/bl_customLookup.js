@@ -39,10 +39,7 @@ export default class Bl_customLookup extends LightningElement {
       );
     }
     handleMessage(message) {
-        if (message.auxiliar == 'toggle'){
-            this.optionIsCustomerPart = message.dataString;
-        }
-        console.log('optionIsCustomerPart: '+this.optionIsCustomerPart);
+        console.log('Not neccessary yet - Lookup Componenet message')
     }
 
     //Lookup field combobox options, ganlde change

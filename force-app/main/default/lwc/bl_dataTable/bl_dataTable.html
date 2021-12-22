@@ -126,9 +126,11 @@
         <!--POP UP REORDER LINES END-->
     <!--DATATABLE END-->
     <!--LOOK UP FIELD START-->
-    <div class="slds-m-left_small slds-m-right_small slds-m-top_small">
-        <c-bl_custom-lookup record-id={recordId} option-is-customer-part={isCustomerPart} search-placeholder="Search Product" icon-name="standard:products" onlookupselected={handleProductSelection}> </c-bl_custom-lookup>
-    </div>
+    <template if:true={isQuoteLinesTab}>
+        <div class="slds-m-left_small slds-m-right_small slds-m-top_small">
+            <c-bl_custom-lookup record-id={recordId} option-is-customer-part={isCustomerPart} search-placeholder="Search Product" icon-name="standard:products" onlookupselected={handleProductSelection}> </c-bl_custom-lookup>
+        </div>
+    </template>
     <!--LOOK UP FIELD END-->
     </lightning-card>
 </template>

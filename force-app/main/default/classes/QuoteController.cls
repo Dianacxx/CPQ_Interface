@@ -58,11 +58,12 @@ public with sharing class QuoteController {
             String labelWithoutSpaces = fieldSetMember.getLabel().replaceAll( '\\s+', '');
 
             wrapper.key = 'NOTES';
+            wrapper.editable = false;
             wrapper.label = fieldSetMember.getLabel();
             wrapper.required = fieldSetMember.getRequired();
             wrapper.property = labelWithoutSpaces.toLowerCase();
             wrapper.apiName = fieldSetMember.getFieldPath();
-            if (labelWithoutSpaces.toLowerCase() == 'linename') {
+            if (labelWithoutSpaces.toLowerCase() == 'productname') {
                 System.debug('entered');
                 wrapper.property = 'name';
             }
@@ -130,21 +131,19 @@ public with sharing class QuoteController {
             Id discountTier = line.record.SBQQ__DiscountTier__c;
             wrapper.id = line.record.id;
             wrapper.name = line.record.name;
-            wrapper.product = JSON.serialize(line.record.SBQQ__Product__c);
+            wrapper.product = JSON.serialize(line.record.SBQQ__Product__r.Name);
             wrapper.quantity = line.record.SBQQ__Quantity__c;
-            wrapper.description = line.record.SBQQ__Description__c;
+            // wrapper.description = line.record.SBQQ__Description__c;
             wrapper.uom = line.record.UOM__c;
             wrapper.listUnitPrice = line.record.SBQQ__ListPrice__c;
             wrapper.additionalDiscount = line.record.SBQQ__AdditionalDiscountAmount__c;
             wrapper.netUnitPrice = line.record.SBQQ__NetPrice__c;
-            wrapper.billingFrecuency = line.record.SBQQ__BillingFrequency__c;
             wrapper.netTotal = line.record.SBQQ__NetTotal__c;
             wrapper.billingTolerance = line.record.BL_Billing_Tolerance__c;
             wrapper.source = line.record.BL_Source__c;
             wrapper.destination = line.record.BL_Destination__c;
             wrapper.alternativeIndicator = line.record.BL_Alternative_Indicator__c;
             wrapper.nspOfferingDetails = line.record.BL_NSP_Offering_Details__c;
-            wrapper.billingFrecuency = line.record.SBQQ__BillingFrequency__c;
             wrapper.approvalStatus = line.record.ApprovalStatus__c;
             wrapper.billingType = line.record.SBQQ__BillingType__c;
             wrapper.componentTotal = line.record.SBQQ__ComponentTotal__c;
@@ -222,7 +221,28 @@ public with sharing class QuoteController {
             WrappersClass.QuoteLineWrapperClass wrapper = new WrappersClass.QuoteLineWrapperClass();
             wrapper.id = newlyAddedLine.record.id;
             wrapper.product = newlyAddedLine.record.SBQQ__Product__r.Name;
-            linesToPrint.add(wrapper);    
+            wrapper.name = newlyAddedLine.record.Name;
+             wrapper.description = newlyAddedLine.record.SBQQ__Description__c;
+            wrapper.uom = newlyAddedLine.record.UOM__c;
+            wrapper.listunitprice = newlyAddedLine.record.SBQQ__ListPrice__c;
+            wrapper.additionaldiscount = newlyAddedLine.record.SBQQ__Discount__c;
+            wrapper.netunitprice = newlyAddedLine.record.SBQQ__NetPrice__c; 
+            wrapper.billingtolerance = newlyAddedLine.record.BL_Billing_Tolerance__c; 
+            wrapper.source = newlyAddedLine.record.BL_Source__c; 
+            wrapper.destination = newlyAddedLine.record.BL_Destination__c;
+            wrapper.alternativeindicator = newlyAddedLine.record.BL_Alternative_Indicator__c;
+            // wrapper.nspofferingdetails = newlyAddedLine.record.SBQQ__Optional__c;
+            wrapper.billingfrequency = newlyAddedLine.record.SBQQ__BillingFrequency__c;
+            wrapper.approvalstatus = newlyAddedLine.record.ApprovalStatus__c;
+            wrapper.billingtype = newlyAddedLine.record.SBQQ__BillingType__c;
+            wrapper.componenttotal = newlyAddedLine.record.SBQQ__ComponentTotal__c;
+            wrapper.enddate = newlyAddedLine.record.SBQQ__EndDate__c;
+            wrapper.length = newlyAddedLine.record.Length__c;
+            wrapper.originalprice = newlyAddedLine.record.SBQQ__OriginalPrice__c;
+            wrapper.packagetype = newlyAddedLine.record.Package_Type__c;
+            wrapper.volumediscount = newlyAddedLine.record.SBQQ__VolumeDiscount__c;
+
+            linesToPrint.add(wrapper); 
         }
         System.debug('lines to print '+ linesToPrint.size());
         

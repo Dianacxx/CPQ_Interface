@@ -23,7 +23,6 @@ public with sharing class WrappersClass {
         public Decimal listunitprice{get;set;}
         public Decimal additionaldiscount{get;set;}
         public Decimal netunitprice{get;set;}
-        public String billingfrecuency{get;set;}
         public Decimal nettotal{get;set;}
         public Decimal billingtolerance {get;set;}
         public String source {get;set;}
