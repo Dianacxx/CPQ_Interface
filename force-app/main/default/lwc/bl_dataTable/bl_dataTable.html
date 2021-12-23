@@ -5,9 +5,7 @@
     <!--SPINNER TO LOAD END-->
     <!--PAGINATION CONTROL START-->
     <div>
-        <p class="slds-align_absolute-center"><b> Auxiliar: {auxiliar}</b></p>
         <p class="slds-align_absolute-center"><b> Quotelines: {quotelinesLength}</b></p>
-        <p class="slds-align_absolute-center"><b> QuoteNotes: {quoteNotesLength}</b></p>
         <p class="slds-align_absolute-center"><b> Page {page} of {totalPage}</b></p>
         <lightning-button-group class="slds-align_absolute-center">
             <lightning-button label="First" icon-name="utility:chevronleft" onclick={firstHandler} class="stretchButton"></lightning-button>
@@ -23,6 +21,27 @@
         onrowaction={handleRowAction} onrowselection={handleRowSelection} onsave={handleSaveEdition}
         sorted-by={sortBy} sorted-direction={sortDirection} onsort={handleSortData}></lightning-datatable>
     </div>
+        <!--POP UP NSP PRODUCTS START-->
+        <template if:true={nspProduct}>
+            <section aria-modal="true" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container ">
+                    <header class="slds-modal__header">
+                        <h2 class="slds-text-heading_medium slds-hyphenate">NSP Product</h2>
+                        <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeNsp}></lightning-icon>
+                    </header>
+                    <div class="slds-modal__content">
+                        <div class="slds-p-around_small slds-align_absolute-center">
+                            <p style="font-size:160%;">HERE GOES NSP PRODUCTS VALUES</p>
+                        </div>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning-button variant="brand" label="Cancel" onclick={closeNsp} class="slds-p-around_x-small slds-m-right_small"></lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+        <!--POP UP NSP PRODUCTS END-->
         <!--POP UP WARNING DELETE START-->
         <template if:true={deleteClick}>
             <section aria-modal="true" class="slds-modal slds-fade-in-open">
