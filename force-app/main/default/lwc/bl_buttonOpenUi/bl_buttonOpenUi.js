@@ -1,4 +1,4 @@
-import { LightningElement, api, wire } from 'lwc';
+import { LightningElement, api, wire, track } from 'lwc';
 import { NavigationMixin } from 'lightning/navigation';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent'; //To show messages to user
 
@@ -13,6 +13,9 @@ export default class ButtonOpenUi extends NavigationMixin(LightningElement) {
     @api quoteNotesString; //Quotelines notes in string
     @api isLoading = false;
 
+    //Active or not the button
+    @track disableButton;
+
     @wire(printQuoteLines, { quoteId: '$recordId'})
     quotelinesData({error, data}){
         var startTime = performance.now();
@@ -25,14 +28,16 @@ export default class ButtonOpenUi extends NavigationMixin(LightningElement) {
         else if (error){
             this.quotelinesString = undefined; 
             this.error = error;
+            this.disableButton = true;
             console.log('quoteLines String ERROR: '+ this.error);
             const evt = new ShowToastEvent({
                 title: 'UI Error',
-                message: 'Unexpected error using UI',
+                message: 'Unexpected error using UI - QUOTELINES',
                 variant: 'error',
                 mode: 'dismissable'
             });
             this.dispatchEvent(evt);
+            
         }
         var endTime = performance.now();
         console.log(`Call to quoteLinesWire took ${endTime - startTime} milliseconds`);
@@ -44,18 +49,21 @@ export default class ButtonOpenUi extends NavigationMixin(LightningElement) {
             this.quoteNotesString = data; 
             this.error = undefined;
             console.log('notes string SUCCESS: '+ this.quoteNotesString);
+            this.disableButton = false;
         }
         else if (error){
             this.quoteNotesString = undefined; 
             this.error = error;
+            this.disableButton = true;
             console.log('notes string ERROR: '+ this.error);
             const evt = new ShowToastEvent({
                 title: 'UI Error',
-                message: 'Unexpected error using UI',
+                message: 'Unexpected error using UI - NOTES',
                 variant: 'error',
                 mode: 'dismissable'
             });
             this.dispatchEvent(evt);
+            
         }
     }
 

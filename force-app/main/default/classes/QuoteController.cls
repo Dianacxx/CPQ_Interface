@@ -174,21 +174,42 @@ public with sharing class QuoteController {
         QuoteReader quoteReader = new QuoteReader();
         QuoteModel quote = quoteReader.read(quoteId);
         QuoteLineModel[] quoteLines = quote.getLineItems();
+        Map<String,Product2> prodMap= new Map <String,Product2>();
+        List<String> notesList = new List<String>();
 
-        Set<Id> quoteLineIDs = new Set<Id>();
         for (QuoteLineModel line : quoteLines) {
-            quoteLineIDs.add(line.record.Id);
+            prodMap.put(line.record.SBQQ__Product__r.id, line.record.SBQQ__Product__r);
         }
 
-        for (AFL_Note__c note : [SELECT ID, BL_Quote_Line__r.Name, BL_Quote_Line__r.SBQQ__Product__c, Note_Text__c FROM AFL_Note__c WHERE BL_Quote_Line__r.Id IN : quoteLineIDs]) {
+        List<AFL_Note__c> noteList = [SELECT ID, Quote_Note_Type__c,BL_Product__c,BL_Product__r.Id, Note_Text__c FROM AFL_Note__c WHERE BL_Product__c IN : prodMap.values()];
+        Map<Id,List<AFL_Note__c>> noteMap = new Map<Id,List<AFL_Note__c>>();
+  
+        for (AFL_Note__c note : noteList) {
+            if (noteMap.containsKey(note.BL_Product__c)) {
+                noteMap.get(note.BL_Product__c).add(note);
+            }else {
+                noteMap.put(note.BL_Product__c, new List<AFL_Note__c>{note});
+            }            
+        }
+        for (Id prod : noteMap.keySet()) {
+            Product2 relatedProd = prodMap.get(prod);
             WrappersClass.NoteWrapperClass wrapper = new WrappersClass.NoteWrapperClass();
-            wrapper.id = note.Id;
-            wrapper.name = note.BL_Quote_Line__r.Name;
-            wrapper.product = note.BL_Quote_Line__r.SBQQ__Product__c;
-            wrapper.notetext = note.Note_Text__c;
+            for (AFL_Note__c note : noteMap.get(prod)) {
+                if (note.Quote_Note_Type__c == 'Product Note') {
+                    notesList.add(note.Note_Text__c);    
+                }
+            }
+            String concatNote = String.join(notesList, '\n');
+            System.debug('concatenated note -- ' + concatNote);
+            System.debug('product -- ' + prod + 'notes -- ' + noteMap.get(prod).size());
+           wrapper.name  = relatedProd.Name;
+           wrapper.notetext = concatNote;
 
-            noteWrapperList.add(wrapper);
+           noteWrapperList.add(wrapper);
+           notesList.clear();
         }
+        System.debug('CPU time -- '+ Limits.getCpuTime() + 'Time Limit -- ' + Limits.getLimitCpuTime());
+
         return JSON.serialize(noteWrapperList);
     }
     @AuraEnabled(cacheable=true)

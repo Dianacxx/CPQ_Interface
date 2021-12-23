@@ -18,7 +18,7 @@
     </div>
     <!--PAGINATION CONTROL END-->
     <!--DATATABLE START-->
-    <div class="slds-align_absolute-center">
+    <div class="slds-align_absolute-center slds-m-top_small">
         <lightning-datatable style="width:100%;" key-field="id" draft-values={draftValues} data={dataPages} columns={columns} 
         onrowaction={handleRowAction} onrowselection={handleRowSelection} onsave={handleSaveEdition}
         sorted-by={sortBy} sorted-direction={sortDirection} onsort={handleSortData}></lightning-datatable>

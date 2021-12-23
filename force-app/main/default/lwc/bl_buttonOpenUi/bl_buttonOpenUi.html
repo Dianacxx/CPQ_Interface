@@ -5,7 +5,7 @@
         </template>
         <template if:true={isLoading}>
             <lightning-button variant="success" label="Open QLE UI" title="Open UI" 
-                onclick={handleNavigateUi} class="slds-align_absolute-center" ></lightning-button>
+                onclick={handleNavigateUi} class="slds-align_absolute-center" disabled={disableButton} ></lightning-button>
         </template>
     </lightning-card>
 </template>

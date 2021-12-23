@@ -1,12 +1,13 @@
 import { LightningElement, api, wire, track } from 'lwc';
+
 import { publish, MessageContext } from 'lightning/messageService';
 import UPDATE_INTERFACE_CHANNEL from '@salesforce/messageChannel/update_Interface__c';
+
 import { NavigationMixin } from 'lightning/navigation';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 //Quote Total functions
 import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
-import QUOTE_OBJECT from '@salesforce/schema/SBQQ__Quote__c';
 import TOTAL_FIELD from '@salesforce/schema/SBQQ__Quote__c.SBQQ__NetAmount__c';
 
 export default class UserInterface extends NavigationMixin(LightningElement) {
@@ -52,22 +53,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         this.quoteNotesString = event.detail;
     }
 
-    //IN PROGRESS - TO DELETE NOTES WHEN QUOTE IS DELETED
-    updateTableDataNotesDelete(event){
-        let quoteNameDelete = event.detail;
-        /*
-        USE THIS TO DELETE THE NOTES THAT ARE RELATED TO THE QUOTE THAT WAS DELETED 
-        */
-        /*
-        console.log("Deleted Notes fron quoteline: " + quoteNameDelete);
-        const payload = { 
-            dataString: quoteNameDelete,
-            auxiliar: 'deletenotesfromquoteline'
-          };
-        publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload);*/
-    }
 
-    
     @track disableReorder; //Only reorder quotelines
     //WHEN CHANGE FROM TAB TO TAB - MAYBE TO DELETE
     handleActive(event){
@@ -187,8 +173,8 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         this.typeDiscount = event.detail.value;
     }
     handleApplyDiscount(){
-        alert('Yo have selected the valueDiscount ' + this.valueDiscount);
-        alert('Yo have selected the typeDiscount ' + this.typeDiscount);
+        alert('You have selected the valueDiscount ' + this.valueDiscount);
+        alert('You have selected the typeDiscount ' + this.typeDiscount);
     }
 
 }
