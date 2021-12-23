@@ -5,7 +5,6 @@ public with sharing class QuoteController {
         List<Schema.FieldSetMember> homeFieldSetMemberListEditable =  FieldSetHandler.getQuote('BL_Quote_Home','SBQQ__QuoteLine__c');
         List<Schema.FieldSetMember> homeFieldSetMemberListNonEditable =  FieldSetHandler.getQuote('BL_Quote_Home_Non_Edit','SBQQ__QuoteLine__c');
         List<Schema.FieldSetMember> detailViewFieldSetMemberList =  FieldSetHandler.getQuote('BL_Detail_View','SBQQ__QuoteLine__c');
-        List<Schema.FieldSetMember> notesFieldSetMemberList =  FieldSetHandler.getQuote('BL_Notes_View','AFL_Note__c');
         List<WrappersClass.FieldSetWrapperClass> fieldsToPrint = new List<WrappersClass.FieldSetWrapperClass>();
         
         for (Schema.FieldSetMember fieldSetMember : homeFieldSetMemberListEditable) {
@@ -49,26 +48,6 @@ public with sharing class QuoteController {
             wrapper.property = labelWithoutSpaces.toLowerCase();
             wrapper.apiName = fieldSetMember.getFieldPath();
             
-            // wrapper.type =fieldSetMember.getType();
-
-            fieldsToPrint.add(wrapper);
-        }
-        for (Schema.FieldSetMember fieldSetMember : notesFieldSetMemberList) {
-            WrappersClass.FieldSetWrapperClass wrapper = new WrappersClass.FieldSetWrapperClass();
-            String labelWithoutSpaces = fieldSetMember.getLabel().replaceAll( '\\s+', '');
-
-            wrapper.key = 'NOTES';
-            wrapper.editable = false;
-            wrapper.label = fieldSetMember.getLabel();
-            wrapper.required = fieldSetMember.getRequired();
-            wrapper.property = labelWithoutSpaces.toLowerCase();
-            wrapper.apiName = fieldSetMember.getFieldPath();
-            if (labelWithoutSpaces.toLowerCase() == 'productname') {
-                System.debug('entered');
-                wrapper.property = 'name';
-            }
-            System.debug(wrapper.property);
-
             // wrapper.type =fieldSetMember.getType();
 
             fieldsToPrint.add(wrapper);
@@ -174,19 +153,14 @@ public with sharing class QuoteController {
         QuoteReader quoteReader = new QuoteReader();
         QuoteModel quote = quoteReader.read(quoteId);
         QuoteLineModel[] quoteLines = quote.getLineItems();
-        Set<Id> quoteLineIDs = new Set<Id>();
         Map<String,Product2> prodMap= new Map <String,Product2>();
-        Set<Product2> prodSet= new Set <Product2>();
-        // Map<String,AFL_Note__c> noteMap= new Map <String,AFL_Note__c>();
+        List<String> notesList = new List<String>();
 
         for (QuoteLineModel line : quoteLines) {
-            quoteLineIDs.add(line.record.Id);
-            prodSet.add(line.record.SBQQ__Product__r);
             prodMap.put(line.record.SBQQ__Product__r.id, line.record.SBQQ__Product__r);
         }
 
-        // Map<Id,AFL_Note__c> noteMap = new Map<Id,AFL_Note__c>([SELECT ID, BL_Quote_Line__r.Name, BL_Quote_Line__r.SBQQ__Product__c, Note_Text__c FROM AFL_Note__c WHERE BL_Product__c IN : prodMap.values()]);
-        List<AFL_Note__c> noteList = [SELECT ID, BL_Product__c,BL_Product__r.Id, Note_Text__c FROM AFL_Note__c WHERE BL_Product__c IN : prodMap.values()];
+        List<AFL_Note__c> noteList = [SELECT ID, Quote_Note_Type__c,BL_Product__c,BL_Product__r.Id, Note_Text__c FROM AFL_Note__c WHERE BL_Product__c IN : prodMap.values()];
         Map<Id,List<AFL_Note__c>> noteMap = new Map<Id,List<AFL_Note__c>>();
   
         for (AFL_Note__c note : noteList) {
@@ -197,21 +171,23 @@ public with sharing class QuoteController {
             }            
         }
         for (Id prod : noteMap.keySet()) {
+            Product2 relatedProd = prodMap.get(prod);
             WrappersClass.NoteWrapperClass wrapper = new WrappersClass.NoteWrapperClass();
+            for (AFL_Note__c note : noteMap.get(prod)) {
+                if (note.Quote_Note_Type__c == 'Product Note') {
+                    notesList.add(note.Note_Text__c);    
+                }
+            }
+            String concatNote = String.join(notesList, '\n');
+            System.debug('concatenated note -- ' + concatNote);
             System.debug('product -- ' + prod + 'notes -- ' + noteMap.get(prod).size());
+           wrapper.name  = relatedProd.Name;
+           wrapper.notetext = concatNote;
+
+           noteWrapperList.add(wrapper);
+           notesList.clear();
         }
-
-
-        // for (AFL_Note__c note : [SELECT ID, BL_Quote_Line__r.Name, BL_Quote_Line__r.SBQQ__Product__c, Note_Text__c FROM AFL_Note__c WHERE BL_Quote_Line__r.Id IN : quoteLineIDs]) {
-        //     WrappersClass.NoteWrapperClass wrapper = new WrappersClass.NoteWrapperClass();
-        //     wrapper.id = note.Id;
-        //     wrapper.name = note.BL_Quote_Line__r.Name;
-        //     wrapper.product = note.BL_Quote_Line__r.SBQQ__Product__c;
-        //     wrapper.notetext = note.Note_Text__c;
-
-        //     noteWrapperList.add(wrapper);
-        // }
-        
+        System.debug('CPU time -- '+ Limits.getCpuTime() + 'Time Limit -- ' + Limits.getLimitCpuTime());
 
         return JSON.serialize(noteWrapperList);
     }
