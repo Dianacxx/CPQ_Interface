@@ -39,23 +39,23 @@ export default class Bl_customLookup extends LightningElement {
       );
     }
     handleMessage(message) {
-        console.log('Not neccessary yet - Lookup Componenet message')
+        //console.log('Not neccessary yet - Lookup Componenet message')
     }
 
     //Lookup field combobox options, ganlde change
     get productOptions() {
         return [
-            { label: 'Part Number', value: 'customerPart' },
             { label: 'Product Name', value: 'name' },
-            //{ label: 'Competitor', value: 'competitor' },
+            { label: 'Customer Part Number', value: 'customerPart' },
+            { label: 'Competitor Part Number', value: 'competitor' },
         ];
     }
-    @track productSelected = 'customerPart';
+    @track productSelected = 'name';
     handleProductSelected(event) {
         this.productSelected = event.detail.value;
     }
 
-    //CHANGE THE OPTION HERE WHEN TOGGLE CLANGE!!!!!
+    //Calling LookUp Search with Default 'Product Name' (name)
     @wire(search, {searchTerm : '$searchTerm', quoteId: '$recordId', option: '$productSelected'})
     wiredRecords({ error, data }) {
         if (data) {

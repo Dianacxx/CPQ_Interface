@@ -25,7 +25,7 @@
                        <lightning-combobox name="discountType"  label="Discount Type" value={typeDiscount} placeholder="Select an Option" options={optionsDiscount} onchange={handleTypeDiscount}></lightning-combobox>
                    </div>
                    <div class="slds-col slds-var-m-top_large ">
-                       <lightning-button class="stretchButton slds-m-left_small" variant="brand" label="Apply" onclick={handleApplyDiscount}></lightning-button>
+                       <lightning-button class="stretchButton slds-m-left_small" variant="brand" label="Apply" disabled={disableButton} onclick={handleApplyDiscount}></lightning-button>
                    </div>
                 </div>
             </lightning-layout-item>
@@ -51,10 +51,10 @@
             <lightning-tabset>
                 
                 <lightning-tab label="Quote Home" value="Home" onactive={handleActive}>
-                    <c-bl_data-table record-id={recordId} tab-selected="Home" quotelines-string={quotelinesString} ondeletedvalues={updateTableData} oneditedtable={updateTableData} onclone={activeCloneButton}></c-bl_data-table>
+                    <c-bl_data-table record-id={recordId} tab-selected="Home" quotelines-string={quotelinesString} ondeletedvalues={updateTableData} oneditedtable={updateTableData} onclone={activeCloneButton} onnotselected={desactiveCloneButton}></c-bl_data-table>
                 </lightning-tab>
                 <lightning-tab label="Detail View" value="Detail" onactive={handleActive}>
-                    <c-bl_data-table record-id={recordId} tab-selected="Detail" quotelines-string={quotelinesString} ondeletedvalues={updateTableData} oneditedtable={updateTableData} onclone={activeCloneButton}></c-bl_data-table>
+                    <c-bl_data-table record-id={recordId} tab-selected="Detail" quotelines-string={quotelinesString} ondeletedvalues={updateTableData} oneditedtable={updateTableData} onclone={activeCloneButton} onnotselected={desactiveCloneButton}></c-bl_data-table>
                 </lightning-tab>
                 <lightning-tab label="Product Notes" value="Notes" onactive={handleActive}>
                     <c-bl_product-notes-table record-id={recordId} quote-notes-string={quoteNotesString}></c-bl_product-notes-table>

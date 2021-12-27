@@ -33,8 +33,13 @@ export default class Bl_dataTable extends LightningElement {
         this.spinnerLoading = true; 
         const COLUMNS_HOME = [ { label: 'Quote Name', fieldName: 'name', sortable: true, },];
         const COLUMNS_DETAIL = [ { label: 'Quote Name', fieldName: 'name', sortable: true, },];
-       
-        this.quoteLines = JSON.parse(this.quotelinesString);
+
+        this.quoteLines = JSON.parse(this.quotelinesString);; 
+        for(let i=0;i<this.quoteLines.length;i++){
+            this.quoteLines[i].product = this.quoteLines[i].product.replace(/['"]+/g, '');
+            //console.log('No double quotes: '+ this.quoteLines[i].product);
+        }
+        this.quoteLinesString = JSON.stringify(this.quoteLines);
         this.updateTable();
     
         //Make available the look up field
@@ -120,33 +125,58 @@ export default class Bl_dataTable extends LightningElement {
         else if (message.auxiliar == 'reordertable'){
             this.popUpReorder = true; 
             this.ElementList = this.quoteLines;
-           
         }
         else if (message.auxiliar == 'closereorder'){
             this.popUpReorder = false;
         }
         else if (message.auxiliar =='letsclone'){
-            //GET QUOTELINES SELECTED
-            //CLONE QUOTELINES AND NOTES FROM THE OTHER OBJECT
-            console.log('HEY CLONE');
-            const evt = new ShowToastEvent({
-                title: 'MISSING CLONE ACTION HERE',
-                message: 'MISSING CLONE ACTION HERE',
-                variant: 'info',
-                mode: 'dismissable'
-            });
-            this.dispatchEvent(evt);
+            //MISSING CLONE LINE NOTES FROM THE OTHER OBJECT
+            let cloneRows = JSON.parse(JSON.stringify(this.selectedRows)); 
+            let randomId; 
+            let randomName; 
+            let last4Name;
+            this.spinnerLoading = true;
+            for(let i=0;i<this.selectedRows.length;i++){
+                //console.log('Selected rows: '+this.selectedRows[i].name);
+                randomId = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(2, 10);
+                randomName = Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 5); 
+                last4Name = cloneRows[i].name.substr(cloneRows[i].name.length - 4)
+                cloneRows[i].id =  randomId;
+                cloneRows[i].name = 'Copy QL-'+last4Name+'-'+randomName; 
+                //console.log('ID: '+cloneRows[i].id);
+                //console.log('NAME: '+cloneRows[i].name);
+                this.quoteLines = [...this.quoteLines, cloneRows[i]];
+            }
+            //console.log('SIZE: ' + this.quoteLines.length);
+            this.updateTable();
+            this.quotelinesString = JSON.stringify(this.quoteLines); 
+            this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
+            this.spinnerLoading = false;
+            setTimeout(function(){
+                const evt = new ShowToastEvent({
+                    title: 'Cloned Rows',
+                    message: 'Clone rows successfully done',
+                    variant: 'success',
+                    mode: 'dismissable'
+                });
+                this.dispatchEvent(evt);
+            },250);
         }
         
     }
 
-    //Cloning rows
+    //Selecting rows
     @api selectedRows;
     handleRowSelection(event){
         //TO ALERT THAT A ROW HAS BEEN SELECTED
-        this.dispatchEvent(new CustomEvent('clone'));
-        console.log('Rows selected '+ event.detail.selectedRows.length);
-        this.selectedRows = event.detail.selectedRows;
+        if(event.detail.selectedRows.length == 0){
+            console.log('No rows selected');
+            this.dispatchEvent(new CustomEvent('notselected'));
+        } else {
+            this.dispatchEvent(new CustomEvent('clone'));
+            console.log('Rows selected '+ event.detail.selectedRows.length);
+            this.selectedRows = event.detail.selectedRows;
+        }   
     }
 
     //Reorder quotelines + Drag and Drop 
@@ -155,7 +185,7 @@ export default class Bl_dataTable extends LightningElement {
     @track ElementList = []; 
     closeReorder(){
         this.popUpReorder = false;
-    }
+    }  
     DragStart(event) {
         this.dragStart = event.target.title;
         event.target.classList.add("drag");
@@ -179,26 +209,43 @@ export default class Bl_dataTable extends LightningElement {
         };
         this.ElementList.move(currentIndex, newIndex);
     }
+    submitReorder(){
+        this.quoteLines = this.ElementList;
+        this.updateTable();
+        this.quotelinesString = JSON.stringify(this.quoteLines); 
+        this.closeReorder();
+        const evt = new ShowToastEvent({
+            title: 'Table Reordered',
+            message: 'Changes are sucessfully done',
+            variant: 'success',
+            mode: 'dismissable'
+        });
+        this.dispatchEvent(evt);
+        this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
+    }
 
     //Lookup search 
     handleProductSelection(event){
         this.spinnerLoading = true;
-        console.log("the selected record id is"+event.detail);
+        console.log("the selected record id is: "+event.detail);
         let productId = event.detail; 
-        let newQuoteline; //New quoteline
+        let newQuotelines; //New quoteline
         let randomId;     //Random Id for new quoteline
         let randomName;   //Random Name for new quoteline
         addQuoteLine({quoteId: this.recordId, productId: productId})
         .then((data) => {
             console.log('Add Product DATA: '+ data); 
-            newQuoteline = JSON.parse(data); 
+            newQuotelines = JSON.parse(data); 
             //console.log('New product object: '+ Object.getOwnPropertyNames(newQuoteline[0]));
-            //To create auxiliar ID and Name
-            randomId = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 10);
-            randomName = Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 10);//Math.random().toFixed(36).substring(0, 7)); 
-            newQuoteline[0].id = randomId; 
-            newQuoteline[0].name = 'New QL-'+randomName; 
-            this.quoteLines = [...this.quoteLines, newQuoteline[0]];
+            for (let i=0; i< newQuotelines.length; i++){
+                //To create auxiliar ID and Name
+                randomId = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 10);
+                randomName = Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 10);//Math.random().toFixed(36).substring(0, 7)); 
+                newQuotelines[i].id = randomId; 
+                newQuotelines[i].name = 'New QL-'+randomName; 
+                this.quoteLines = [...this.quoteLines, newQuotelines[i]];
+            }
+
             this.updateTable();
             this.quotelinesString = JSON.stringify(this.quoteLines); 
             this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));

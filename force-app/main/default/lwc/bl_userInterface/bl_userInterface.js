@@ -87,6 +87,10 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     activeCloneButton(){
         this.disableButton = false;
     }
+
+    desactiveCloneButton(){
+        this.disableButton = true;
+    }
     handleClone(){
         const payload = { 
             dataString: null,
@@ -173,8 +177,20 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         this.typeDiscount = event.detail.value;
     }
     handleApplyDiscount(){
-        alert('You have selected the valueDiscount ' + this.valueDiscount);
-        alert('You have selected the typeDiscount ' + this.typeDiscount);
+        if (this.valueDiscount && this.typeDiscount){
+            alert('You have selected the valueDiscount ' + this.valueDiscount);
+            alert('You have selected the typeDiscount ' + this.typeDiscount);
+        }
+        else {
+            const evt = new ShowToastEvent({
+                title: 'Error selecting Discount Values',
+                message: 'Please select a line and type discount',
+                variant: 'error',
+                mode: 'dismissable'
+            });
+            this.dispatchEvent(evt);
+        }
+       
     }
 
 }

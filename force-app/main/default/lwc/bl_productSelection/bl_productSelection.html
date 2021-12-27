@@ -1,8 +1,48 @@
 <template>
-    <lightning-card>
+    <lightning-card class="slds-box">
         <p>THIS PAGE IS NOT IN PROCESS YET</p>
         <p>{recordId}</p>
-        <p>{quotelinesString}</p>
-        <p>{quoteNotesString}</p>
+        <!--HEADER START-->
+        <div class="slds-border_top slds-border_right slds-border_bottom slds-border_left slds-m-left_large slds-m-right_large">
+            <c-bl_header record-id={recordId}></c-bl_header>
+        </div>
+        <!--HEADER END-->
+        <!--BODY START-->
+        <div class="slds-grid slds-wrap slds-box slds-theme_shade slds-m-left_large slds-m-right_large">
+            <div class="slds-col slds-size_1-of-2">
+                <h2 class="slds-text-heading_large slds-m-left_large  slds-align_absolute-center">Add Products</h2> 
+            </div>
+            <div class="slds-col slds-size_1-of-2">
+                <div class="slds-align_absolute-center"> 
+                <lightning-button-group>
+                    <lightning-button variant="brand" label="Save & Exit" icon-name="utility:save" onclick={handleSaveExit}></lightning-button>    
+                    <lightning-button variant="destructive" label="Cancel" icon-name="utility:close" onclick={handleCancel}></lightning-button>
+                </lightning-button-group>
+                </div>
+            </div>
+        </div>
+        <div class="slds-border_top slds-border_bottom slds-border_left slds-border_right slds-m-left_large slds-m-right_large slds-m-top_small">
+            <lightning-tabset variant="scoped">
+                <lightning-tab label="ACA" onactive={handleActive}>
+                    ACA
+                </lightning-tab>
+                <lightning-tab label="Connectivity" onactive={handleActive}>
+                    Connectivity
+                </lightning-tab>
+                <lightning-tab label="Fiber Optic Cable" onactive={handleActive}>
+                    Fiber Optic Cable
+                </lightning-tab>
+                <lightning-tab label="Cable" onactive={handleActive}>
+                    Cable
+                </lightning-tab>
+                <lightning-tab label="Test & Inspection" onactive={handleActive}>
+                    Test & Inspection
+                </lightning-tab>
+                <lightning-tab label="Manual Items" onactive={handleActive}>
+                    Manual Items
+                </lightning-tab>
+            </lightning-tabset>
+        </div>
+        <!--BODY END-->
     </lightning-card>
 </template>

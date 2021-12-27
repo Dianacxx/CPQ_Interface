@@ -67,9 +67,9 @@ export default class ButtonOpenUi extends NavigationMixin(LightningElement) {
         }
     }
 
+    @api quoteLinesAuxiliar; 
     //NAVIGATION TO OPEN UI
     handleNavigateUi(){
-        
         if (this.quoteLinesString == '[]'){
             this.quoteLinesString = '[id: \"none\"]';
             console.log(this.quoteLinesString);

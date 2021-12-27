@@ -104,39 +104,37 @@
                         <!--START TABLE TO REORDER -->
                         <p class="slds-align_absolute-center" style="color: blue;">Number of QuoteLines: {quotelinesLength}</p>
                         <div class="slds-grid slds-grid_vertical">
-                          <div class="slds-scrollable slds-grow">
-                            <div class="slds-scrollable_none">
-                              <table aria-multiselectable="true" class=" slds-table slds-no-row-hover
-                                  slds-table_bordered slds-table_fixed-layout slds-table_resizable-cols " role="grid" >
-                                <thead>
-                                  <tr class="slds-line-height_reset">
-                                    <th>Name</th>
-                                    <th>Description</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  <template for:each={ElementList} for:item="acc" for:index="index">
-                                    <tr key={acc.Id} onchange={Change}  draggable="true" ondrop={Drop}
-                                      ondragstart={DragStart} ondragover={DragOver} title={index}  >
-                                      <td role="gridcell">
-                                        <div class="slds-cell-wrap" title="name">{acc.name}</div>
-                                      </td>
-                                      <td role="gridcell">
-                                        <div class="slds-cell-wrap" title="description">{acc.description}</div>
-                                      </td>
+                            <div class="slds-scrollable slds-grow">
+                              <div class="slds-scrollable_none">
+                                <table aria-multiselectable="true" class="slds-table slds-no-row-hover slds-table_bordered slds-table_fixed-layout slds-table_resizable-cols" role="grid" >
+                                  <thead>
+                                    <tr class="slds-line-height_reset">
+                                      <th>Name</th>
+                                      <th>Description</th>
                                     </tr>
-                                  </template>
-                                </tbody>
-                              </table>
+                                  </thead>
+                                  <tbody>
+                                    <template for:each={ElementList} for:item="qlorder" for:index="index">
+                                      <tr key={qlorder.Id} onchange={Change} draggable="true" ondrop={Drop} ondragstart={DragStart} ondragover={DragOver} title={index}>
+                                        <td role="gridcell">
+                                          <div class="slds-cell-wrap" title={index}>{qlorder.name}</div>
+                                        </td>
+                                        <td role="gridcell">
+                                          <div class="slds-cell-wrap" title="Phone">{qlorder.description}</div>
+                                        </td>
+                                      </tr>
+                                    </template>
+                                  </tbody>
+                                </table>
+                              </div>
                             </div>
-                          </div>
                         </div>
                         <!--END TABLE TO REORDER-->
                     </div>
                     <!-- Modal/Popup Box LWC footer starts here -->
                     <footer class="slds-modal__footer">
                         <button class="slds-button slds-button_neutral" onclick={closeReorder} title="Cancel">Cancel</button>
-                        <button class="slds-button slds-button_brand" onclick={submitDetails} title="OK">Save</button>
+                        <button class="slds-button slds-button_brand" onclick={submitReorder} title="OK">Save</button>
                     </footer>
                 </div>
             </section>
