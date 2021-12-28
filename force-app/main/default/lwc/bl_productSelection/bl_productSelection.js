@@ -1,4 +1,4 @@
-import { LightningElement, api } from 'lwc';
+import { LightningElement, api , track} from 'lwc';
 import { NavigationMixin } from 'lightning/navigation';
 
 
@@ -9,9 +9,28 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
 
     //When click cancel button
     handleCancel(){
-        var url = window.location.href; 
-        var value = url.substr(0,url.lastIndexOf('/') + 1);
-        window.history.back();
-        return false;
+        this.dispatchEvent(new CustomEvent('cancelps'));
+    }
+    
+    handleSaveAndExit(){
+        this.dispatchEvent(new CustomEvent('saveandexit'));
+    }
+    
+    //FILTER AND SELECTED AREA
+    @track openFilterSelectPopup = false; 
+    openFilterAndSelected(){
+        this.openFilterSelectPopup = true; 
+    }
+    closeFilterAndSelected(){
+        this.openFilterSelectPopup = false; 
+    }
+
+    //CONFIGURED PRODUCTS AREA
+    @track openConfiguredPopup = false; 
+    openConfigured(){
+        this.openConfiguredPopup = true;
+    }
+    closeConfigured(){
+        this.openConfiguredPopup = false;
     }
 }

@@ -5,7 +5,6 @@ public with sharing class QuoteController {
         List<Schema.FieldSetMember> homeFieldSetMemberListEditable =  FieldSetHandler.getQuote('BL_Quote_Home','SBQQ__QuoteLine__c');
         List<Schema.FieldSetMember> homeFieldSetMemberListNonEditable =  FieldSetHandler.getQuote('BL_Quote_Home_Non_Edit','SBQQ__QuoteLine__c');
         List<Schema.FieldSetMember> detailViewFieldSetMemberList =  FieldSetHandler.getQuote('BL_Detail_View','SBQQ__QuoteLine__c');
-        List<Schema.FieldSetMember> notesFieldSetMemberList =  FieldSetHandler.getQuote('BL_Notes_View','AFL_Note__c');
         List<WrappersClass.FieldSetWrapperClass> fieldsToPrint = new List<WrappersClass.FieldSetWrapperClass>();
         
         for (Schema.FieldSetMember fieldSetMember : homeFieldSetMemberListEditable) {
@@ -49,26 +48,6 @@ public with sharing class QuoteController {
             wrapper.property = labelWithoutSpaces.toLowerCase();
             wrapper.apiName = fieldSetMember.getFieldPath();
             
-            // wrapper.type =fieldSetMember.getType();
-
-            fieldsToPrint.add(wrapper);
-        }
-        for (Schema.FieldSetMember fieldSetMember : notesFieldSetMemberList) {
-            WrappersClass.FieldSetWrapperClass wrapper = new WrappersClass.FieldSetWrapperClass();
-            String labelWithoutSpaces = fieldSetMember.getLabel().replaceAll( '\\s+', '');
-
-            wrapper.key = 'NOTES';
-            wrapper.editable = false;
-            wrapper.label = fieldSetMember.getLabel();
-            wrapper.required = fieldSetMember.getRequired();
-            wrapper.property = labelWithoutSpaces.toLowerCase();
-            wrapper.apiName = fieldSetMember.getFieldPath();
-            if (labelWithoutSpaces.toLowerCase() == 'productname') {
-                System.debug('entered');
-                wrapper.property = 'name';
-            }
-            System.debug(wrapper.property);
-
             // wrapper.type =fieldSetMember.getType();
 
             fieldsToPrint.add(wrapper);
@@ -133,7 +112,7 @@ public with sharing class QuoteController {
             wrapper.name = line.record.name;
             wrapper.product = JSON.serialize(line.record.SBQQ__Product__r.Name);
             wrapper.quantity = line.record.SBQQ__Quantity__c;
-            // wrapper.description = line.record.SBQQ__Description__c;
+            wrapper.description = line.record.SBQQ__Description__c;
             wrapper.uom = line.record.UOM__c;
             wrapper.listUnitPrice = line.record.SBQQ__ListPrice__c;
             wrapper.additionalDiscount = line.record.SBQQ__AdditionalDiscountAmount__c;
@@ -230,7 +209,8 @@ public with sharing class QuoteController {
         ProductAdder adder = new ProductAdder(); 
         QuoteModel quoteWithProducts = adder.add(quote, productModels, 0);
         List<QuoteLineModel> newLines = quoteWithProducts.getLineItems();
-
+        System.debug('previous lines -- ' + previousLines.size());
+        System.debug('new lines -- ' + newLines.size());
         
         for (QuoteLineModel newLine : newLines) {
             if (newLine.record.id == null) {

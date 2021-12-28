@@ -17,6 +17,9 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
 
     @api disableButton; //To active clone button
 
+    @track showPSTab = false; //To open Product Selection TAB
+    @track activeTab = 'UI'; 
+
     //Initialize UI
     connectedCallback(){
         this.disableButton = true; 
@@ -32,12 +35,10 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     //Connect channel
     @wire(MessageContext)
     messageContext;
-    
-
 
     //WHEN TABLE OF QUOTELINES IS CHANGED
     updateTableData(event){
-        console.log('Deleted OR Edited Values');
+        console.log('Deleted, Clone, Reorder OR Edited Values');
         this.quotelinesString = event.detail; 
         console.log('Updated');
         const payload = { 
@@ -135,8 +136,31 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         });
     }
 
+    //NAVIGATE BACK TO UI FROM PRODUCT SELECTION TAB WHEN CANCEL
+    returnToUiCancel(){
+        this.showPSTab = false; 
+        this.activeTab = 'UI';
+    }
+    //NAVIGATE BACK TO UI FROM PRODUCT SELECTION TAB WHEN SAVE AN EXIT
+    //(MISSING SAVE IN ARRAY)
+    returnToUiSave(){
+        this.showPSTab = false; 
+        this.activeTab = 'UI';
+        const evt = new ShowToastEvent({
+            title: 'SAVE HERE PS QUOTELINES WHEN CLICK IN SAVE',
+            message: 'NOT WORKING HERE YET',
+            variant: 'info',
+            mode: 'dismissable'
+        });
+        this.dispatchEvent(evt);
+
+    }
+
     //NAVIGATE TO PRODUCT SELECTION PAGE (MISSING SENDING INFO)
-    navitageToProductSelection(event){
+    navitageToProductSelection(){
+        this.showPSTab = true; 
+        this.activeTab = 'PS';
+        /*
         event.preventDefault();
         let quotelinesStringSave = JSON.stringify(this.quotelinesString);
         let quoteNotesStringSave = JSON.stringify(this.quoteNotesString);
@@ -158,7 +182,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 url: '/one/one.app#' + encodedComponentDef
             }
         });
-        
+        */
     }
     
     //APPLY BUTTON WITH DISCOUNT VALUES
