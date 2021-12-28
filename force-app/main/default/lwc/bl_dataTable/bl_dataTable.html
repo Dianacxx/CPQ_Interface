@@ -100,17 +100,17 @@
                     </header>
                     <!-- Modal/Popup Box LWC body starts here -->
                     <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
-                        <p style="color:red;"><b>MISSING THIS TO WORK !!!!!</b></p>
                         <!--START TABLE TO REORDER -->
-                        <p class="slds-align_absolute-center" style="color: blue;">Number of QuoteLines: {quotelinesLength}</p>
+                        <p class="slds-align_absolute-center slds-m-bottom_x-small" style="color: blue;">Number of QuoteLines: {quotelinesLength}</p>
                         <div class="slds-grid slds-grid_vertical">
                             <div class="slds-scrollable slds-grow">
                               <div class="slds-scrollable_none">
                                 <table aria-multiselectable="true" class="slds-table slds-no-row-hover slds-table_bordered slds-table_fixed-layout slds-table_resizable-cols" role="grid" >
                                   <thead>
                                     <tr class="slds-line-height_reset">
-                                      <th>Name</th>
-                                      <th>Description</th>
+                                        <th>Quote Name</th>
+                                        <th>Product</th>
+                                        <th>Description</th>
                                     </tr>
                                   </thead>
                                   <tbody>
@@ -120,7 +120,10 @@
                                           <div class="slds-cell-wrap" title={index}>{qlorder.name}</div>
                                         </td>
                                         <td role="gridcell">
-                                          <div class="slds-cell-wrap" title="Phone">{qlorder.description}</div>
+                                            <div class="slds-cell-wrap" title="product">{qlorder.product}</div>
+                                          </td>
+                                        <td role="gridcell">
+                                          <div class="slds-cell-wrap" title="description">{qlorder.description}</div>
                                         </td>
                                       </tr>
                                     </template>

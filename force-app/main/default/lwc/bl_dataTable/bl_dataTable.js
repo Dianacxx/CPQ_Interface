@@ -22,6 +22,7 @@ export default class Bl_dataTable extends LightningElement {
 
     //QuoteLines fieldSet
     @track fieldSetLength;
+
     //Lookup field available if quotelines tabs
     @track isQuoteLinesTab;
 
@@ -96,7 +97,14 @@ export default class Bl_dataTable extends LightningElement {
         .catch((error) => {
             this.error = error;
             this.fieldSet = undefined; 
-            console.log('Error displaying field sets');
+            const evt = new ShowToastEvent({
+                title: 'Error displaying field sets',
+                message: 'Please reload the UI',
+                variant: 'error',
+                mode: 'dismissable'
+            });
+            this.dispatchEvent(evt);
+            //console.log('Error displaying field sets');
         })
     }
     
@@ -250,6 +258,15 @@ export default class Bl_dataTable extends LightningElement {
             this.quotelinesString = JSON.stringify(this.quoteLines); 
             this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
             this.spinnerLoading = false;
+            setTimeout(function(){
+                const evt = new ShowToastEvent({
+                    title: 'Product added in the table',
+                    message: 'The product you searched was added',
+                    variant: 'success',
+                    mode: 'dismissable'
+                });
+                this.dispatchEvent(evt);
+            },250);
         })
         .catch((error) =>{
             console.log('Add Product ERROR: '+ error);
