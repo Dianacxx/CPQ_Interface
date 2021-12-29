@@ -314,6 +314,7 @@ export default class Bl_dataTable extends LightningElement {
             });
             this.dispatchEvent(evt);
         }
+        this.firstHandler();
         //MISSING WHEN UPDATE FIELDS IN NOTES
         /*
         *
