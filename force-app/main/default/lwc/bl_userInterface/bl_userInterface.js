@@ -67,9 +67,11 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
               };
             publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload);  
             this.disableReorder = true;
+            this.disableButton = true;
         }
         else if (event.target.value=='Line'){
             this.disableReorder = true;
+            this.disableButton = true;
         }
         else {
             //this.quotelinesString =  this.quotelinesString; 

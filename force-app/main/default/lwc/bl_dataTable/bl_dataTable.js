@@ -139,36 +139,49 @@ export default class Bl_dataTable extends LightningElement {
         }
         else if (message.auxiliar =='letsclone'){
             //MISSING CLONE LINE NOTES FROM THE OTHER OBJECT
-            let cloneRows = JSON.parse(JSON.stringify(this.selectedRows)); 
-            let randomId; 
-            let randomName; 
-            let last4Name;
-            this.spinnerLoading = true;
-            for(let i=0;i<this.selectedRows.length;i++){
-                //console.log('Selected rows: '+this.selectedRows[i].name);
-                randomId = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(2, 10);
-                randomName = Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 5); 
-                last4Name = cloneRows[i].name.substr(cloneRows[i].name.length - 4)
-                cloneRows[i].id =  randomId;
-                cloneRows[i].name = 'Copy QL-'+last4Name+'-'+randomName; 
-                //console.log('ID: '+cloneRows[i].id);
-                //console.log('NAME: '+cloneRows[i].name);
-                this.quoteLines = [...this.quoteLines, cloneRows[i]];
-            }
-            //console.log('SIZE: ' + this.quoteLines.length);
-            this.updateTable();
-            this.quotelinesString = JSON.stringify(this.quoteLines); 
-            this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
-            this.spinnerLoading = false;
-            setTimeout(function(){
+            if (this.selectedRows){
+                let cloneRows = JSON.parse(JSON.stringify(this.selectedRows)); 
+                let randomId; 
+                let randomName; 
+                let last4Name;
+                this.spinnerLoading = true;
+                for(let i=0;i<this.selectedRows.length;i++){
+                    //console.log('Selected rows: '+this.selectedRows[i].name);
+                    randomId = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(2, 10);
+                    randomName = Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 6); 
+                    last4Name = cloneRows[i].name.substr(cloneRows[i].name.length - 4)
+                    cloneRows[i].id =  randomId;
+                    cloneRows[i].name = 'Copy QL-'+last4Name+'-'+randomName; 
+                    //console.log('ID: '+cloneRows[i].id);
+                    //console.log('NAME: '+cloneRows[i].name);
+                    this.quoteLines = [...this.quoteLines, cloneRows[i]];
+                }
+                //console.log('SIZE: ' + this.quoteLines.length);
+                this.updateTable();
+                this.quotelinesString = JSON.stringify(this.quoteLines); 
+                this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
+                this.spinnerLoading = false;
+                setTimeout(function(){
+                    const evt = new ShowToastEvent({
+                        title: 'Cloned Rows',
+                        message: 'Clone rows successfully done',
+                        variant: 'success',
+                        mode: 'dismissable'
+                    });
+                    this.dispatchEvent(evt);
+                },250);
+                this.template.querySelector('lightning-datatable').selectedRows=[];
+                this.firstHandler();
+            } else {
                 const evt = new ShowToastEvent({
-                    title: 'Cloned Rows',
-                    message: 'Clone rows successfully done',
-                    variant: 'success',
+                    title: 'You selected a Row from the other tab',
+                    message: 'The row selected to clone is in the other tab',
+                    variant: 'info',
                     mode: 'dismissable'
                 });
                 this.dispatchEvent(evt);
-            },250);
+                this.firstHandler();
+            }
         }
         
     }
@@ -178,6 +191,7 @@ export default class Bl_dataTable extends LightningElement {
     handleRowSelection(event){
         //TO ALERT THAT A ROW HAS BEEN SELECTED
         if(event.detail.selectedRows.length == 0){
+            this.selectedRows = [];
             console.log('No rows selected');
             this.dispatchEvent(new CustomEvent('notselected'));
         } else {
@@ -350,6 +364,7 @@ export default class Bl_dataTable extends LightningElement {
         this.quoteLines = quoteLinesDeleted;
         this.quotelinesString = JSON.stringify(this.quoteLines);
         this.updateTable();
+        this.firstHandler();
         this.dispatchEvent(new CustomEvent('deletedvalues', { detail: this.quotelinesString }));
         this.deleteClick = false;
     }
