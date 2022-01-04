@@ -251,4 +251,51 @@ public with sharing class QuoteController {
         return JSON.serialize(linesToPrint);
     }
 
+    @AuraEnabled
+    public static String deleteQuoteLines(List<SBQQ__QuoteLine__c> existingQuoteLines, List<WrappersClass.QuoteLineWrapperClass> receivedQuoteLines){
+        List<SBQQ__QuoteLine__c> linesToDelete = new List <SBQQ__QuoteLine__c>();
+        Set<Id> quoteLineIDs = new Set<Id>();
+        Set<Id> receivedIDs = new Set<Id>();
+
+
+
+        //Gets the quote lines from the UI and deserializes them into a list of quote line wrappers
+        // List<WrappersClass.QuoteLineWrapperClass> untypedQuoteLines = (List<WrappersClass.QuoteLineWrapperClass>) JSON.deserialize(quoteLines, List<WrappersClass.QuoteLineWrapperClass>.class);
+        // //Checks the existing quote lines in Salesforce 
+        // List<SBQQ__QuoteLine__c> existingQuoteLines = [SELECT ID FROM SBQQ__QuoteLine__c WHERE SBQQ__Quote__c =: quoteId];
+
+        //Add the existing quote line ids to a set
+        for (SBQQ__QuoteLine__c line : existingQuoteLines) {
+            quoteLineIDs.add(line.id);
+        }
+        //Add the received quote line ids to a set
+        for (WrappersClass.QuoteLineWrapperClass line : receivedQuoteLines) {
+            receivedIDs.add(line.id);
+        }
+        try{
+            for (SBQQ__QuoteLine__c line : existingQuoteLines) {
+                if (!receivedIDs.contains(line.id)) {
+                    linesToDelete.add(line);
+                }
+            }
+            delete linesToDelete;
+        }catch (Exception e) {
+            throw new AuraHandledException('Something went wrong: ' + e.getMessage() + 'cause: ' + e.getCause());
+        }
+        return JSON.serialize(linesToDelete);
+    }
+    @AuraEnabled
+    public static void saveAndCalculateQuote(String quoteId, String quoteLines){
+        List<SBQQ__QuoteLine__c> existingQuoteLines = [SELECT ID FROM SBQQ__QuoteLine__c WHERE SBQQ__Quote__c =: quoteId];
+        List<WrappersClass.QuoteLineWrapperClass> untypedQuoteLines = (List<WrappersClass.QuoteLineWrapperClass>) JSON.deserialize(quoteLines, List<WrappersClass.QuoteLineWrapperClass>.class);
+
+        String deletion = deleteQuoteLines(existingQuoteLines,untypedQuoteLines);
+    }
+    @AuraEnabled
+    public static void quoteSaver(String quoteId, String quoteLines){
+        List<SBQQ__QuoteLine__c> existingQuoteLines = [SELECT ID FROM SBQQ__QuoteLine__c WHERE SBQQ__Quote__c =: quoteId];
+        List<WrappersClass.QuoteLineWrapperClass> untypedQuoteLines = (List<WrappersClass.QuoteLineWrapperClass>) JSON.deserialize(quoteLines, List<WrappersClass.QuoteLineWrapperClass>.class);
+
+        String deletion = deleteQuoteLines(existingQuoteLines,untypedQuoteLines);
+    }
 }

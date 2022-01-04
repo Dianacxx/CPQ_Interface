@@ -1,11 +1,123 @@
 <template>
+    <!--TREE VIEW START-->
     <div class="slds-p-around_medium lgc-bg">
         <div class="slds-m-bottom_small">
             <lightning-button label="Collapse All" onclick={clickToCollapseAll} class="slds-m-right_small"></lightning-button>
             <lightning-button label="Expand All" onclick={clickToExpandAll}></lightning-button>
         </div>
-        <lightning-tree-grid class="slds-truncate" columns = {columns} data = {gridData} key-field = "Id"
+        <lightning-tree-grid class="slds-truncate" columns = {gridColumns} data = {gridData} key-field = "name"
             hide-checkbox-column = true  onrowaction={handleRowAction} >
         </lightning-tree-grid>
     </div>
+    <!--TREE VIEW END-->
+    <!--POP UP FILTER AND SELECT START-->
+    <template if:true={openFilterSelectPopup}>
+        <section aria-modal="true" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container ">
+                <header class="slds-modal__header">
+                    <h2 class="slds-text-heading_medium slds-hyphenate">Filter & Select</h2>
+                    <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeFilterAndSelected}></lightning-icon>
+                </header>
+                <div class="slds-modal__content">
+                    <div class="slds-p-around_small slds-align_absolute-center">
+                        <lightning-tabset active-tab-value={activeFilterTab}>
+                            <lightning-tab label="Filter" value="Filter" onactive={handleFilterTabActive}>
+                                <div class="slds-grid slds-gutters slds-m-left_large slds-m-right_small">
+                                    <lightning-combobox name="FiberCount" label="Fiber Count" value={fiberCount} placeholder="Select an Option" options={options} onchange={handlefiberCount} ></lightning-combobox>
+                                    <lightning-combobox name="JacketType" label="Jacket Type" value={jacketType} placeholder="Select an Option" options={options} onchange={handlejacketType} class="slds-m-left_small" ></lightning-combobox>
+                                    <lightning-combobox name="ArmorType" label="Armor Type" value={armorType} placeholder="Select an Option" options={options} onchange={handlearmorType} class="slds-m-left_small" ></lightning-combobox>
+                                    <lightning-button variant="brand" label="Clear Filters" title="Clear"  onclick={clearFilters} class="slds-m-left_small slds-m-top_large"></lightning-button>
+                                </div>
+                                <div class="slds-grid slds-gutters slds-m-left_large slds-m-right_small">
+                                    <lightning-combobox name="SubUnit1" label="SubUnit" value={subUnit1} placeholder="Select an Option" options={options} onchange={handlesubUnit1} ></lightning-combobox>
+                                    <lightning-combobox name="SubUnit2" label="SubUnit" value={subUnit2} placeholder="Select an Option" options={options} onchange={handlesubUnit2} class="slds-m-left_small" ></lightning-combobox>
+                                </div>
+                                <div class="slds-grid slds-gutters slds-m-left_large slds-m-top_medium">
+                                    <h1 style="color: gray;" class="slds-text-heading_large">Add Products</h1>
+                                </div>
+                                <div class="slds-grid slds-gutters slds-m-left_large slds-m-top_medium">
+                                    <lightning-icon icon-name="standard:filter" alternative-text="filter" size="small" class=" slds-m-right_small"></lightning-icon>
+                                    <p style="color: red;">Filtered, {recordsAmount} records displayed</p>
+                                </div>
+                            </lightning-tab>
+                            <lightning-tab label="Review" value="Review" onactive={handleReviewTabActive}>
+                                <div class="slds-grid slds-gutters slds-m-left_small slds-m-right_medium">
+                                    <lightning-combobox name="FiberCount" label="Fiber Count" value={fiberCount} placeholder="Select an Option" options={options} onchange={handlefiberCount} ></lightning-combobox>
+                                    <lightning-combobox name="JacketType" label="Jacket Type" value={jacketType} placeholder="Select an Option" options={options} onchange={handlejacketType} class="slds-m-left_small" ></lightning-combobox>
+                                    <lightning-combobox name="ArmorType" label="Armor Type" value={armorType} placeholder="Select an Option" options={options} onchange={handlearmorType} class="slds-m-left_small" ></lightning-combobox>
+                                    <lightning-button variant="brand" label="Clear Filters" title="Clear"  onclick={clearFilters} class="slds-m-left_small slds-m-top_large"></lightning-button>
+                                </div>
+                                <div class="slds-grid slds-gutters slds-m-left_small slds-m-right_medium">
+                                    <lightning-combobox name="SubUnit1" label="SubUnit" value={subUnit1} placeholder="Select an Option" options={options} onchange={handlesubUnit1} ></lightning-combobox>
+                                    <lightning-combobox name="SubUnit2" label="SubUnit" value={subUnit2} placeholder="Select an Option" options={options} onchange={handlesubUnit2} class="slds-m-left_small" ></lightning-combobox>
+                                </div>
+                                <div class="slds-grid slds-gutters slds-m-left_small slds-m-top_medium">
+                                    <h1 style="color: gray;" class="slds-text-heading_large">Review </h1>
+                                </div>
+                                <div class="slds-grid slds-gutters slds-m-left_small slds-m-top_medium">
+                                    <lightning-icon icon-name="standard:filter" alternative-text="filter" size="small" class=" slds-m-right_small"></lightning-icon>
+                                    <p style="color: red;">Filtered, {recordsAmount} records displayed</p>
+                                </div>
+                            </lightning-tab>
+                    </lightning-tabset>
+                    </div>
+                </div>
+                <footer class="slds-modal__footer">
+                    <template if:false={tabOption}>
+                        <lightning-button variant="brand" label="Cancel" title="Close"  onclick={closeFilterAndSelected} class="slds-m-right_small"></lightning-button>   
+                        <lightning-button variant="brand" label="Add & Review" title="Add"  onclick={addAndReview} ></lightning-button>    
+                    </template>
+                    <template if:true={tabOption}>
+                        <lightning-button variant="brand" label="Add More" title="AddMore"  onclick={moreAdd} class="slds-m-right_small"></lightning-button>   
+                        <lightning-button variant="brand" label="Save & Exit" title="SaveExit"  onclick={saveAndExitFilterModal} ></lightning-button>
+                    </template>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+        <!--POP UP IF NSP PRODUCT IN LIST START-->
+        <template if:true={nspProduct}>
+            <section aria-modal="true" class="slds-modal slds-fade-in-open slds-align_absolute-center" style="background-color: rgba(28, 91, 199, 0.404)">
+                <div class="slds-modal__container2" style="width:360px;">
+                    <header class="slds-modal__header">
+                        <h2 class="slds-text-heading_medium slds-hyphenate">Action Required! Populate NSP Fields</h2>
+                        <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeNspPopUps}></lightning-icon>
+                    </header>
+                    <div class="slds-modal__content">
+                        <div class="slds-p-around_small slds-align_absolute-center">
+                            <p style="font-size:160%;">HERE GOES Populate NSP Fields</p>
+                        </div>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning-button variant="brand" label="Cancel" onclick={closeNspPopUps} class="slds-p-around_x-small slds-m-right_small"></lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+         <!--POP UP IF NSP PRODUCT IN LIST END-->
+    </template>
+    <!--POP UP FILTER AND SELECT END-->
+    <!--POP UP CONFIGURED PRODUCTS START-->
+    <template if:true={openConfiguredPopup}>
+        <section aria-modal="true" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container ">
+                <header class="slds-modal__header">
+                    <h2 class="slds-text-heading_medium slds-hyphenate">Choose Options</h2>
+                    <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeConfigured}></lightning-icon>
+                </header>
+                <div class="slds-modal__content">
+                    <div class="slds-p-around_small slds-align_absolute-center">
+                        <p style="font-size:160%;">HERE GOES CONFIGURED PRODUCTS</p>
+                    </div>
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning-button variant="brand" label="Save & Exit" onclick={closeConfigured} class="slds-p-around_x-small slds-m-right_small"></lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+    <!--POP UP CONFIGURED PRODUCTS END-->
+
 </template>

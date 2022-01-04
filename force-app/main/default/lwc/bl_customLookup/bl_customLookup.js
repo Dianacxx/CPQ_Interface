@@ -69,19 +69,23 @@ export default class Bl_customLookup extends LightningElement {
             //let customer;
             //let competitor; 
             //console.log('Values of this.records ' + Object.getOwnPropertyNames(this.records[0]));
-            for (let k = 0; k< this.records.length; k++){
-                //console.log('Values of this.records ' + Object.getOwnPropertyNames(this.records[k]));
-                //console.log('Customer_Part_Cross_References__r '+ this.records[k].Customer_Part_Cross_References__r)
-                if(this.records[k].hasOwnProperty('Customer_Part_Cross_References__r')){
-                    this.customerDisplay = true; 
-                    //console.log('Customer Ob: '+ Object.getOwnPropertyNames(this.records[k].Customer_Part_Cross_References__r)); 
-                    //customer = this.records[k].Customer_Part_Cross_References__r;
-                    //console.log('Customer = '+ customer[k].Customer_Item_Number__c);
-                }
-                else if(this.records[k].hasOwnProperty('Competitor_Part_Cross_References__r')){
-                    this.competitorDisplay = true; 
-                    //competitor = this.records[k].Competitor_Part_Cross_References__r;
-                    //console.log('competitor = '+ JSON.stringify(competitor[k]));
+            if (!(this.productSelected == 'name' )) { 
+                for (let k = 0; k< this.records.length; k++){
+                    //console.log('Values of this.records ' + Object.getOwnPropertyNames(this.records[k]));
+                    //console.log('Customer_Part_Cross_References__r '+ this.records[k].Customer_Part_Cross_References__r)
+                    if(this.records[k].hasOwnProperty('Customer_Part_Cross_References__r')){
+                        this.customerDisplay = true; 
+                        this.competitorDisplay = false;
+                        //console.log('Customer Ob: '+ Object.getOwnPropertyNames(this.records[k].Customer_Part_Cross_References__r)); 
+                        //customer = this.records[k].Customer_Part_Cross_References__r;
+                        //console.log('Customer = '+ customer[k].Customer_Item_Number__c);
+                    }
+                    else if(this.records[k].hasOwnProperty('Competitor_Cross_References__r')){
+                        this.competitorDisplay = true; 
+                        this.customerDisplay = false; 
+                        //competitor = this.records[k].Competitor_Cross_References__r;
+                        //console.log('competitor = '+ JSON.stringify(competitor[k]));
+                    } 
                 } 
             }
         } else if (error) {

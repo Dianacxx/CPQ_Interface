@@ -1,79 +1,332 @@
 import { LightningElement, track, api , wire} from 'lwc';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 //MOCK DATA
-import fetchAccounts from '@salesforce/apex/blMockData.fetchAccounts';
+const EXAMPLES_COLUMNS_DEFINITION_BASIC = [
+    {
+        type: 'text',
+        fieldName: 'level2',
+        label: 'Level 2',
+        initialWidth: 300,
+    },
+    {
+        type: 'text',
+        fieldName: 'level3',
+        label: 'Level 3',
+    },
+    {
+        type: 'text',
+        fieldName: 'level4',
+        label: 'Level 4',
+    },
+];
+const EXAMPLES_DATA_BASIC = [
+    {
+        name: '1',
+        level2: 'OSP Cable Assemblies',
+        _children: [
+            {
+                name: '1-A',
+                level3: 'OSP Cable Assemblies child',
+                selectionType: 'filtered',
+            },
+        ],
+    },
+
+    {
+        name: '2',
+        level2: 'Product 2',
+        _children: [
+            {
+                name: '2-A',
+                level3: 'Titan RTD',
+                _children: [
+                    {
+                        name: '2-A-A',
+                        level4: 'Titan RTD Child 1',
+                        selectionType: 'bundle',
+                    },
+                    {
+                        name: '2-A-B',
+                        level4: 'Titan RTD Child 2',
+                        selectionType: 'bundle',
+                    },
+                ],
+            },
+
+            {
+                name: '2-B',
+                level3: 'Nodeflex',
+                _children: [
+                    {
+                        name: '2-B-A',
+                        level4: 'Nodeflex Child 1',
+                        selectionType: 'filtered',
+                    },
+                    {
+                        name: '2-B-B',
+                        level4: 'Nodeflex Child 2',
+                        selectionType: 'filtered',
+                    },
+                ],
+            },
+        ],
+    },
+
+    {
+        name: '3',
+        level2: 'Product 3',
+        _children: [
+            {
+                name: '3-A',
+                level3: 'Product 3 child',
+                selectionType: 'bundle',
+            },
+        ],
+    },
+
+    {
+        name: '4',
+        level2: 'Product 4',
+        _children: [
+            {
+                name: '4-A',
+                level3: 'Titan RTD',
+                _children: [
+                    {
+                        name: '4-A-A',
+                        level4: 'Titan RTD Child 1',
+                        selectionType: 'bundle',
+                    },
+                    {
+                        name: '4-A-B',
+                        level4: 'Titan RTD Child 2',
+                        selectionType: 'bundle',
+                    },
+                ],
+            },
+
+            {
+                name: '4-B',
+                level3: 'Nodeflex',
+                _children: [
+                    {
+                        name: '4-B-A',
+                        level4: 'Nodeflex Child 1',
+                        selectionType: 'filtered',
+                    },
+                    {
+                        name: '4-B-B',
+                        level4: 'Nodeflex Child 2',
+                        selectionType: 'filtered',
+                    },
+                ],
+            },
+        ],
+    },
+];
+
 
 export default class Bl_treeProducts extends LightningElement {
 
     @track gridData; //MOCK DATA
-    @track columns; 
+    @track gridColumns; 
+
     connectedCallback(){
-        //MOCK DATA FOR TREE
-        this.columns = [
-            { type: 'text', fieldName: 'Name', label: 'Level 2' , initialWidth: 350,},
-            { type: 'text', fieldName: 'FirstName', label: 'Level 3', initialWidth: 200,},
-            { type: 'text', fieldName: '_children.Level', label: 'Level 4', initialWidth: 200,},
-            { type: 'action', typeAttributes: { rowActions: this.getRowActions }, initialWidth: 50, },
-        ]
-        fetchAccounts()
-        .then((data) => {
-            if ( data ) {
-                var tempData = JSON.parse( JSON.stringify( data ) );
-                for ( var i = 0; i < tempData.length; i++ ) {
-                    tempData[ i ]._children = tempData[ i ][ 'Contacts' ];
-                    console.log('Childrens: '+ Object.getOwnPropertyNames(tempData[ i ]._children));
-                    
-                    for(var j =0;j<tempData[ i ]._children.length; j++){
-                        tempData[ i ]._children[j]._children = {"Level":"Level 4" };
-                        console.log('Nietos: '+  tempData[ i ]._children[j]._children); 
-                    } 
-                    
-                    delete tempData[ i ].Contacts;
+        console.log('Here goes the values of gird data!');
+        this.gridData = EXAMPLES_DATA_BASIC;
+    }
+
+    constructor() {
+        super();
+        this.gridColumns = [
+            { type: 'text', fieldName: 'level2', label: 'Level 2', },
+            { type: 'text', fieldName: 'level3', label: 'Level 3', },
+            { type: 'text', fieldName: 'level4', label: 'Level 4', },
+            { type: 'action', typeAttributes: { rowActions: this.getRowActions } },
+        ];
+    }
+
+    //HERE GOES THE ACTIONS TO ADD, EDIT, CLONE OR DELETE ONE.
+    handleRowAction(event){
+        const action = event.detail.action;
+        const row = event.detail.row;
+        //console.log('ROW LEVEL '+row.level);
+        switch (action.name) {
+            case 'view':
+                alert('VIEW');
+                break;
+            case 'add':
+                console.log('Selection Type: '+ row.selectionType);
+                if (row.selectionType == 'filtered'){
+                    this.openFilterAndSelected();
+                } else if (row.selectionType == 'bundle'){
+                    this.openConfigured(); 
                 }
-                this.gridData = tempData;
-            } else if ( error ) {
-                if ( Array.isArray( error.body ) )
-                    console.log( 'Error is ' + error.body.map( e => e.message ).join( ', ' ) );
-                else if ( typeof error.body.message === 'string' )
-                    console.log( 'Error is ' + error.body.message );
-            }
-        });
+                break;
+            case 'clone':
+                alert('CLONE');
+                break; 
+            case 'edit':
+                alert('EDIT');
+                break; 
+            case 'delete':
+                alert('DELETE');
+                break; 
+            default:
+                alert('ERROR');
+        }
     }
 
     getRowActions(row, doneCallback) {
-        if(row.level == 1) {
-          doneCallback([{ label: 'View', name: 'view' }]);
-          console.log('LEVEL 2');
+        //LEVEL 1: TABS, LEVEL 2: TREE HEAD, LEVEL 3: SELECTABLE PRODUCT, LEVEL 4: SECOND SELECTABLE PRODUCT
+        const actions = [];
+        //console.log('ROW PROPERTIES: '+ Object.getOwnPropertyNames(row));
+
+        //IF LEVEL 2 - ONLY SHOW PRODUCT INFORMATION
+        if (row.level == 1) {
+            actions.push({ label: 'View', name: 'view' });
+        } 
+        //IF LEVEL 3 WITHOUT LEVEL 4 (NO CHILDREN)
+        else if (row.level == 2 && !row.hasChildren) {
+            actions.push({ label: 'Add', name: 'add' },
+            { label: 'Clone', name: 'clone' },
+            { label: 'Edit', name: 'edit' },
+            { label: 'Delete', name: 'delete' },);
+        } 
+        //IF LEVEL 3 WITH LEVEL 4 (CHILDREN)
+        else if (row.level == 2 && row.hasChildren) {
+            actions.push({ label: 'View', name: 'view' });
+        } 
+        //IF IS LEVEL 4 
+        else if (row.level == 3 ) {
+            actions.push({ label: 'Add 3', name: 'add' },
+            { label: 'Clone 3', name: 'clone' },
+            { label: 'Edit 3', name: 'edit' },
+            { label: 'Delete 3', name: 'delete' },);
         }
-        if(row.level == 2) {
-          doneCallback([
-              { label: 'Add', name: 'add' },
-              { label: 'Clone', name: 'clone' },
-              { label: 'Edit', name: 'edit' },
-              { label: 'Delete', name: 'delete' },                 
-          ]);
-          console.log('LEVEL 3');
-        }
-        if(row.level == 3) {
-            doneCallback([
-                { label: 'Add', name: 'add' },
-                { label: 'Clone', name: 'clone' },
-                { label: 'Edit', name: 'edit' },
-                { label: 'Delete', name: 'delete' },                 
-            ]);
-            console.log('LEVEL 4');
-          }
-      }
+        /**
+         * if (row.hasChildren){
+         * console.log('Children of row: '+row.hasChildren);
+         * } 
+         */
+         
+        // simulate a trip to the server
+        setTimeout(() => {
+            doneCallback(actions);
+        }, 200);
+    }
 
     //Tree View Collapse or Expand
     clickToExpandAll( e ) {
         const grid =  this.template.querySelector( 'lightning-tree-grid' );
         grid.expandAll();
     }
-
     clickToCollapseAll( e ) {
         const grid =  this.template.querySelector( 'lightning-tree-grid' );
         grid.collapseAll();
+    }
+
+    //Pop ups for filter and bundles
+    //---------FILTER AND SELECTED AREA
+    @track openFilterSelectPopup = false; 
+    openFilterAndSelected(){
+        //Open filter and select pop up
+        this.openFilterSelectPopup = true; 
+    }
+    closeFilterAndSelected(){
+        //Close filter and select pop up
+        this.openFilterSelectPopup = false; 
+    }
+    @track activeFilterTab = 'Filter'; 
+    @track recordsAmount = 1000;
+    @track tabOption = false; 
+    
+    //--------FILTER TAB 
+    //FILTER VALUES 
+    @track fiberCount;
+    @track jacketType;
+    @track armorType;
+    @track subUnit1;
+    @track subUnit2;
+    //Filter Values, changing
+        handlefiberCount(event) {
+            this.fiberCount = event.detail.value;
+        }
+        handlejacketType(event) {
+            this.jacketType = event.detail.value;
+        }
+        handlearmorType(event){
+            this.armorType = event.detail.value;
+        }
+        handlesubUnit1(event){
+            this.subUnit1 = event.detail.value;
+        }
+        handlesubUnit2(event){
+            this.subUnit2 = event.detail.value;
+        }
+    //OPTIONS IN FILTERS - CHANGE WHEN DIANA SENDS VALUES !!!!!!
+    get options() {
+        return [
+            { label: 'Option 1', value: 'Op1' },
+            { label: 'Option 2', value: 'Op2' },
+            { label: 'Option 3', value: 'Op3' },
+        ];
+    }
+    clearFilters(){
+         //Clearing filters with button in Filter Tab
+        this.template.querySelectorAll('lightning-combobox').forEach(each => {
+            each.value = undefined;
+        });
+    }
+    moreAdd(){
+        //Change to filter tab
+        this.activeFilterTab = 'Filter';
+        this.tabOption = false;
+    }
+    handleFilterTabActive(){
+        this.tabOption = false;
+    }
+    handleReviewTabActive(){
+        this.tabOption = true;
+    }
+    //------------REVIEW TAB 
+    addAndReview(){
+        //Change to review tab
+        this.activeFilterTab = 'Review';
+        this.tabOption = true;
+
+        this.nspProduct = true; //ONLY HERE TO TEST THE NSP MODAL - CHANGE WHEN PRODUCTS AVALABLE
+    }
+    saveAndExitFilterModal(){
+        //Save the changes and add to the array
+        //HERE GOES THE PROCESS TO SAVE IT 
+        const evt = new ShowToastEvent({
+            title: 'MISSING SAVE ACTION HERE',
+            message: 'MISSING SAVE ACTION HERE',
+            variant: 'info',
+            mode: 'dismissable'
+        });
+        this.dispatchEvent(evt);
+        this.moreAdd();
+        this.closeFilterAndSelected();
+    }
+    //----NSP Tab
+    @track nspProduct = false; 
+    closeNspPopUps(){
+        this.nspProduct = false; 
+    }
+    openNspPopUps(){
+        this.nspProduct = true; 
+    }
+
+    //-----------CONFIGURED PRODUCTS AREA
+    @track openConfiguredPopup = false; 
+    openConfigured(){
+        this.openConfiguredPopup = true;
+    }
+    closeConfigured(){
+        this.openConfiguredPopup = false;
     }
 
 }

@@ -25,14 +25,14 @@
                                 <template if:true={customerDisplay}>
                                     <template for:each={record.Customer_Part_Cross_References__r} for:item="customer">
                                         <li key={customer.Customer_Item_Number__c}>
-                                            <span class="slds-truncate">&nbsp;/ {customer.Customer_Item_Number__c}</span>
+                                            <span style="font-size:12px; font-family:courier;" class="slds-truncate">&nbsp;/ {customer.Customer_Item_Number__c}</span>
                                         </li>
                                     </template>
                                 </template>
                                 <template if:true={competitorDisplay}>
-                                    <template for:each={record.Competitor_Part_Cross_References__r} for:item="competitor">
-                                        <li key={competitor.BL_Competitor_Item_Number__c}>
-                                            <span class="slds-truncate">&nbsp;/ {competitor.BL_Competitor_Item_Number__c}</span>
+                                    <template for:each={record.Competitor_Cross_References__r} for:item="competitor">
+                                        <li key={competitor.Competitor_Cross_References__r}>
+                                            <span style="font-size:12px; font-family:courier;" class="slds-truncate">&nbsp;/ {competitor.Competitor_Part__c}</span>
                                         </li>
                                     </template>
                                 </template>

@@ -30,10 +30,9 @@ public with sharing class SearchLookupController {
                 myQuery = 'Select Id, Name,IsActive from Product2 Where LastViewedDate != NULL ORDER BY LastViewedDate DESC LIMIT  5';
     
             }
-            else if (competitorAccounts.contains(accountID)) {
+            else {
                 
-                myQuery = 'SELECT Id, Name, (SELECT BL_Competitor_Item_Number__c FROM Competitor_Part_Cross_References__r) FROM Product2 WHERE Id In (Select BL_Product__c FROM BL_Competitor_Part_Cross_Reference__c Where BL_Account__c = \'' +accountID+ '\' AND BL_Competitor_Item_Number__c Like  \'%' + searchTerm + '%\' AND BL_Active__c = True) LIMIT 5';
-                // myQuery = 'SELECT Id, Name, (SELECT BL_Competitor_Item_Number__c FROM BL_Competitor_Part_Cross_References__r) FROM Product2 WHERE Id In (Select BL_Product__c FROM BL_Competitor_Part_Cross_Reference__c Where BL_Account__c = \'' +accountID+ '\' AND BL_Competitor_Item_Number__c Like  \'%' + searchTerm + '%\' AND BL_Active__c = True) LIMIT 5';
+                myQuery = 'SELECT Id, Name, (SELECT Competitor_Part__c FROM Competitor_Cross_References__r) FROM Product2 WHERE Id In (Select Product__c FROM Competitor_Product_Cross_Reference__c WHERE Competitor_Part__c Like  \'%' + searchTerm + '%\') LIMIT 5';
                 
             }
         }
