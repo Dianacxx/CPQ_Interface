@@ -8,6 +8,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
     @api quotelinesString; //Quotelines information in string
     @api quoteNotesString; //Quotelines Notes in string 
 
+
     //When click cancel button in Product Selection UI
     handleCancel(){
         this.dispatchEvent(new CustomEvent('cancelps'));
@@ -54,7 +55,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         handlesubUnit2(event){
             this.subUnit2 = event.detail.value;
         }
-    //OPTIONS IN FILTERS - CHANGE WHEN DIANA SENDS VALUES 
+    //OPTIONS IN FILTERS - CHANGE WHEN DIANA SENDS VALUES !!!!!!
     get options() {
         return [
             { label: 'Option 1', value: 'Op1' },

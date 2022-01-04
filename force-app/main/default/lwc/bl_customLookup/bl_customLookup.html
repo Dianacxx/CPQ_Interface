@@ -1,9 +1,9 @@
 <template>
     <div>
-        <lightning-combobox class="slds-m-top_small slds-m-bottom_small slds-size_1-of-3 slds-align_absolute-center" name="TypeSearch" label="Search By" value={productSelected} placeholder="Type of Product" options={productOptions} onchange={handleProductSelected} ></lightning-combobox>
+        <lightning-combobox class="slds-m-bottom_small slds-m-left_small slds-m-right_small  slds-size_1-of-3" name="TypeSearch" label="Search By" value={productSelected} placeholder="Type of Product" options={productOptions} onchange={handleProductSelected} ></lightning-combobox>
     </div>
     <div>
-        <div class="slds-form-element">
+        <div class="slds-form-element slds-m-left_small slds-m-right_small ">
             <div class="slds-form-element__control">
             <div class="slds-combobox_container">
             <div id="box" class={boxClass} aria-expanded="true" aria-haspopup="listbox" role="combobox">
@@ -22,6 +22,20 @@
                             <span class="slds-lookup__item-action slds-lookup__item-action--label" role="option">
                                 <lightning-icon class="slds-icon slds-icon--small slds-icon-text-default" icon-name={iconName} alternative-text={objName} size="small"></lightning-icon>
                                 <span class="slds-truncate">{record.Name}</span>
+                                <template if:true={customerDisplay}>
+                                    <template for:each={record.Customer_Part_Cross_References__r} for:item="customer">
+                                        <li key={customer.Customer_Item_Number__c}>
+                                            <span class="slds-truncate">&nbsp;/ {customer.Customer_Item_Number__c}</span>
+                                        </li>
+                                    </template>
+                                </template>
+                                <template if:true={competitorDisplay}>
+                                    <template for:each={record.Competitor_Part_Cross_References__r} for:item="competitor">
+                                        <li key={competitor.BL_Competitor_Item_Number__c}>
+                                            <span class="slds-truncate">&nbsp;/ {competitor.BL_Competitor_Item_Number__c}</span>
+                                        </li>
+                                    </template>
+                                </template>
                             </span>
                         </li>
                     </template>

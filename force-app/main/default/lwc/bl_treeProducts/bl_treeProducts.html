@@ -1,0 +1,11 @@
+<template>
+    <div class="slds-p-around_medium lgc-bg">
+        <div class="slds-m-bottom_small">
+            <lightning-button label="Collapse All" onclick={clickToCollapseAll} class="slds-m-right_small"></lightning-button>
+            <lightning-button label="Expand All" onclick={clickToExpandAll}></lightning-button>
+        </div>
+        <lightning-tree-grid class="slds-truncate" columns = {columns} data = {gridData} key-field = "Id"
+            hide-checkbox-column = true  onrowaction={handleRowAction} >
+        </lightning-tree-grid>
+    </div>
+</template>

@@ -59,6 +59,7 @@ export default class Bl_dataTable extends LightningElement {
             console.log('Length of fieldset '+ this.fieldSetLength); 
         })
         .then(() => {
+            let indexDes; 
             for (let i=0; i<this.fieldSetLength;i++){
                 if (this.tabSelected == 'Home'){
                     if (this.fieldSet[i].key == 'HOME'){
@@ -68,8 +69,18 @@ export default class Bl_dataTable extends LightningElement {
                         //console.log('Editable: '+this.fieldSet[i].editable);
                         let labelName;
                         this.fieldSet[i].required ? labelName = '*'+this.fieldSet[i].label: labelName = this.fieldSet[i].label;
-                        COLUMNS_HOME.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, },);
                         //console.log('added: '+COLUMNS_HOME.length); 
+                        if (this.fieldSet[i].property == 'product'){
+                            COLUMNS_HOME.splice(indexDes, 0, { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, },);
+                            //console.log('Inserting before description');
+                        }
+                        else {
+                            COLUMNS_HOME.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, },);
+                            if(this.fieldSet[i].property == 'description'){
+                                indexDes = i+2; //One because Quote Name and other because is the next index
+                                //console.log('Index description '+indexDes);
+                            }
+                        }
                     }
                     this.columns = COLUMNS_HOME; 
                     this.auxiliar = 1;
@@ -93,6 +104,7 @@ export default class Bl_dataTable extends LightningElement {
                 { type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:delete', name: 'Delete', variant:'border-filled', size:'xx-small'}}
             );
             this.spinnerLoading = false; 
+
         })
         .catch((error) => {
             this.error = error;

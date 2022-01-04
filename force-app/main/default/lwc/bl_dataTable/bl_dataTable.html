@@ -3,6 +3,13 @@
     <!--SPINNER TO LOAD START-->
     <lightning-spinner if:true={spinnerLoading} alternative-text="Loading" size="medium"></lightning-spinner>
     <!--SPINNER TO LOAD END-->
+    <!--LOOK UP FIELD START-->
+    <template if:true={isQuoteLinesTab}>
+        <div class="slds-m-left_small slds-m-right_small slds-m-top_small slds-m-bottom_small">
+            <c-bl_custom-lookup record-id={recordId} option-is-customer-part={isCustomerPart} search-placeholder="Search Product" icon-name="standard:products" onlookupselected={handleProductSelection}> </c-bl_custom-lookup>
+        </div>
+    </template>
+    <!--LOOK UP FIELD END-->
     <!--PAGINATION CONTROL START-->
     <div>
         <p class="slds-align_absolute-center"><b> Quote lines: {quotelinesLength}</b></p>
@@ -145,12 +152,5 @@
         </template>
         <!--POP UP REORDER LINES END-->
     <!--DATATABLE END-->
-    <!--LOOK UP FIELD START-->
-    <template if:true={isQuoteLinesTab}>
-        <div class="slds-m-left_small slds-m-right_small slds-m-top_small">
-            <c-bl_custom-lookup record-id={recordId} option-is-customer-part={isCustomerPart} search-placeholder="Search Product" icon-name="standard:products" onlookupselected={handleProductSelection}> </c-bl_custom-lookup>
-        </div>
-    </template>
-    <!--LOOK UP FIELD END-->
     </lightning-card>
 </template>
