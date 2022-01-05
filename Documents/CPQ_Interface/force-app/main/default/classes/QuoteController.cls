@@ -112,7 +112,7 @@ public with sharing class QuoteController {
             wrapper.name = line.record.name;
             wrapper.product = JSON.serialize(line.record.SBQQ__Product__r.Name);
             wrapper.quantity = line.record.SBQQ__Quantity__c;
-            // wrapper.description = line.record.SBQQ__Description__c;
+            wrapper.description = line.record.SBQQ__Description__c;
             wrapper.uom = line.record.UOM__c;
             wrapper.listUnitPrice = line.record.SBQQ__ListPrice__c;
             wrapper.additionalDiscount = line.record.SBQQ__AdditionalDiscountAmount__c;
@@ -209,7 +209,8 @@ public with sharing class QuoteController {
         ProductAdder adder = new ProductAdder(); 
         QuoteModel quoteWithProducts = adder.add(quote, productModels, 0);
         List<QuoteLineModel> newLines = quoteWithProducts.getLineItems();
-
+        System.debug('previous lines -- ' + previousLines.size());
+        System.debug('new lines -- ' + newLines.size());
         
         for (QuoteLineModel newLine : newLines) {
             if (newLine.record.id == null) {
@@ -250,4 +251,66 @@ public with sharing class QuoteController {
         return JSON.serialize(linesToPrint);
     }
 
+    @AuraEnabled
+    public static String deleteQuoteLines(List<SBQQ__QuoteLine__c> existingQuoteLines, List<WrappersClass.QuoteLineWrapperClass> receivedQuoteLines){
+        List<SBQQ__QuoteLine__c> linesToDelete = new List <SBQQ__QuoteLine__c>();
+        Set<String> quoteLineIDs = new Set<String>();
+        Set<String> receivedIDs = new Set<String>();
+
+
+
+        //Gets the quote lines from the UI and deserializes them into a list of quote line wrappers
+        // List<WrappersClass.QuoteLineWrapperClass> untypedQuoteLines = (List<WrappersClass.QuoteLineWrapperClass>) JSON.deserialize(quoteLines, List<WrappersClass.QuoteLineWrapperClass>.class);
+        // //Checks the existing quote lines in Salesforce 
+        // List<SBQQ__QuoteLine__c> existingQuoteLines = [SELECT ID FROM SBQQ__QuoteLine__c WHERE SBQQ__Quote__c =: quoteId];
+
+        //Add the existing quote line ids to a set
+        for (SBQQ__QuoteLine__c line : existingQuoteLines) {
+            quoteLineIDs.add(line.id);
+        }
+        //Add the received quote line ids to a set
+        for (WrappersClass.QuoteLineWrapperClass line : receivedQuoteLines) {
+            receivedIDs.add(line.id);
+            
+            
+        }
+        try{
+            for (SBQQ__QuoteLine__c line : existingQuoteLines) {
+                if (!receivedIDs.contains(line.id)) {
+                    linesToDelete.add(line);
+                }
+            }
+            delete linesToDelete;
+        }catch (Exception e) {
+            throw new AuraHandledException('Something went wrong: ' + e.getMessage() + 'cause: ' + e.getCause());
+        }
+        return JSON.serialize(linesToDelete);
+    }
+    @AuraEnabled
+    @Future
+    public static void saveAndCalculateQuote(String quoteId, String quoteLines){
+        List<SBQQ__QuoteLine__c> existingQuoteLines = [SELECT ID FROM SBQQ__QuoteLine__c WHERE SBQQ__Quote__c =: quoteId];
+        List<WrappersClass.QuoteLineWrapperClass> untypedQuoteLines = (List<WrappersClass.QuoteLineWrapperClass>) JSON.deserialize(quoteLines, List<WrappersClass.QuoteLineWrapperClass>.class);
+
+        String deletion = deleteQuoteLines(existingQuoteLines,untypedQuoteLines);
+    }
+    @AuraEnabled
+    @Future
+    public static void quoteSaver(String quoteId, String quoteLines){
+        List<SBQQ__QuoteLine__c> existingQuoteLines = [SELECT ID FROM SBQQ__QuoteLine__c WHERE SBQQ__Quote__c =: quoteId];
+        List<WrappersClass.QuoteLineWrapperClass> untypedQuoteLines = (List<WrappersClass.QuoteLineWrapperClass>) JSON.deserialize(quoteLines, List<WrappersClass.QuoteLineWrapperClass>.class);
+
+        
+
+        String deletion = deleteQuoteLines(existingQuoteLines,untypedQuoteLines);
+    }
+    @AuraEnabled
+
+    public static QuoteModel quoteSaverMethod(QuoteModel quote){
+        QuoteSaver saver = new QuoteSaver();
+        QuoteModel savedQuote = saver.save(quote);
+
+        return savedQuote;
+
+    }
 }
