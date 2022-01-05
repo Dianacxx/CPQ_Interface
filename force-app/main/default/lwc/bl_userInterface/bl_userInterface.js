@@ -6,6 +6,10 @@ import UPDATE_INTERFACE_CHANNEL from '@salesforce/messageChannel/update_Interfac
 import { NavigationMixin } from 'lightning/navigation';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
+//QuoteLines and Notes info 
+import printQuoteLines from '@salesforce/apex/QuoteController.printQuoteLines';
+import printNotes from '@salesforce/apex/QuoteController.printNotes'; 
+
 //Quote Total functions
 import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
 import TOTAL_FIELD from '@salesforce/schema/SBQQ__Quote__c.SBQQ__NetAmount__c';
@@ -24,11 +28,88 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     @track showPSTab = false; //To open Product Selection TAB
     @track activeTab = 'UI'; 
 
+    @track spinnerLoadingUI = false;
+
     //Initialize UI
     connectedCallback(){
         this.disableButton = true; 
+        var startTime = performance.now();
+        printQuoteLines({ quoteId: this.recordId})
+        .then(data =>{
+            if (data){
+                this.quotelinesString = data; 
+                this.error = undefined;
+                this.isLoading = true; 
+                console.log('quoteLines String SUCCESS: '+ this.quotelinesString);
+                const payload = { 
+                    dataString: this.quotelinesString,
+                    auxiliar: 'newtable'
+                  };
+                publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
+            }
+        })
+        .catch(error =>{
+            if (error){
+                this.quotelinesString = undefined; 
+                this.error = error;
+                console.log('quoteLines String ERROR:');
+                console.log(this.error);
+                const evt = new ShowToastEvent({
+                    title: 'UI QUOTELINES Error',
+                    message: 'Unexpected error using UI - QUOTELINES',
+                    variant: 'error',
+                    mode: 'dismissable'
+                });
+                this.dispatchEvent(evt);
+                
+            }
+        })
+            
+        printNotes({ quoteId: this.recordId })
+        .then(data =>{
+            if (data){
+                this.quoteNotesString = data; 
+                this.error = undefined;
+                console.log('notes string SUCCESS: '+ this.quoteNotesString);
+                this.disableButton = false;
+            }    
+        })
+        .catch(error =>{
+             if (error){
+                this.quoteNotesString = undefined; 
+                this.error = error;
+                this.disableButton = true;
+                this.quoteNotesString = '[name: \"none\"]';
+                console.log('notes string ERROR: ');
+                console.log(this.error);
+                const evt = new ShowToastEvent({
+                    title: 'UI NOTES Error',
+                    message: 'Unexpected error using UI - NOTES',
+                    variant: 'error',
+                    mode: 'dismissable'
+                });
+                this.dispatchEvent(evt);
+            }
+        })
 
+        var endTime = performance.now();
+        console.log(`Call to quoteLinesWire took ${endTime - startTime} milliseconds`);
 
+        if (this.quoteLinesString == '[]'){
+            this.quoteLinesString = '[id: \"none\"]';
+            console.log(this.quoteLinesString);
+            console.log('No quotelines yet');
+            const payload = { 
+                dataString: this.quotelinesString,
+                auxiliar: 'newtable'
+              };
+            publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
+        }
+        if (this.quoteNotesString == '[]'){
+            this.quoteNotesString = '[name: \"none\"]';
+            console.log(this.quoteNotesString);
+            console.log('No quotes Notes yet');
+        }
         
     }
 
@@ -122,12 +203,31 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     handleSaveAndCalculate(){
         //CALL APEX METHOD TO SAVE QUOTELINES AND NOTES
         //CALL METHOD TO GET QUOTE TOTAL
+        this.spinnerLoadingUI = true;
         console.log('quoteLines: '+this.quotelinesString);
         saveAndCalculateQuote( {quoteId: this.recordId, quoteLines: this.quotelinesString})
         .then(()=>{
-            alert('SUCCES quoteSaver');
+            this.spinnerLoadingUI = false;
+            const evt = new ShowToastEvent({
+                title: 'Success making the calculations',
+                message: 'Your changes have been saved on Salesforce',
+                variant: 'success',
+                mode: 'dismissable'
+            });
+            this.dispatchEvent(evt);
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
         })
         .catch((error)=>{ 
+            this.spinnerLoadingUI = false;
+            const evt = new ShowToastEvent({
+                title: 'Error making the calculations',
+                message: 'Your changes cannot be saved on Salesforce',
+                variant: 'error',
+                mode: 'dismissable'
+            });
+            this.dispatchEvent(evt);
             console.log('Error quoteSaver: '); 
             console.log(error); 
             console.log('Error message: '+ error.body.message);
@@ -145,16 +245,6 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             });
         }, 1000);
         */
-
-        
-
-        const evt = new ShowToastEvent({
-            title: 'MESSAGE HERE WHEN SAVE IT',
-            message: 'MESSAGE HERE WHEN SAVE IT',
-            variant: 'info',
-            mode: 'dismissable'
-        });
-        this.dispatchEvent(evt);
     }
 
 

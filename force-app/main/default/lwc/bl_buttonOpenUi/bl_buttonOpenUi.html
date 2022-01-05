@@ -1,9 +1,9 @@
 <template>
     <lightning-card>
-        <template if:false={isLoading}>
+        <template if:true={isLoading}>
             <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
         </template>
-        <template if:true={isLoading}>
+        <template if:false={isLoading}>
             <lightning-button variant="success" label="Open QLE UI" title="Open UI" 
                 onclick={handleNavigateUi} class="slds-align_absolute-center" disabled={disableButton} ></lightning-button>
         </template>

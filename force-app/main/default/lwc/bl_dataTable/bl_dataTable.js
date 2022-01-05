@@ -35,14 +35,15 @@ export default class Bl_dataTable extends LightningElement {
         const COLUMNS_HOME = [ { label: 'Quote Name', fieldName: 'name', sortable: true, },];
         const COLUMNS_DETAIL = [ { label: 'Quote Name', fieldName: 'name', sortable: true, },];
 
-        this.quoteLines = JSON.parse(this.quotelinesString);; 
-        for(let i=0;i<this.quoteLines.length;i++){
-            this.quoteLines[i].product = this.quoteLines[i].product.replace(/['"]+/g, '');
-            //console.log('No double quotes: '+ this.quoteLines[i].product);
+        if (this.quotelinesString){
+            this.quoteLines = JSON.parse(this.quotelinesString);
+            for(let i=0;i<this.quoteLines.length;i++){
+                this.quoteLines[i].product = this.quoteLines[i].product.replace(/['"]+/g, '');
+                //console.log('No double quotes: '+ this.quoteLines[i].product);
+            }
+            this.quoteLinesString = JSON.stringify(this.quoteLines);
+            this.updateTable();
         }
-        this.quoteLinesString = JSON.stringify(this.quoteLines);
-        this.updateTable();
-    
         //Make available the look up field
         if (this.tabSelected == 'Home' || this.tabSelected == 'Detail'){
             this.isQuoteLinesTab = true; 
@@ -132,7 +133,20 @@ export default class Bl_dataTable extends LightningElement {
 
     handleMessage(message) {
         //Message when table has changed
-        if (message.auxiliar == 'updatetable'){
+        this.spinnerLoading = true;
+        if (message.auxiliar == 'newtable'){
+            this.quotelinesString = message.dataString;
+            if (this.quotelinesString){
+                this.quoteLines = JSON.parse(this.quotelinesString);
+                for(let i=0;i<this.quoteLines.length;i++){
+                    this.quoteLines[i].product = this.quoteLines[i].product.replace(/['"]+/g, '');
+                    //console.log('No double quotes: '+ this.quoteLines[i].product);
+                }
+                this.quoteLinesString = JSON.stringify(this.quoteLines);
+                this.updateTable();
+            }
+        }
+        else if (message.auxiliar == 'updatetable'){
             this.quotelinesString = message.dataString;
             this.quoteLines = JSON.parse(this.quotelinesString);
             this.updateTable();
@@ -190,7 +204,7 @@ export default class Bl_dataTable extends LightningElement {
                 this.firstHandler();
             }
         }
-        
+        this.spinnerLoading = false;
     }
 
     //Selecting rows

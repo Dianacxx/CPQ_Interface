@@ -1,6 +1,9 @@
 <template>
     <!--THIS IS THE USER INTERFACE FOR AFL CPQ QUOTELINE EDITOR-->
     <lightning-card>
+        <!--SPINNER TO LOAD START-->
+        <lightning-spinner if:true={spinnerLoadingUI} alternative-text="Loading" size="medium"></lightning-spinner>
+        <!--SPINNER TO LOAD END-->
         <lightning-tabset active-tab-value={activeTab}>
             <!--UI TAB START-->
             <template if:false={showPSTab}>
