@@ -1,6 +1,7 @@
 import { LightningElement, api, wire, track } from 'lwc';
 import { NavigationMixin } from 'lightning/navigation';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent'; //To show messages to user
+import { refreshApex } from '@salesforce/apex';
 
 import printQuoteLines from '@salesforce/apex/QuoteController.printQuoteLines';
 import printNotes from '@salesforce/apex/QuoteController.printNotes'; 
@@ -70,6 +71,8 @@ export default class ButtonOpenUi extends NavigationMixin(LightningElement) {
     @api quoteLinesAuxiliar; 
     //NAVIGATION TO OPEN UI
     handleNavigateUi(){
+        refreshApex(this.quotelinesString); 
+
         if (this.quoteLinesString == '[]'){
             this.quoteLinesString = '[id: \"none\"]';
             console.log(this.quoteLinesString);

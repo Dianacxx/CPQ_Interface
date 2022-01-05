@@ -3,22 +3,9 @@ import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 //MOCK DATA
 const EXAMPLES_COLUMNS_DEFINITION_BASIC = [
-    {
-        type: 'text',
-        fieldName: 'level2',
-        label: 'Level 2',
-        initialWidth: 300,
-    },
-    {
-        type: 'text',
-        fieldName: 'level3',
-        label: 'Level 3',
-    },
-    {
-        type: 'text',
-        fieldName: 'level4',
-        label: 'Level 4',
-    },
+    { type: 'text', fieldName: 'level2', label: 'Level 2', },
+    { type: 'text', fieldName: 'level3', label: 'Level 3', },
+    { type: 'text', fieldName: 'level4', label: 'Level 4', },
 ];
 const EXAMPLES_DATA_BASIC = [
     {
@@ -125,10 +112,14 @@ const EXAMPLES_DATA_BASIC = [
         ],
     },
 ];
-
+import { getPicklistValues } from 'lightning/uiObjectInfoApi';
+import FIBER_COUNT_FIELD from '@salesforce/schema/Product2.Configuration__c';
+import { getObjectInfo } from 'lightning/uiObjectInfoApi';
+import PRODUCT2_OBJECT from '@salesforce/schema/Product2';
 
 export default class Bl_treeProducts extends LightningElement {
-
+    @api recordId;
+    @api productId = '';
     @track gridData; //MOCK DATA
     @track gridColumns; 
 
@@ -137,6 +128,7 @@ export default class Bl_treeProducts extends LightningElement {
         this.gridData = EXAMPLES_DATA_BASIC;
     }
 
+    //BUTTON ACTION DEPENDING ON LEVELS
     constructor() {
         super();
         this.gridColumns = [
@@ -146,12 +138,62 @@ export default class Bl_treeProducts extends LightningElement {
             { type: 'action', typeAttributes: { rowActions: this.getRowActions } },
         ];
     }
+    getRowActions(row, doneCallback) {
+        //LEVEL 1: TABS, LEVEL 2: TREE HEAD, LEVEL 3: SELECTABLE PRODUCT, LEVEL 4: SECOND SELECTABLE PRODUCT
+        const actions = [];
+        //console.log('ROW PROPERTIES: '+ Object.getOwnPropertyNames(row));
+
+        //IF LEVEL 2 - ONLY SHOW PRODUCT INFORMATION
+        if (row.level == 1) {
+            actions.push({ label: 'View', name: 'view' });
+        } 
+        //IF LEVEL 3 WITHOUT LEVEL 4 (NO CHILDREN)
+        else if (row.level == 2 && !row.hasChildren) {
+            let typeProduct; 
+            if (row.selectionType == 'filtered'){
+                typeProduct='Filter';
+            } else {
+                typeProduct='Bundle';
+            } 
+            actions.push({ label: 'Add '+typeProduct , name: 'add' },
+            { label: 'Clone', name: 'clone', disabled: true },
+            { label: 'Edit', name: 'edit', disabled: true},
+            { label: 'Delete', name: 'delete', disabled: true },);
+        } 
+        //IF LEVEL 3 WITH LEVEL 4 (CHILDREN)
+        else if (row.level == 2 && row.hasChildren) {
+            actions.push({ label: 'View', name: 'view' });
+        } 
+        //IF IS LEVEL 4 
+        else if (row.level == 3 ) {
+            let typeProduct; 
+            if (row.selectionType == 'filtered'){
+                typeProduct='Filter';
+            } else {
+                typeProduct='Bundle';
+            } 
+            actions.push({ label: 'Add '+typeProduct, name: 'add' },
+            { label: 'Clone 3', name: 'clone', disabled: true },
+            { label: 'Edit 3', name: 'edit', disabled: true },
+            { label: 'Delete 3', name: 'delete', disabled: true },);
+        }
+        /**
+         * if (row.hasChildren){
+         * console.log('Children of row: '+row.hasChildren);
+         * } 
+         */
+         
+        // simulate a trip to the server
+        setTimeout(() => {
+            doneCallback(actions);
+        }, 200);
+    }
 
     //HERE GOES THE ACTIONS TO ADD, EDIT, CLONE OR DELETE ONE.
     handleRowAction(event){
         const action = event.detail.action;
         const row = event.detail.row;
-        //console.log('ROW LEVEL '+row.level);
+        console.log('ROW properties '+ Object.getOwnPropertyNames(row));
         switch (action.name) {
             case 'view':
                 alert('VIEW');
@@ -160,8 +202,16 @@ export default class Bl_treeProducts extends LightningElement {
                 console.log('Selection Type: '+ row.selectionType);
                 if (row.selectionType == 'filtered'){
                     this.openFilterAndSelected();
+                    
                 } else if (row.selectionType == 'bundle'){
                     this.openConfigured(); 
+                    if (row.level == 2){
+                        this.nameBundleProduct = row.level3; 
+                        console.log('Row Name:' + this.nameBundleProduct); 
+                    } else if ( row.level == 3){
+                        this.nameBundleProduct = row.level4; 
+                        console.log('Row Name:' + this.nameBundleProduct)
+                    }
                 }
                 break;
             case 'clone':
@@ -176,45 +226,6 @@ export default class Bl_treeProducts extends LightningElement {
             default:
                 alert('ERROR');
         }
-    }
-
-    getRowActions(row, doneCallback) {
-        //LEVEL 1: TABS, LEVEL 2: TREE HEAD, LEVEL 3: SELECTABLE PRODUCT, LEVEL 4: SECOND SELECTABLE PRODUCT
-        const actions = [];
-        //console.log('ROW PROPERTIES: '+ Object.getOwnPropertyNames(row));
-
-        //IF LEVEL 2 - ONLY SHOW PRODUCT INFORMATION
-        if (row.level == 1) {
-            actions.push({ label: 'View', name: 'view' });
-        } 
-        //IF LEVEL 3 WITHOUT LEVEL 4 (NO CHILDREN)
-        else if (row.level == 2 && !row.hasChildren) {
-            actions.push({ label: 'Add', name: 'add' },
-            { label: 'Clone', name: 'clone' },
-            { label: 'Edit', name: 'edit' },
-            { label: 'Delete', name: 'delete' },);
-        } 
-        //IF LEVEL 3 WITH LEVEL 4 (CHILDREN)
-        else if (row.level == 2 && row.hasChildren) {
-            actions.push({ label: 'View', name: 'view' });
-        } 
-        //IF IS LEVEL 4 
-        else if (row.level == 3 ) {
-            actions.push({ label: 'Add 3', name: 'add' },
-            { label: 'Clone 3', name: 'clone' },
-            { label: 'Edit 3', name: 'edit' },
-            { label: 'Delete 3', name: 'delete' },);
-        }
-        /**
-         * if (row.hasChildren){
-         * console.log('Children of row: '+row.hasChildren);
-         * } 
-         */
-         
-        // simulate a trip to the server
-        setTimeout(() => {
-            doneCallback(actions);
-        }, 200);
     }
 
     //Tree View Collapse or Expand
@@ -266,13 +277,17 @@ export default class Bl_treeProducts extends LightningElement {
             this.subUnit2 = event.detail.value;
         }
     //OPTIONS IN FILTERS - CHANGE WHEN DIANA SENDS VALUES !!!!!!
+
     get options() {
-        return [
-            { label: 'Option 1', value: 'Op1' },
-            { label: 'Option 2', value: 'Op2' },
-            { label: 'Option 3', value: 'Op3' },
-        ];
+        return this.TypePicklistValues.data.values;
     }
+    //THIS FILTERS NEED TO BE DONE BUT ASK HOW MANY THEY ARE GOING TO BE
+    @wire(getObjectInfo, { objectApiName: PRODUCT2_OBJECT })
+    objectInfo;
+
+    @wire(getPicklistValues, { recordTypeId: '$objectInfo.data.defaultRecordTypeId', fieldApiName: FIBER_COUNT_FIELD})
+    TypePicklistValues;
+
     clearFilters(){
          //Clearing filters with button in Filter Tab
         this.template.querySelectorAll('lightning-combobox').forEach(each => {
@@ -328,5 +343,7 @@ export default class Bl_treeProducts extends LightningElement {
     closeConfigured(){
         this.openConfiguredPopup = false;
     }
+    //Bundle information: 
+    @track nameBundleProduct; 
 
 }

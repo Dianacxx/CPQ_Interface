@@ -137,11 +137,6 @@ export default class Bl_dataTable extends LightningElement {
             this.quoteLines = JSON.parse(this.quotelinesString);
             this.updateTable();
         }
-        //Message when lookupfield is add 
-        else if (message.auxiliar == 'AddNewProduct'){
-            console.log('Product Id: '+ message.dataString);
-            //WORK HERE TO ADD THE PRODUCT AS QUOTELINES
-        }
         else if (message.auxiliar == 'reordertable'){
             this.popUpReorder = true; 
             this.ElementList = this.quoteLines;
@@ -162,8 +157,8 @@ export default class Bl_dataTable extends LightningElement {
                     randomId = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(2, 10);
                     randomName = Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 6); 
                     last4Name = cloneRows[i].name.substr(cloneRows[i].name.length - 4)
-                    cloneRows[i].id =  randomId;
-                    cloneRows[i].name = 'Copy QL-'+last4Name+'-'+randomName; 
+                    cloneRows[i].id =  'new'+randomId;
+                    cloneRows[i].name = 'Clone QL-'+last4Name+'-'+randomName; 
                     //console.log('ID: '+cloneRows[i].id);
                     //console.log('NAME: '+cloneRows[i].name);
                     this.quoteLines = [...this.quoteLines, cloneRows[i]];
@@ -275,7 +270,7 @@ export default class Bl_dataTable extends LightningElement {
                 //To create auxiliar ID and Name
                 randomId = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 10);
                 randomName = Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 10);//Math.random().toFixed(36).substring(0, 7)); 
-                newQuotelines[i].id = randomId; 
+                newQuotelines[i].id = 'new'+randomId; 
                 newQuotelines[i].name = 'New QL-'+randomName; 
                 this.quoteLines = [...this.quoteLines, newQuotelines[i]];
             }

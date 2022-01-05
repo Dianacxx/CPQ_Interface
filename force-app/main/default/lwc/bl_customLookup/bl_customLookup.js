@@ -65,7 +65,8 @@ export default class Bl_customLookup extends LightningElement {
             console.log('Seacrh option: '+this.productSelected);
             this.error = undefined;
             this.records = data;
-            console.log('Lookup DATA: ' + this.records);
+            console.log('Lookup DATA Ok');
+            //console.log('Lookup DATA: ' + this.records);
             //let customer;
             //let competitor; 
             //console.log('Values of this.records ' + Object.getOwnPropertyNames(this.records[0]));
@@ -76,13 +77,14 @@ export default class Bl_customLookup extends LightningElement {
                     if(this.records[k].hasOwnProperty('Customer_Part_Cross_References__r')){
                         this.customerDisplay = true; 
                         this.competitorDisplay = false;
-                        //console.log('Customer Ob: '+ Object.getOwnPropertyNames(this.records[k].Customer_Part_Cross_References__r)); 
+                        //console.log('Customer Ob: '+ Object.getOwnPropertyNames(this.records[k].Customer_Part_Cross_References__r[0].Account__r.Name)); 
                         //customer = this.records[k].Customer_Part_Cross_References__r;
                         //console.log('Customer = '+ customer[k].Customer_Item_Number__c);
                     }
                     else if(this.records[k].hasOwnProperty('Competitor_Cross_References__r')){
                         this.competitorDisplay = true; 
                         this.customerDisplay = false; 
+                        //console.log('Customer Ob: '+ Object.getOwnPropertyNames(this.records[k].Competitor_Cross_References__r[0].Competitor__r.Name)); 
                         //competitor = this.records[k].Competitor_Cross_References__r;
                         //console.log('competitor = '+ JSON.stringify(competitor[k]));
                     } 
@@ -91,7 +93,8 @@ export default class Bl_customLookup extends LightningElement {
         } else if (error) {
             this.error = error;
             this.records = undefined;
-            console.log('Lookup ERROR: ' + this.error);
+            console.log('Lookup ERROR: '); 
+            console.log(this.error);
             const evt = new ShowToastEvent({
                 title: 'No products found',
                 message: 'This quote has no associated products',
@@ -130,7 +133,7 @@ export default class Bl_customLookup extends LightningElement {
 
     onChange(event) {
         this.searchTerm = event.target.value;
-        console.log('search Term : '+ this.searchTerm);
+        //console.log('search Term : '+ this.searchTerm);
     }
 
 }

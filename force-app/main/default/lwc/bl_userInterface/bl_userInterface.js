@@ -10,6 +10,10 @@ import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
 import TOTAL_FIELD from '@salesforce/schema/SBQQ__Quote__c.SBQQ__NetAmount__c';
 
+//Quote Saver
+import quoteSaver from '@salesforce/apex/QuoteController.quoteSaver'; 
+import saveAndCalculateQuote from '@salesforce/apex/QuoteController.saveAndCalculateQuote';
+
 export default class UserInterface extends NavigationMixin(LightningElement) {
     @api recordId; //Quote Record Id that opens the UI
     @api quotelinesString; //Quotelines information in string
@@ -23,6 +27,9 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     //Initialize UI
     connectedCallback(){
         this.disableButton = true; 
+
+
+        
     }
 
     //Get total value 
@@ -115,6 +122,31 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     handleSaveAndCalculate(){
         //CALL APEX METHOD TO SAVE QUOTELINES AND NOTES
         //CALL METHOD TO GET QUOTE TOTAL
+        console.log('quoteLines: '+this.quotelinesString);
+        saveAndCalculateQuote( {quoteId: this.recordId, quoteLines: this.quotelinesString})
+        .then(()=>{
+            alert('SUCCES quoteSaver');
+        })
+        .catch((error)=>{ 
+            console.log('Error quoteSaver: '); 
+            console.log(error); 
+            console.log('Error message: '+ error.body.message);
+            console.log('Error stackTrace: '+ error.body.stackTrace);
+        }); 
+
+        /*
+        setTimeout(() => {
+            saveAndCalculateQuote({quoteId: this.recordId, quoteLines: this.quotelinesStrings})
+            .then(()=>{
+                alert('SUCCES saveAndCalculateQuote');
+            })
+            .catch(()=>{
+                alert('ERROR saveAndCalculateQuote');
+            });
+        }, 1000);
+        */
+
+        
 
         const evt = new ShowToastEvent({
             title: 'MESSAGE HERE WHEN SAVE IT',
@@ -128,14 +160,27 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
 
     //NAVIGATE TO QUOTE RECORD PAGE (MISSING SAVING INFORMATION)
     navigateToQuoteRecordPage() {
-        this[NavigationMixin.Navigate]({
-            type: 'standard__recordPage',
-            attributes: {
-                recordId: this.recordId,
-                //objectApiName: this.objectApiName,
-                actionName: 'view'
-            },
-        });
+        //HERE GOES THE SAVING PART
+        // simulate a trip to the server
+        setTimeout(() => {
+            this[NavigationMixin.Navigate]({
+                type: 'standard__recordPage',
+                attributes: {
+                    recordId: this.recordId,
+                    //objectApiName: this.objectApiName,
+                    actionName: 'view'
+                },
+            });
+    
+            const evt = new ShowToastEvent({
+                title: 'Please Reload ',
+                message: 'Reload the Page to see the changes in the UI',
+                variant: 'info',
+                mode: 'dismissable'
+            });
+            this.dispatchEvent(evt);
+        }, 1000);
+        
     }
 
     //NAVIGATE BACK TO UI FROM PRODUCT SELECTION TAB WHEN CANCEL
@@ -162,29 +207,6 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     navitageToProductSelection(){
         this.showPSTab = true; 
         this.activeTab = 'PS';
-        /*
-        event.preventDefault();
-        let quotelinesStringSave = JSON.stringify(this.quotelinesString);
-        let quoteNotesStringSave = JSON.stringify(this.quoteNotesString);
-        console.log('Q'+quotelinesStringSave);
-        console.log('N'+quoteNotesStringSave);
-        let componentDef = {
-            componentDef: "c:bl_productSelection",
-            attributes: {
-                recordId: this.recordId, 
-                quotelinesString: quotelinesStringSave,
-                quoteNotesString: quoteNotesStringSave,
-            } //Whatch description there is something weird about it
-        }
-        // Encode the componentDefinition JS object to Base64 format to make it url addressable
-        let encodedComponentDef = btoa(JSON.stringify(componentDef));
-        this[NavigationMixin.Navigate]({
-            type: 'standard__webPage',
-            attributes: {
-                url: '/one/one.app#' + encodedComponentDef
-            }
-        });
-        */
     }
     
     //APPLY BUTTON WITH DISCOUNT VALUES

@@ -254,8 +254,8 @@ public with sharing class QuoteController {
     @AuraEnabled
     public static String deleteQuoteLines(List<SBQQ__QuoteLine__c> existingQuoteLines, List<WrappersClass.QuoteLineWrapperClass> receivedQuoteLines){
         List<SBQQ__QuoteLine__c> linesToDelete = new List <SBQQ__QuoteLine__c>();
-        Set<Id> quoteLineIDs = new Set<Id>();
-        Set<Id> receivedIDs = new Set<Id>();
+        Set<String> quoteLineIDs = new Set<String>();
+        Set<String> receivedIDs = new Set<String>();
 
 
 
@@ -271,6 +271,8 @@ public with sharing class QuoteController {
         //Add the received quote line ids to a set
         for (WrappersClass.QuoteLineWrapperClass line : receivedQuoteLines) {
             receivedIDs.add(line.id);
+            
+            
         }
         try{
             for (SBQQ__QuoteLine__c line : existingQuoteLines) {
@@ -285,17 +287,90 @@ public with sharing class QuoteController {
         return JSON.serialize(linesToDelete);
     }
     @AuraEnabled
+    // @Future
     public static void saveAndCalculateQuote(String quoteId, String quoteLines){
-        List<SBQQ__QuoteLine__c> existingQuoteLines = [SELECT ID FROM SBQQ__QuoteLine__c WHERE SBQQ__Quote__c =: quoteId];
+        QuoteReader quoteReader = new QuoteReader();
+        QuoteModel quote = quoteReader.read(quoteId);
+        
+        //Checks the quote lines that already exist on salesforce
+        List<SBQQ__QuoteLine__c> existingQuoteLines = [SELECT ID,SBQQ__Quote__c FROM SBQQ__QuoteLine__c WHERE SBQQ__Quote__c =: quoteId];
+        //Gets the quote lines and deserialize it into a quote line wrapper class
         List<WrappersClass.QuoteLineWrapperClass> untypedQuoteLines = (List<WrappersClass.QuoteLineWrapperClass>) JSON.deserialize(quoteLines, List<WrappersClass.QuoteLineWrapperClass>.class);
 
-        String deletion = deleteQuoteLines(existingQuoteLines,untypedQuoteLines);
+        List<QuoteLineModel> quoteLinesToInsert = new List<QuoteLineModel>();
+        Set<String> quoteLineIDs = new Set<String>();
+        Set<String> receivedIDs = new Set<String>();
+
+         //Add the existing quote line ids to a set
+         for (SBQQ__QuoteLine__c line : existingQuoteLines) {
+            quoteLineIDs.add(line.id);
+        }
+        for (WrappersClass.QuoteLineWrapperClass line : untypedQuoteLines) {
+            receivedIDs.add(line.id);
+        }
+
+        // try{
+            for (SBQQ__QuoteLine__c line : existingQuoteLines) {
+                if (receivedIDs.contains(line.id)) {
+                    System.debug('Entered first');
+                    QuoteLineModel newModel = new QuoteLineModel();
+
+                    newModel.setRecord(line);
+                    
+                    //newModel.record.SBQQ__Quantity__c = 10;
+                    quoteLinesToInsert.add(newModel);
+                } 
+            }
+            for(WrappersClass.QuoteLineWrapperClass line : untypedQuoteLines){
+                String stringID = String.valueOf(line.id);
+                if (stringID.startsWith('new')) {
+                    SBQQ__QuoteLine__c newQuoteLine = new SBQQ__QuoteLine__c();
+                    newQuoteLine.SBQQ__Product__c = line.product;
+                    newQuoteLine.SBQQ__Quantity__c = line.quantity;
+
+                    QuoteLineModel newModel = new QuoteLineModel();
+                    newModel.setRecord(newQuoteLine);
+                    newModel.record.id = newQuoteLine.id;
+                    newModel.setKey(1111);
+                    System.debug('new quote line model : ' + newModel.getRecord());
+                    quoteLinesToInsert.add(newModel);
+                }
+            }
+            //Inserts the new version of the quote lines into the quote line model
+            quote.setLineItems(quoteLinesToInsert);
+            System.debug('Setter line items: ' +  quote.getLineItems());
+        
+            
+            //Saves te new version of the quote
+            QuoteModel savedQuote = quoteSaverMethod(quote);
+            System.debug('line items size :' +  savedQuote.getLineItems().size());
+            update quote.record;
+            //Deletes the quote lines from salesforce that are not in the UI
+            String deletion = deleteQuoteLines(existingQuoteLines,untypedQuoteLines);
+            
+
+        // }catch (Exception e) {
+        //     throw new AuraHandledException('Something went wrong: ' + e.getMessage() + 'cause: ' + e.getCause());
+        // }
+       
     }
     @AuraEnabled
+    @Future
     public static void quoteSaver(String quoteId, String quoteLines){
         List<SBQQ__QuoteLine__c> existingQuoteLines = [SELECT ID FROM SBQQ__QuoteLine__c WHERE SBQQ__Quote__c =: quoteId];
         List<WrappersClass.QuoteLineWrapperClass> untypedQuoteLines = (List<WrappersClass.QuoteLineWrapperClass>) JSON.deserialize(quoteLines, List<WrappersClass.QuoteLineWrapperClass>.class);
 
+        
+
         String deletion = deleteQuoteLines(existingQuoteLines,untypedQuoteLines);
+    }
+    @AuraEnabled
+
+    public static QuoteModel quoteSaverMethod(QuoteModel quote){
+        QuoteSaver saver = new QuoteSaver();
+        QuoteModel savedQuote = saver.save(quote);
+
+        return savedQuote;
+
     }
 }
