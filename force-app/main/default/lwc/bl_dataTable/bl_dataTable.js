@@ -29,7 +29,6 @@ export default class Bl_dataTable extends LightningElement {
 
     connectedCallback(){
         this.subscribeToMessageChannel();
-
         //DEPENDING ON TAB, CHANGE COLUMS VALUES
         this.spinnerLoading = true; 
         const COLUMNS_HOME = [ { label: 'Quote Name', fieldName: 'name', sortable: true, },];
@@ -78,7 +77,7 @@ export default class Bl_dataTable extends LightningElement {
                         else {
                             COLUMNS_HOME.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, },);
                             if(this.fieldSet[i].property == 'description'){
-                                indexDes = i+2; //One because Quote Name and other because is the next index
+                                indexDes = i+1; //One because Quote Name 
                                 //console.log('Index description '+indexDes);
                             }
                         }
@@ -105,6 +104,8 @@ export default class Bl_dataTable extends LightningElement {
                 { type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:delete', name: 'Delete', variant:'border-filled', size:'xx-small'}}
             );
             this.spinnerLoading = false; 
+            console.log('No rows selected');
+            this.dispatchEvent(new CustomEvent('notselected'));
 
         })
         .catch((error) => {
@@ -118,7 +119,9 @@ export default class Bl_dataTable extends LightningElement {
             });
             this.dispatchEvent(evt);
             //console.log('Error displaying field sets');
-        })
+        });
+        
+
     }
     
     @wire(MessageContext)
@@ -194,13 +197,17 @@ export default class Bl_dataTable extends LightningElement {
                 this.template.querySelector('lightning-datatable').selectedRows=[];
                 this.firstHandler();
             } else {
-                const evt = new ShowToastEvent({
-                    title: 'You selected a Row from the other tab',
-                    message: 'The row selected to clone is in the other tab',
-                    variant: 'info',
-                    mode: 'dismissable'
-                });
-                this.dispatchEvent(evt);
+                console.log('No rows selected');
+                this.dispatchEvent(new CustomEvent('notselected'));
+                setTimeout(function() {
+                    const evt = new ShowToastEvent({
+                        title: 'You selected a Row from the other tab',
+                        message: 'The row selected to clone is in the other tab',
+                        variant: 'info',
+                        mode: 'dismissable'
+                    });
+                    this.dispatchEvent(evt);
+                }, 1000);
                 this.firstHandler();
             }
         }
