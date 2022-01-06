@@ -16,6 +16,7 @@ const EXAMPLES_DATA_BASIC = [
                 name: '1-A',
                 level3: 'OSP Cable Assemblies child',
                 selectionType: 'filtered',
+                isAdd: false,
             },
         ],
     },
@@ -32,11 +33,13 @@ const EXAMPLES_DATA_BASIC = [
                         name: '2-A-A',
                         level4: 'Titan RTD Child 1',
                         selectionType: 'bundle',
+                        isAdd: false,
                     },
                     {
                         name: '2-A-B',
                         level4: 'Titan RTD Child 2',
                         selectionType: 'bundle',
+                        isAdd: false,
                     },
                 ],
             },
@@ -49,11 +52,13 @@ const EXAMPLES_DATA_BASIC = [
                         name: '2-B-A',
                         level4: 'Nodeflex Child 1',
                         selectionType: 'filtered',
+                        isAdd: false,
                     },
                     {
                         name: '2-B-B',
                         level4: 'Nodeflex Child 2',
                         selectionType: 'filtered',
+                        isAdd: false,
                     },
                 ],
             },
@@ -68,6 +73,7 @@ const EXAMPLES_DATA_BASIC = [
                 name: '3-A',
                 level3: 'Product 3 child',
                 selectionType: 'bundle',
+                isAdd: false,
             },
         ],
     },
@@ -84,11 +90,13 @@ const EXAMPLES_DATA_BASIC = [
                         name: '4-A-A',
                         level4: 'Titan RTD Child 1',
                         selectionType: 'bundle',
+                        isAdd: false,
                     },
                     {
                         name: '4-A-B',
                         level4: 'Titan RTD Child 2',
                         selectionType: 'bundle',
+                        isAdd: false,
                     },
                 ],
             },
@@ -101,11 +109,13 @@ const EXAMPLES_DATA_BASIC = [
                         name: '4-B-A',
                         level4: 'Nodeflex Child 1',
                         selectionType: 'filtered',
+                        isAdd: false,
                     },
                     {
                         name: '4-B-B',
                         level4: 'Nodeflex Child 2',
                         selectionType: 'filtered',
+                        isAdd: false,
                     },
                 ],
             },
@@ -123,9 +133,11 @@ export default class Bl_treeProducts extends LightningElement {
     @track gridData; //MOCK DATA
     @track gridColumns; 
 
+    @track addDisable;
     connectedCallback(){
         console.log('Here goes the values of gird data!');
         this.gridData = EXAMPLES_DATA_BASIC;
+        this.addDisable = [false, true, true, true];
     }
 
     //BUTTON ACTION DEPENDING ON LEVELS
@@ -135,14 +147,15 @@ export default class Bl_treeProducts extends LightningElement {
             { type: 'text', fieldName: 'level2', label: 'Level 2', },
             { type: 'text', fieldName: 'level3', label: 'Level 3', },
             { type: 'text', fieldName: 'level4', label: 'Level 4', },
-            { type: 'action', typeAttributes: { rowActions: this.getRowActions } },
+            { type: 'action', typeAttributes: { rowActions: this.getRowActions.bind(this) } },
         ];
     }
+
+
     getRowActions(row, doneCallback) {
         //LEVEL 1: TABS, LEVEL 2: TREE HEAD, LEVEL 3: SELECTABLE PRODUCT, LEVEL 4: SECOND SELECTABLE PRODUCT
         const actions = [];
         //console.log('ROW PROPERTIES: '+ Object.getOwnPropertyNames(row));
-
         //IF LEVEL 2 - ONLY SHOW PRODUCT INFORMATION
         if (row.level == 1) {
             actions.push({ label: 'View', name: 'view' });
@@ -150,15 +163,16 @@ export default class Bl_treeProducts extends LightningElement {
         //IF LEVEL 3 WITHOUT LEVEL 4 (NO CHILDREN)
         else if (row.level == 2 && !row.hasChildren) {
             let typeProduct; 
+            
             if (row.selectionType == 'filtered'){
                 typeProduct='Filter';
             } else {
                 typeProduct='Bundle';
             } 
-            actions.push({ label: 'Add '+typeProduct , name: 'add' },
-            { label: 'Clone', name: 'clone', disabled: true },
-            { label: 'Edit', name: 'edit', disabled: true},
-            { label: 'Delete', name: 'delete', disabled: true },);
+            actions.push({ label: 'Add '+typeProduct , name: 'add', disabled: this.addDisable[0], },
+            { label: 'Clone', name: 'clone', disabled: this.addDisable[1], },
+            { label: 'Edit', name: 'edit', disabled: this.addDisable[2],},
+            { label: 'Delete', name: 'delete', disabled: this.addDisable[3], },);
         } 
         //IF LEVEL 3 WITH LEVEL 4 (CHILDREN)
         else if (row.level == 2 && row.hasChildren) {
@@ -172,10 +186,10 @@ export default class Bl_treeProducts extends LightningElement {
             } else {
                 typeProduct='Bundle';
             } 
-            actions.push({ label: 'Add '+typeProduct, name: 'add' },
-            { label: 'Clone 3', name: 'clone', disabled: true },
-            { label: 'Edit 3', name: 'edit', disabled: true },
-            { label: 'Delete 3', name: 'delete', disabled: true },);
+            actions.push({ label: 'Add '+typeProduct , name: 'add', disabled: this.addDisable[0] },
+            { label: 'Clone', name: 'clone', disabled: this.addDisable[1], },
+            { label: 'Edit', name: 'edit', disabled: this.addDisable[2],},
+            { label: 'Delete', name: 'delete', disabled: this.addDisable[3], },);
         }
         /**
          * if (row.hasChildren){
@@ -190,9 +204,11 @@ export default class Bl_treeProducts extends LightningElement {
     }
 
     //HERE GOES THE ACTIONS TO ADD, EDIT, CLONE OR DELETE ONE.
+    @api rowSelected;
     handleRowAction(event){
         const action = event.detail.action;
         const row = event.detail.row;
+        this.rowSelected = row; 
         console.log('ROW properties '+ Object.getOwnPropertyNames(row));
         switch (action.name) {
             case 'view':
@@ -345,5 +361,13 @@ export default class Bl_treeProducts extends LightningElement {
     }
     //Bundle information: 
     @track nameBundleProduct; 
+
+    //Change Configured display when Save; 
+    saveConfigured(){
+        this.closeConfigured();
+        console.log('Level that closed the popup '+this.rowSelected.level); 
+        this.rowSelected.isAdd = !this.rowSelected.isAdd ? true : false; 
+        this.addDisable = [true, false, false, false];
+    }
 
 }

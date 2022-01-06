@@ -10,12 +10,9 @@ import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import printQuoteLines from '@salesforce/apex/QuoteController.printQuoteLines';
 import printNotes from '@salesforce/apex/QuoteController.printNotes'; 
 
-//Quote Total functions
-import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
-import TOTAL_FIELD from '@salesforce/schema/SBQQ__Quote__c.SBQQ__NetAmount__c';
-
 //Quote Saver
 import getQuoteTotal from '@salesforce/apex/QuoteController.getQuoteTotal'; 
+import quoteLineCreator from '@salesforce/apex/QuoteController.quoteLineCreator'; 
 import saveAndCalculateQuote from '@salesforce/apex/QuoteController.saveAndCalculateQuote';
 
 export default class UserInterface extends NavigationMixin(LightningElement) {
@@ -294,7 +291,52 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         this.labelButtonSave =  event.target.label;
         //console.log('Label '+ label);
         this.spinnerLoadingUI = true;
-        //console.log('quoteLines: '+this.quotelinesString);
+        console.log('quoteLines: '+this.quotelinesString);
+        quoteLineCreator({quoteId: this.recordId, quoteLines: this.quotelinesString})
+        .then(()=>{
+            const payload = { 
+                dataString: this.quotelinesString,
+                auxiliar: 'updatetable'
+              };
+            publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload);   
+            
+            getQuoteTotal({quoteId: this.recordId})
+            .then((data)=>{
+                console.log('NEW QUOTE TOTAL data');
+                console.log(data);
+                this.totalValue = JSON.parse(data);
+                this.spinnerLoadingUI = false;
+                const evt = new ShowToastEvent({
+                    title: 'Success making the calculations',
+                    message: 'Your changes have been saved on Salesforce',
+                    variant: 'success',
+                    mode: 'dismissable'
+                });
+                this.dispatchEvent(evt);
+                setTimeout(() => {
+                    if (this.labelButtonSave == "Save & Calculate"){
+                        //window.location.reload(); //To reload the page. 
+                        //ask if they want to see changes or not in UI
+                        this.callData();
+                        console.log('quoteLineCreator SUCCESS');
+                    } else {
+                        this.callData();
+                    }
+                }, 500);
+            })
+            .catch((error)=>{
+                console.log('NEW QUOTE TOTAL error');
+                console.log(error);
+                this.spinnerLoadingUI = false;
+            }); 
+        })
+        .catch((error)=>{
+            console.log('quoteLineCreator ERROR');
+            console.log(error);
+        })
+
+
+/*
         saveAndCalculateQuote( {quoteId: this.recordId, quoteLines: this.quotelinesString})
         .then(()=>{
             getQuoteTotal({quoteId: this.recordId})
@@ -325,7 +367,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 console.log(error);
                 this.spinnerLoadingUI = false;
             }); 
-            })
+        })
         .catch((error)=>{ 
             this.spinnerLoadingUI = false;
             const evt = new ShowToastEvent({
@@ -340,6 +382,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             console.log('Error message: '+ error.body.message);
             console.log('Error stackTrace: '+ error.body.stackTrace);
         }); 
+        */
     }
 
 
@@ -356,14 +399,6 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                     actionName: 'view'
                 },
             });
-    
-            const evt = new ShowToastEvent({
-                title: 'Please Reload ',
-                message: 'Reload the Page to see the changes in the UI',
-                variant: 'info',
-                mode: 'dismissable'
-            });
-            this.dispatchEvent(evt);
         }, 1000);
         
     }

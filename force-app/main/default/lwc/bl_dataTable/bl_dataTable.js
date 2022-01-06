@@ -195,6 +195,8 @@ export default class Bl_dataTable extends LightningElement {
                     this.dispatchEvent(evt);
                 },250);
                 this.template.querySelector('lightning-datatable').selectedRows=[];
+                this.selectedRows = [];
+                this.dispatchEvent(new CustomEvent('notselected'));
                 this.firstHandler();
             } else {
                 console.log('No rows selected');
@@ -356,6 +358,7 @@ export default class Bl_dataTable extends LightningElement {
             });
             this.dispatchEvent(evt);
         }
+        this.quoteLinesEdit = [];
         this.firstHandler();
         //MISSING WHEN UPDATE FIELDS IN NOTES
         /*
