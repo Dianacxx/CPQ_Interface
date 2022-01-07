@@ -1,0 +1,156 @@
+<template>
+    <lightning-card>
+    <!--SPINNER TO LOAD START-->
+    <lightning-spinner if:true={spinnerLoading} alternative-text="Loading" size="medium"></lightning-spinner>
+    <!--SPINNER TO LOAD END-->
+    <!--LOOK UP FIELD START-->
+    <template if:true={isQuoteLinesTab}>
+        <div class="slds-m-left_small slds-m-right_small slds-m-top_small slds-m-bottom_small">
+            <c-bl_custom-lookup record-id={recordId} option-is-customer-part={isCustomerPart} search-placeholder="Search Product" icon-name="standard:products" onlookupselected={handleProductSelection}> </c-bl_custom-lookup>
+        </div>
+    </template>
+    <!--LOOK UP FIELD END-->
+    <!--PAGINATION CONTROL START-->
+    <div>
+        <p class="slds-align_absolute-center"><b> Quote lines: {quotelinesLength}</b></p>
+        <p class="slds-align_absolute-center"><b> Page {page} of {totalPage}</b></p>
+        <lightning-button-group class="slds-align_absolute-center">
+            <lightning-button label="First" icon-name="utility:chevronleft" onclick={firstHandler} class="stretchButton"></lightning-button>
+            <lightning-button label="Previous" icon-name="utility:chevronleft" onclick={previousHandler} class="stretchButton"></lightning-button>
+            <lightning-button label="Next" icon-name="utility:chevronright" icon-position="right" onclick={nextHandler} class="stretchButton"></lightning-button>
+            <lightning-button label="Last" icon-name="utility:chevronright" icon-position="right" onclick={lastHandler} class="stretchButton"></lightning-button>
+        </lightning-button-group>
+    </div>
+    <!--PAGINATION CONTROL END-->
+    <!--DATATABLE START-->
+    <div class="slds-align_absolute-center slds-m-top_small">
+        <lightning-datatable style="width:100%;" key-field="id" draft-values={draftValues} data={dataPages} columns={columns} 
+        onrowaction={handleRowAction} onrowselection={handleRowSelection} onsave={handleSaveEdition}
+        sorted-by={sortBy} sorted-direction={sortDirection} onsort={handleSortData}></lightning-datatable>
+    </div>
+        <!--POP UP NSP PRODUCTS START-->
+        <template if:true={nspProduct}>
+            <section aria-modal="true" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container ">
+                    <header class="slds-modal__header">
+                        <h2 class="slds-text-heading_medium slds-hyphenate">NSP Product</h2>
+                        <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeNsp}></lightning-icon>
+                    </header>
+                    <div class="slds-modal__content">
+                        <div class="slds-p-around_small slds-align_absolute-center">
+                            <p style="font-size:160%;">HERE GOES NSP PRODUCTS VALUES</p>
+                        </div>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning-button variant="brand" label="Cancel" onclick={closeNsp} class="slds-p-around_x-small slds-m-right_small"></lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+        <!--POP UP NSP PRODUCTS END-->
+        <!--POP UP WARNING DELETE START-->
+        <template if:true={deleteClick}>
+            <section aria-modal="true" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container ">
+                    <header class="slds-modal__header">
+                        <h2 class="slds-text-heading_medium slds-hyphenate">WARNING</h2>
+                        <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeModal}></lightning-icon>
+                    </header>
+                    <div class="slds-modal__content">
+                        <div class="slds-p-around_small slds-align_absolute-center">
+                            <p style="font-size:160%;">Are you sure you want to delete this?</p>
+                        </div>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning-button variant="brand" label="Cancel" onclick={closeModal} class="slds-p-around_x-small slds-m-right_small"></lightning-button>
+                        <lightning-button variant="brand" label="Confirm" onclick={deleteModal} class="slds-p-around_x-small"></lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+        <!--POP UP WARNING DELETE END-->
+        <!--POP UP TIERS AND CONTRACTS START-->
+        <template if:true={popUpTiers}>
+            <section aria-modal="true" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container ">
+                    <header class="slds-modal__header">
+                        <h2 class="slds-text-heading_medium slds-hyphenate">Available Discounts</h2>
+                        <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeTiers}></lightning-icon>
+                    </header>
+                    <div class="slds-modal__content">
+                        <div class="slds-p-around_small slds-align_absolute-center">
+                            <p style="font-size:160%;">HERE GOES THE TIERS AND CONTRACTS AVAILABLE</p>
+                        </div>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning-button variant="brand" label="Close" onclick={closeTiers} class="slds-p-around_x-small slds-m-right_small"></lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+        <!--POP UP TIERS AND CONTRACTS END-->
+        <!--POP UP REORDER LINES START-->
+        <template if:true={popUpReorder}>
+            <!-- Modal/Popup Box LWC starts here -->
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <!-- Modal/Popup Box LWC header here -->
+                    <header class="slds-modal__header">
+                        <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={closeReorder}>
+                            <lightning-icon icon-name="utility:close" alternative-text="close" variant="inverse" size="small" ></lightning-icon>
+                            <span class="slds-assistive-text">Close</span>
+                        </button>
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Reorder Lines of products</h2>
+                    </header>
+                    <!-- Modal/Popup Box LWC body starts here -->
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                        <!--START TABLE TO REORDER -->
+                        <p class="slds-align_absolute-center slds-m-bottom_x-small" style="color: blue;">Number of Quote Lines: {quotelinesLength}</p>
+                        <div class="slds-grid slds-grid_vertical">
+                            <div class="slds-scrollable slds-grow">
+                              <div class="slds-scrollable_none">
+                                <table aria-multiselectable="true" class="slds-table slds-no-row-hover slds-table_bordered slds-table_fixed-layout slds-table_resizable-cols" role="grid" >
+                                  <thead>
+                                    <tr class="slds-line-height_reset">
+                                        <th>Quote Name</th>
+                                        <th>Product</th>
+                                        <th>Description</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    <template for:each={ElementList} for:item="qlorder" for:index="index">
+                                      <tr key={qlorder.Id} onchange={Change} draggable="true" ondrop={Drop} ondragstart={DragStart} ondragover={DragOver} title={index}>
+                                        <td role="gridcell">
+                                          <div class="slds-cell-wrap" title={index}>{qlorder.name}</div>
+                                        </td>
+                                        <td role="gridcell">
+                                            <div class="slds-cell-wrap" title="product">{qlorder.product}</div>
+                                          </td>
+                                        <td role="gridcell">
+                                          <div class="slds-cell-wrap" title="description">{qlorder.description}</div>
+                                        </td>
+                                      </tr>
+                                    </template>
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                        </div>
+                        <!--END TABLE TO REORDER-->
+                    </div>
+                    <!-- Modal/Popup Box LWC footer starts here -->
+                    <footer class="slds-modal__footer">
+                        <button class="slds-button slds-button_neutral" onclick={closeReorder} title="Cancel">Cancel</button>
+                        <button class="slds-button slds-button_brand" onclick={submitReorder} title="OK">Save</button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+        <!--POP UP REORDER LINES END-->
+    <!--DATATABLE END-->
+    </lightning-card>
+</template>
