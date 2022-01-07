@@ -10,7 +10,10 @@ export default class ButtonOpenUi extends NavigationMixin(LightningElement) {
     //Active or not the button
     @track disableButton = false;
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 9bddcd97696a77f6d13b85d98ae7bb0c45e69399
     @api quoteLinesAuxiliar; 
     //NAVIGATION TO OPEN UI
     handleNavigateUi(){

@@ -10,8 +10,6 @@ public with sharing class QuoteController {
         for (Schema.FieldSetMember fieldSetMember : homeFieldSetMemberListEditable) {
             WrappersClass.FieldSetWrapperClass wrapper = new WrappersClass.FieldSetWrapperClass();
             String labelWithoutSpaces = fieldSetMember.getLabel().replaceAll( '\\s+', '');
-            
-            
             wrapper.key = 'HOME';
             wrapper.editable= true;
             wrapper.label = fieldSetMember.getLabel();

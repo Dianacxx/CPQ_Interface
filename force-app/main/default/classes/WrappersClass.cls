@@ -16,8 +16,11 @@ public with sharing class WrappersClass {
         public String id{get;set;}
         public String name {get;set;}
         public String product{get;set;}
+<<<<<<< HEAD
         public Id productid{get;set;}
         public Product2 productobj{get;set;}
+=======
+>>>>>>> 9bddcd97696a77f6d13b85d98ae7bb0c45e69399
         public String tiers{get;set;}
         public String description{get;set;}
         public Decimal quantity{get;set;}

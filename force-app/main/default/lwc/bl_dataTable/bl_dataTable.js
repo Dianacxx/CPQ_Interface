@@ -329,6 +329,7 @@ export default class Bl_dataTable extends LightningElement {
     //Save when table is edited and clicked in save button.
     handleSaveEdition(event){
         this.quoteLinesEdit = event.detail.draftValues; 
+<<<<<<< HEAD
         for (let j = 0; j<this.quoteLines.length;j++){
             console.log('quoteLine id: '+ this.quoteLines[j].id + ' - name: ' + this.quoteLines[j].name);
         }
@@ -340,6 +341,12 @@ export default class Bl_dataTable extends LightningElement {
             for (let i =0; i< this.quoteLinesEdit.length; i++){
                 console.log('Id editada: '+this.quoteLinesEdit[i].id);
                 let index = this.quoteLines.findIndex(x => x.id === this.quoteLinesEdit[i].id);
+=======
+        if (!(this.tabSelected == 'Notes') && !(this.tabSelected == 'Line')){
+            for (let i =0; i< this.quoteLinesEdit.length; i++){
+                console.log('Id editada: '+this.quoteLinesEdit[i].id);
+                const index = this.quoteLines.findIndex(x => x.id === this.quoteLinesEdit[i].id);
+>>>>>>> 9bddcd97696a77f6d13b85d98ae7bb0c45e69399
                 console.log('Index en quoteLines '+index); 
                 const inputsItems = this.quoteLinesEdit.slice().map(draft => {
                     const fields = Object.assign({}, draft);
@@ -364,11 +371,17 @@ export default class Bl_dataTable extends LightningElement {
                 mode: 'dismissable'
             });
             this.dispatchEvent(evt);
+<<<<<<< HEAD
             this.quoteLinesEdit = [];
         }
         this.template.querySelector("lightning-datatable").draftValues = [];
         this.firstHandler();
         this.updateTable();
+=======
+        }
+        this.quoteLinesEdit = [];
+        this.firstHandler();
+>>>>>>> 9bddcd97696a77f6d13b85d98ae7bb0c45e69399
         //MISSING WHEN UPDATE FIELDS IN NOTES
         /*
         *

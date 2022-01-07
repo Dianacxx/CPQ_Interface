@@ -32,8 +32,13 @@ public with sharing class SearchLookupController {
             }
             else {
                 
+<<<<<<< HEAD
                 myQuery = 'SELECT Id, Name, (SELECT Competitor_Part__c,Competitor__r.Name FROM Competitor_Cross_References__r) FROM Product2 WHERE Id In (Select Product__c FROM Competitor_Product_Cross_Reference__c WHERE Competitor_Part__c Like  \'%' + searchTerm + '%\')          LIMIT 5';
                 //SELECT Id, Name, (SELECT Competitor_Part__c FROM Competitor_Cross_References__r) FROM Product2 WHERE Id In (Select Product__c FROM Competitor_Product_Cross_Reference__c WHERE Competitor_Part__c Like '%sw%' )
+=======
+                myQuery = 'SELECT Id, Name, (SELECT Competitor_Part__c FROM Competitor_Cross_References__r) FROM Product2 WHERE Id In (Select Product__c FROM Competitor_Product_Cross_Reference__c WHERE Competitor_Part__c Like  \'%' + searchTerm + '%\') LIMIT 5';
+                
+>>>>>>> 9bddcd97696a77f6d13b85d98ae7bb0c45e69399
             }
         }
         else {
@@ -41,10 +46,17 @@ public with sharing class SearchLookupController {
                 myQuery = 'Select Id, Name,IsActive from Product2 Where LastViewedDate != NULL ORDER BY LastViewedDate DESC LIMIT  5';
     
             }
+<<<<<<< HEAD
             else {
                 // myQuery = 'Select Id, Name from Customer_Part_Cross_Reference__c Where Account__c = '+accountID+ ' AND Name Like  \'%' + searchTerm + '%\' AND Active__c = \'%True%\' LIMIT  5';
                 //partQuery = [Select Id, Name, Product__c from Customer_Part_Cross_Reference__c Where Account__c =: accountID  AND Name Like  : searchTerm  AND Active__c = 'True'];
                 myQuery = 'SELECT Id, Name, (SELECT Customer_Item_Number__c, Account__r.Name FROM Customer_Part_Cross_References__r) FROM Product2 WHERE Id In (Select Product__c FROM Customer_Part_Cross_Reference__c Where Customer_Item_Number__c Like  \'%' + searchTerm + '%\' AND Active__c = True) LIMIT 5';
+=======
+            else if (partAccounts.contains(accountID)) {
+                // myQuery = 'Select Id, Name from Customer_Part_Cross_Reference__c Where Account__c = '+accountID+ ' AND Name Like  \'%' + searchTerm + '%\' AND Active__c = \'%True%\' LIMIT  5';
+                //partQuery = [Select Id, Name, Product__c from Customer_Part_Cross_Reference__c Where Account__c =: accountID  AND Name Like  : searchTerm  AND Active__c = 'True'];
+                myQuery = 'SELECT Id, Name, (SELECT Customer_Item_Number__c FROM Customer_Part_Cross_References__r) FROM Product2 WHERE Id In (Select Product__c FROM Customer_Part_Cross_Reference__c Where Account__c = \'' +accountID+ '\' AND Customer_Item_Number__c Like  \'%' + searchTerm + '%\' AND Active__c = True) LIMIT 5';
+>>>>>>> 9bddcd97696a77f6d13b85d98ae7bb0c45e69399
                 // myQuery = 'Select Id, Name FROM Product2 WHERE Id In (Select Product__c FROM Customer_Part_Cross_Reference__c Where Account__c = \'' +accountID+ '\' AND Customer_Item_Number__c Like  \'%' + searchTerm + '%\' AND Active__c = True) LIMIT 5';
             }
         }

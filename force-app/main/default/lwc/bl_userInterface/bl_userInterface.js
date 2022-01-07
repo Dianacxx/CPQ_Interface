@@ -13,7 +13,11 @@ import printNotes from '@salesforce/apex/QuoteController.printNotes';
 //Quote Saver
 import getQuoteTotal from '@salesforce/apex/QuoteController.getQuoteTotal'; 
 import quoteLineCreator from '@salesforce/apex/QuoteController.quoteLineCreator'; 
+<<<<<<< HEAD
 import editAndDeleteQuotes from '@salesforce/apex/QuoteController.editAndDeleteQuotes';
+=======
+import saveAndCalculateQuote from '@salesforce/apex/QuoteController.saveAndCalculateQuote';
+>>>>>>> 9bddcd97696a77f6d13b85d98ae7bb0c45e69399
 
 export default class UserInterface extends NavigationMixin(LightningElement) {
     @api recordId; //Quote Record Id that opens the UI
@@ -292,7 +296,10 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         //console.log('Label '+ label);
         this.spinnerLoadingUI = true;
         console.log('quoteLines: '+this.quotelinesString);
+<<<<<<< HEAD
         
+=======
+>>>>>>> 9bddcd97696a77f6d13b85d98ae7bb0c45e69399
         quoteLineCreator({quoteId: this.recordId, quoteLines: this.quotelinesString})
         .then(()=>{
             const payload = { 
@@ -301,6 +308,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
               };
             publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload);   
             
+<<<<<<< HEAD
 
             getQuoteTotal({quoteId: this.recordId})
             .then((data)=>{
@@ -308,11 +316,27 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 console.log(data);
                 this.totalValue = JSON.parse(data);
                 
+=======
+            getQuoteTotal({quoteId: this.recordId})
+            .then((data)=>{
+                console.log('NEW QUOTE TOTAL data');
+                console.log(data);
+                this.totalValue = JSON.parse(data);
+                this.spinnerLoadingUI = false;
+                const evt = new ShowToastEvent({
+                    title: 'Success making the calculations',
+                    message: 'Your changes have been saved on Salesforce',
+                    variant: 'success',
+                    mode: 'dismissable'
+                });
+                this.dispatchEvent(evt);
+>>>>>>> 9bddcd97696a77f6d13b85d98ae7bb0c45e69399
                 setTimeout(() => {
                     if (this.labelButtonSave == "Save & Calculate"){
                         //window.location.reload(); //To reload the page. 
                         //ask if they want to see changes or not in UI
                         this.callData();
+<<<<<<< HEAD
                         console.log('TOTAL SUCCESS');
                     } else {
                         this.callData();
@@ -339,11 +363,24 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                     mode: 'dismissable'
                 });
                 this.dispatchEvent(evt);
+=======
+                        console.log('quoteLineCreator SUCCESS');
+                    } else {
+                        this.callData();
+                    }
+                }, 500);
+            })
+            .catch((error)=>{
+                console.log('NEW QUOTE TOTAL error');
+                console.log(error);
+                this.spinnerLoadingUI = false;
+>>>>>>> 9bddcd97696a77f6d13b85d98ae7bb0c45e69399
             }); 
         })
         .catch((error)=>{
             console.log('quoteLineCreator ERROR');
             console.log(error);
+<<<<<<< HEAD
 
             this.spinnerLoadingUI = false;
             const evt = new ShowToastEvent({
@@ -353,6 +390,8 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 mode: 'dismissable'
             });
             this.dispatchEvent(evt);
+=======
+>>>>>>> 9bddcd97696a77f6d13b85d98ae7bb0c45e69399
         })
 
 
