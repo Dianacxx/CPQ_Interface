@@ -13,7 +13,7 @@ import printNotes from '@salesforce/apex/QuoteController.printNotes';
 //Quote Saver
 import getQuoteTotal from '@salesforce/apex/QuoteController.getQuoteTotal'; 
 import quoteLineCreator from '@salesforce/apex/QuoteController.quoteLineCreator'; 
-import saveAndCalculateQuote from '@salesforce/apex/QuoteController.saveAndCalculateQuote';
+import editAndDeleteQuotes from '@salesforce/apex/QuoteController.editAndDeleteQuotes';
 
 export default class UserInterface extends NavigationMixin(LightningElement) {
     @api recordId; //Quote Record Id that opens the UI
@@ -292,6 +292,39 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         //console.log('Label '+ label);
         this.spinnerLoadingUI = true;
         console.log('quoteLines: '+this.quotelinesString);
+        
+        this.callEditAnDeleteMethod();
+        setTimeout(()=>{
+            this.callCreateMethod();
+        }, 2000);
+        
+    }
+
+    callEditAnDeleteMethod(){
+        editAndDeleteQuotes({quoteId: this.recordId, quoteLines: this.quotelinesString})
+        .then(()=>{
+            const payload = { 
+                dataString: this.quotelinesString,
+                auxiliar: 'updatetable'
+              };
+            publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload);   
+        })
+        .catch((error)=>{
+            console.log('editAndDeleteQuotes ERROR');
+            console.log(error);
+
+            this.spinnerLoadingUI = false;
+            const evt = new ShowToastEvent({
+                title: 'editAndDeleteQuotes ERROR',
+                message: 'open console',
+                variant: 'error',
+                mode: 'dismissable'
+            });
+            this.dispatchEvent(evt);
+        })
+    }
+
+    callCreateMethod(){
         quoteLineCreator({quoteId: this.recordId, quoteLines: this.quotelinesString})
         .then(()=>{
             const payload = { 
@@ -299,93 +332,55 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 auxiliar: 'updatetable'
               };
             publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload);   
-            
             getQuoteTotal({quoteId: this.recordId})
             .then((data)=>{
-                console.log('NEW QUOTE TOTAL data');
+                console.log('getQuoteTotal SUCCESS');
                 console.log(data);
                 this.totalValue = JSON.parse(data);
-                this.spinnerLoadingUI = false;
-                const evt = new ShowToastEvent({
-                    title: 'Success making the calculations',
-                    message: 'Your changes have been saved on Salesforce',
-                    variant: 'success',
-                    mode: 'dismissable'
-                });
-                this.dispatchEvent(evt);
+                
                 setTimeout(() => {
-                    if (this.labelButtonSave == "Save & Calculate"){
-                        //window.location.reload(); //To reload the page. 
-                        //ask if they want to see changes or not in UI
-                        this.callData();
-                        console.log('quoteLineCreator SUCCESS');
-                    } else {
-                        this.callData();
-                    }
+                    this.callData();
+                    console.log('TOTAL SUCCESS');
+                    this.callData();
+                    this.spinnerLoadingUI = false;
+
+                    const evt = new ShowToastEvent({
+                        title: 'Success making the calculations',
+                        message: 'Your changes have been saved on Salesforce',
+                        variant: 'success',
+                        mode: 'dismissable'
+                    });
+                    this.dispatchEvent(evt);
                 }, 500);
             })
             .catch((error)=>{
-                console.log('NEW QUOTE TOTAL error');
+                console.log('getQuoteTotal ERROR');
                 console.log(error);
                 this.spinnerLoadingUI = false;
+
+                const evt = new ShowToastEvent({
+                    title: 'getQuoteTotal ERROR',
+                    message: 'open console',
+                    variant: 'error',
+                    mode: 'dismissable'
+                });
+                this.dispatchEvent(evt);
             }); 
         })
         .catch((error)=>{
             console.log('quoteLineCreator ERROR');
             console.log(error);
-        })
 
-
-/*
-        saveAndCalculateQuote( {quoteId: this.recordId, quoteLines: this.quotelinesString})
-        .then(()=>{
-            getQuoteTotal({quoteId: this.recordId})
-            .then((data)=>{
-                console.log('NEW QUOTE TOTAL data');
-                console.log(data);
-                this.totalValue = JSON.parse(data);
-                this.spinnerLoadingUI = false;
-                const evt = new ShowToastEvent({
-                    title: 'Success making the calculations',
-                    message: 'Your changes have been saved on Salesforce',
-                    variant: 'success',
-                    mode: 'dismissable'
-                });
-                this.dispatchEvent(evt);
-                setTimeout(() => {
-                    if (this.labelButtonSave == "Save & Calculate"){
-                        //window.location.reload(); //To reload the page. 
-                        //ask if they want to see changes or not in UI
-                        this.callData();
-                    } else {
-                        this.callData();
-                    }
-                }, 500);
-            })
-            .catch((error)=>{
-                console.log('NEW QUOTE TOTAL error');
-                console.log(error);
-                this.spinnerLoadingUI = false;
-            }); 
-        })
-        .catch((error)=>{ 
             this.spinnerLoadingUI = false;
             const evt = new ShowToastEvent({
-                title: 'Error making the calculations',
-                message: 'Your changes cannot be saved on Salesforce',
+                title: 'quoteLineCreator ERROR',
+                message: 'open console',
                 variant: 'error',
                 mode: 'dismissable'
             });
             this.dispatchEvent(evt);
-            console.log('Error quoteSaver: '); 
-            console.log(error); 
-            console.log('Error message: '+ error.body.message);
-            console.log('Error stackTrace: '+ error.body.stackTrace);
-        }); 
-        */
+        })
     }
-
-
     //NAVIGATE TO QUOTE RECORD PAGE (MISSING SAVING INFORMATION)
     navigateToQuoteRecordPage() {
         //HERE GOES THE SAVING PART
