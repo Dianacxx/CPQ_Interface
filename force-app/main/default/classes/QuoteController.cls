@@ -448,14 +448,7 @@ public with sharing class QuoteController {
         return JSON.serialize(quote.SBQQ__NetAmount__c);
     }
     @AuraEnabled
-    public static List<QuoteLineModel> addQuoteLines (QuoteModel quote, QuoteLineModel newQuoteLine){
-        List<QuoteLineModel> quoteLines = quote.getLineItems() ;
-        quoteLines.add(newQuoteLine);
-        quote.setLineItems(quoteLines);
-
-        QuoteModel savedQuote = quoteSaverMethod(quote);
-        system.debug('new line Items size - ' + savedQuote.getLineItems().size());
-
-        return savedQuote.getLineItems();
+    public static void addQuoteLines (String level1){
+        List<Product2> productList = [SELECT ID,ProdLevel1__c,ProdLevel2__c,ProdLevel3__c,ProdLevel4__c FROM Product2 WHERE ProdLevel1__c =: level1];
     }
 }

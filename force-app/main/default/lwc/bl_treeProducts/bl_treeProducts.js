@@ -122,6 +122,22 @@ const EXAMPLES_DATA_BASIC = [
         ],
     },
 ];
+
+const FOCfilters = [
+    {label: 'Premise Cable', filterSelection: '', options: [{label:'Option 1', value:1},{label:'Option 2',value:2} ,{label:'Option 3',value:3},], },
+    {label:'ADSS Cable', filterSelection: '', options: [{label:'Option 4', value:1},{label:'Option 5',value:2} ,{label:'Option 6',value:3},],},
+    {label:'Loose Tube Cable', filterSelection: '', options: [{label:'Option 7', value:1},{label:'Option 8',value:2} ,{label:'Option 9',value:3},],},
+    {label:'SkyWrap Cable', filterSelection: '', options: [{label:'Option 10', value:1},{label:'Option 11',value:2} ,{label:'Option 12',value:3},],},
+    {label:'Wrapping Tube Cable', filterSelection: '', options: [{label:'Option 13', value:1},{label:'Option 14',value:2} ,{label:'Option 15',value:3},],},
+];
+const ACAfilters = [
+    {label: 'Bus Conductor - Seamless Bus Pipe', filterSelection: '', options: [{label:'Option 1', value:1},{label:'Option 5',value:2} ,{label:'Option 9',value:3},],},
+    {label: 'Bus Conductor - Universal Angle', filterSelection: '', options: [{label:'Option 2', value:1},{label:'Option 6',value:2} ,{label:'Option 10',value:3},],},
+    {label:	'Bus Conductor -Rectangular Bar', filterSelection: '', options: [{label:'Option 3', value:1},{label:'Option 7',value:2} ,{label:'Option 11',value:3},],},
+    {label: 'Copperclad', filterSelection: '', options: [{label:'Option 4', value:1},{label:'Option 8',value:2} ,{label:'Option 12',value:3},],}, 
+]; 
+
+
 import { getPicklistValues } from 'lightning/uiObjectInfoApi';
 import FIBER_COUNT_FIELD from '@salesforce/schema/Product2.Configuration__c';
 import { getObjectInfo } from 'lightning/uiObjectInfoApi';
@@ -133,11 +149,16 @@ export default class Bl_treeProducts extends LightningElement {
     @track gridData; //MOCK DATA
     @track gridColumns; 
 
+    @track filters1; //MOCK FILTERS
+    @track filters2; //MOCK FILTERS
+
     @track addDisable;
     connectedCallback(){
         console.log('Here goes the values of gird data!');
         this.gridData = EXAMPLES_DATA_BASIC;
         this.addDisable = [false, true, true, true];
+        this.filters1 = FOCfilters;
+        this.filters2 = ACAfilters;
     }
 
     //BUTTON ACTION DEPENDING ON LEVELS
@@ -279,6 +300,7 @@ export default class Bl_treeProducts extends LightningElement {
     //Filter Values, changing
         handlefiberCount(event) {
             this.fiberCount = event.detail.value;
+            console.log('Selected option of filter: '+event.detail.value); 
         }
         handlejacketType(event) {
             this.jacketType = event.detail.value;
@@ -295,6 +317,7 @@ export default class Bl_treeProducts extends LightningElement {
     //OPTIONS IN FILTERS - CHANGE WHEN DIANA SENDS VALUES !!!!!!
 
     get options() {
+        //console.log('How to display options: '+ JSON.stringify(this.TypePicklistValues.data.values));
         return this.TypePicklistValues.data.values;
     }
     //THIS FILTERS NEED TO BE DONE BUT ASK HOW MANY THEY ARE GOING TO BE
@@ -367,7 +390,7 @@ export default class Bl_treeProducts extends LightningElement {
         this.closeConfigured();
         console.log('Level that closed the popup '+this.rowSelected.level); 
         this.rowSelected.isAdd = !this.rowSelected.isAdd ? true : false; 
-        this.addDisable = [true, false, false, false];
+        //this.addDisable = [true, false, false, false];
     }
 
 }

@@ -41,7 +41,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 this.quotelinesString = data; 
                 this.error = undefined;
                 this.isLoading = true; 
-                console.log('quoteLines String SUCCESS: '+ this.quotelinesString);
+                //console.log('quoteLines String SUCCESS: '+ this.quotelinesString);
                 const payload = { 
                     dataString: this.quotelinesString,
                     auxiliar: 'newtable'
@@ -71,7 +71,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             if (data){
                 this.quoteNotesString = data; 
                 this.error = undefined;
-                console.log('notes string SUCCESS: '+ this.quoteNotesString);
+                //console.log('notes string SUCCESS: '+ this.quoteNotesString);
                 this.disableButton = false;
             }    
         })
@@ -107,11 +107,11 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         }); 
         
         var endTime = performance.now();
-        console.log(`Call to quoteLinesWire took ${endTime - startTime} milliseconds`);
+        //console.log(`Call to quoteLinesWire took ${endTime - startTime} milliseconds`);
 
         if (this.quoteLinesString == '[]'){
             this.quoteLinesString = '[id: \"none\"]';
-            console.log(this.quoteLinesString);
+            //console.log(this.quoteLinesString);
             console.log('No quotelines yet');
             const payload = { 
                 dataString: this.quotelinesString,
@@ -121,7 +121,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         }
         if (this.quoteNotesString == '[]'){
             this.quoteNotesString = '[name: \"none\"]';
-            console.log(this.quoteNotesString);
+            //console.log(this.quoteNotesString);
             console.log('No quotes Notes yet');
         }
         this.desactiveCloneButton();
@@ -213,7 +213,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     updateTableData(event){
         console.log('Deleted, Clone, Reorder OR Edited Values');
         this.quotelinesString = event.detail; 
-        console.log('Updated');
+        console.log('Table Updated');
         const payload = { 
             dataString: this.quotelinesString,
             auxiliar: 'updatetable'
@@ -242,6 +242,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             this.disableButton = true;
         }
         else if (event.target.value=='Line'){
+            console.log('Line');
             this.disableReorder = true;
             this.disableButton = true;
         }
@@ -287,104 +288,119 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     //WHEN CLICK SAVE AND CALCULATE
     handleSaveAndCalculate(event){
         //CALL APEX METHOD TO SAVE QUOTELINES AND NOTES
-        //CALL METHOD TO GET QUOTE TOTAL
+
         this.labelButtonSave =  event.target.label;
         //console.log('Label '+ label);
         this.spinnerLoadingUI = true;
-        console.log('quoteLines: '+this.quotelinesString);
+        //console.log('quoteLines: '+this.quotelinesString);
         
-        this.callEditAnDeleteMethod();
-        setTimeout(()=>{
-            this.callCreateMethod();
-        }, 2000);
-        
+        let startTime = performance.now();
+        this.callEditAnDeleteMethod().then(this.callCreateMethod());
+        let endTime = performance.now();
+        console.log(`Saving method took ${endTime - startTime} milliseconds`);
     }
 
-    callEditAnDeleteMethod(){
-        editAndDeleteQuotes({quoteId: this.recordId, quoteLines: this.quotelinesString})
-        .then(()=>{
-            const payload = { 
-                dataString: this.quotelinesString,
-                auxiliar: 'updatetable'
-              };
-            publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload);   
-        })
-        .catch((error)=>{
-            console.log('editAndDeleteQuotes ERROR');
-            console.log(error);
-
-            this.spinnerLoadingUI = false;
-            const evt = new ShowToastEvent({
-                title: 'editAndDeleteQuotes ERROR',
-                message: 'open console',
-                variant: 'error',
-                mode: 'dismissable'
+    //Method that save the changes and deletions
+    async callEditAnDeleteMethod(){
+        return new Promise((resolve) => {
+            editAndDeleteQuotes({quoteId: this.recordId, quoteLines: this.quotelinesString})
+            .then(()=>{
+                const payload = { 
+                    dataString: this.quotelinesString,
+                    auxiliar: 'updatetable'
+                };
+                publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload);   
+                console.log('1. Quote lines updated, now proceed with new quote lines');
+            })
+            .catch((error)=>{
+                console.log('editAndDeleteQuotes ERROR');
+                console.log(error);
+                let errorMessage;
+                if (error.body.hasOwnProperty("pageErrors")){
+                    errorMessage = error.body.pageErrors[0].statusCode; 
+                } 
+                else {
+                    errorMessage = 'Developer: Open console to see error message'
+                }
+                this.spinnerLoadingUI = false;
+                const evt = new ShowToastEvent({
+                    title: 'Editing or Deleting ERROR',
+                    message: errorMessage,
+                    variant: 'error',
+                    mode: 'dismissable'
+                });
+                this.dispatchEvent(evt);
             });
-            this.dispatchEvent(evt);
-        })
+            resolve();
+        });
+        
     }
+    //Method that saves the new quote lines created in the UI
+    async callCreateMethod(){
+        return new Promise((resolve) => {
+            quoteLineCreator({quoteId: this.recordId, quoteLines: this.quotelinesString})
+            .then(()=>{
+                console.log('2. New quote lines created, now proceed with new total');
+                const payload = { 
+                    dataString: this.quotelinesString,
+                    auxiliar: 'updatetable'
+                };
+                publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload);   
+                getQuoteTotal({quoteId: this.recordId})
+                .then((data)=>{
+                    console.log('3. New total value recived, End of process');
+                    //console.log('getQuoteTotal SUCCESS');
+                    //console.log(data);
+                    this.totalValue = JSON.parse(data);
+                    
+                    setTimeout(() => {
+                        this.callData();
+                        console.log('TOTAL SUCCESS');
+                        this.callData();
+                        this.spinnerLoadingUI = false;
 
-    callCreateMethod(){
-        quoteLineCreator({quoteId: this.recordId, quoteLines: this.quotelinesString})
-        .then(()=>{
-            const payload = { 
-                dataString: this.quotelinesString,
-                auxiliar: 'updatetable'
-              };
-            publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload);   
-            getQuoteTotal({quoteId: this.recordId})
-            .then((data)=>{
-                console.log('getQuoteTotal SUCCESS');
-                console.log(data);
-                this.totalValue = JSON.parse(data);
-                
-                setTimeout(() => {
-                    this.callData();
-                    console.log('TOTAL SUCCESS');
-                    this.callData();
+                        const evt = new ShowToastEvent({
+                            title: 'Success creating new quote lines',
+                            message: 'Your additions have been saved on Salesforce',
+                            variant: 'success',
+                            mode: 'dismissable'
+                        });
+                        this.dispatchEvent(evt);
+                    }, 500);
+                })
+                .catch((error)=>{
+                    console.log('getQuoteTotal ERROR');
+                    console.log(error);
                     this.spinnerLoadingUI = false;
 
                     const evt = new ShowToastEvent({
-                        title: 'Success making the calculations',
-                        message: 'Your changes have been saved on Salesforce',
-                        variant: 'success',
+                        title: 'Getting the Total value ERROR',
+                        message: 'open console',
+                        variant: 'error',
                         mode: 'dismissable'
                     });
                     this.dispatchEvent(evt);
-                }, 500);
+                }); 
             })
             .catch((error)=>{
-                console.log('getQuoteTotal ERROR');
+                console.log('quoteLineCreator ERROR');
                 console.log(error);
-                this.spinnerLoadingUI = false;
 
+                this.spinnerLoadingUI = false;
                 const evt = new ShowToastEvent({
-                    title: 'getQuoteTotal ERROR',
+                    title: 'Creating new quotelines ERROR',
                     message: 'open console',
                     variant: 'error',
                     mode: 'dismissable'
                 });
                 this.dispatchEvent(evt);
-            }); 
-        })
-        .catch((error)=>{
-            console.log('quoteLineCreator ERROR');
-            console.log(error);
-
-            this.spinnerLoadingUI = false;
-            const evt = new ShowToastEvent({
-                title: 'quoteLineCreator ERROR',
-                message: 'open console',
-                variant: 'error',
-                mode: 'dismissable'
             });
-            this.dispatchEvent(evt);
-        })
+        resolve();
+        });   
     }
+
     //NAVIGATE TO QUOTE RECORD PAGE (MISSING SAVING INFORMATION)
-    navigateToQuoteRecordPage() {
-        //HERE GOES THE SAVING PART
-        // simulate a trip to the server
+    async exitToRecordPage(){
         setTimeout(() => {
             this[NavigationMixin.Navigate]({
                 type: 'standard__recordPage',
@@ -394,8 +410,16 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                     actionName: 'view'
                 },
             });
-        }, 1000);
+        }, 2000);
         
+    }
+    async navigateToQuoteRecordPage() {
+        let startTime = performance.now();
+        await this.callEditAnDeleteMethod();
+        await this.callCreateMethod();
+        this.exitToRecordPage();
+        let endTime = performance.now();
+        console.log(`Saving and Exit method took ${endTime - startTime} milliseconds`);
     }
 
     //NAVIGATE BACK TO UI FROM PRODUCT SELECTION TAB WHEN CANCEL

@@ -104,7 +104,7 @@ export default class Bl_dataTable extends LightningElement {
                 { type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:delete', name: 'Delete', variant:'border-filled', size:'xx-small'}}
             );
             this.spinnerLoading = false; 
-            console.log('No rows selected');
+            //console.log('No rows selected');
             this.dispatchEvent(new CustomEvent('notselected'));
 
         })
@@ -222,7 +222,7 @@ export default class Bl_dataTable extends LightningElement {
         //TO ALERT THAT A ROW HAS BEEN SELECTED
         if(event.detail.selectedRows.length == 0){
             this.selectedRows = [];
-            console.log('No rows selected');
+            //console.log('No rows selected');
             this.dispatchEvent(new CustomEvent('notselected'));
         } else {
             this.dispatchEvent(new CustomEvent('clone'));
@@ -279,14 +279,14 @@ export default class Bl_dataTable extends LightningElement {
     //Lookup search 
     handleProductSelection(event){
         this.spinnerLoading = true;
-        console.log("the selected record id is: "+event.detail);
+        //console.log("the selected record id is: "+event.detail);
         let productId = event.detail; 
         let newQuotelines; //New quoteline
         let randomId;     //Random Id for new quoteline
         let randomName;   //Random Name for new quoteline
         addQuoteLine({quoteId: this.recordId, productId: productId})
         .then((data) => {
-            console.log('Add Product DATA: '+ data); 
+            //console.log('Add Product DATA: '+ data); 
             newQuotelines = JSON.parse(data); 
             //console.log('New product object: '+ Object.getOwnPropertyNames(newQuoteline[0]));
             for (let i=0; i< newQuotelines.length; i++){
@@ -329,28 +329,29 @@ export default class Bl_dataTable extends LightningElement {
     //Save when table is edited and clicked in save button.
     handleSaveEdition(event){
         this.quoteLinesEdit = event.detail.draftValues; 
+        /*
         for (let j = 0; j<this.quoteLines.length;j++){
             console.log('quoteLine id: '+ this.quoteLines[j].id + ' - name: ' + this.quoteLines[j].name);
         }
         for (let j = 0; j<this.quoteLinesEdit.length;j++){
             console.log('quoteLinesEdit id: '+ this.quoteLinesEdit[j].id+ ' - name: ' + this.quoteLinesEdit[j].name);
         }        
-
+        */
         if (!(this.tabSelected == 'Notes') && !(this.tabSelected == 'Line')){
             for (let i =0; i< this.quoteLinesEdit.length; i++){
-                console.log('Id editada: '+this.quoteLinesEdit[i].id);
+                //console.log('Id editada: '+this.quoteLinesEdit[i].id);
                 let index = this.quoteLines.findIndex(x => x.id === this.quoteLinesEdit[i].id);
-                console.log('Index en quoteLines '+index); 
+                //console.log('Index en quoteLines '+index); 
                 const inputsItems = this.quoteLinesEdit.slice().map(draft => {
                     const fields = Object.assign({}, draft);
                     return { fields };
                 });
-                console.log('inputsItems '+ Object.getOwnPropertyNames(inputsItems[i].fields));
+                //console.log('inputsItems '+ Object.getOwnPropertyNames(inputsItems[i].fields));
                 let prop = Object.getOwnPropertyNames(inputsItems[i].fields); 
-                console.log('prop '+ Object.getOwnPropertyNames(prop)); 
+                //console.log('prop '+ Object.getOwnPropertyNames(prop)); 
                 for(let j= 0; j<prop.length-1; j++){
-                    console.log('Value before edition: '+this.quoteLines[index][prop[j]]);
-                    console.log('Value after edition: ' +inputsItems[i].fields[prop[j]]);
+                    //console.log('Value before edition: '+this.quoteLines[index][prop[j]]);
+                    //console.log('Value after edition: ' +inputsItems[i].fields[prop[j]]);
                     this.quoteLines[index][prop[j]] = inputsItems[i].fields[prop[j]];
                 }               
             }
@@ -394,7 +395,7 @@ export default class Bl_dataTable extends LightningElement {
         let quoteLinesDeleted = this.quoteLines; 
         let row = quoteLinesDeleted.findIndex(x => x.id === this.dataRow.id);
         this.dispatchEvent(new CustomEvent('deletedid', { detail: this.dataRow.name}));
-        console.log("Deleted: " + this.dataRow.name + "- Row: " + row);
+        //console.log("Deleted: " + this.dataRow.name + "- Row: " + row);
         if (quoteLinesDeleted.length > 1){
             quoteLinesDeleted.splice(row,1); 
         }
@@ -480,7 +481,7 @@ export default class Bl_dataTable extends LightningElement {
         this.endingRecord = (this.endingRecord > this.totalRecountCount) 
                             ? this.totalRecountCount : this.endingRecord; 
         this.dataPages = this.quoteLines.slice(this.startingRecord, this.endingRecord);
-        console.log('Slice quoteLines here');
+        //console.log('Slice quoteLines here');
         this.startingRecord = this.startingRecord + 1;
     }    
 
