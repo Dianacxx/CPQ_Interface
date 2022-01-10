@@ -365,12 +365,7 @@ public with sharing class QuoteController {
             }
             update quoteLineRecordsToUpdate;
 
-            //  for(QuoteLineModel line:savedQuote.getLineItems()){
-            //      System.debug('new saved quantities - ' + line.record.SBQQ__Quantity__c);
-
-            //  }
-
-            quoteLineCreator(quoteId, quoteLines);
+            // quoteLineCreator(quoteId, quoteLines);
             
             //Deletes the quote lines from salesforce that are not in the UI
             String deletion = deleteQuoteLines(existingQuoteLines,untypedQuoteLines);
@@ -408,61 +403,41 @@ public with sharing class QuoteController {
             receivedIDs.add(line.id);
         }
 
-            for(WrappersClass.QuoteLineWrapperClass line : untypedQuoteLines){
-                String stringID = String.valueOf(line.id);
-                if (stringID.startsWith('new') || line.id == null || stringID.startsWith('xxx')) {
-                    System.debug('Entered second');
-                    SBQQ__QuoteLine__c newQuoteLine = new SBQQ__QuoteLine__c();
-                    //newQuoteLine.SBQQ__Product__r = '01t8A000007bfC4QAI';
-                    newQuoteLine.SBQQ__Quote__c = getQuote.id;
-                    newQuoteLine.SBQQ__Product__c = line.productid;
-                    newQuoteLine.SBQQ__Quantity__c = line.quantity;
-                    newQuoteLine.SBQQ__Description__c = line.productobj.Description;
-                    newQuoteLine.UOM__c = line.uom;
-                    newQuoteLine.SBQQ__Discount__c = line.additionaldiscount;
-                    newQuoteLine.SBQQ__NetPrice__c = line.netunitprice;
-                    newQuoteLine.SBQQ__ListPrice__c = line.listunitprice;
-                    newQuoteLine.BL_Billing_Tolerance__c = line.billingtolerance;
-                    newQuoteLine.BL_Source__c = line.source;
-                    newQuoteLine.BL_Destination__c = line.destination;
-                    newQuoteLine.BL_Alternative_Indicator__c = line.alternativeindicator;
-                    newQuoteLine.BL_NSP_Offering_Details__c = line.nspofferingdetails;
+        for(WrappersClass.QuoteLineWrapperClass line : untypedQuoteLines){
+            String stringID = String.valueOf(line.id);
+            if (stringID.startsWith('new') || line.id == null || stringID.startsWith('xxx')) {
+                System.debug('Entered second');
+                SBQQ__QuoteLine__c newQuoteLine = new SBQQ__QuoteLine__c();
+                //newQuoteLine.SBQQ__Product__r = '01t8A000007bfC4QAI';
+                newQuoteLine.SBQQ__Quote__c = getQuote.id;
+                newQuoteLine.SBQQ__Product__c = line.productid;
+                newQuoteLine.SBQQ__Quantity__c = line.quantity;
+                newQuoteLine.SBQQ__Description__c = line.productobj.Description;
+                newQuoteLine.UOM__c = line.uom;
+                newQuoteLine.SBQQ__Discount__c = line.additionaldiscount;
+                newQuoteLine.SBQQ__NetPrice__c = line.netunitprice;
+                newQuoteLine.SBQQ__ListPrice__c = line.listunitprice;
+                newQuoteLine.BL_Billing_Tolerance__c = line.billingtolerance;
+                newQuoteLine.BL_Source__c = line.source;
+                newQuoteLine.BL_Destination__c = line.destination;
+                newQuoteLine.BL_Alternative_Indicator__c = line.alternativeindicator;
+                newQuoteLine.BL_NSP_Offering_Details__c = line.nspofferingdetails;
 
-                    QuoteLineModel newModel = new QuoteLineModel();
-                    newModel.setRecord(newQuoteLine);
-                    linesFromQuote.add(newModel);
-                    quote.setLineItems(linesFromQuote);
-                    quoteLinerecordsToInsert.add(newQuoteLine);
-                }
+                QuoteLineModel newModel = new QuoteLineModel();
+                newModel.setRecord(newQuoteLine);
+                linesFromQuote.add(newModel);
+                quote.setLineItems(linesFromQuote);
+                quoteLinerecordsToInsert.add(newQuoteLine);
             }
-            insert quoteLinerecordsToInsert;
-
-            // System.debug('new list size: ' + savedQuote.getLineItems().size());
-            
-
-            // // quote.setLineItems(listFromMethod);
-
-            // // QuoteModel savedQuote = quoteSaverMethod(quote);
-            // for(QuoteLineModel line : savedQuote.getLineItems()){
-            //     System.debug('products: '+line.record.SBQQ__Product__r.Name);
-            // }
-
-            // System.debug('Lines to insert - ' + quoteLinesToInsert.size());
-            // //Inserts the new version of the quote lines into the quote line model
-            // quote.setLineItems(quoteLinesToInsert);
-            // System.debug('Setter line items: ' +  quote.getLineItems());
-        
-            
-            // //Saves te new version of the quote
-            // for(QuoteLineModel line : quote.getLineItems()){
-            // }
+        }
+        insert quoteLinerecordsToInsert;
     }
     @AuraEnabled
 
     public static QuoteModel quoteSaverMethod(QuoteModel quote){
         QuoteSaver saver = new QuoteSaver();
         QuoteModel savedQuote = saver.save(quote);
-
+        
         return savedQuote;
 
     }
@@ -473,14 +448,7 @@ public with sharing class QuoteController {
         return JSON.serialize(quote.SBQQ__NetAmount__c);
     }
     @AuraEnabled
-    public static List<QuoteLineModel> addQuoteLines (QuoteModel quote, QuoteLineModel newQuoteLine){
-        List<QuoteLineModel> quoteLines = quote.getLineItems() ;
-        quoteLines.add(newQuoteLine);
-        quote.setLineItems(quoteLines);
-
-        QuoteModel savedQuote = quoteSaverMethod(quote);
-        system.debug('new line Items size - ' + savedQuote.getLineItems().size());
-
-        return savedQuote.getLineItems();
+    public static void addQuoteLines (String level1){
+        List<Product2> productList = [SELECT ID,ProdLevel1__c,ProdLevel2__c,ProdLevel3__c,ProdLevel4__c FROM Product2 WHERE ProdLevel1__c =: level1];
     }
 }
