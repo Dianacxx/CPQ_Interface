@@ -41,7 +41,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 this.quotelinesString = data; 
                 this.error = undefined;
                 this.isLoading = true; 
-                //console.log('quoteLines String SUCCESS: '+ this.quotelinesString);
+                console.log('quoteLines String SUCCESS: '+ this.quotelinesString);
                 const payload = { 
                     dataString: this.quotelinesString,
                     auxiliar: 'newtable'
@@ -72,7 +72,6 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 this.quoteNotesString = data; 
                 this.error = undefined;
                 //console.log('notes string SUCCESS: '+ this.quoteNotesString);
-                this.disableButton = false;
             }    
         })
         .catch(error =>{
@@ -107,7 +106,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         }); 
         
         var endTime = performance.now();
-        //console.log(`Call to quoteLinesWire took ${endTime - startTime} milliseconds`);
+        console.log(`Starting process took ${endTime - startTime} milliseconds`);
 
         if (this.quoteLinesString == '[]'){
             this.quoteLinesString = '[id: \"none\"]';
@@ -168,7 +167,6 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 this.quoteNotesString = data; 
                 this.error = undefined;
                 //console.log('notes string SUCCESS: '+ this.quoteNotesString);
-                this.disableButton = false;
             }    
         })
         .catch(error =>{
@@ -266,6 +264,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
 
     desactiveCloneButton(){
         this.disableButton = true;
+        console.log('Button cancel');
     }
     handleClone(){
         const payload = { 
@@ -289,7 +288,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     handleSaveAndCalculate(event){
         //CALL APEX METHOD TO SAVE QUOTELINES AND NOTES
 
-        this.labelButtonSave =  event.target.label;
+        //this.labelButtonSave =  event.target.label;
         //console.log('Label '+ label);
         this.spinnerLoadingUI = true;
         //console.log('quoteLines: '+this.quotelinesString);
@@ -298,8 +297,13 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         this.callEditAnDeleteMethod().then(this.callCreateMethod());
         let endTime = performance.now();
         console.log(`Saving method took ${endTime - startTime} milliseconds`);
+        this.desactiveCloneButton();
     }
 
+    handleDiscount(){
+        this.handleSaveAndCalculate();
+        this.desactiveCloneButton();
+    }
     //Method that save the changes and deletions
     async callEditAnDeleteMethod(){
         return new Promise((resolve) => {
@@ -360,7 +364,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                         this.spinnerLoadingUI = false;
 
                         const evt = new ShowToastEvent({
-                            title: 'Success creating new quote lines',
+                            title: 'Success saving the changes in the UI',
                             message: 'Your additions have been saved on Salesforce',
                             variant: 'success',
                             mode: 'dismissable'
@@ -449,29 +453,31 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     }
     
     //APPLY BUTTON WITH DISCOUNT VALUES
-    get optionsDiscount(){
-        return [
-            { label: '$', value: 'Currency' },
-            { label: '%', value: 'Percentage' },
-        ];
-    }
     @track valueDiscount;
-    @track typeDiscount; 
     handleValueDiscount(event) {
+        /* IN CASE IT'S LIMIT BY SOMETHING
+        if (event.detail.value < 0 || event.detail.value > 100){
+            alert('Value greater than 100% or less than 0%'); 
+            this.valueDiscount = null;
+        } else {
+            this.valueDiscount = event.detail.value;
+        }
+        */
         this.valueDiscount = event.detail.value;
     }
-    handleTypeDiscount(event) {
-        this.typeDiscount = event.detail.value;
-    }
     handleApplyDiscount(){
-        if (this.valueDiscount && this.typeDiscount){
-            alert('You have selected the valueDiscount ' + this.valueDiscount);
-            alert('You have selected the typeDiscount ' + this.typeDiscount);
+        if (this.valueDiscount){
+            //alert('You have selected the valueDiscount ' + this.valueDiscount);
+            const payload = { 
+                dataString: this.valueDiscount,
+                auxiliar: 'applydiscount'
+              };
+            publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
         }
         else {
             const evt = new ShowToastEvent({
                 title: 'Error selecting Discount Values',
-                message: 'Please select a line and type discount',
+                message: 'Please select a line discount',
                 variant: 'error',
                 mode: 'dismissable'
             });

@@ -26,6 +26,9 @@ export default class Bl_dataTable extends LightningElement {
     //Lookup field available if quotelines tabs
     @track isQuoteLinesTab;
 
+    //Applying discount
+    @track discount; 
+
 
     connectedCallback(){
         this.subscribeToMessageChannel();
@@ -42,6 +45,7 @@ export default class Bl_dataTable extends LightningElement {
             }
             this.quoteLinesString = JSON.stringify(this.quoteLines);
             this.updateTable();
+            
         }
         //Make available the look up field
         if (this.tabSelected == 'Home' || this.tabSelected == 'Detail'){
@@ -69,6 +73,7 @@ export default class Bl_dataTable extends LightningElement {
                         //console.log('Editable: '+this.fieldSet[i].editable);
                         let labelName;
                         this.fieldSet[i].required ? labelName = '*'+this.fieldSet[i].label: labelName = this.fieldSet[i].label;
+                        this.fieldSet[i].property == 'additionaldisc.(%)' ? this.fieldSet[i].property = 'additionaldiscount' : this.fieldSet[i].property; 
                         //console.log('added: '+COLUMNS_HOME.length); 
                         if (this.fieldSet[i].property == 'product'){
                             COLUMNS_HOME.splice(indexDes, 0, { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, },);
@@ -87,6 +92,7 @@ export default class Bl_dataTable extends LightningElement {
                 } else if (this.tabSelected == 'Detail'){
                     if (this.fieldSet[i].key == 'DETAIL'){
                         //console.log('Label: '+this.fieldSet[i].label);
+                        //console.log('Property: '+ this.fieldSet[i].property)
                         //console.log('Editable: '+this.fieldSet[i].editable);
                         //console.log('Required '+this.fieldSet[i].required)
                         let labelName;
@@ -185,7 +191,7 @@ export default class Bl_dataTable extends LightningElement {
                 this.quotelinesString = JSON.stringify(this.quoteLines); 
                 this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
                 this.spinnerLoading = false;
-                setTimeout(function(){
+                setTimeout(()=>{
                     const evt = new ShowToastEvent({
                         title: 'Cloned Rows',
                         message: 'Clone rows successfully done',
@@ -201,7 +207,7 @@ export default class Bl_dataTable extends LightningElement {
             } else {
                 console.log('No rows selected');
                 this.dispatchEvent(new CustomEvent('notselected'));
-                setTimeout(function() {
+                setTimeout(()=> {
                     const evt = new ShowToastEvent({
                         title: 'You selected a Row from the other tab',
                         message: 'The row selected to clone is in the other tab',
@@ -212,6 +218,45 @@ export default class Bl_dataTable extends LightningElement {
                 }, 1000);
                 this.firstHandler();
             }
+        }
+        else if (message.auxiliar == 'applydiscount'){
+            //console.log('HERE PROPERTIES');
+            //console.log(Object.getOwnPropertyNames(this.quoteLines[0])); 
+            this.discount = message.dataString;
+            if (this.selectedRows){
+                for(let j = 0; j< this.selectedRows.length; j++){
+                    let index = this.quoteLines.findIndex(x => x.id === this.selectedRows[j].id);
+                    //console.log('quotelines Name: '+this.quoteLines[index].name + ' selected Name: ' +this.selectedRows[j].name)
+                    this.quoteLines[index].additionaldiscount = (this.discount/100);
+                    //console.log('Disccount apply: '+this.quoteLines[index].additionaldiscount);
+                }
+                this.updateTable();
+                this.quotelinesString = JSON.stringify(this.quoteLines); 
+                this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
+                setTimeout(()=>{
+                    this.dispatchEvent(new CustomEvent('discount'));
+                    this.spinnerLoading = false;
+                },500);
+                
+            }
+            else {
+                console.log('No rows selected');
+                this.dispatchEvent(new CustomEvent('notselected'));
+                setTimeout(()=>{
+                    const evt = new ShowToastEvent({
+                        title: 'No rows selected',
+                        message: 'Select in the actual tab the rows you want to modify',
+                        variant: 'info',
+                        mode: 'dismissable'
+                    });
+                    this.dispatchEvent(evt);
+                }, 500);
+                this.firstHandler();
+            }
+            this.template.querySelector('lightning-datatable').selectedRows=[];
+            this.selectedRows = [];
+            this.dispatchEvent(new CustomEvent('notselected'));
+            this.firstHandler();
         }
         this.spinnerLoading = false;
     }
@@ -302,7 +347,7 @@ export default class Bl_dataTable extends LightningElement {
             this.quotelinesString = JSON.stringify(this.quoteLines); 
             this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
             this.spinnerLoading = false;
-            setTimeout(function(){
+            setTimeout(()=>{
                 const evt = new ShowToastEvent({
                     title: 'Product added in the table',
                     message: 'The product you searched was added',

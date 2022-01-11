@@ -24,17 +24,12 @@
                             <lightning-tab label="Filter" value="Filter" onactive={handleFilterTabActive}>
                                 <div class="slds-grid slds-gutters slds-m-left_large slds-m-right_small">
                                     <template for:each={filters1} for:item="filterFOC">
-                                        <lightning-combobox class="slds-m-right_small" key={filterFOC.label} name={filterFOC.label} label={filterFOC.label} value={filterFOC.filterSelection} placeholder="Select an Option" options={filterFOC.options} onchange={handlefiberCount} ></lightning-combobox>
+                                        <div class="slds-grid slds-gutters slds-m-right_xxx-small" key={filterFOC.label}>
+                                            <lightning-combobox class="slds-m-right_small" name={filterFOC.label} label={filterFOC.label} value={filterFOC.filterSelection} placeholder="Option" options={filterFOC.options} onchange={handlefiberCount} ></lightning-combobox>
+                                        </div>
                                     </template>   
-                                       
                                 </div>
-                                <div class="slds-grid slds-gutters slds-m-left_large slds-m-right_small">
-                                    <template for:each={filters2} for:item="filterACA">
-                                        <lightning-combobox class="slds-m-right_small" key={filterACA.label} name={filterACA.label} label={filterACA.label} value={filterACA.filterSelection} placeholder="Select an Option" options={filterACA.options} onchange={handlefiberCount} ></lightning-combobox>
-                                    </template>  
-                                </div>
-                                
-                                <div class="slds-grid slds-gutters slds-m-left_large slds-m-right_small">
+                                <div class="slds-grid slds-gutters slds-m-left_large slds-align_absolute-center slds-m-right_small">
                                     <lightning-button variant="brand" label="Clear Filters" title="Clear"  onclick={clearFilters} class="slds-m-left_small slds-m-top_large"></lightning-button>
                                 </div>
 
@@ -48,14 +43,14 @@
                             </lightning-tab>
                             <lightning-tab label="Review" value="Review" onactive={handleReviewTabActive}>
                                 <div class="slds-grid slds-gutters slds-m-left_small slds-m-right_medium">
-                                    <lightning-combobox name="FiberCount" label="Fiber Count" value={fiberCount} placeholder="Select an Option" options={options} onchange={handlefiberCount} ></lightning-combobox>
-                                    <lightning-combobox name="JacketType" label="Jacket Type" value={jacketType} placeholder="Select an Option" options={options} onchange={handlejacketType} class="slds-m-left_small" ></lightning-combobox>
-                                    <lightning-combobox name="ArmorType" label="Armor Type" value={armorType} placeholder="Select an Option" options={options} onchange={handlearmorType} class="slds-m-left_small" ></lightning-combobox>
-                                    <lightning-button variant="brand" label="Clear Filters" title="Clear"  onclick={clearFilters} class="slds-m-left_small slds-m-top_large"></lightning-button>
+                                    <template for:each={filters1} for:item="filterFOC">
+                                        <div class="slds-grid slds-gutters slds-m-right_xxx-small" key={filterFOC.label}>
+                                            <lightning-combobox class="slds-m-right_small" name={filterFOC.label} label={filterFOC.label} value={filterFOC.filterSelection} placeholder="Option" options={filterFOC.options} onchange={handlefiberCount} ></lightning-combobox>
+                                        </div>
+                                    </template>  
                                 </div>
-                                <div class="slds-grid slds-gutters slds-m-left_small slds-m-right_medium">
-                                    <lightning-combobox name="SubUnit1" label="SubUnit" value={subUnit1} placeholder="Select an Option" options={options} onchange={handlesubUnit1} ></lightning-combobox>
-                                    <lightning-combobox name="SubUnit2" label="SubUnit" value={subUnit2} placeholder="Select an Option" options={options} onchange={handlesubUnit2} class="slds-m-left_small" ></lightning-combobox>
+                                <div class="slds-grid slds-gutters slds-m-left_large slds-align_absolute-center slds-m-right_small">
+                                    <lightning-button variant="brand" label="Clear Filters" title="Clear"  onclick={clearFilters} class="slds-m-left_small slds-m-top_large"></lightning-button>
                                 </div>
                                 <div class="slds-grid slds-gutters slds-m-left_small slds-m-top_medium">
                                     <h1 style="color: gray;" class="slds-text-heading_large">Review </h1>
