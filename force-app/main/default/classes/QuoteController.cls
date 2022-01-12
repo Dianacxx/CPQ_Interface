@@ -461,46 +461,51 @@ public with sharing class QuoteController {
 
         List<Product2> productList = [SELECT ID,Name,ProdLevel1__c,ProdLevel2__c,ProdLevel3__c,ProdLevel4__c FROM Product2 WHERE ProdLevel1__c =: level1];
         
+        for(Product2 prod : productList){
+            if(prod.ProdLevel3__c != null){
+                if(wrapper3Map.containsKey(prod.ProdLevel3__c)){
+                    WrappersClass.level3WrapperClass lvl3Wrapper = new WrappersClass.level3WrapperClass();
+                    lvl3Wrapper.id = String.valueOf(prod.id);
+                    if(prod.ProdLevel4__c != null){
+                        lvl3Wrapper.level4 = prod.Name;
+                    }
+                    wrapper3Map.get(prod.ProdLevel3__c).add(lvl3Wrapper);
+                }else{
+                    WrappersClass.level3WrapperClass lvl3Wrapper = new WrappersClass.level3WrapperClass();
+                    lvl3Wrapper.id = String.valueOf(prod.id);
+                    lvl3Wrapper.level4 = prod.Name;
+                    wrapper3Map.put(String.valueOf(prod.ProdLevel3__c), new List<WrappersClass.level3WrapperClass>{lvl3Wrapper}); 
 
+                }
+            }
+        }
         
-        for (Product2 prod : productList) {
-
+        for (Product2 prod : productList) {            
             if(prod.ProdLevel2__c!=null){
-                system.debug(prod.ProdLevel2__c);
                 if(wrapper2Map.containsKey(prod.ProdLevel2__c)){
                     WrappersClass.level2WrapperClass lvl2Wrapper = new WrappersClass.level2WrapperClass();
-                    // lvl2Wrapper.name = prod.Name+'1-A';
                     lvl2Wrapper.name = prod.ProdLevel2__c;
                     lvl2Wrapper.id = String.valueOf(prod.id);
-                    lvl2Wrapper.level3 = prod.Name;
-                    // wrapper2Map.get(prod.ProdLevel2__c).add(new WrappersClass.level2WrapperClass(name = String.valueOf(prod.id) + 'L2',level3 = prod.ProdLevel3__c));
+                    if(prod.ProdLevel4__c == null){
+                        lvl2Wrapper.level3 = prod.Name;
+                    }else{
+                        lvl2Wrapper.level3 = prod.ProdLevel3__c;
+                    }
+                    lvl2Wrapper.children = JSON.serialize(wrapper3Map.get(prod.ProdLevel3__c));
                     wrapper2Map.get(prod.ProdLevel2__c).add(lvl2Wrapper);
-                    productMap.put(prod.id,prod);
                 }else{
                     WrappersClass.level2WrapperClass lvl2Wrapper = new WrappersClass.level2WrapperClass();
                     lvl2Wrapper.name = prod.ProdLevel2__c;
                     lvl2Wrapper.id = String.valueOf(prod.id);
                     lvl2Wrapper.level3 = prod.Name;
+                    lvl2Wrapper.children = JSON.serialize(wrapper3Map.get(prod.ProdLevel3__c));
                     wrapper2Map.put(String.valueOf(prod.ProdLevel2__c), new List<WrappersClass.level2WrapperClass>{lvl2Wrapper}); 
-                    productMap.put(prod.id,prod);
+                    System.debug('Level 2 children: ' + lvl2Wrapper.children);
+
                 }
-            }
-            // if(prod.ProdLevel3__c!=null){
-            //     if(wrapper3Map.containsKey(prod.ProdLevel3__c)){
-            //         WrappersClass.level3WrapperClass lvl3Wrapper = new WrappersClass.level3WrapperClass();
-            //         lvl3Wrapper.name = String.valueOf(prod.id) + 'L2';
-            //         lvl3Wrapper.level4 = prod.ProdLevel4__c;
-            //         wrapper3Map.get(prod.ProdLevel3__c).add(lvl3Wrapper);
-            //     }else{
-            //         WrappersClass.level3WrapperClass lvl3Wrapper = new WrappersClass.level3WrapperClass();
-            //         lvl3Wrapper.name = String.valueOf(prod.id) + 'L2';
-            //         lvl3Wrapper.level4 = prod.ProdLevel4__c;
-            //         wrapper3Map.put(prod.ProdLevel3__c,new List<WrappersClass.level3WrapperClass>{lvl3Wrapper}); 
-            //     }
-            // }                        
+            }                      
         }
-        System.debug('Level 2 size: ' + wrapper2Map.size());
-        System.debug('Level 2 keys: ' + wrapper2Map.keyset());
+        System.debug('Level 3 size: ' + wrapper3Map.size() + 'levels 3: '+wrapper3Map.keyset());
         //List<Product2> level2Children = [SELECT ID,ProdLevel1__c,ProdLevel2__c,ProdLevel3__c,ProdLevel4__c FROM Product2 WHERE ProdLevel1__c =: level1 AND ProdLevel2__c ];
 
         for(String key : wrapper2Map.keyset()){
@@ -511,7 +516,7 @@ public with sharing class QuoteController {
             wrapper.level1 = level1;
             wrapper.level2 = key;
             wrapper.children = JSON.serialize(wrapper2Map.get(key));
-
+            
             //system.debug(wrapper.level2);
             wrapperList.add(wrapper);
         }

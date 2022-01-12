@@ -92,12 +92,13 @@ const TAI_PRODUCTS = [
 const EXAMPLES_DATA_BASIC = [
     {
         name: 'Id000001',
-        level2: 'OSP Cable Assemblies',
+        level2: 'Product 1',
         _children: [
             {
                 name: 'Id000001-Idc00001',
                 level3: 'OSP Cable Assemblies child',
                 selectionType: 'filtered',
+                filteredGrouping: 'Permise Cable',
                 isAdd: [false, true, true, true],
             },
         ],
@@ -120,7 +121,8 @@ const EXAMPLES_DATA_BASIC = [
                     {
                         name: '01t8A000007bfBkQAI',
                         level4: 'Titan RTD Child 2',
-                        selectionType: 'bundle',
+                        selectionType: 'filtered',
+                        filteredGrouping: 'ADSS Cable',
                         isAdd: [false, true, true, true],
                     },
                 ],
@@ -134,12 +136,13 @@ const EXAMPLES_DATA_BASIC = [
                         name: '2-B-A',
                         level4: 'Nodeflex Child 1',
                         selectionType: 'filtered',
+                        filteredGrouping: 'ADSS Cable',
                         isAdd: [false, true, true, true],
                     },
                     {
                         name: '2-B-B',
                         level4: 'Nodeflex Child 2',
-                        selectionType: 'filtered',
+                        selectionType: 'bundle',
                         isAdd: [false, true, true, true],
                     },
                 ],
@@ -154,7 +157,8 @@ const EXAMPLES_DATA_BASIC = [
             {
                 name: '3-A',
                 level3: 'Product 3 child',
-                selectionType: 'bundle',
+                selectionType: 'filtered',
+                filteredGrouping: 'Loose Tube Cable',
                 isAdd: [false, true, true, true],
             },
         ],
@@ -171,7 +175,8 @@ const EXAMPLES_DATA_BASIC = [
                     {
                         name: '4-A-A',
                         level4: 'Titan RTD Child 1',
-                        selectionType: 'bundle',
+                        selectionType: 'filtered',
+                        filteredGrouping: 'SkyWrap Cable',
                         isAdd: [false, true, true, true],
                     },
                     {
@@ -191,12 +196,14 @@ const EXAMPLES_DATA_BASIC = [
                         name: '4-B-A',
                         level4: 'Nodeflex Child 1',
                         selectionType: 'filtered',
+                        filteredGrouping: 'Permise Cable',
                         isAdd: [false, true, true, true],
                     },
                     {
                         name: '4-B-B',
                         level4: 'Nodeflex Child 2',
                         selectionType: 'filtered',
+                        filteredGrouping: 'Wrapping Tube Cable',
                         isAdd: [false, true, true, true],
                     },
                 ],
@@ -362,7 +369,7 @@ export default class Bl_treeProducts extends LightningElement {
                 console.log('Selection Type: '+ row.selectionType);
                 if (row.selectionType == 'filtered'){
                     this.openFilterAndSelected();
-                    
+                    this.selectFiltersToShow();
                 } else if (row.selectionType == 'bundle'){
                     this.openConfigured(); 
                     if (row.level == 2){
@@ -414,30 +421,8 @@ export default class Bl_treeProducts extends LightningElement {
     @track tabOption = false; 
     
     //--------FILTER TAB 
-    //FILTER VALUES 
-    @track fiberCount;
-    @track jacketType;
-    @track armorType;
-    @track subUnit1;
-    @track subUnit2;
-    //Filter Values, changing
-        handlefiberCount(event) {
-            this.fiberCount = event.detail.value;
-            console.log('Selected option of filter: '+event.detail.value); 
-        }
-        handlejacketType(event) {
-            this.jacketType = event.detail.value;
-        }
-        handlearmorType(event){
-            this.armorType = event.detail.value;
-        }
-        handlesubUnit1(event){
-            this.subUnit1 = event.detail.value;
-        }
-        handlesubUnit2(event){
-            this.subUnit2 = event.detail.value;
-        }
-    //OPTIONS IN FILTERS - CHANGE WHEN DIANA SENDS VALUES !!!!!!
+    
+    //WORK HERE TI GET THE VALUES CALLING THEM
 
     get options() {
         //console.log('How to display options: '+ JSON.stringify(this.TypePicklistValues.data.values));
@@ -450,8 +435,66 @@ export default class Bl_treeProducts extends LightningElement {
     @wire(getPicklistValues, { recordTypeId: '$objectInfo.data.defaultRecordTypeId', fieldApiName: FIBER_COUNT_FIELD})
     TypePicklistValues;
 
+    //______________________________________________________________________________
+    //SHOW FILTERS
+    selectFiltersToShow(){
+        let filterProduct = this.rowSelected.filteredGrouping; 
+        switch (filterProduct) {
+            case '':
+                break;
+            case '':
+                break;
+            case '':
+                break;
+            case '':
+                break;
+            case '':
+                break;
+            case '':
+                break;
+            case '':
+                break;
+            case '':
+                break;
+            case '':
+                break;
+            case '':
+                break;
+            case '':
+                break;
+            case '':
+                break;
+            default: 
+                break; 
+        }
+        
+    }
+    //FILTER VALUES 
+    @track filterValueSelected = []; 
+    @track filterSelected = []; 
+    handleOnChangeFilter(event){
+        //console.log('Value Selected Here:'+ event.detail.value); 
+        //console.log('Label Here:'+ event.target.label);
+        let indexFilter = this.filterSelected.indexOf(event.target.label); 
+        //console.log('Index in filterSelected: '+indexFilter);
+        if( indexFilter > -1){
+            this.filterValueSelected[indexFilter] = event.detail.value; 
+        } else {
+            this.filterSelected.push(event.target.label); 
+            this.filterValueSelected.push(event.detail.value); 
+        }
+        //console.log('this.filterSelected:'+ this.filterSelected);
+        //console.log('this.filterValueSelected:'+ this.filterValueSelected);
+
+        //CALL HERE THE FILTER METHOD FROM APEX SENDING THE VALUE AND THE TYPE OF FILTER ACTIVE!
+
+    }
+
     clearFilters(){
          //Clearing filters with button in Filter Tab
+         this.filterSelected = [];
+         this.filterValueSelected = [];
+         this.filtersValue = 0; 
         this.template.querySelectorAll('lightning-combobox').forEach(each => {
             each.value = undefined;
         });
@@ -479,7 +522,50 @@ export default class Bl_treeProducts extends LightningElement {
         //Save the changes and add to the array
         //HERE GOES THE PROCESS TO SAVE IT 
         console.log('Filtered Level that closed the popup '+this.rowSelected.level); 
-        this.rowSelected.isAdd = [true, false, false, false]; 
+        this.spinnerPSLoading = true;
+        //console.log('Name of product added '+this.rowSelected.name);
+        let idParent;
+        let indexParent;
+        let indexParentChildren; 
+        let indexOldRow;
+        this.helpValue = true; 
+        if (this.rowSelected.level == 2) { 
+            idParent = this.rowSelected.id.substr(0, this.rowSelected.id.indexOf('-'));
+            //console.log('Id of parent: '+idParent);
+            indexParent = this.gridData.findIndex(x => x.id === idParent);
+            console.log('Index Parent: '+indexParent);
+            indexOldRow = this.gridData[indexParent]._children.findIndex(x => x.id === this.rowSelected.id);
+            console.log('Index selected: '+indexOldRow);
+            this.copyRow = JSON.parse(JSON.stringify(this.rowSelected));
+            let randomId = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(2, 7);
+            this.gridData[indexParent]._children[indexOldRow].id = '01t8A000007d3StQAI-01t8A000007d3StQAP';
+            ;
+            //this.gridData[indexParent]._children[indexOldRow].id = this.gridData[indexParent]._children[indexOldRow].id+'ADD'+randomId;
+            this.gridData[indexParent]._children[indexOldRow].level3 = 'NEW-'+this.gridData[indexParent]._children[indexOldRow].level3;
+            this.gridData[indexParent]._children[indexOldRow].isAdd = [true, false, false, false]; 
+            this.gridData[indexParent]._children[indexOldRow].isExpanded = true;
+            this.gridData[indexParent].isExpanded = true;
+            console.log(JSON.stringify(this.copyRow));
+            console.log('gridData before in parent length: '+ this.gridData[indexParent]._children.length);
+            this.gridData[indexParent]._children.splice(indexOldRow, 0, this.copyRow);
+            //this.gridData[indexParent]._children= [...this.gridData[indexParent]._children, this.copyRow];
+            console.log('gridData after in parent length: '+ this.gridData[indexParent]._children.length);
+            console.log(JSON.stringify(this.gridData));
+            this.gridData = this.gridData;
+            
+            setTimeout(()=>{
+                this.helpValue= false;
+                this.spinnerPSLoading = false; 
+            }, 1000);
+        } else if (this.rowSelected.level == 3) {
+            //CAHNGE THIS TO GET THE PARENT ID IF LEVEL 4 WITH 2 - 
+            indexParent = this.rowSelected.id.substr(0, this.rowSelected.id.indexOf('-'));
+            indexParentChildren = indexParent.substr(0, indexParent.indexOf('-'));
+            console.log('indexParent '+indexParent); 
+            console.log('indexParentChildren '+indexParentChildren);
+            //WORK HERE WHEN LEVEL 4 IN DATA AVAILABLE!
+            this.spinnerPSLoading = false; 
+        }
         this.moreAdd();
         this.closeFilterAndSelected();
     }
@@ -516,6 +602,7 @@ export default class Bl_treeProducts extends LightningElement {
         let indexParentChildren; 
         let indexOldRow;
         this.helpValue = true; 
+        /*
         if (this.rowSelected.level == 2) { 
             idParent = this.rowSelected.id.substr(0, this.rowSelected.id.indexOf('-'));
             //console.log('Id of parent: '+idParent);
@@ -543,13 +630,16 @@ export default class Bl_treeProducts extends LightningElement {
             setTimeout(()=>{
                 this.helpValue= false;
                 this.spinnerPSLoading = false; 
-            }, 2000);
+            }, 1000);
         } else if (this.rowSelected.level == 3) {
             //CAHNGE THIS TO GET THE PARENT ID IF LEVEL 4 WITH 2 - 
             indexParent = this.rowSelected.id.substr(0, this.rowSelected.id.indexOf('-'));
             indexParentChildren = this.rowSelected.id.substr(0, this.rowSelected.id.indexOf('-'));
             //WORK HERE WHEN LEVEL 4 IN DATA AVAILABLE!
+            this.spinnerPSLoading = false; 
         }
+        */
+        this.spinnerPSLoading = false; 
         this.closeConfigured();
 
     }

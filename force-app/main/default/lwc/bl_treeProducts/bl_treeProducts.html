@@ -31,7 +31,7 @@
                                 <div class="slds-grid slds-gutters slds-m-left_large slds-m-right_small">
                                     <template for:each={filters1} for:item="filterFOC">
                                         <div class="slds-grid slds-gutters slds-m-right_xxx-small" key={filterFOC.label}>
-                                            <lightning-combobox class="slds-m-right_small" name={filterFOC.label} label={filterFOC.label} value={filterFOC.filterSelection} placeholder="Option" options={filterFOC.options} onchange={handlefiberCount} ></lightning-combobox>
+                                            <lightning-combobox class="slds-m-right_small" name={filterFOC.label} data-id={filterFOC.label} label={filterFOC.label} value={filterFOC.filterSelection} placeholder="Option" options={filterFOC.options} onchange={handleOnChangeFilter} ></lightning-combobox>
                                         </div>
                                     </template>   
                                 </div>
