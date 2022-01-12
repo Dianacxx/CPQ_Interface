@@ -227,7 +227,7 @@ export default class Bl_dataTable extends LightningElement {
                 for(let j = 0; j< this.selectedRows.length; j++){
                     let index = this.quoteLines.findIndex(x => x.id === this.selectedRows[j].id);
                     //console.log('quotelines Name: '+this.quoteLines[index].name + ' selected Name: ' +this.selectedRows[j].name)
-                    this.quoteLines[index].additionaldiscount = (this.discount/100);
+                    this.quoteLines[index].additionaldiscount = (this.discount);
                     //console.log('Disccount apply: '+this.quoteLines[index].additionaldiscount);
                 }
                 this.updateTable();

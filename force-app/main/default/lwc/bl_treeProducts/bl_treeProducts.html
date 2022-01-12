@@ -1,14 +1,20 @@
 <template>
     <!--TREE VIEW START-->
-    <div class="slds-p-around_medium lgc-bg">
-        <div class="slds-m-bottom_small">
-            <lightning-button label="Collapse All" onclick={clickToCollapseAll} class="slds-m-right_small"></lightning-button>
-            <lightning-button label="Expand All" onclick={clickToExpandAll}></lightning-button>
+    <!--SPINNER TO LOAD START-->
+    <lightning-spinner if:true={spinnerPSLoading} alternative-text="Loading" size="medium"></lightning-spinner>
+    <!--SPINNER TO LOAD END-->
+    <template if:false={helpValue}>
+        <div class="slds-p-around_medium lgc-bg">
+            <div class="slds-m-bottom_small">
+                <lightning-button label="Collapse All" onclick={clickToCollapseAll} class="slds-m-right_small"></lightning-button>
+                <lightning-button label="Expand All" onclick={clickToExpandAll}></lightning-button>
+            </div>
+            <lightning-tree-grid class="slds-truncate" columns={gridColumns} data={gridData} key-field="id"
+                hide-checkbox-column=true  onrowaction={handleRowAction} >
+            </lightning-tree-grid>
         </div>
-        <lightning-tree-grid class="slds-truncate" columns = {gridColumns} data = {gridData} key-field = "name"
-            hide-checkbox-column = true  onrowaction={handleRowAction} >
-        </lightning-tree-grid>
-    </div>
+    </template>
+    
     <!--TREE VIEW END-->
     <!--POP UP FILTER AND SELECT START-->
     <template if:true={openFilterSelectPopup}>
@@ -29,6 +35,13 @@
                                         </div>
                                     </template>   
                                 </div>
+                                <div class="slds-grid slds-gutters slds-m-left_large slds-m-right_small">
+                                    <template for:each={filters2} for:item="filterFOC2">
+                                        <div class="slds-grid slds-gutters slds-m-right_xxx-small" key={filterFOC2.label}>
+                                            <lightning-combobox class="slds-m-right_small" name={filterFOC2.label} label={filterFOC2.label} value={filterFOC2.filterSelection} placeholder="Option" options={filterFOC2.options} onchange={handlefiberCount} ></lightning-combobox>
+                                        </div>
+                                    </template>  
+                                </div>
                                 <div class="slds-grid slds-gutters slds-m-left_large slds-align_absolute-center slds-m-right_small">
                                     <lightning-button variant="brand" label="Clear Filters" title="Clear"  onclick={clearFilters} class="slds-m-left_small slds-m-top_large"></lightning-button>
                                 </div>
@@ -47,7 +60,7 @@
                                         <div class="slds-grid slds-gutters slds-m-right_xxx-small" key={filterFOC.label}>
                                             <lightning-combobox class="slds-m-right_small" name={filterFOC.label} label={filterFOC.label} value={filterFOC.filterSelection} placeholder="Option" options={filterFOC.options} onchange={handlefiberCount} ></lightning-combobox>
                                         </div>
-                                    </template>  
+                                    </template>
                                 </div>
                                 <div class="slds-grid slds-gutters slds-m-left_large slds-align_absolute-center slds-m-right_small">
                                     <lightning-button variant="brand" label="Clear Filters" title="Clear"  onclick={clearFilters} class="slds-m-left_small slds-m-top_large"></lightning-button>

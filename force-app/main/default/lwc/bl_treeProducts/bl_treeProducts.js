@@ -91,37 +91,37 @@ const TAI_PRODUCTS = [
 
 const EXAMPLES_DATA_BASIC = [
     {
-        name: '1',
+        name: 'Id000001',
         level2: 'OSP Cable Assemblies',
         _children: [
             {
-                name: '1-A',
+                name: 'Id000001-Idc00001',
                 level3: 'OSP Cable Assemblies child',
                 selectionType: 'filtered',
-                isAdd: false,
+                isAdd: [false, true, true, true],
             },
         ],
     },
 
     {
-        name: '2',
+        name: '01t8A000007bfBaQAI',
         level2: 'Product 2',
         _children: [
             {
-                name: '2-A',
+                name: '01t8A000007bfBaQAI',
                 level3: 'Titan RTD',
                 _children: [
                     {
-                        name: '2-A-A',
+                        name: '01t8A000007bfBfQAI',
                         level4: 'Titan RTD Child 1',
                         selectionType: 'bundle',
-                        isAdd: false,
+                        isAdd: [false, true, true, true],
                     },
                     {
-                        name: '2-A-B',
+                        name: '01t8A000007bfBkQAI',
                         level4: 'Titan RTD Child 2',
                         selectionType: 'bundle',
-                        isAdd: false,
+                        isAdd: [false, true, true, true],
                     },
                 ],
             },
@@ -134,13 +134,13 @@ const EXAMPLES_DATA_BASIC = [
                         name: '2-B-A',
                         level4: 'Nodeflex Child 1',
                         selectionType: 'filtered',
-                        isAdd: false,
+                        isAdd: [false, true, true, true],
                     },
                     {
                         name: '2-B-B',
                         level4: 'Nodeflex Child 2',
                         selectionType: 'filtered',
-                        isAdd: false,
+                        isAdd: [false, true, true, true],
                     },
                 ],
             },
@@ -155,7 +155,7 @@ const EXAMPLES_DATA_BASIC = [
                 name: '3-A',
                 level3: 'Product 3 child',
                 selectionType: 'bundle',
-                isAdd: false,
+                isAdd: [false, true, true, true],
             },
         ],
     },
@@ -172,13 +172,13 @@ const EXAMPLES_DATA_BASIC = [
                         name: '4-A-A',
                         level4: 'Titan RTD Child 1',
                         selectionType: 'bundle',
-                        isAdd: false,
+                        isAdd: [false, true, true, true],
                     },
                     {
                         name: '4-A-B',
                         level4: 'Titan RTD Child 2',
                         selectionType: 'bundle',
-                        isAdd: false,
+                        isAdd: [false, true, true, true],
                     },
                 ],
             },
@@ -191,13 +191,13 @@ const EXAMPLES_DATA_BASIC = [
                         name: '4-B-A',
                         level4: 'Nodeflex Child 1',
                         selectionType: 'filtered',
-                        isAdd: false,
+                        isAdd: [false, true, true, true],
                     },
                     {
                         name: '4-B-B',
                         level4: 'Nodeflex Child 2',
                         selectionType: 'filtered',
-                        isAdd: false,
+                        isAdd: [false, true, true, true],
                     },
                 ],
             },
@@ -205,19 +205,6 @@ const EXAMPLES_DATA_BASIC = [
     },
 ];
 
-const FOCfilters = [
-    {label: 'Premise Cable', filterSelection: '', options: [{label:'Option 1', value:1},{label:'Option 2',value:2} ,{label:'Option 3',value:3},], },
-    {label:'ADSS Cable', filterSelection: '', options: [{label:'Option 4', value:1},{label:'Option 5',value:2} ,{label:'Option 6',value:3},],},
-    {label:'Loose Tube Cable', filterSelection: '', options: [{label:'Option 7', value:1},{label:'Option 8',value:2} ,{label:'Option 9',value:3},],},
-    {label:'SkyWrap Cable', filterSelection: '', options: [{label:'Option 10', value:1},{label:'Option 11',value:2} ,{label:'Option 12',value:3},],},
-    {label:'Wrapping Tube Cable', filterSelection: '', options: [{label:'Option 13', value:1},{label:'Option 14',value:2} ,{label:'Option 15',value:3},],},
-];
-const ACAfilters = [
-    {label: 'Bus Conductor - Seamless Bus Pipe', filterSelection: '', options: [{label:'Option 1', value:1},{label:'Option 5',value:2} ,{label:'Option 9',value:3},],},
-    {label: 'Bus Conductor - Universal Angle', filterSelection: '', options: [{label:'Option 2', value:1},{label:'Option 6',value:2} ,{label:'Option 10',value:3},],},
-    {label:	'Bus Conductor -Rectangular Bar', filterSelection: '', options: [{label:'Option 3', value:1},{label:'Option 7',value:2} ,{label:'Option 11',value:3},],},
-    {label: 'Copperclad', filterSelection: '', options: [{label:'Option 4', value:1},{label:'Option 8',value:2} ,{label:'Option 12',value:3},],}, 
-]; 
 
 
 import { getPicklistValues } from 'lightning/uiObjectInfoApi';
@@ -231,27 +218,66 @@ export default class Bl_treeProducts extends LightningElement {
     @track gridData; //MOCK DATA
     @track gridColumns; 
 
-    @track filters1 = []; //MOCK FILTERS
+    @api spinnerPSLoading = false; 
 
-    @track addDisable;
-    @track typeProduct; 
+    @track filters1 = []; //MOCK FILTERS
+    @track filters2 = []; //MOCK FILTERS
+
+    @track typeProduct;
+    @track typeProduct2;
     connectedCallback(){
         console.log('Here goes the values of gird data!');
-        this.gridData = EXAMPLES_DATA_BASIC;
-        this.addDisable = [false, true, true, true];
+        this.spinnerPSLoading = true; 
 
         //MOCK FILTERS
-        this.typeProduct = FOC_PPRODUCTS[0]; 
+        this.typeProduct = FOC_PPRODUCTS[1]; 
+        this.typeProduct2 = FOC_PPRODUCTS[2]; 
         for(let j = 1; j < this.typeProduct.length; j++){
             this.filters1.push(this.typeProduct[j]); 
         }
+        for(let j = 1; j < this.typeProduct2.length; j++){
+            this.filters2.push(this.typeProduct2[j]); 
+        }
 
-        getProductLevels({level1: 'ACA'})
+        getProductLevels({level1: 'OCA'})
         .then((data)=>{
+            let tempData = JSON.parse(data);
             console.log('DATA: ' + data);
+            for ( let i = 0; i < tempData.length; i++ ) {
+                //tempData[ i ].selectionType = 'filtered'; 
+                //tempData[ i ].isAdd = [false, true, true, true];
+                tempData[ i ]._children = JSON.parse(tempData[ i ][ 'children' ]);
+                for (let j = 0; j< tempData[ i ]._children.length; j++){
+                    if ( JSON.parse(tempData[ i ]._children[ j ][ 'children' ]) == null) {
+                        //THIS LINE GOES ONCE IS FULL
+                        tempData[ i ]._children[ j ].selectionType = 'filtered';
+                        tempData[ i ]._children[ j ].id = tempData[ i ].id+'-'+tempData[ i ]._children[ j ].id;
+                        tempData[ i ]._children[ j ].isAdd = [false, true, true, true];
+                    }
+                    else {
+                        tempData[ i ]._children[ j ]._children = JSON.parse(tempData[ i ]._children[ j ][ 'children' ]);
+                        //console.log('i: '+ i + ' j: '+ j);
+                        //console.log('Children of childre: '+ JSON.stringify(tempData[ i ]._children[ j ]._children));
+                        tempData[ i ]._children[ j ].id = tempData[ i ].id+'-'+tempData[ i ]._children[ j ].id;
+                        for (let k = 0; k< tempData[ i ]._children[ j ]._children.length; k++){
+                            //THIS LINE GOES ONCE IS FULL
+                            tempData[ i ]._children[ j ]._children[ k ].selectionType = 'filtered';
+                            tempData[ i ]._children[ j ]._children[ k ].id = tempData[ i ]._children[ j ].id+'-'+tempData[ i ]._children[ j ]._children[ k ].id;
+                            tempData[ i ]._children[ j ]._children[ k ].isAdd = [false, true, true, true];
+                        }
+                        delete tempData[ i ]._children[j].children;
+                    }
+                }
+                delete tempData[ i ].children;
+            }
+            this.gridData = tempData;
+            console.log('Edited DATA: '+JSON.stringify(this.gridData));
+            this.spinnerPSLoading = false; 
         })
         .catch((error)=>{
             console.log(error);
+            this.gridData = EXAMPLES_DATA_BASIC;
+            this.spinnerPSLoading = false; 
         })
 
     }
@@ -271,7 +297,8 @@ export default class Bl_treeProducts extends LightningElement {
     getRowActions(row, doneCallback) {
         //LEVEL 1: TABS, LEVEL 2: TREE HEAD, LEVEL 3: SELECTABLE PRODUCT, LEVEL 4: SECOND SELECTABLE PRODUCT
         const actions = [];
-        //console.log('ROW PROPERTIES: '+ Object.getOwnPropertyNames(row));
+        console.log('ROW PROPERTIES: '+ Object.getOwnPropertyNames(row));
+        console.log('ROW LEVEL: '+ row.level);
         //IF LEVEL 2 - ONLY SHOW PRODUCT INFORMATION
         if (row.level == 1) {
             actions.push({ label: 'View', name: 'view' });
@@ -285,10 +312,10 @@ export default class Bl_treeProducts extends LightningElement {
             } else {
                 typeProduct='Bundle';
             } 
-            actions.push({ label: 'Add '+typeProduct , name: 'add', disabled: this.addDisable[0], },
-            { label: 'Clone', name: 'clone', disabled: this.addDisable[1], },
-            { label: 'Edit', name: 'edit', disabled: this.addDisable[2],},
-            { label: 'Delete', name: 'delete', disabled: this.addDisable[3], },);
+            actions.push({ label: 'Add '+typeProduct , name: 'add', disabled: row.isAdd[0], },
+            { label: 'Clone', name: 'clone', disabled: row.isAdd[1], },
+            { label: 'Edit', name: 'edit', disabled: row.isAdd[2],},
+            { label: 'Delete', name: 'delete', disabled: row.isAdd[3], },);
         } 
         //IF LEVEL 3 WITH LEVEL 4 (CHILDREN)
         else if (row.level == 2 && row.hasChildren) {
@@ -302,10 +329,10 @@ export default class Bl_treeProducts extends LightningElement {
             } else {
                 typeProduct='Bundle';
             } 
-            actions.push({ label: 'Add '+typeProduct , name: 'add', disabled: this.addDisable[0] },
-            { label: 'Clone', name: 'clone', disabled: this.addDisable[1], },
-            { label: 'Edit', name: 'edit', disabled: this.addDisable[2],},
-            { label: 'Delete', name: 'delete', disabled: this.addDisable[3], },);
+            actions.push({ label: 'Add '+typeProduct , name: 'add', disabled: row.isAdd[0] },
+            { label: 'Clone', name: 'clone', disabled: row.isAdd[1], },
+            { label: 'Edit', name: 'edit', disabled: row.isAdd[2],},
+            { label: 'Delete', name: 'delete', disabled: row.isAdd[3], },);
         }
         /**
          * if (row.hasChildren){
@@ -326,6 +353,7 @@ export default class Bl_treeProducts extends LightningElement {
         const row = event.detail.row;
         this.rowSelected = row; 
         console.log('ROW properties '+ Object.getOwnPropertyNames(row));
+        console.log(row);
         switch (action.name) {
             case 'view':
                 alert('VIEW');
@@ -450,13 +478,8 @@ export default class Bl_treeProducts extends LightningElement {
     saveAndExitFilterModal(){
         //Save the changes and add to the array
         //HERE GOES THE PROCESS TO SAVE IT 
-        const evt = new ShowToastEvent({
-            title: 'MISSING SAVE ACTION HERE',
-            message: 'MISSING SAVE ACTION HERE',
-            variant: 'info',
-            mode: 'dismissable'
-        });
-        this.dispatchEvent(evt);
+        console.log('Filtered Level that closed the popup '+this.rowSelected.level); 
+        this.rowSelected.isAdd = [true, false, false, false]; 
         this.moreAdd();
         this.closeFilterAndSelected();
     }
@@ -481,11 +504,54 @@ export default class Bl_treeProducts extends LightningElement {
     @track nameBundleProduct; 
 
     //Change Configured display when Save; 
+    @track copyRow; 
+    @api helpValue = false; 
     saveConfigured(){
+        //WORKING HERE
+        console.log('Bundle Level that closed the popup '+this.rowSelected.level); 
+        this.spinnerPSLoading = true;
+        //console.log('Name of product added '+this.rowSelected.name);
+        let idParent;
+        let indexParent;
+        let indexParentChildren; 
+        let indexOldRow;
+        this.helpValue = true; 
+        if (this.rowSelected.level == 2) { 
+            idParent = this.rowSelected.id.substr(0, this.rowSelected.id.indexOf('-'));
+            //console.log('Id of parent: '+idParent);
+            indexParent = this.gridData.findIndex(x => x.id === idParent);
+            console.log('Index Parent: '+indexParent);
+            indexOldRow = this.gridData[indexParent]._children.findIndex(x => x.id === this.rowSelected.id);
+            console.log('Index selected: '+indexOldRow);
+            this.copyRow = JSON.parse(JSON.stringify(this.rowSelected));
+            let randomId = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(2, 7);
+            this.gridData[indexParent]._children[indexOldRow].id = '01t8A000007d3StQAI-01t8A000007d3StQAP';
+            ;
+            //this.gridData[indexParent]._children[indexOldRow].id = this.gridData[indexParent]._children[indexOldRow].id+'ADD'+randomId;
+            this.gridData[indexParent]._children[indexOldRow].level3 = 'This is the new one';
+            this.gridData[indexParent]._children[indexOldRow].isAdd = [true, false, false, false]; 
+            this.gridData[indexParent]._children[indexOldRow].isExpanded = true;
+            this.gridData[indexParent].isExpanded = true;
+            console.log(JSON.stringify(this.copyRow));
+            console.log('gridData before in parent length: '+ this.gridData[indexParent]._children.length);
+            this.gridData[indexParent]._children.splice(indexOldRow, 0, this.copyRow);
+            //this.gridData[indexParent]._children= [...this.gridData[indexParent]._children, this.copyRow];
+            console.log('gridData after in parent length: '+ this.gridData[indexParent]._children.length);
+            console.log(JSON.stringify(this.gridData));
+            this.gridData = this.gridData;
+            
+            setTimeout(()=>{
+                this.helpValue= false;
+                this.spinnerPSLoading = false; 
+            }, 2000);
+        } else if (this.rowSelected.level == 3) {
+            //CAHNGE THIS TO GET THE PARENT ID IF LEVEL 4 WITH 2 - 
+            indexParent = this.rowSelected.id.substr(0, this.rowSelected.id.indexOf('-'));
+            indexParentChildren = this.rowSelected.id.substr(0, this.rowSelected.id.indexOf('-'));
+            //WORK HERE WHEN LEVEL 4 IN DATA AVAILABLE!
+        }
         this.closeConfigured();
-        console.log('Level that closed the popup '+this.rowSelected.level); 
-        this.rowSelected.isAdd = !this.rowSelected.isAdd ? true : false; 
-        //this.addDisable = [true, false, false, false];
+
     }
 
 }
