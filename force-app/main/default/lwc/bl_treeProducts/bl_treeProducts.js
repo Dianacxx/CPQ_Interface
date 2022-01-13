@@ -1,6 +1,5 @@
 import { LightningElement, track, api , wire} from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
-import getProductLevels  from '@salesforce/apex/QuoteController.getProductLevels'; 
 
 //MOCK DATA
 
@@ -89,205 +88,84 @@ const TAI_PRODUCTS = [
     [TAI_FILTERS[0],TAI_FILTERS[1],TAI_FILTERS[2],TAI_FILTERS[3],TAI_FILTERS[4],],
 ];
 
-const EXAMPLES_DATA_BASIC = [
-    {
-        name: 'Id000001',
-        level2: 'Product 1',
-        _children: [
-            {
-                name: 'Id000001-Idc00001',
-                level3: 'OSP Cable Assemblies child',
-                selectionType: 'filtered',
-                filteredGrouping: 'Permise Cable',
-                isAdd: [false, true, true, true],
-            },
-        ],
-    },
-
-    {
-        name: '01t8A000007bfBaQAI',
-        level2: 'Product 2',
-        _children: [
-            {
-                name: '01t8A000007bfBaQAI',
-                level3: 'Titan RTD',
-                _children: [
-                    {
-                        name: '01t8A000007bfBfQAI',
-                        level4: 'Titan RTD Child 1',
-                        selectionType: 'bundle',
-                        isAdd: [false, true, true, true],
-                    },
-                    {
-                        name: '01t8A000007bfBkQAI',
-                        level4: 'Titan RTD Child 2',
-                        selectionType: 'filtered',
-                        filteredGrouping: 'ADSS Cable',
-                        isAdd: [false, true, true, true],
-                    },
-                ],
-            },
-
-            {
-                name: '2-B',
-                level3: 'Nodeflex',
-                _children: [
-                    {
-                        name: '2-B-A',
-                        level4: 'Nodeflex Child 1',
-                        selectionType: 'filtered',
-                        filteredGrouping: 'ADSS Cable',
-                        isAdd: [false, true, true, true],
-                    },
-                    {
-                        name: '2-B-B',
-                        level4: 'Nodeflex Child 2',
-                        selectionType: 'bundle',
-                        isAdd: [false, true, true, true],
-                    },
-                ],
-            },
-        ],
-    },
-
-    {
-        name: '3',
-        level2: 'Product 3',
-        _children: [
-            {
-                name: '3-A',
-                level3: 'Product 3 child',
-                selectionType: 'filtered',
-                filteredGrouping: 'Loose Tube Cable',
-                isAdd: [false, true, true, true],
-            },
-        ],
-    },
-
-    {
-        name: '4',
-        level2: 'Product 4',
-        _children: [
-            {
-                name: '4-A',
-                level3: 'Titan RTD',
-                _children: [
-                    {
-                        name: '4-A-A',
-                        level4: 'Titan RTD Child 1',
-                        selectionType: 'filtered',
-                        filteredGrouping: 'SkyWrap Cable',
-                        isAdd: [false, true, true, true],
-                    },
-                    {
-                        name: '4-A-B',
-                        level4: 'Titan RTD Child 2',
-                        selectionType: 'bundle',
-                        isAdd: [false, true, true, true],
-                    },
-                ],
-            },
-
-            {
-                name: '4-B',
-                level3: 'Nodeflex',
-                _children: [
-                    {
-                        name: '4-B-A',
-                        level4: 'Nodeflex Child 1',
-                        selectionType: 'filtered',
-                        filteredGrouping: 'Permise Cable',
-                        isAdd: [false, true, true, true],
-                    },
-                    {
-                        name: '4-B-B',
-                        level4: 'Nodeflex Child 2',
-                        selectionType: 'filtered',
-                        filteredGrouping: 'Wrapping Tube Cable',
-                        isAdd: [false, true, true, true],
-                    },
-                ],
-            },
-        ],
-    },
-];
-
-
-
 import { getPicklistValues } from 'lightning/uiObjectInfoApi';
-import FIBER_COUNT_FIELD from '@salesforce/schema/Product2.Configuration__c';
+import PRODUCT_TYPE_FIELD from '@salesforce/schema/Product2.Product_Type__c';
+import FIBER_COUNT_FIELD from '@salesforce/schema/Product2.Fiber_Count__c';
+import FIBER_TYPE_FIELD from '@salesforce/schema/Product2.Fiber_Type__c';
+import JACKET_TYPE_FIELD from '@salesforce/schema/Product2.Jacket_Type__c';
+import JACKET_CONFIG_FIELD from '@salesforce/schema/Product2.Jacket_Configuration__c';
+import JACKET_PRINT_FIELD from '@salesforce/schema/Product2.Jacket_Print__c';
+import SUB_UNIT_FIELD from '@salesforce/schema/Product2.Sub_Unit__c';
+import ARMOR_TYPE_FIELD from '@salesforce/schema/Product2.Armor_Type__c';
+import TIGHT_BUFF_FIELD from '@salesforce/schema/Product2.TightBuff_Type__c';
+import MAX_SPAN_LIGHT_FIELD from '@salesforce/schema/Product2.Max_Span_at_Light__c';
+import MAX_SPAN_MEDIUM_FIELD from '@salesforce/schema/Product2.Max_Span_at_Medium__c';
+import MAX_SPAN_HEAVY_FIELD from '@salesforce/schema/Product2.Max_Span_at_Heavy__c';
+import PACKGING_FIELD from '@salesforce/schema/Product2.Packaging__c';
+import LENGTH_PICK_FIELD from '@salesforce/schema/Product2.Length_Picklist__c';
+import BUS_SIZE_WIDTH_FIELD from '@salesforce/schema/Product2.Bus_Size_or_Width__c';
+import BUS_SCHEDULE_FIELD from '@salesforce/schema/Product2.Bus_Schedule__c';
+import BUS_ALLOY_FIELD from '@salesforce/schema/Product2.Bus_Alloy__c';
+import BUS_TEMPER_FIELD from '@salesforce/schema/Product2.Bus_Temper__c';
+import BUS_THICKNESS_FIELD from '@salesforce/schema/Product2.Bus_Thickness__c';
+import INDUSTRY_NAME_FIELD from '@salesforce/schema/Product2.AW_Industry_Name__c';
+import NUMBER_STRANDS_FIELD from '@salesforce/schema/Product2.AW_Number_of_Strands__c';
+import WIRE_SIZE_FIELD from '@salesforce/schema/Product2.AW_Wire_Size__c';
+import BREAKING_STRENGTH_FIELD from '@salesforce/schema/Product2.Breaking_Strength__c';
+import LAY_DIRECTION_FIELD from '@salesforce/schema/Product2.Lay_Direction__c';
+import DIAMETER_TOLERANCE_FIELD from '@salesforce/schema/Product2.Diameter_Tolerance__c';
+import CORE_ANNEALING_FIELD from '@salesforce/schema/Product2.Core_Annealing__c';
+import GUY_WIRE_DISPENSER_FIELD from '@salesforce/schema/Product2.Guy_Wire_Dispenser__c';
+import WIRE_SHAPE_FIELD from '@salesforce/schema/Product2.Wire_Shape__c';
+
 import { getObjectInfo } from 'lightning/uiObjectInfoApi';
 import PRODUCT2_OBJECT from '@salesforce/schema/Product2';
 
 export default class Bl_treeProducts extends LightningElement {
-    @api recordId;
-    @api productId = '';
-    @track gridData; //MOCK DATA
-    @track gridColumns; 
+    
+    
+    @api gridData; //MOCK DATA
+    @api gridColumns; 
+    @api tab;
 
     @api spinnerPSLoading = false; 
-
-    @track filters1 = []; //MOCK FILTERS
+    @track filtersUsed = []; //MOCK FILTERS
     @track filters2 = []; //MOCK FILTERS
-
     @track typeProduct;
-    @track typeProduct2;
+
     connectedCallback(){
         console.log('Here goes the values of gird data!');
         this.spinnerPSLoading = true; 
 
         //MOCK FILTERS
         this.typeProduct = FOC_PPRODUCTS[1]; 
-        this.typeProduct2 = FOC_PPRODUCTS[2]; 
         for(let j = 1; j < this.typeProduct.length; j++){
-            this.filters1.push(this.typeProduct[j]); 
+            this.filtersUsed.push(this.typeProduct[j]); 
         }
-        for(let j = 1; j < this.typeProduct2.length; j++){
-            this.filters2.push(this.typeProduct2[j]); 
+        
+        switch (this.tab) {
+            case 'ACA':
+                this.typeFilterProduct = ACA_PPRODUCTS; 
+            break; 
+            case 'Connectivity':
+                this.typeFilterProduct = CONNECTIVITY_PPRODUCTS; 
+            break; 
+            case 'Fiber Optic Cable':
+                this.typeFilterProduct = FOC_PPRODUCTS; 
+            break; 
+            case 'Cable':
+                this.typeFilterProduct = CABLE_PRODUCTS; 
+            break; 
+            case 'Test & Inspection':
+                this.typeFilterProduct = TAI_PRODUCTS; 
+            break; 
+            default:
+                console.log('ERROR HERE IN TAB OPTION');
+                break; 
         }
-
-        getProductLevels({level1: 'OCA'})
-        .then((data)=>{
-            let tempData = JSON.parse(data);
-            console.log('DATA: ' + data);
-            for ( let i = 0; i < tempData.length; i++ ) {
-                //tempData[ i ].selectionType = 'filtered'; 
-                //tempData[ i ].isAdd = [false, true, true, true];
-                tempData[ i ]._children = JSON.parse(tempData[ i ][ 'children' ]);
-                for (let j = 0; j< tempData[ i ]._children.length; j++){
-                    if ( JSON.parse(tempData[ i ]._children[ j ][ 'children' ]) == null) {
-                        //THIS LINE GOES ONCE IS FULL
-                        tempData[ i ]._children[ j ].selectionType = 'filtered';
-                        tempData[ i ]._children[ j ].id = tempData[ i ].id+'-'+tempData[ i ]._children[ j ].id;
-                        tempData[ i ]._children[ j ].isAdd = [false, true, true, true];
-                    }
-                    else {
-                        tempData[ i ]._children[ j ]._children = JSON.parse(tempData[ i ]._children[ j ][ 'children' ]);
-                        //console.log('i: '+ i + ' j: '+ j);
-                        //console.log('Children of childre: '+ JSON.stringify(tempData[ i ]._children[ j ]._children));
-                        tempData[ i ]._children[ j ].id = tempData[ i ].id+'-'+tempData[ i ]._children[ j ].id;
-                        for (let k = 0; k< tempData[ i ]._children[ j ]._children.length; k++){
-                            //THIS LINE GOES ONCE IS FULL
-                            tempData[ i ]._children[ j ]._children[ k ].selectionType = 'filtered';
-                            tempData[ i ]._children[ j ]._children[ k ].id = tempData[ i ]._children[ j ].id+'-'+tempData[ i ]._children[ j ]._children[ k ].id;
-                            tempData[ i ]._children[ j ]._children[ k ].isAdd = [false, true, true, true];
-                        }
-                        delete tempData[ i ]._children[j].children;
-                    }
-                }
-                delete tempData[ i ].children;
-            }
-            this.gridData = tempData;
-            console.log('Edited DATA: '+JSON.stringify(this.gridData));
-            this.spinnerPSLoading = false; 
-        })
-        .catch((error)=>{
-            console.log(error);
-            this.gridData = EXAMPLES_DATA_BASIC;
-            this.spinnerPSLoading = false; 
-        })
-
+        this.spinnerPSLoading = false; 
     }
+
 
     //BUTTON ACTION DEPENDING ON LEVELS
     constructor() {
@@ -304,8 +182,8 @@ export default class Bl_treeProducts extends LightningElement {
     getRowActions(row, doneCallback) {
         //LEVEL 1: TABS, LEVEL 2: TREE HEAD, LEVEL 3: SELECTABLE PRODUCT, LEVEL 4: SECOND SELECTABLE PRODUCT
         const actions = [];
-        console.log('ROW PROPERTIES: '+ Object.getOwnPropertyNames(row));
-        console.log('ROW LEVEL: '+ row.level);
+        //console.log('ROW PROPERTIES: '+ Object.getOwnPropertyNames(row));
+        //console.log('ROW LEVEL: '+ row.level);
         //IF LEVEL 2 - ONLY SHOW PRODUCT INFORMATION
         if (row.level == 1) {
             actions.push({ label: 'View', name: 'view' });
@@ -353,20 +231,23 @@ export default class Bl_treeProducts extends LightningElement {
         }, 200);
     }
 
+    @api recordId;
+    @api productId = '';
+       
     //HERE GOES THE ACTIONS TO ADD, EDIT, CLONE OR DELETE ONE.
     @api rowSelected;
     handleRowAction(event){
         const action = event.detail.action;
         const row = event.detail.row;
         this.rowSelected = row; 
-        console.log('ROW properties '+ Object.getOwnPropertyNames(row));
-        console.log(row);
+        //console.log('ROW properties '+ Object.getOwnPropertyNames(row));
+        //console.log(row);
         switch (action.name) {
             case 'view':
                 alert('VIEW');
                 break;
             case 'add':
-                console.log('Selection Type: '+ row.selectionType);
+                //console.log('Selection Type: '+ row.selectionType);
                 if (row.selectionType == 'filtered'){
                     this.openFilterAndSelected();
                     this.selectFiltersToShow();
@@ -426,48 +307,42 @@ export default class Bl_treeProducts extends LightningElement {
 
     get options() {
         //console.log('How to display options: '+ JSON.stringify(this.TypePicklistValues.data.values));
-        return this.TypePicklistValues.data.values;
+        return 0; //this.TypePicklistValues.data.values;
     }
     //THIS FILTERS NEED TO BE DONE BUT ASK HOW MANY THEY ARE GOING TO BE
     @wire(getObjectInfo, { objectApiName: PRODUCT2_OBJECT })
     objectInfo;
-
-    @wire(getPicklistValues, { recordTypeId: '$objectInfo.data.defaultRecordTypeId', fieldApiName: FIBER_COUNT_FIELD})
-    TypePicklistValues;
+    @api helper; 
+    @wire(getPicklistValues, { recordTypeId: '$objectInfo.data.defaultRecordTypeId', fieldApiName: JACKET_TYPE_FIELD})
+    wiredPicklistValues({ error, data }) {
+        // reset values to handle eg data provisioned then error provisioned
+        if (data) {
+            console.log('Piklist values: ');//+JSON.stringify(data));
+            console.log(data.values)
+            this.helper = data.values; 
+        } else if (error) {
+            console.log(error);
+        }
+    }  
 
     //______________________________________________________________________________
     //SHOW FILTERS
+    @api filtersUsed = []; 
     selectFiltersToShow(){
         let filterProduct = this.rowSelected.filteredGrouping; 
-        switch (filterProduct) {
-            case '':
-                break;
-            case '':
-                break;
-            case '':
-                break;
-            case '':
-                break;
-            case '':
-                break;
-            case '':
-                break;
-            case '':
-                break;
-            case '':
-                break;
-            case '':
-                break;
-            case '':
-                break;
-            case '':
-                break;
-            case '':
-                break;
-            default: 
-                break; 
+        this.filtersUsed = [];
+        for (let i = 0; i < this.typeFilterProduct.length; i++){
+            //console.log('Types of filters: '+this.typeFilterProduct[i][0]); 
+            if (this.typeFilterProduct[i][0] == filterProduct){
+                //console.log('Found type of filtered product'); 
+                
+                for(let j = 1; j < this.typeFilterProduct[i].length; j++){
+                    this.typeFilterProduct[i][j].options = this.helper;//[{label:'HERE 1', value:1},{label:'HERE 2',value:2} ,{label:'HERE 3',value:3},]; 
+                    this.filtersUsed.push(this.typeFilterProduct[i][j]); 
+                }
+                
+            }
         }
-        
     }
     //FILTER VALUES 
     @track filterValueSelected = []; 
@@ -595,6 +470,7 @@ export default class Bl_treeProducts extends LightningElement {
     saveConfigured(){
         //WORKING HERE
         console.log('Bundle Level that closed the popup '+this.rowSelected.level); 
+        /*
         this.spinnerPSLoading = true;
         //console.log('Name of product added '+this.rowSelected.name);
         let idParent;
@@ -602,7 +478,7 @@ export default class Bl_treeProducts extends LightningElement {
         let indexParentChildren; 
         let indexOldRow;
         this.helpValue = true; 
-        /*
+        
         if (this.rowSelected.level == 2) { 
             idParent = this.rowSelected.id.substr(0, this.rowSelected.id.indexOf('-'));
             //console.log('Id of parent: '+idParent);
