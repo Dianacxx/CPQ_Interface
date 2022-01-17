@@ -452,98 +452,45 @@ public with sharing class QuoteController {
    
     @AuraEnabled
     public static String getProductLevels(String level1){
+        List<AFL_Lookups__c> lookupList = [SELECT ID, Product_Class_1__c, Lookup_Code__c FROM AFL_Lookups__c WHERE Product_Class_1__c =: level1];
+        // System.debug(lookupList.size());
         Set<String> level2Set = new Set<String>();
-        Set<String> level3Set = new Set<String>();
-        List<WrappersClass.level1WrapperClass> wrapperList = new List<WrappersClass.level1WrapperClass> ();
-        Map<Id,Product2> productMap = new Map<Id,Product2>();
-        Map<String,List<WrappersClass.level2WrapperClass>> wrapper2Map = new Map<String,List<WrappersClass.level2WrapperClass>>();
-        // Map<String,WrappersClass.level2WrapperClass> wrapper2Map = new Map<String,WrappersClass.level2WrapperClass>();
-        Set<String> level2Values = new Set<String>();
-        Map<String,List<WrappersClass.level3WrapperClass>> wrapper3Map = new Map<String,List<WrappersClass.level3WrapperClass>>();
-
-        List<Product2> productList = [SELECT ID,Name,ProdLevel1__c,ProdLevel2__c,ProdLevel3__c,ProdLevel4__c FROM Product2 WHERE ProdLevel1__c =: level1];
-        
+        List<WrappersClass.level1WrapperClass> wrappersToPrintList = new List<WrappersClass.level1WrapperClass>();
+        Map<String,List<WrappersClass.level2WrapperClass>> prodsPerLevelMap = new Map<String,List<WrappersClass.level2WrapperClass>>();
+        //Add all of the product 2 levels into a set
+        for(AFL_Lookups__c lookup : lookupList){
+            level2Set.add(lookup.Lookup_Code__c);
+        }
+        //Get all of the products that have the level 1 and multiple level 2
+        // List<Product2> initialProdList = [SELECT ID FROM Product2 WHERE QLE_Search_Method__c = 'FILTERED' OR QLE_Search_Method__c = 'CONFIGURED'];
+        // System.debug(initialProdList.size());
+        List<Product2> productList = [SELECT ID FROM Product2 WHERE ProdLevel1__c =: level1 AND ProdLevel2__c IN: level2Set AND QLE_Search_Method__c = 'FILTERED' ];
+        // List<Product2> productList = [SELECT ID FROM Product2 WHERE ProdLevel1__c =: level1 AND ProdLevel2__c IN: level2Set AND ID =: initialProdList];
+        System.debug(productList.size());
         for(Product2 prod : productList){
-            level2Values.add(prod.ProdLevel2__c);
-            if(prod.ProdLevel3__c != null){
-                if(wrapper3Map.containsKey(prod.ProdLevel3__c)){
-                    WrappersClass.level3WrapperClass lvl3Wrapper = new WrappersClass.level3WrapperClass();
-                    lvl3Wrapper.id = String.valueOf(prod.id);
-                    if(prod.ProdLevel4__c != null){
-                        lvl3Wrapper.level4 = prod.Name;
-                    }
-                    wrapper3Map.get(prod.ProdLevel3__c).add(lvl3Wrapper);
-                }else{
-                    WrappersClass.level3WrapperClass lvl3Wrapper = new WrappersClass.level3WrapperClass();
-                    lvl3Wrapper.id = String.valueOf(prod.id);
-                    if(prod.ProdLevel4__c != null){
-                        lvl3Wrapper.level4 = prod.Name;
-                    }
-                    wrapper3Map.put(String.valueOf(prod.ProdLevel3__c), new List<WrappersClass.level3WrapperClass>{lvl3Wrapper}); 
-                }
+            if(prodsPerLevelMap.containsKey(prod.ProdLevel2__c)){
+                WrappersClass.level2WrapperClass lvl2Wrapper = new WrappersClass.level2WrapperClass();
+                lvl2Wrapper.id = String.valueOf(prod.id);
+                lvl2Wrapper.selectionType = prod.Filtered_Grouping__c;
+                prodsPerLevelMap.get(prod.ProdLevel2__c).add(lvl2Wrapper);
+            }else{
+                WrappersClass.level2WrapperClass lvl2Wrapper = new WrappersClass.level2WrapperClass();
+                lvl2Wrapper.id = String.valueOf(prod.id);
+                lvl2Wrapper.selectionType = prod.Filtered_Grouping__c;
+                prodsPerLevelMap.put(String.valueOf(prod.ProdLevel2__c), new List<WrappersClass.level2WrapperClass>{lvl2Wrapper});
             }
         }
-        
-        for (Product2 prod : productList) {            
-            if(prod.ProdLevel2__c!=null){
-                if(wrapper2Map.containsKey(prod.ProdLevel2__c)){
-                    WrappersClass.level2WrapperClass lvl2Wrapper = new WrappersClass.level2WrapperClass();
-                    lvl2Wrapper.name = prod.ProdLevel2__c;
-                    lvl2Wrapper.id = String.valueOf(prod.id);
-                    if(prod.ProdLevel4__c == null){
-                        lvl2Wrapper.level3 = prod.name;
-                    }else{
-                        lvl2Wrapper.level3 = prod.ProdLevel3__c;
-                    }
-                    lvl2Wrapper.children = JSON.serialize(wrapper3Map.get(prod.ProdLevel3__c));
-                    wrapper2Map.get(prod.ProdLevel2__c).add(lvl2Wrapper);
-                }else{
-                    WrappersClass.level2WrapperClass lvl2Wrapper = new WrappersClass.level2WrapperClass();
-                    lvl2Wrapper.name = prod.ProdLevel2__c;
-                    lvl2Wrapper.id = String.valueOf(prod.id);
-                    if(prod.ProdLevel4__c == null){
-                        lvl2Wrapper.level3 = prod.name;
-                    }else{
-                        lvl2Wrapper.level3 = prod.ProdLevel3__c;
-                    }
-                    lvl2Wrapper.children = JSON.serialize(wrapper3Map.get(prod.ProdLevel3__c));
-                    wrapper2Map.put(String.valueOf(prod.ProdLevel2__c), new List<WrappersClass.level2WrapperClass>{lvl2Wrapper}); 
-                   // System.debug('Level 3 children: ' + lvl2Wrapper.children);
 
-                }
-            }                      
-        }
-        for(String key : wrapper2Map.keyset()){
-            for(WrappersClass.level2WrapperClass item : wrapper2Map.get(key)){
-                System.debug(item.level3);
-            }
-        }
-        System.debug('Level 2 size: ' + wrapper2Map.size() + ' levels 2: '+wrapper2Map.keyset());
-        // System.debug('Level 3 size: ' + wrapper3Map.size() + ' levels 3: '+wrapper3Map.keyset());
-        //List<Product2> level2Children = [SELECT ID,ProdLevel1__c,ProdLevel2__c,ProdLevel3__c,ProdLevel4__c FROM Product2 WHERE ProdLevel1__c =: level1 AND ProdLevel2__c ];
-
-        for(String key : wrapper2Map.keyset()){
-            
+        for(String key : prodsPerLevelMap.keySet()){
             WrappersClass.level1WrapperClass wrapper = new WrappersClass.level1WrapperClass ();
-            // wrapper.name = wrapper2Map.get(key)[0].name + '1';
-            wrapper.id = wrapper2Map.get(key)[0].id;  
+            wrapper.id = prodsPerLevelMap.get(key)[0].id;
             wrapper.level1 = level1;
             wrapper.level2 = key;
-            wrapper.children = JSON.serialize(wrapper2Map.get(key));
-            // if(key=='ISP CONNECTIVITY'){
-            //     system.debug('first ' + wrapper2Map.get(key)[0].level3);
-            //     system.debug('second ' + wrapper2Map.get(key)[1].level3);
-            //     system.debug('third ' + wrapper2Map.get(key)[2].level3);
-            //     system.debug('fourth ' + wrapper2Map.get(key)[3].level3);
-            //     system.debug('fifth ' + wrapper2Map.get(key)[4].level3);
-                
-            // }
-            System.debug('Level 2 children: ' + wrapper.children);
-            
-            wrapperList.add(wrapper);
+            wrapper.children = JSON.serialize(prodsPerLevelMap.get(key));
+
+            wrappersToPrintList.add(wrapper);
         }
 
-        System.debug(JSON.serialize(wrapperList));
-        return JSON.serialize(wrapperList);
+        return JSON.serialize(wrappersToPrintList);
     }
 }
