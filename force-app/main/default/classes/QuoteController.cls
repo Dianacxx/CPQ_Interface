@@ -508,7 +508,7 @@ public with sharing class QuoteController {
                     }
                     lvl2Wrapper.children = JSON.serialize(wrapper3Map.get(prod.ProdLevel3__c));
                     wrapper2Map.put(String.valueOf(prod.ProdLevel2__c), new List<WrappersClass.level2WrapperClass>{lvl2Wrapper}); 
-                   // System.debug('Level 2 children: ' + lvl2Wrapper.children);
+                   // System.debug('Level 3 children: ' + lvl2Wrapper.children);
 
                 }
             }                      
@@ -538,6 +538,7 @@ public with sharing class QuoteController {
             //     system.debug('fifth ' + wrapper2Map.get(key)[4].level3);
                 
             // }
+            System.debug('Level 2 children: ' + wrapper.children);
             
             wrapperList.add(wrapper);
         }

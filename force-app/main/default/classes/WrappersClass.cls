@@ -75,6 +75,7 @@ public with sharing class WrappersClass {
 
     }
     public class level3WrapperClass{
+        public String id {get; set;}
         public String name {get; set;}
         public String level4 {get; set;}
         public String selectionType {get; set;}
