@@ -132,6 +132,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
 
     @api girdDataFirstTab; 
     connectedCallback(){
+        /*
         getProductLevels({level1: 'OCA'})
         .then((data)=>{
             let tempData = JSON.parse(data);
@@ -171,7 +172,24 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             console.log(error);
             this.girdDataFirstTab = EXAMPLES_DATA_BASIC;
         })
+        */
         
+    }
+
+    @api productId; 
+    handleProductSelectionBundle(){
+
+        //let link = '/apex/sbqq__sb?scontrolCaching=1&id=' + this.recordId + '#quote/le?qId=' + this.recordId; //To QLE of quote. 
+        //To Configure Products of a Bundle one
+        this.productId = '01t8A000007c76KQAQ';
+        let link2 = '/apex/sbqq__sb?id='+this.recordId+'&tour=&isdtp=p1&ltn_app_id=06m8A0000004jM5QAI&clc=0#/product/pc?qId='+this.recordId+'&aId=a5e8A000000EK29QAG&pId='+this.productId+'&redirectUrl=LineEditor&open=0';
+        this[NavigationMixin.Navigate]({
+            type: 'standard__webPage',
+            attributes: {
+                url: link2,
+                recordId : this.recordId,
+            }
+        })
     }
     //When click cancel button in Product Selection UI
     handleCancel(){

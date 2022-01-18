@@ -16,6 +16,8 @@ public with sharing class WrappersClass {
         public String id{get;set;}
         public String name {get;set;}
         public String product{get;set;}
+        public Id productid{get;set;}
+        public Product2 productobj{get;set;}
         public String tiers{get;set;}
         public String description{get;set;}
         public Decimal quantity{get;set;}
@@ -54,5 +56,35 @@ public with sharing class WrappersClass {
         public String name{get;set;}
         public String product{get;set;}
         public String notetext {get;set;}
-     }
+    }
+    public class level1WrapperClass{
+        public String name {get; set;}
+        public String id {get; set;}
+        public String level1 {get; set;}
+        public String level2 {get; set;}
+        public String selectionType {get; set;}
+        public String children {get; set;}
+    }
+    public class level2WrapperClass{
+        public String id {get; set;}
+        public String name {get; set;}
+        public String level3 {get; set;}
+        public String selectionType {get; set;}
+        public String children {get; set;}
+        public List<Boolean> isAdd {get;set;}
+
+    }
+    public class level3WrapperClass{
+        public String id {get; set;}
+        public String name {get; set;}
+        public String level4 {get; set;}
+        public String selectionType {get; set;}
+    }
+
+    public class LookupWrapperClass{
+        public String lookupCode {get;set;}
+        public String productClass1 {get;set;}
+    }
+    
+
 }

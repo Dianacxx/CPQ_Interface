@@ -1,0 +1,16 @@
+<template>
+    <lightning-card>
+        <template if:true={recordId}>
+            <h2 class="slds-m-left_small slds-text-heading_medium slds-m-bottom_medium">
+                Returning to Quote Editor UI for the quote: {quoteName} con Id {recordId} 
+             </h2>
+        </template>
+        <template if:false={recordId}>
+            <h2 class="slds-m-left_small slds-text-heading_medium slds-m-bottom_medium">
+                To use the UI please access first from the record page of the quote.  
+            </h2>
+            <h2 class="slds-m-left_small slds-text-heading_small slds-m-bottom_small">
+                This action is only available if you access before from the record page of the quote.            </h2>
+        </template>
+    </lightning-card>
+</template>

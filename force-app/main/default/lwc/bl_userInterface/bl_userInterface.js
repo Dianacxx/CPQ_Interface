@@ -33,7 +33,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         this.disableButton = true; 
         var startTime = performance.now();
         this.spinnerLoadingUI = true;
-
+        console.log('Record Id: '+this.recordId);
         //These 3 can be replaced by callData funtion but not sure to meke this cahnge right now
         printQuoteLines({ quoteId: this.recordId})
         .then(data =>{
@@ -402,7 +402,6 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         resolve();
         });   
     }
-
     //NAVIGATE TO QUOTE RECORD PAGE (MISSING SAVING INFORMATION)
     async exitToRecordPage(){
         setTimeout(() => {
@@ -415,15 +414,15 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 },
             });
         }, 2000);
-        
+  
     }
     async navigateToQuoteRecordPage() {
-        let startTime = performance.now();
-        await this.callEditAnDeleteMethod();
-        await this.callCreateMethod();
-        this.exitToRecordPage();
-        let endTime = performance.now();
-        console.log(`Saving and Exit method took ${endTime - startTime} milliseconds`);
+        //let startTime = performance.now();
+        //await this.callEditAnDeleteMethod();
+        //await this.callCreateMethod();
+        await this.exitToRecordPage();
+        //let endTime = performance.now();
+        //console.log(`Saving and Exit method took ${endTime - startTime} milliseconds`);
     }
 
     //NAVIGATE BACK TO UI FROM PRODUCT SELECTION TAB WHEN CANCEL

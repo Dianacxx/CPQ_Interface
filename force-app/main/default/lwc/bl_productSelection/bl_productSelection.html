@@ -9,6 +9,7 @@
                 </lightning-layout-item>
                 <lightning-layout-item size="12" small-device-size="8" padding="around-small">
                     <div class="slds-m-left_xx-large">
+                        <lightning-button class="slds-m-right_medium" variant="brand" label="Drive to Configure Product Window" icon-name="utility:bundle_config" onclick={handleProductSelectionBundle}></lightning-button>    
                         <lightning-button class="slds-m-right_medium" variant="brand" label="Save & Exit" icon-name="utility:save" onclick={handleSaveAndExit}></lightning-button>    
                         <lightning-button variant="destructive" label="Cancel" icon-name="utility:close" onclick={handleCancel}></lightning-button>
                     </div>
@@ -27,7 +28,9 @@
                         Connectivity
                     </lightning-tab>
                     <lightning-tab label="Fiber Optic Cable" onactive={handleActive}>
+                       <!--
                         <c-bl_tree-products record-id={recordId} grid-data={girdDataFirstTab} tab="Fiber Optic Cable"></c-bl_tree-products>
+                       -->
                     </lightning-tab>
                     <lightning-tab label="Cable" onactive={handleActive}>
                         Cable
