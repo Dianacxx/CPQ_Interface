@@ -468,4 +468,35 @@ public with sharing class QuoteController {
 
         return JSON.serialize(wrappersToPrintList);
     }
+    @AuraEnabled
+    public static void getProductFiltering(String filteredGrouping){
+        // Sobject object_name = Product2;
+        Schema.sObjectType sobject_type = Product2.getSObjectType();
+        Map<String, Schema.SObjectField> theFieldmap = sobject_type.getDescribe().fields.getMap();
+        // Map<String, Schema.SObjectField> pickListFields = sobject_type.getDescribe().fields.getMap();
+
+        // list<cObjects> myobjects = new list<cObjects>();  
+
+        for(String field: theFieldmap.keyset()){ //for each field in the object
+              
+            Schema.DisplayType theResult = theFieldmap.get(field).getDescribe().GetType(); //get field type
+
+            if (theResult == Schema.DisplayType.Picklist){ //if it's a picklist
+                list<Schema.PicklistEntry> pick_list_values = theFieldmap.get(field).getDescribe().getPickListValues();
+                
+                for (Schema.PicklistEntry a : pick_list_values) {  
+
+                    // //for each value, add item to myobjects list
+                    // cObjects tempObject = new cObjects();
+                    // tempObject.myObjectName = f.getDescribe().getLabel();
+                    // tempObject.myFieldName = theFieldmap.get(field).GetDescribe().Name;
+                    // tempObject.myFieldValue = a.getValue();
+                    // myobjects.add(tempObject);
+
+               }
+            }
+        }
+
+    }
+
 }

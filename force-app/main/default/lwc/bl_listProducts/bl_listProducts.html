@@ -1,0 +1,65 @@
+<template>
+    <!--DATATABLE START-->
+        <!-- sldsValidatorIgnoreNextLine -->
+        <lightning-datatable key-field="Id" data={listToDisplay} columns={gridColumns}  hide-checkbox-column="true"  
+        onrowaction={callRowAction} hide-table-header="true"></lightning-datatable>  
+    <!--DATATABLE END-->
+    <!--FILTERED POP-UP START-->
+    <template if:true={openFilterPopup}>
+        <section aria-modal="true" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container ">
+                <header class="slds-modal__header">
+                    <h2 class="slds-text-heading_medium slds-hyphenate">Filter & Select</h2>
+                    <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeFilterAndSelected}></lightning-icon>
+                </header>
+                <div class="slds-modal__content">
+                    <div class="slds-var-p-around_small slds-align_absolute-center">
+                        <lightning-tabset active-tab-value={activeFilterTab}>
+                            <lightning-tab label="Filter" value="Filter" onactive={handleFilterTabActive}>
+                                Filter
+                            </lightning-tab>
+                            <lightning-tab label="Review" value="Review" onactive={handleReviewTabActive}>
+                                Review
+                            </lightning-tab>
+                        </lightning-tabset>
+                    </div>
+                </div>
+                <footer class="slds-modal__footer">
+                    <template if:false={tabOption}>
+                        <lightning-button variant="brand" label="Cancel" title="Close"  onclick={closeFilterAndSelected} class="slds-var-m-right_small"></lightning-button>   
+                        <lightning-button variant="brand" label="Add & Review" title="Add"  onclick={addAndReview} ></lightning-button>    
+                    </template>
+                    <template if:true={tabOption}>
+                        <lightning-button variant="brand" label="Add More" title="AddMore"  onclick={moreAdd} class="slds-var-m-right_small"></lightning-button>   
+                        <lightning-button variant="brand" label="Save & Exit" title="SaveExit"  onclick={saveAndExitFilterModal} ></lightning-button>
+                    </template>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+    <!--FILTERED POP-UP END-->
+    <!--CONFIGURED POP-UP START-->
+    <template if:true={openConfiguredPopup}>
+        <section aria-modal="true" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container ">
+                <header class="slds-modal__header">
+                    <h2 class="slds-text-heading_medium slds-hyphenate">Configured Product Alert</h2>
+                    <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeConfiguredAlert}></lightning-icon>
+                </header>
+                <div class="slds-modal__content">
+                    <div class="slds-var-p-around_medium lgc-bg slds-var-p-around_small slds-align_absolute-center">
+                        <lightning-icon class="slds-var-m-right_small" icon-name="utility:warning" alternative-text="Warning!" title="Warning"></lightning-icon>
+                        In order to redirect you to the Salesforce QLE configured product page for this product, the process in the UI is going to be saved right now in salesforce. Are you going to continue? 
+                    </div>
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning-button variant="brand" label="Cancel" title="Close"  onclick={closeConfiguredAlert} class="slds-var-m-right_small"></lightning-button>   
+                    <lightning-button variant="brand" label="Continue" title="Continue"  onclick={continueCofiguredQLE} ></lightning-button>    
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+    <!--CONFIGURED POP-UP END-->
+</template>

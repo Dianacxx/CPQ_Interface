@@ -27,7 +27,8 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     @track activeTab = 'UI'; 
 
     @track spinnerLoadingUI = false;
-
+    @track totalValueLoading = false;
+    @track errorInQuotes = false; //To show error message when something goes wrong
     //Initialize UI
     connectedCallback(){
         this.disableButton = true; 
@@ -62,7 +63,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                     mode: 'dismissable'
                 });
                 this.dispatchEvent(evt);
-                
+                this.errorInQuotes = true; 
             }
         })
             
@@ -130,77 +131,83 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     callData(){
         var startTime = performance.now();
         this.spinnerLoadingUI = true;
-        printQuoteLines({ quoteId: this.recordId})
-        .then(data =>{
-            if (data){
-                this.quotelinesString = data; 
-                this.error = undefined;
-                this.isLoading = true; 
-                //console.log('quoteLines String SUCCESS: '+ this.quotelinesString);
-                const payload = { 
-                    dataString: this.quotelinesString,
-                    auxiliar: 'newtable'
-                  };
-                publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
-            }
-        })
-        .catch(error =>{
-            if (error){
-                this.quotelinesString = undefined; 
-                this.error = error;
-                console.log('quoteLines String ERROR:');
-                console.log(this.error);
-                const evt = new ShowToastEvent({
-                    title: 'UI QUOTELINES Error',
-                    message: 'Unexpected error using UI - QUOTELINES',
-                    variant: 'error',
-                    mode: 'dismissable'
-                });
-                this.dispatchEvent(evt);
+        this.totalValueLoading = true;
+        setTimeout(()=>{
+            printQuoteLines({ quoteId: this.recordId})
+            .then(data =>{
+                if (data){
+                    this.quotelinesString = data; 
+                    this.error = undefined;
+                    this.isLoading = true; 
+                    //console.log('quoteLines String SUCCESS: '+ this.quotelinesString);
+                    const payload = { 
+                        dataString: this.quotelinesString,
+                        auxiliar: 'newtable'
+                      };
+                    publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
+                }
                 
-            }
-        })
-            
-        printNotes({ quoteId: this.recordId })
-        .then(data =>{
-            if (data){
-                this.quoteNotesString = data; 
-                this.error = undefined;
-                //console.log('notes string SUCCESS: '+ this.quoteNotesString);
-            }    
-        })
-        .catch(error =>{
-             if (error){
-                this.quoteNotesString = undefined; 
-                this.error = error;
-                this.disableButton = true;
-                this.quoteNotesString = '[name: \"none\"]';
-                console.log('notes string ERROR: ');
-                console.log(this.error);
-                const evt = new ShowToastEvent({
-                    title: 'UI NOTES Error',
-                    message: 'Unexpected error using UI - NOTES',
-                    variant: 'error',
-                    mode: 'dismissable'
-                });
-                this.dispatchEvent(evt);
-            }
-        })
-
-        getQuoteTotal({quoteId: this.recordId})
-            .then((data)=>{
-                //console.log('NEW QUOTE TOTAL data');
-                //console.log(data);
-                this.totalValue = data;
-                this.spinnerLoadingUI = false;
+                setTimeout(()=>{
+                    getQuoteTotal({quoteId: this.recordId})
+                    .then((data)=>{
+                        console.log('NEW QUOTE TOTAL data');
+                        console.log(data);
+                        this.totalValue = data;
+                        this.spinnerLoadingUI = false;
+                        this.totalValueLoading = false;
+                        var endTime = performance.now();
+                        //console.log(`Call to refresh data took ${endTime - startTime} milliseconds`)
+                    })
+                    .catch((error)=>{
+                        console.log('NEW QUOTE TOTAL error');
+                        console.log(error);
+                        this.spinnerLoadingUI = false;
+                    }); 
+                }, 8000);
             })
-            .catch((error)=>{
-                console.log('NEW QUOTE TOTAL error');
-                console.log(error);
-                this.spinnerLoadingUI = false;
-        }); 
-        var endTime = performance.now();
-        console.log(`Call to refresh data took ${endTime - startTime} milliseconds`);
+            .catch(error =>{
+                if (error){
+                    this.quotelinesString = undefined; 
+                    this.error = error;
+                    console.log('quoteLines String ERROR:');
+                    console.log(this.error);
+                    const evt = new ShowToastEvent({
+                        title: 'UI QUOTELINES Error',
+                        message: 'Unexpected error using UI - QUOTELINES',
+                        variant: 'error',
+                        mode: 'dismissable'
+                    });
+                    this.dispatchEvent(evt);
+                    
+                }
+            })
+                
+            printNotes({ quoteId: this.recordId })
+            .then(data =>{
+                if (data){
+                    this.quoteNotesString = data; 
+                    this.error = undefined;
+                    //console.log('notes string SUCCESS: '+ this.quoteNotesString);
+                }    
+            })
+            .catch(error =>{
+                 if (error){
+                    this.quoteNotesString = undefined; 
+                    this.error = error;
+                    this.disableButton = true;
+                    this.quoteNotesString = '[name: \"none\"]';
+                    console.log('notes string ERROR: ');
+                    console.log(this.error);
+                    const evt = new ShowToastEvent({
+                        title: 'UI NOTES Error',
+                        message: 'Unexpected error using UI - NOTES',
+                        variant: 'error',
+                        mode: 'dismissable'
+                    });
+                    this.dispatchEvent(evt);
+                }
+            })    
+        }, 5000);    
     }
 
     //Connect channel
@@ -350,41 +357,20 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                     auxiliar: 'updatetable'
                 };
                 publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload);   
-                getQuoteTotal({quoteId: this.recordId})
-                .then((data)=>{
-                    console.log('3. New total value recived, End of process');
-                    //console.log('getQuoteTotal SUCCESS');
-                    //console.log(data);
-                    this.totalValue = JSON.parse(data);
-                    
-                    setTimeout(() => {
-                        this.callData();
-                        console.log('TOTAL SUCCESS');
-                        this.callData();
-                        this.spinnerLoadingUI = false;
-
-                        const evt = new ShowToastEvent({
-                            title: 'Success saving the changes in the UI',
-                            message: 'Your additions have been saved on Salesforce',
-                            variant: 'success',
-                            mode: 'dismissable'
-                        });
-                        this.dispatchEvent(evt);
-                    }, 500);
-                })
-                .catch((error)=>{
-                    console.log('getQuoteTotal ERROR');
-                    console.log(error);
+                setTimeout(() => {
+                    console.log('TOTAL SUCCESS');
+                    this.callData();
                     this.spinnerLoadingUI = false;
 
                     const evt = new ShowToastEvent({
-                        title: 'Getting the Total value ERROR',
-                        message: 'open console',
-                        variant: 'error',
+                        title: 'Success saving the changes in the UI',
+                        message: 'Your additions have been saved on Salesforce',
+                        variant: 'success',
                         mode: 'dismissable'
                     });
                     this.dispatchEvent(evt);
-                }); 
+                }, 5000);
+                
             })
             .catch((error)=>{
                 console.log('quoteLineCreator ERROR');
@@ -417,12 +403,12 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
   
     }
     async navigateToQuoteRecordPage() {
-        //let startTime = performance.now();
-        //await this.callEditAnDeleteMethod();
-        //await this.callCreateMethod();
+        let startTime = performance.now();
+        await this.callEditAnDeleteMethod();
+        await this.callCreateMethod();
         await this.exitToRecordPage();
-        //let endTime = performance.now();
-        //console.log(`Saving and Exit method took ${endTime - startTime} milliseconds`);
+        let endTime = performance.now();
+        console.log(`Saving and Exit method took ${endTime - startTime} milliseconds`);
     }
 
     //NAVIGATE BACK TO UI FROM PRODUCT SELECTION TAB WHEN CANCEL

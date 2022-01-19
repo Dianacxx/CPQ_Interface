@@ -2,177 +2,86 @@ import { LightningElement, api , track} from 'lwc';
 import { NavigationMixin } from 'lightning/navigation';
 
 import getProductLevels  from '@salesforce/apex/QuoteController.getProductLevels'; 
-const EXAMPLES_DATA_BASIC = [
-    {
-        name: 'Id000001',
-        level2: 'Product 1',
-        _children: [
-            {
-                name: 'Id000001-Idc00001',
-                level3: 'OSP Cable Assemblies child',
-                selectionType: 'filtered',
-                filteredGrouping: 'Permise Cable',
-                isAdd: [false, true, true, true],
-            },
-        ],
-    },
 
-    {
-        name: '01t8A000007bfBaQAI',
-        level2: 'Product 2',
-        _children: [
-            {
-                name: '01t8A000007bfBaQAI',
-                level3: 'Titan RTD',
-                _children: [
-                    {
-                        name: '01t8A000007bfBfQAI',
-                        level4: 'Titan RTD Child 1',
-                        selectionType: 'bundle',
-                        isAdd: [false, true, true, true],
-                    },
-                    {
-                        name: '01t8A000007bfBkQAI',
-                        level4: 'Titan RTD Child 2',
-                        selectionType: 'filtered',
-                        filteredGrouping: 'ADSS Cable',
-                        isAdd: [false, true, true, true],
-                    },
-                ],
-            },
-
-            {
-                name: '2-B',
-                level3: 'Nodeflex',
-                _children: [
-                    {
-                        name: '2-B-A',
-                        level4: 'Nodeflex Child 1',
-                        selectionType: 'filtered',
-                        filteredGrouping: 'ADSS Cable',
-                        isAdd: [false, true, true, true],
-                    },
-                    {
-                        name: '2-B-B',
-                        level4: 'Nodeflex Child 2',
-                        selectionType: 'bundle',
-                        isAdd: [false, true, true, true],
-                    },
-                ],
-            },
-        ],
-    },
-
-    {
-        name: '3',
-        level2: 'Product 3',
-        _children: [
-            {
-                name: '3-A',
-                level3: 'Product 3 child',
-                selectionType: 'filtered',
-                filteredGrouping: 'Loose Tube Cable',
-                isAdd: [false, true, true, true],
-            },
-        ],
-    },
-
-    {
-        name: '4',
-        level2: 'Product 4',
-        _children: [
-            {
-                name: '4-A',
-                level3: 'Titan RTD',
-                _children: [
-                    {
-                        name: '4-A-A',
-                        level4: 'Titan RTD Child 1',
-                        selectionType: 'filtered',
-                        filteredGrouping: 'SkyWrap Cable',
-                        isAdd: [false, true, true, true],
-                    },
-                    {
-                        name: '4-A-B',
-                        level4: 'Titan RTD Child 2',
-                        selectionType: 'bundle',
-                        isAdd: [false, true, true, true],
-                    },
-                ],
-            },
-
-            {
-                name: '4-B',
-                level3: 'Nodeflex',
-                _children: [
-                    {
-                        name: '4-B-A',
-                        level4: 'Nodeflex Child 1',
-                        selectionType: 'filtered',
-                        filteredGrouping: 'Permise Cable',
-                        isAdd: [false, true, true, true],
-                    },
-                    {
-                        name: '4-B-B',
-                        level4: 'Nodeflex Child 2',
-                        selectionType: 'filtered',
-                        filteredGrouping: 'Wrapping Tube Cable',
-                        isAdd: [false, true, true, true],
-                    },
-                ],
-            },
-        ],
-    },
-];
 
 export default class Bl_productSelection extends NavigationMixin(LightningElement) {
     @api recordId; //Quote Record Id that opens the UI
     @api quotelinesString; //Quotelines information in string
     @api quoteNotesString; //Quotelines Notes in string 
 
-    @api girdDataFirstTab; 
+    @api girdDataAcaTab; 
+    @api girdDataConnTab; 
+    @api girdDataFocTab; 
+    @api girdDataCableTab; 
+    @api girdDataTandITab; 
+
     connectedCallback(){
-        /*
-        getProductLevels({level1: 'OCA'})
+        let isAddVector = [false, true, true, true];
+        getProductLevels({level1: 'ACA'})
         .then((data)=>{
-            let tempData = JSON.parse(data);
-            console.log('DATA: ' + data);
-            for ( let i = 0; i < tempData.length; i++ ) {
-                //tempData[ i ].selectionType = 'filtered'; 
-                //tempData[ i ].isAdd = [false, true, true, true];
-                tempData[ i ]._children = JSON.parse(tempData[ i ][ 'children' ]);
-                for (let j = 0; j< tempData[ i ]._children.length; j++){
-                    if ( JSON.parse(tempData[ i ]._children[ j ][ 'children' ]) == null) {
-                        //THIS LINE GOES ONCE IS FULL
-                        tempData[ i ]._children[ j ].selectionType = 'filtered';
-                        tempData[ i ]._children[ j ].id = tempData[ i ].id+'-'+tempData[ i ]._children[ j ].id;
-                        tempData[ i ]._children[ j ].isAdd = [false, true, true, true];
-                    }
-                    else {
-                        tempData[ i ]._children[ j ]._children = JSON.parse(tempData[ i ]._children[ j ][ 'children' ]);
-                        //console.log('i: '+ i + ' j: '+ j);
-                        //console.log('Children of childre: '+ JSON.stringify(tempData[ i ]._children[ j ]._children));
-                        tempData[ i ]._children[ j ].id = tempData[ i ].id+'-'+tempData[ i ]._children[ j ].id;
-                        for (let k = 0; k< tempData[ i ]._children[ j ]._children.length; k++){
-                            //THIS LINE GOES ONCE IS FULL
-                            tempData[ i ]._children[ j ]._children[ k ].selectionType = 'filtered';
-                            tempData[ i ]._children[ j ]._children[ k ].id = tempData[ i ]._children[ j ].id+'-'+tempData[ i ]._children[ j ]._children[ k ].id;
-                            tempData[ i ]._children[ j ]._children[ k ].isAdd = [false, true, true, true];
-                        }
-                        delete tempData[ i ]._children[j].children;
-                    }
-                }
-                delete tempData[ i ].children;
+            this.girdDataAcaTab = JSON.parse(data);
+            console.log('ACA Data: ' + data);
+            for(let i=0; i<this.girdDataAcaTab.length; i++){
+                this.girdDataAcaTab[i].isAdd = isAddVector; 
             }
-            this.girdDataFirstTab = tempData;
-            console.log('Edited DATA: '+JSON.stringify(this.girdDataFirstTab));
-            this.girdDataFirstTab = EXAMPLES_DATA_BASIC; //BORRAR ESTO CUANDO YA LA DATA ESTE BIEN
         })
         .catch((error)=>{
+            console.log('ERROR ACA');
             console.log(error);
-            this.girdDataFirstTab = EXAMPLES_DATA_BASIC;
+        });
+
+        getProductLevels({level1: 'Connectivity'})
+        .then((data)=>{
+            this.girdDataConnTab = JSON.parse(data);
+            console.log('Connectivity Data: ' + data);
+            for(let i=0; i<this.girdDataConnTab.length; i++){
+                this.girdDataConnTab[i].isAdd = isAddVector; 
+            }
         })
-        */
+        .catch((error)=>{
+            console.log('ERROR Connectivity');
+            console.log(error);
+        });
+
+        getProductLevels({level1: 'Fiber Optic Cable'})
+        .then((data)=>{
+            this.girdDataFocTab = JSON.parse(data);
+            console.log('Fiber Optic Cable Data: ' + data);
+            for(let i=0; i<this.girdDataFocTab.length; i++){
+                this.girdDataFocTab[i].isAdd = isAddVector; 
+            }
+        })
+        .catch((error)=>{
+            console.log('ERROR Fiber Optic Cable');
+            console.log(error);
+        });
+
+        getProductLevels({level1: 'Cable'})
+        .then((data)=>{
+            this.girdDataCableTab = JSON.parse(data);
+            console.log('Cable Data: ' + data);
+            for(let i=0; i<this.girdDataCableTab.length; i++){
+                this.girdDataCableTab[i].isAdd = isAddVector; 
+            }
+        })
+        .catch((error)=>{
+            console.log('ERROR Cable');
+            console.log(error);
+        });
+
+        getProductLevels({level1: 'Test and Inspection'})
+        .then((data)=>{
+            this.girdDataTandITab = JSON.parse(data);
+            console.log('Test & Inspection Data: ' + data);
+            for(let i=0; i<this.girdDataTandITab.length; i++){
+                this.girdDataTandITab[i].isAdd = isAddVector; 
+            }
+        })
+        .catch((error)=>{
+            console.log('ERROR Test & Inspection');
+            console.log(error);
+        })
+        
         
     }
 

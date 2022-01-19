@@ -4,31 +4,40 @@
         <!--SPINNER TO LOAD START-->
         <lightning-spinner if:true={spinnerLoadingUI} alternative-text="Loading" size="medium"></lightning-spinner>
         <!--SPINNER TO LOAD END-->
+        <!--ERROR MESSAGE START-->
+        <template if:true={errorInQuotes}>
+            <lightning-card style="color: red;">
+                <p style="font-size: 2.5vw" class="slds-var-p-horizontal_small slds-align_absolute-center">Fatal error, please open the UI once again from the quote record page.</p>
+                <p style="font-size: 2vw" class="slds-var-p-horizontal_small slds-align_absolute-center">If the error persists please contact the support team.</p>
+        </lightning-card>
+        </template>
+        <!--ERROR MESSAGE END-->
+        <!--TAB OF QLE AND PRODUCT SELECTION START-->
         <lightning-tabset active-tab-value={activeTab}>
             <!--UI TAB START-->
             <template if:false={showPSTab}>
                 <lightning-tab label="QLE User Interface" value="UI">
                     <!--HEADER START-->
-                        <div class="slds-border_top slds-border_right slds-border_bottom slds-border_left slds-m-left_large slds-m-right_large">
+                        <div class="slds-border_top slds-border_right slds-border_bottom slds-border_left slds-var-m-left_large slds-var-m-right_large">
                             <c-bl_header record-id={recordId}></c-bl_header>
                         </div>
                     <!--HEADER END-->
                     <!--BODY START-->
                         <!--ADD PRODUCTS SECTION START-->
-                        <lightning-layout multiple-rows class="slds-border_top slds-border_right slds-border_left slds-m-left_large slds-m-right_large"> 
+                        <lightning-layout multiple-rows class="slds-border_top slds-border_right slds-border_left slds-var-m-right_large slds-var-m-left_large"> 
                             <!--Title and Discount fields-->
                             <lightning-layout-item size="12" small-device-size="8" padding="around-small">
                             <span class="slds-page-header__title slds-truncate">
-                                <h2 class="slds-text-heading_large slds-m-left_large" style="color:gray;">Add Products</h2>
+                                <h2 class="slds-text-heading_large slds-var-m-left_large" style="color:gray;">Add Products</h2>
                             </span>
                             </lightning-layout-item>
                             <lightning-layout-item size="9" small-device-size="6" padding="around-small">
                                 <div class="slds-grid">
-                                    <div class="slds-col slds-m-right_medium">
-                                        <lightning-input  class="slds-m-left_medium" type="number" label="Line Discount (%)" placeholder="50" value={valueDiscount} onchange={handleValueDiscount}></lightning-input>
+                                    <div class="slds-col slds-var-m-right_medium">
+                                        <lightning-input  class="slds-var-m-left_medium" type="number" label="Line Discount (%)" placeholder="50" value={valueDiscount} onchange={handleValueDiscount}></lightning-input>
                                     </div>
                                     <div class="slds-col slds-var-m-top_large ">
-                                        <lightning-button class="stretchButton slds-m-left_small" variant="brand" label="Apply" disabled={disableButton} onclick={handleApplyDiscount}></lightning-button>
+                                        <lightning-button class="stretchButton slds-var-m-left_small" variant="brand" label="Apply" disabled={disableButton} onclick={handleApplyDiscount}></lightning-button>
                                         <lightning-helptext content="This action is going to save the process in SalesForce and then apply the discounts"></lightning-helptext>
                                     </div>
                                 </div>
@@ -36,22 +45,25 @@
                             <!--Button Set-->
                             <lightning-layout-item size="12" small-device-size="6" padding="around-small">
                                 <div class="slds-align_absolute-center">
-                                        <lightning-button class="stretchButton slds-m-right_small" variant="brand" label="Reorder Lines" disabled={disableReorder} onclick={handleReorder}></lightning-button>
-                                        <lightning-button class="stretchButton slds-m-right_small" variant="brand-outline" label="Save & Calculate" onclick={handleSaveAndCalculate}></lightning-button>
+                                        <lightning-button class="stretchButton slds-var-m-right_small" variant="brand" label="Reorder Lines" disabled={disableReorder} onclick={handleReorder}></lightning-button>
+                                        <lightning-button class="stretchButton slds-var-m-right_small" variant="brand-outline" label="Save & Calculate" onclick={handleSaveAndCalculate}></lightning-button>
                                         <lightning-button class="stretchButton" variant="brand" label="Save & Exit"  onclick={navigateToQuoteRecordPage}></lightning-button>
                                         </div>
-                                <div class="slds-align_absolute-center slds-m-top_small">
-                                        <lightning-button class="stretchButton slds-m-right_small" variant="brand-outline" label="Product Selection" onclick={navitageToProductSelection}></lightning-button>
+                                <div class="slds-align_absolute-center slds-var-m-top_small">
+                                        <lightning-button class="stretchButton slds-var-m-right_small" variant="brand-outline" label="Product Selection" onclick={navitageToProductSelection}></lightning-button>
                                         <lightning-button class="stretchButton" variant="brand-outline" label="Clone Selected" disabled={disableButton} onclick={handleClone}></lightning-button>
                                 </div>
-                                <div class="slds-align_absolute-center slds-m-top_small">
-                                    <h1 class="slds-text-heading_medium slds-m-center_medium">Quote Total: <lightning-formatted-number value={totalValue} format-style="currency" currency-code="USD"></lightning-formatted-number></h1>
+                                <div class="slds-align_absolute-center slds-var-m-top_small">
+                                    <h1 class="slds-text-heading_medium">Quote Total: <lightning-formatted-number value={totalValue} format-style="currency" currency-code="USD"></lightning-formatted-number></h1>
+                                    <template if:true={totalValueLoading}>
+                                        <lightning-dynamic-icon type="eq" option="play" alternative-text="Loading"></lightning-dynamic-icon>                                   
+                                    </template>
                                 </div>
                             </lightning-layout-item>
                         </lightning-layout>
                         <!--ADD PRODUCTS SECTION END-->
                         <!--TAB SET SECTION START-->
-                            <div class="slds-border_right slds-border_bottom slds-border_left slds-m-left_large slds-m-right_large">
+                            <div class="slds-border_right slds-border_bottom slds-border_left slds-var-m-left_large slds-var-m-right_large">
                                 <lightning-tabset>
                                     <lightning-tab label="Quote Home" value="Home" onactive={handleActive}>
                                         <c-bl_data-table record-id={recordId} tab-selected="Home" quotelines-string={quotelinesString} ondeletedvalues={updateTableData} oneditedtable={updateTableData} onclone={activeCloneButton} onnotselected={desactiveCloneButton} ondiscount={handleDiscount}></c-bl_data-table>
@@ -70,7 +82,7 @@
                             </div>
                         <!--TAB SET SECTION END-->
                     <!--BODY END-->
-                    <div class="slds-m-bottom_large"></div>
+                    <div class="slds-var-m-bottom_large"></div>
                 </lightning-tab>
             </template>
             <!--UI TAB END-->
@@ -78,7 +90,7 @@
             <template if:true={showPSTab}>
                 <lightning-tab label="Product Selection" value="PS">
                     <!--HEADER START-->
-                    <div class="slds-border_top slds-border_right slds-border_bottom slds-border_left slds-m-left_large slds-m-right_large">
+                    <div class="slds-border_top slds-border_right slds-border_bottom slds-border_left slds-var-m-left_large slds-var-m-right_large">
                         <c-bl_header record-id={recordId}></c-bl_header>
                     </div>
                     <!--HEADER END-->
@@ -87,5 +99,6 @@
             </template>
             <!--PRODUCT SELECTION TAB END-->
         </lightning-tabset>
+        <!--TAB OF QLE AND PRODUCT SELECTION END-->
     </lightning-card>
 </template>
