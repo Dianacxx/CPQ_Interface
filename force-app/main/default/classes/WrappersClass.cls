@@ -80,6 +80,19 @@ public with sharing class WrappersClass {
         public String level4 {get; set;}
         public String selectionType {get; set;}
     }
+
+    public class LookupWrapperClass{
+        public String lookupCode {get;set;}
+        public String selectionType {get;set;}
+        public List<Boolean> isAdd {get;set;}
+        // public String productClass1 {get;set;}
+    }
+    public class FilteringWrappingClass{
+        public String label {get;set;}
+        public String options {get;set;}
+        public String filterSelection {get;set;}
+        
+    }
     
 
 }

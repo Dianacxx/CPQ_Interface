@@ -452,45 +452,48 @@ public with sharing class QuoteController {
    
     @AuraEnabled
     public static String getProductLevels(String level1){
-        List<AFL_Lookups__c> lookupList = [SELECT ID, Product_Class_1__c, Lookup_Code__c FROM AFL_Lookups__c WHERE Product_Class_1__c =: level1];
-        // System.debug(lookupList.size());
-        Set<String> level2Set = new Set<String>();
-        List<WrappersClass.level1WrapperClass> wrappersToPrintList = new List<WrappersClass.level1WrapperClass>();
-        Map<String,List<WrappersClass.level2WrapperClass>> prodsPerLevelMap = new Map<String,List<WrappersClass.level2WrapperClass>>();
-        //Add all of the product 2 levels into a set
+        List<AFL_Lookups__c> lookupList = [SELECT Name, BL_Selection_Type__c,toLabel(Product_Class_1__c), Lookup_Code__c, CreatedDate, Id, CurrencyIsoCode, LastModifiedDate, SystemModstamp FROM AFL_Lookups__c WHERE Lookup_Type__c = 'Product Configurations' AND Enabled_Flag__c = true AND Product_Class_1__c =:level1 ORDER BY Product_Class_1__c ASC NULLS FIRST, Id ASC NULLS FIRST];
+        List<WrappersClass.LookupWrapperClass> wrappersToPrintList = new List<WrappersClass.LookupWrapperClass>();
+
         for(AFL_Lookups__c lookup : lookupList){
-            level2Set.add(lookup.Lookup_Code__c);
-        }
-        //Get all of the products that have the level 1 and multiple level 2
-        // List<Product2> initialProdList = [SELECT ID FROM Product2 WHERE QLE_Search_Method__c = 'FILTERED' OR QLE_Search_Method__c = 'CONFIGURED'];
-        // System.debug(initialProdList.size());
-        List<Product2> productList = [SELECT ID FROM Product2 WHERE ProdLevel1__c =: level1 AND ProdLevel2__c IN: level2Set AND QLE_Search_Method__c = 'FILTERED' ];
-        // List<Product2> productList = [SELECT ID FROM Product2 WHERE ProdLevel1__c =: level1 AND ProdLevel2__c IN: level2Set AND ID =: initialProdList];
-        System.debug(productList.size());
-        for(Product2 prod : productList){
-            if(prodsPerLevelMap.containsKey(prod.ProdLevel2__c)){
-                WrappersClass.level2WrapperClass lvl2Wrapper = new WrappersClass.level2WrapperClass();
-                lvl2Wrapper.id = String.valueOf(prod.id);
-                lvl2Wrapper.selectionType = prod.Filtered_Grouping__c;
-                prodsPerLevelMap.get(prod.ProdLevel2__c).add(lvl2Wrapper);
-            }else{
-                WrappersClass.level2WrapperClass lvl2Wrapper = new WrappersClass.level2WrapperClass();
-                lvl2Wrapper.id = String.valueOf(prod.id);
-                lvl2Wrapper.selectionType = prod.Filtered_Grouping__c;
-                prodsPerLevelMap.put(String.valueOf(prod.ProdLevel2__c), new List<WrappersClass.level2WrapperClass>{lvl2Wrapper});
-            }
-        }
-
-        for(String key : prodsPerLevelMap.keySet()){
-            WrappersClass.level1WrapperClass wrapper = new WrappersClass.level1WrapperClass ();
-            wrapper.id = prodsPerLevelMap.get(key)[0].id;
-            wrapper.level1 = level1;
-            wrapper.level2 = key;
-            wrapper.children = JSON.serialize(prodsPerLevelMap.get(key));
-
+            WrappersClass.LookupWrapperClass wrapper = new WrappersClass.LookupWrapperClass();
+            wrapper.lookupCode = lookup.Lookup_Code__c;
+            wrapper.selectionType = lookup.BL_Selection_Type__c;
             wrappersToPrintList.add(wrapper);
         }
 
         return JSON.serialize(wrappersToPrintList);
+
     }
+    @AuraEnabled
+    public static void getProductFiltering(String filteredGrouping){
+        // Sobject object_name = Product2;
+        Schema.sObjectType sobject_type = Product2.getSObjectType();
+        Map<String, Schema.SObjectField> theFieldmap = sobject_type.getDescribe().fields.getMap();
+        // Map<String, Schema.SObjectField> pickListFields = sobject_type.getDescribe().fields.getMap();
+
+        // list<cObjects> myobjects = new list<cObjects>();  
+
+        for(String field: theFieldmap.keyset()){ //for each field in the object
+              
+            Schema.DisplayType theResult = theFieldmap.get(field).getDescribe().GetType(); //get field type
+
+            if (theResult == Schema.DisplayType.Picklist){ //if it's a picklist
+                list<Schema.PicklistEntry> pick_list_values = theFieldmap.get(field).getDescribe().getPickListValues();
+                
+                for (Schema.PicklistEntry a : pick_list_values) {  
+
+                    // //for each value, add item to myobjects list
+                    // cObjects tempObject = new cObjects();
+                    // tempObject.myObjectName = f.getDescribe().getLabel();
+                    // tempObject.myFieldName = theFieldmap.get(field).GetDescribe().Name;
+                    // tempObject.myFieldValue = a.getValue();
+                    // myobjects.add(tempObject);
+
+               }
+            }
+        }
+
+    }
+
 }
