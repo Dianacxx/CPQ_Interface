@@ -22,22 +22,22 @@
             <div class="slds-border_top slds-border_bottom slds-border_left slds-border_right slds-var-m-left_large slds-var-m-right_large slds-var-m-top_small">
                 <lightning-tabset variant="scoped">
                     <lightning-tab label="ACA" onactive={handleActive}>
-                        <c-bl_list-products list-to-display={girdDataAcaTab}></c-bl_list-products>
+                        <c-bl_list-products tab-selected="ACA" list-to-display={girdDataAcaTab}></c-bl_list-products>
                     </lightning-tab>
                     <lightning-tab label="Connectivity" onactive={handleActive}>
-                        <c-bl_list-products list-to-display={girdDataConnTab}></c-bl_list-products>
+                        <c-bl_list-products tab-selected="Connectivity" list-to-display={girdDataConnTab}></c-bl_list-products>
                     </lightning-tab>
                     <lightning-tab label="Fiber Optic Cable" onactive={handleActive}>
-                        <c-bl_list-products list-to-display={girdDataFocTab}></c-bl_list-products>
+                        <c-bl_list-products tab-selected="Fiber Optic Cable" list-to-display={girdDataFocTab}></c-bl_list-products>
                     </lightning-tab>
                     <lightning-tab label="Cable" onactive={handleActive}>
-                        <c-bl_list-products list-to-display={girdDataCableTab}></c-bl_list-products>
+                        <c-bl_list-products tab-selected="Cable" list-to-display={girdDataCableTab}></c-bl_list-products>
                     </lightning-tab>
                     <lightning-tab label="Test & Inspection" onactive={handleActive}>
-                        <c-bl_list-products list-to-display={girdDataTandITab}></c-bl_list-products>
+                        <c-bl_list-products tab-selected="Test and Inspection" list-to-display={girdDataTandITab}></c-bl_list-products>
                     </lightning-tab>
                     <lightning-tab label="Manual Items" onactive={handleActive}>
-                        <!--TAB SET MANUAL ITEMS START-->
+                        <!--TAB SET MANUAL ITEMS START tab-selected="Manual Items"-->
                         <lightning-tabset variant="vertical">
                             <lightning-tab label="ACA">
                                 MANUAL ACA

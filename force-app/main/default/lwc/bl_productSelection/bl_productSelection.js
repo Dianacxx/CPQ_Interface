@@ -20,7 +20,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         getProductLevels({level1: 'ACA'})
         .then((data)=>{
             this.girdDataAcaTab = JSON.parse(data);
-            console.log('ACA Data: ' + data);
+            //console.log('ACA Data: ' + data);
             for(let i=0; i<this.girdDataAcaTab.length; i++){
                 this.girdDataAcaTab[i].isAdd = isAddVector; 
             }
@@ -33,7 +33,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         getProductLevels({level1: 'Connectivity'})
         .then((data)=>{
             this.girdDataConnTab = JSON.parse(data);
-            console.log('Connectivity Data: ' + data);
+            //console.log('Connectivity Data: ' + data);
             for(let i=0; i<this.girdDataConnTab.length; i++){
                 this.girdDataConnTab[i].isAdd = isAddVector; 
             }
@@ -46,7 +46,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         getProductLevels({level1: 'Fiber Optic Cable'})
         .then((data)=>{
             this.girdDataFocTab = JSON.parse(data);
-            console.log('Fiber Optic Cable Data: ' + data);
+            //console.log('Fiber Optic Cable Data: ' + data);
             for(let i=0; i<this.girdDataFocTab.length; i++){
                 this.girdDataFocTab[i].isAdd = isAddVector; 
             }
@@ -59,7 +59,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         getProductLevels({level1: 'Cable'})
         .then((data)=>{
             this.girdDataCableTab = JSON.parse(data);
-            console.log('Cable Data: ' + data);
+            //console.log('Cable Data: ' + data);
             for(let i=0; i<this.girdDataCableTab.length; i++){
                 this.girdDataCableTab[i].isAdd = isAddVector; 
             }
@@ -72,7 +72,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         getProductLevels({level1: 'Test and Inspection'})
         .then((data)=>{
             this.girdDataTandITab = JSON.parse(data);
-            console.log('Test & Inspection Data: ' + data);
+            //console.log('Test & Inspection Data: ' + data);
             for(let i=0; i<this.girdDataTandITab.length; i++){
                 this.girdDataTandITab[i].isAdd = isAddVector; 
             }

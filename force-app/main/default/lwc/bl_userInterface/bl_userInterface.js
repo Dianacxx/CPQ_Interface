@@ -14,6 +14,7 @@ import printNotes from '@salesforce/apex/QuoteController.printNotes';
 import getQuoteTotal from '@salesforce/apex/QuoteController.getQuoteTotal'; 
 import quoteLineCreator from '@salesforce/apex/QuoteController.quoteLineCreator'; 
 import editAndDeleteQuotes from '@salesforce/apex/QuoteController.editAndDeleteQuotes';
+import deletingRecordId from '@salesforce/apex/blMockData.deletingRecordId';
 
 export default class UserInterface extends NavigationMixin(LightningElement) {
     @api recordId; //Quote Record Id that opens the UI
@@ -60,7 +61,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                     title: 'UI QUOTELINES Error',
                     message: 'Unexpected error using UI - QUOTELINES',
                     variant: 'error',
-                    mode: 'dismissable'
+                    mode: 'sticky'
                 });
                 this.dispatchEvent(evt);
                 this.errorInQuotes = true; 
@@ -87,7 +88,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                     title: 'UI NOTES Error',
                     message: 'Unexpected error using UI - NOTES',
                     variant: 'error',
-                    mode: 'dismissable'
+                    mode: 'sticky'
                 });
                 this.dispatchEvent(evt);
             }
@@ -163,7 +164,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                         console.log(error);
                         this.spinnerLoadingUI = false;
                     }); 
-                }, 8000);
+                }, 6000);
             })
             .catch(error =>{
                 if (error){
@@ -175,7 +176,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                         title: 'UI QUOTELINES Error',
                         message: 'Unexpected error using UI - QUOTELINES',
                         variant: 'error',
-                        mode: 'dismissable'
+                        mode: 'sticky'
                     });
                     this.dispatchEvent(evt);
                     
@@ -202,7 +203,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                         title: 'UI NOTES Error',
                         message: 'Unexpected error using UI - NOTES',
                         variant: 'error',
-                        mode: 'dismissable'
+                        mode: 'sticky'
                     });
                     this.dispatchEvent(evt);
                 }
@@ -218,7 +219,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     updateTableData(event){
         console.log('Deleted, Clone, Reorder OR Edited Values');
         this.quotelinesString = event.detail; 
-        console.log('Table Updated');
+        //console.log('Table Updated');
         const payload = { 
             dataString: this.quotelinesString,
             auxiliar: 'updatetable'
@@ -271,7 +272,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
 
     desactiveCloneButton(){
         this.disableButton = true;
-        console.log('Button cancel');
+        //console.log('Clone/Apply Button desactive');
     }
     handleClone(){
         const payload = { 
@@ -338,7 +339,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                     title: 'Editing or Deleting ERROR',
                     message: errorMessage,
                     variant: 'error',
-                    mode: 'dismissable'
+                    mode: 'sticky'
                 });
                 this.dispatchEvent(evt);
             });
@@ -390,6 +391,15 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     }
     //NAVIGATE TO QUOTE RECORD PAGE (MISSING SAVING INFORMATION)
     async exitToRecordPage(){
+        deletingRecordId({quoteId: this.recordId})
+        .then(()=>{
+            console.log('Quote Id Record for this user was delete'); 
+        })
+        .catch((error)=>{
+            console.log('ERROR: Quote Id Record for this user cannot be deleted');
+            console.log(error); 
+        })
+
         setTimeout(() => {
             this[NavigationMixin.Navigate]({
                 type: 'standard__recordPage',
@@ -464,7 +474,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 title: 'Error selecting Discount Values',
                 message: 'Please select a line discount',
                 variant: 'error',
-                mode: 'dismissable'
+                mode: 'sticky'
             });
             this.dispatchEvent(evt);
         }

@@ -1,11 +1,26 @@
 import { LightningElement, api , track} from 'lwc';
+import getProductFiltering from '@salesforce/apex/QuoteController.getProductFiltering'; 
+import filteredProductPrinter from '@salesforce/apex/QuoteController.filteredProductPrinter';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 export default class Bl_listProducts extends LightningElement {
 
     @api listToDisplay = []; 
     @track openFilterPopup = false; 
     @track openConfiguredPopup = false; 
+    @api tabSelected; 
+
+    //LIST OF FILTERS AND TEXT INPUTS
+    @track listFilters = []; 
+    @track listTextFilters = []; 
+    //FILTER VALUES 
+    @track filtersForApex = [];
+    @track draftValues = []; 
+    @track filtersLoading = false; 
+
     connectedCallback(){
+        this.filtersLoading = false; 
+        //ADSS Cable - Loose Tube Cable - Premise Cable - SkyWrap Cable - Wrapping Tube Cable
         
     }
 
@@ -43,6 +58,8 @@ export default class Bl_listProducts extends LightningElement {
             case 'add':
                 if (row.selectionType == 'Filtered'){
                     this.openFilterPopup = true; 
+                    this.handleFilterTabActive();
+                    this.callFiltersInPopUp(row.lookupCode);
                     //console.log('Is filtered');
                 } else if (row.selectionType == 'Configured'){
                     //Must save process before turning there
@@ -71,24 +88,357 @@ export default class Bl_listProducts extends LightningElement {
     @track activeFilterTab = 'Filter';
     closeFilterAndSelected(){
         this.openFilterPopup = false;
+        this.clearFilters();
+        this.reviewDisplay = []; 
+        this.goReview = true;
+        this.updateReviewTable(); 
+
     }
     moreAdd(){ //Button in pop up that says Add More
         //Change to filter tab
         this.activeFilterTab = 'Filter';
         this.tabOption = false;
+        this.rowsSelected = [];
+        
     }
     handleFilterTabActive(){ //If user returns to tab clicking in the name
+        this.activeFilterTab = 'Filter';
         this.tabOption = false;
     }
     handleReviewTabActive(){ //If user returns to tab clicking in the name
+        this.activeFilterTab = 'Review';
         this.tabOption = true;
     }
     addAndReview(){ //Button in pop up that says Add and Review
         //Change to review tab
-        this.activeFilterTab = 'Review';
-        this.tabOption = true;
+        if (!(this.rowsSelected == [])){
+            for(let i = 0; i< this.rowsSelected.length; i++){
+                this.allReviews.push(this.rowsSelected[i]);
+            }
+            this.reviewDisplay = this.allReviews; 
+            console.log('ALL '+JSON.stringify(this.allReviews)); 
+            console.log('review '+JSON.stringify(this.reviewDisplay)); 
+            console.log('row '+JSON.stringify(this.rowsSelected)); 
+            //console.log('Filling all Reviews '+ Object.getOwnPropertyNames(this.allReviews[0]));
+            this.activeFilterTab = 'Review';
+            this.tabOption = true;
+            this.updateReviewTable();
+            this.rowsSelected = [];
+            this.template.querySelectorAll('lightning-datatable').forEach(each => {
+                each.selectedRows = [];
+            });
+        } else {
+            const evt = new ShowToastEvent({
+                title: 'Not selected rows',
+                message: 'Please, select a row to review',
+                variant: 'warning',
+                mode: 'dismissable'
+            });
+            this.dispatchEvent(evt);
+        }
+        
     }
 
+    //SELECTING PRODUCTS
+    @track goReview = true;
+    handleRowSelection(event){
+        if(event.detail.selectedRows.length == 0){
+            this.goReview = true;
+        } else {
+            this.goReview = false; 
+            this.rowsSelected = JSON.parse(JSON.stringify(event.detail.selectedRows)); 
+            for (let i = 0; i< this.rowsSelected.length; i++){
+                this.rowsSelected[i]['idTemporal'] = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(2, 10);
+            }
+            //console.log(Object.getOwnPropertyNames(this.rowsSelected[0]));
+        }
+        
+    }
+    @track reviewSelectedValue; 
+    @track reviewSelectedLabel;
+    @track reviewLoading = false;
+    @track reviewDisplay = [];
+    @track allReviews = [];
+    handleInputChangeSelected(event){
+        this.reviewLoading = true; 
+        this.reviewSelectedLabel = event.target.label;
+        this.reviewSelectedValue = event.detail.value;
+        if (this.reviewSelectedValue && this.reviewSelectedLabel){
+            let recs = [];
+            let apiPropertyIndex = this.columnsFilters.find(element => element.label == this.reviewSelectedLabel);
+            //console.log(Object.getOwnPropertyNames(this.columnsFilters[0]));
+            //console.log(apiPropertyIndex);
+            for (let rec of this.reviewDisplay){
+                console.log('Property: '+this.reviewSelectedLabel)
+                //console.log(apiPropertyIndex.fieldName);
+                console.log(rec[apiPropertyIndex.fieldName]); 
+                if (rec[apiPropertyIndex.fieldName] == this.reviewSelectedValue){
+                    recs.push(rec); 
+                }
+            }
+            this.reviewDisplay = recs; 
+        } else {
+            this.reviewDisplay = this.allReviews; 
+        }
+        console.log('review data: '+ JSON.stringify(this.reviewDisplay)); 
+        this.updateReviewTable();
+        this.reviewLoading = false; 
+        //WATCH HERE IF THIS IS WORKING! 
+
+    }
+    //DELETING PRODUCT FROM REVIEW TABLE
+    handleRowAction(event) {
+        this.reviewLoading = true; 
+        let dataRow = event.detail.row; 
+		if (event.detail.action.name === "delete") {
+            let newData = JSON.parse(JSON.stringify(this.allReviews));
+            
+            let row = newData.findIndex(x => x.idTemporal === dataRow.idTemporal);
+            console.log('row '+dataRow.idTemporal+' array '+newData[row].idTemporal); 
+            console.log('DELETE row '+row);
+
+		    this.allReviews = newData;
+            if (newData.length > 1){
+                newData.splice(row,1); 
+            }
+            else {
+                newData = []; 
+            }
+            this.allReviews = newData;
+            this.reviewDisplay = this.allReviews;
+            this.rowsSelected = [];
+            //console.log('New data after delete');
+            //console.log(this.allReviews)
+            this.updateReviewTable();
+		} 
+        setTimeout(()=>{
+            this.reviewLoading = false; 
+        }, 500);
+        console.log('All reviews');
+        console.log(this.allReviews); 
+	}
+
+    //FILTERS CALLING
+    @track columnsFilters = [{label: 'Product Name', fieldName: 'Name', editable: false, wrapText: true,},];
+    @track columnsReview = [{label: 'Product Name', fieldName: 'Name', editable: false, wrapText: true,},]; 
+    callFiltersInPopUp(filterGroup){
+        this.listTextFilters = []; 
+        this.listFilters = []; 
+        this.filtersLoading = false; 
+        this.filtersForApex = []; 
+        this.columnsFilters = [{label: 'Product Name', fieldName: 'Name', editable: false, wrapText: true,},]; 
+        this.columnsReview = [{label: 'Product Name', fieldName: 'Name', editable: false, wrapText: true,},]; 
+        getProductFiltering({filteredGrouping: filterGroup})
+        .then ((data)=>{
+            console.log('DATA GETTING FILTERS'); 
+            console.log(data); 
+            let temporalList = JSON.parse(data);
+            for(let i = 0; i< temporalList.length; i++){
+                if (temporalList[i].options == '[]'){
+                    this.listTextFilters.push({label: temporalList[i].label, name: temporalList[i].label});
+                    //console.log('Empty Option -> Is not a pickList'); 
+                }
+                else {
+                    let optionsFilters = JSON.parse(temporalList[i].options);  
+                    //console.log(JSON.stringify(optionsFilters));
+                    //console.log(Object.getOwnPropertyNames(optionsFilters));
+                    
+                    for (let j = 0; j < optionsFilters.length; j++){
+                        optionsFilters[j] = {label: optionsFilters[j].label, value: optionsFilters[j].value}; 
+                    }
+                    temporalList[i].options = optionsFilters; 
+                    this.listFilters.push(temporalList[i]); 
+                }
+                this.columnsFilters.push({label: temporalList[i].label, fieldName: temporalList[i].apiName, wrapText: true,}); 
+                this.columnsReview.push({label: temporalList[i].label, fieldName: temporalList[i].apiName, editable: true, wrapText: true,}); 
+                //console.log('columnsFilters'); 
+                //console.log(Object.getOwnPropertyNames(this.columnsFilters)); 
+                //this.filterSelected.push(temporalList[i].label);
+            }
+            this.columnsReview.push({type: 'button-icon', initialWidth: 30,typeAttributes:{ iconName: 'utility:delete', name: 'delete', iconClass: 'slds-icon-text-error'
+            }}); 
+            this.filtersLoading = true; 
+            //console.log(JSON.stringify(this.listFilters));
+           
+        })
+        .catch ((error)=>{
+            console.log('ERROR GETTING FILTERS'); 
+            console.log(error); 
+        })
+    }
+    
+    //FILTERS CHANGES
+    @track filterResults = []; 
+    @track recordsAmount = 0; 
+    @track loadingFilteData = false; 
+    handleInputChange(event){
+        //console.log(JSON.stringify(this.listFilters));
+        //console.log(JSON.stringify(this.listTextFilters));
+        if (this.filtersForApex.length == 0){
+            //console.log('List to apex full');
+            for (let i = 0; i < this.listFilters.length; i++){
+                this.filtersForApex.push({label: this.listFilters[i].label, value: ''}); 
+            }
+            for (let i = 0; i < this.listTextFilters.length; i++){
+                this.filtersForApex.push({label: this.listTextFilters[i].label, value: ''}); 
+            }
+        }
+        let indexFilter = this.filtersForApex.findIndex(x => x.label == event.target.label); 
+        //console.log('Index in filterSelected: '+indexFilter);
+        if( indexFilter > -1){
+            this.filtersForApex[indexFilter].value = event.detail.value; 
+        } else {
+            this.filtersForApex.push({label: event.target.label, value:event.detail.value}); 
+        }
+        
+        //console.log(JSON.stringify(this.filtersForApex));
+        //console.log(this.tabSelected);
+
+        this.loadingFilteData = true;
+        filteredProductPrinter({filterValues: JSON.stringify(this.filtersForApex), level1: this.tabSelected, filteredGrouping: 'Premise Cable'})
+        .then((data)=>{
+            //console.log('Products Filtered');
+            //console.log(data);
+            this.recordsAmount = data.length; 
+            this.filterResults = data; 
+            this.loadingFilteData = false;
+            this.updateFilterTable();
+        })
+        .catch((error)=>{
+            console.log('ERROR Products Filtered');
+            console.log(error);
+        });
+        
+        //CALL HERE THE FILTER METHOD FROM APEX SENDING THE VALUE AND THE TYPE OF FILTER ACTIVE!
+    }
+    //FILTERS RESET
+    clearFilters(){
+        //Clearing filters with button in Filter Tab
+        this.filtersForApex = [];
+        this.recordsAmount = 0;
+        this.filterResults = []; 
+        this.template.querySelectorAll('lightning-combobox').forEach(each => {
+           each.value = undefined;
+        });
+        this.template.querySelectorAll('lightning-input').forEach(each => {
+            each.value = undefined;
+        });
+        this.template.querySelectorAll('lightning-datatable').forEach(each => {
+            each.selectedRows = [];
+        });
+        this.dataPages = [];
+        this.reviewDisplay = this.allReviews; 
+        if (this.rowsSelected) {
+            this.updateReviewTable();
+        }
+        this.updateFilterTable();
+        //console.log('review data save '+ JSON.stringify(this.reviewDisplay));
+
+   }
+   //FILTERS PAGINATION
+    @track startingRecord = 1;
+    @track endingRecord = 0; 
+    @track page = 1; 
+    @track totalRecountCount = 0;
+    @track dataPages = []; 
+    @track totalPage = 0;
+    @track pageSize = 15; 
+
+    updateFilterTable(){
+        this.totalRecountCount = this.filterResults.length;  
+        this.totalPage = Math.ceil(this.totalRecountCount / this.pageSize); 
+        this.dataPages = this.filterResults.slice(0,this.pageSize); 
+        this.endingRecord = this.pageSize;
+    }
+    previousHandler() {
+        if (this.page > 1) {
+            this.page = this.page - 1; //decrease page by 1
+            this.displayRecordPerPage(this.page);
+        }
+    }
+    nextHandler() {
+        if((this.page<this.totalPage) && this.page !== this.totalPage){
+            this.page = this.page + 1; //increase page by 1
+            this.displayRecordPerPage(this.page);            
+        }             
+    }
+    firstHandler() {
+        this.page = 1; //turn to page 1
+        this.displayRecordPerPage(this.page);                   
+    }
+    lastHandler() {
+        this.page = this.totalPage; //turn to last page 
+        this.displayRecordPerPage(this.page);                   
+    }
+    displayRecordPerPage(page){
+        this.startingRecord = ((page -1) * this.pageSize);
+        this.endingRecord = (this.pageSize * page);
+        this.endingRecord = (this.endingRecord > this.totalRecountCount) 
+                            ? this.totalRecountCount : this.endingRecord;
+        this.dataPages = this.filterResults.slice(this.startingRecord, this.endingRecord);
+        //console.log('dataPages');
+        //console.log(this.dataPages);
+        this.startingRecord = this.startingRecord + 1;
+    }    
+
+    //FILTERS REVIEW PAGINATION
+    @track startingRecordR = 1;
+    @track endingRecordR = 0; 
+    @track pageR = 1; 
+    @track totalRecountCountR = 0;
+    @track dataPagesR = []; 
+    @track totalPageR = 0;
+    @track pageSizeR = 15; 
+
+    updateReviewTable(){
+        //console.log('review data: '+ JSON.stringify(this.reviewDisplay)); 
+        this.totalRecountCountR = this.reviewDisplay.length;  
+        this.totalPageR = Math.ceil(this.totalRecountCountR / this.pageSizeR); 
+        this.dataPagesR = this.reviewDisplay.slice(0,this.pageSizeR); 
+        this.endingRecordR = this.pageSizeR;
+    }
+    previousHandlerR() {
+        if (this.pageR > 1) {
+            this.pageR = this.pageR - 1; //decrease page by 1
+            this.displayRecordPerPageR(this.pageR);
+        }
+    }
+    nextHandlerR() {
+        if((this.pageR<this.totalPageR) && this.pageR !== this.totalPageR){
+            this.pageR = this.pageR + 1; //increase page by 1
+            this.displayRecordPerPageR(this.pageR);            
+        }             
+    }
+    firstHandlerR() {
+        this.pageR = 1; //turn to page 1
+        this.displayRecordPerPageR(this.pageR);                   
+    }
+    lastHandlerR() {
+        this.pageR = this.totalPageR; //turn to last page 
+        this.displayRecordPerPageR(this.pageR);                   
+    }
+    displayRecordPerPageR(page){
+        this.startingRecordR = ((page -1) * this.pageSizeR);
+        this.endingRecordR = (this.pageSizeR * page);
+        this.endingRecordR = (this.endingRecordR > this.totalRecountCountR) 
+                            ? this.totalRecountCountR : this.endingRecordR;
+        this.dataPagesR = this.reviewDisplay.slice(this.startingRecordR, this.endingRecordR);
+        //console.log('dataPages');
+        //console.log(this.dataPages);
+        this.startingRecordR = this.startingRecordR + 1;
+    }    
+
+    saveAndExitFilterModal(){
+        const evt = new ShowToastEvent({
+            title: 'Here goes the save process',
+            message: 'Save in quote format and create another value in list',
+            variant: 'info',
+            mode: 'dismissible '
+        });
+        this.dispatchEvent(evt);
+
+        this.closeFilterAndSelected(); 
+    }
     //CONFIGURED POP UP FUNCTIONS
     closeConfiguredAlert(){
         this.openConfiguredPopup = false; 

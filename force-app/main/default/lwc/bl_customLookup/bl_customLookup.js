@@ -62,10 +62,10 @@ export default class Bl_customLookup extends LightningElement {
     @wire(search, {searchTerm : '$searchTerm', quoteId: '$recordId', option: '$productSelected'})
     wiredRecords({ error, data }) {
         if (data) {
-            console.log('Seacrh option: '+this.productSelected);
+            //console.log('Seacrh option: '+this.productSelected);
             this.error = undefined;
             this.records = data;
-            console.log('Lookup DATA Ok');
+            //console.log('Lookup DATA Ok');
             //console.log('Lookup DATA: ' + this.records);
             //let customer;
             //let competitor; 

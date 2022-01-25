@@ -76,7 +76,7 @@ export default class Bl_dataTable extends LightningElement {
                         this.fieldSet[i].property == 'additionaldisc.(%)' ? this.fieldSet[i].property = 'additionaldiscount' : this.fieldSet[i].property; 
                         //console.log('added: '+COLUMNS_HOME.length); 
                         if (this.fieldSet[i].property == 'product'){
-                            COLUMNS_HOME.splice(indexDes, 0, { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, },);
+                            COLUMNS_HOME.splice(indexDes, 0, { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, wrapText: true, },);
                             //console.log('Inserting before description');
                         }
                         else {
@@ -97,7 +97,7 @@ export default class Bl_dataTable extends LightningElement {
                         //console.log('Required '+this.fieldSet[i].required)
                         let labelName;
                         this.fieldSet[i].required ? labelName = '*'+this.fieldSet[i].label: labelName = this.fieldSet[i].label;
-                        COLUMNS_DETAIL.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable, sortable: true, },);
+                        COLUMNS_DETAIL.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable, sortable: true, wrapText: true, },);
                         //console.log('added: '+COLUMNS_DETAIL.length); 
                     }
                     this.columns = COLUMNS_DETAIL; 
@@ -121,7 +121,7 @@ export default class Bl_dataTable extends LightningElement {
                 title: 'Error displaying field sets',
                 message: 'Please reload the UI',
                 variant: 'error',
-                mode: 'dismissable'
+                mode: 'sticky'
             });
             this.dispatchEvent(evt);
             //console.log('Error displaying field sets');
@@ -246,7 +246,7 @@ export default class Bl_dataTable extends LightningElement {
                     const evt = new ShowToastEvent({
                         title: 'No rows selected',
                         message: 'Select in the actual tab the rows you want to modify',
-                        variant: 'info',
+                        variant: 'warning',
                         mode: 'dismissable'
                     });
                     this.dispatchEvent(evt);
@@ -364,7 +364,7 @@ export default class Bl_dataTable extends LightningElement {
                 title: 'Error creating QuoteLine',
                 message: 'The product selected cannot turn into a quoteline',
                 variant: 'error',
-                mode: 'dismissable'
+                mode: 'sticky'
             });
             this.dispatchEvent(evt);
         }) 

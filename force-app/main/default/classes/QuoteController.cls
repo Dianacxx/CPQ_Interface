@@ -261,12 +261,6 @@ public with sharing class QuoteController {
         Set<String> receivedIDs = new Set<String>();
 
 
-
-        //Gets the quote lines from the UI and deserializes them into a list of quote line wrappers
-        // List<WrappersClass.QuoteLineWrapperClass> untypedQuoteLines = (List<WrappersClass.QuoteLineWrapperClass>) JSON.deserialize(quoteLines, List<WrappersClass.QuoteLineWrapperClass>.class);
-        // //Checks the existing quote lines in Salesforce 
-        // List<SBQQ__QuoteLine__c> existingQuoteLines = [SELECT ID FROM SBQQ__QuoteLine__c WHERE SBQQ__Quote__c =: quoteId];
-
         //Add the existing quote line ids to a set
         for (SBQQ__QuoteLine__c line : existingQuoteLines) {
             quoteLineIDs.add(line.id);
@@ -452,51 +446,226 @@ public with sharing class QuoteController {
    
     @AuraEnabled
     public static String getProductLevels(String level1){
-        List<AFL_Lookups__c> lookupList = [SELECT ID, Product_Class_1__c, Lookup_Code__c FROM AFL_Lookups__c WHERE Product_Class_1__c =: level1];
-        Set<String> codes = new Set<String>();
+        List<AFL_Lookups__c> lookupList = [SELECT Name, BL_Selection_Type__c,toLabel(Product_Class_1__c), Lookup_Code__c, CreatedDate, Id, CurrencyIsoCode, LastModifiedDate, SystemModstamp FROM AFL_Lookups__c WHERE Lookup_Type__c = 'Product Configurations' AND Enabled_Flag__c = true AND Product_Class_1__c =:level1 ORDER BY Product_Class_1__c ASC NULLS FIRST, Id ASC NULLS FIRST];
         List<WrappersClass.LookupWrapperClass> wrappersToPrintList = new List<WrappersClass.LookupWrapperClass>();
 
         for(AFL_Lookups__c lookup : lookupList){
-            codes.add(lookup.Lookup_Code__c);
-        }
-
-        for(String code : codes){
             WrappersClass.LookupWrapperClass wrapper = new WrappersClass.LookupWrapperClass();
-            wrapper.lookupCode = code;
+            wrapper.lookupCode = lookup.Lookup_Code__c;
+            wrapper.selectionType = lookup.BL_Selection_Type__c;
             wrappersToPrintList.add(wrapper);
         }
 
         return JSON.serialize(wrappersToPrintList);
+
     }
     @AuraEnabled
-    public static void getProductFiltering(String filteredGrouping){
-        // Sobject object_name = Product2;
+    public static String getProductFiltering(String filteredGrouping){
+
+        Map<String,BL_Product_Filters__c> custFieldsMap = BL_Product_Filters__c.getAll(); //Get the custom fields in the custom setting
+
         Schema.sObjectType sobject_type = Product2.getSObjectType();
         Map<String, Schema.SObjectField> theFieldmap = sobject_type.getDescribe().fields.getMap();
-        // Map<String, Schema.SObjectField> pickListFields = sobject_type.getDescribe().fields.getMap();
+        Map<String, Schema.SObjectField> picklistFields = new Map<String, Schema.SObjectField>(); //Store the picklist fields
+        Map<String, String> fieldsNameMap = new Map<String, String>(); //Store the picklist fields
 
-        // list<cObjects> myobjects = new list<cObjects>();  
+        Map<String, List<Schema.PicklistEntry>> filtersMap = new Map<String, List<Schema.PicklistEntry>>();
+        List<WrappersClass.FilteringWrappingClass> filtersWrapperToShow = new List<WrappersClass.FilteringWrappingClass>();
+
 
         for(String field: theFieldmap.keyset()){ //for each field in the object
-              
+            String label = theFieldmap.get(field).getDescribe().getLabel(); // Get the label of each field in the product object
             Schema.DisplayType theResult = theFieldmap.get(field).getDescribe().GetType(); //get field type
-
+            fieldsNameMap.put(label,theFieldmap.get(field).getDescribe().getName()); //Stores the API name of each field object
             if (theResult == Schema.DisplayType.Picklist){ //if it's a picklist
-                list<Schema.PicklistEntry> pick_list_values = theFieldmap.get(field).getDescribe().getPickListValues();
-                
-                for (Schema.PicklistEntry a : pick_list_values) {  
+                picklistFields.put(label,theFieldmap.get(field)); //put all of the picklist fields in a map, with the label as the key
+            }
+        }
+        //Get all of the custom field values from the filtered grouping 
+        BL_Product_Filters__c customFilters = custFieldsMap.get(filteredGrouping);
 
-                    // //for each value, add item to myobjects list
-                    // cObjects tempObject = new cObjects();
-                    // tempObject.myObjectName = f.getDescribe().getLabel();
-                    // tempObject.myFieldName = theFieldmap.get(field).GetDescribe().Name;
-                    // tempObject.myFieldValue = a.getValue();
-                    // myobjects.add(tempObject);
+        //Each filtered grouping value can have up to 10 attributes
+        if(customFilters.Attribute_1__c!= null){
+            if(picklistFields.get(customFilters.Attribute_1__c)!=null){
+                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_1__c).getDescribe().getPickListValues();
+                if(pick_list_values.size()>0){
+                    filtersMap.put(customFilters.Attribute_1__c,pick_list_values);
+                }
+            }else{
+                filtersMap.put(customFilters.Attribute_1__c,new List<Schema.PicklistEntry>());
+            }
+        }
+        if(customFilters.Attribute_2__c!= null){
+            if(picklistFields.get(customFilters.Attribute_2__c)!=null){
+                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_2__c).getDescribe().getPickListValues();
+                if(pick_list_values.size()>0){
+                    filtersMap.put(customFilters.Attribute_2__c,pick_list_values);
+                }
+            }else{
+                filtersMap.put(customFilters.Attribute_2__c,new List<Schema.PicklistEntry>());
+            }
+        }
+        if(customFilters.Attribute_3__c!= null){
+            if(picklistFields.get(customFilters.Attribute_3__c)!=null){
+                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_3__c).getDescribe().getPickListValues();
+                if(pick_list_values.size()>0){
+                    filtersMap.put(customFilters.Attribute_3__c,pick_list_values);
+                }
+            }else{
+                filtersMap.put(customFilters.Attribute_3__c,new List<Schema.PicklistEntry>());
+            }
+        }
+        if(customFilters.Attribute_4__c!= null){
+            if(picklistFields.get(customFilters.Attribute_4__c)!=null){
+                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_4__c).getDescribe().getPickListValues();
+                if(pick_list_values.size()>0){
+                    filtersMap.put(customFilters.Attribute_4__c,pick_list_values);
+                }
+            }else{
+                filtersMap.put(customFilters.Attribute_4__c,new List<Schema.PicklistEntry>());
+            }
+        }
+        if(customFilters.Attribute_5__c!= null){
+            if(picklistFields.get(customFilters.Attribute_5__c)!=null){
+                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_5__c).getDescribe().getPickListValues();
+                if(pick_list_values.size()>0){
+                    filtersMap.put(customFilters.Attribute_5__c,pick_list_values);
+                }
+            }else{
+                filtersMap.put(customFilters.Attribute_5__c,new List<Schema.PicklistEntry>());
+            }
+        }
+        if(customFilters.Attribute_6__c!= null){
+            if(picklistFields.get(customFilters.Attribute_6__c)!=null){
+                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_6__c).getDescribe().getPickListValues();
+                if(pick_list_values.size()>0){
+                    filtersMap.put(customFilters.Attribute_6__c,pick_list_values);
+                }
+            }else{
+                filtersMap.put(customFilters.Attribute_6__c,new List<Schema.PicklistEntry>());
+            }
+        }
+        if(customFilters.Attribute_7__c!= null){
+            if(picklistFields.get(customFilters.Attribute_7__c)!=null){
+                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_7__c).getDescribe().getPickListValues();
+                if(pick_list_values.size()>0){
+                    filtersMap.put(customFilters.Attribute_7__c,pick_list_values);
+                }
+            }else{
+                filtersMap.put(customFilters.Attribute_1__c,new List<Schema.PicklistEntry>());
+            }
+        }
+        if(customFilters.Attribute_8__c!= null){
+            if(picklistFields.get(customFilters.Attribute_8__c)!=null){
+                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_8__c).getDescribe().getPickListValues();
+                if(pick_list_values.size()>0){
+                    filtersMap.put(customFilters.Attribute_8__c,pick_list_values);
+                }
+            }else{
+                filtersMap.put(customFilters.Attribute_8__c,new List<Schema.PicklistEntry>());
+            }
+        }
+        if(customFilters.Attribute_9__c!= null){
+            if(picklistFields.get(customFilters.Attribute_9__c)!=null){
+                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_9__c).getDescribe().getPickListValues();
+                if(pick_list_values.size()>0){
+                    filtersMap.put(customFilters.Attribute_9__c,pick_list_values);
+                }
+            }else{
+                filtersMap.put(customFilters.Attribute_9__c,new List<Schema.PicklistEntry>());
+            }
+        }
+        if(customFilters.Attribute_10__c!= null){
+            if(picklistFields.get(customFilters.Attribute_10__c)!=null){
+                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_10__c).getDescribe().getPickListValues();
+                if(pick_list_values.size()>0){
+                    filtersMap.put(customFilters.Attribute_10__c,pick_list_values);
+                }
+            }else{
+                filtersMap.put(customFilters.Attribute_10__c,new List<Schema.PicklistEntry>());
+            }
+        }
+        
+        for(String filter : filtersMap.keyset()){
+            WrappersClass.FilteringWrappingClass wrapper = new WrappersClass.FilteringWrappingClass();
+            wrapper.label = filter;
+            wrapper.options = JSON.serialize(filtersMap.get(filter));
+            wrapper.apiName = fieldsNameMap.get(filter);
+            filtersWrapperToShow.add(wrapper);
+        }
 
-               }
+        System.debug(JSON.serialize(filtersWrapperToShow));
+        
+        return JSON.serialize(filtersWrapperToShow);
+    }
+
+    @AuraEnabled
+    public static List<sObject> filteredProductPrinter(String filterValues,String level1,String filteredGrouping){
+        List<WrappersClass.FilteringSelectionWrappingClass> untypedfilterValues = (List<WrappersClass.FilteringSelectionWrappingClass>) JSON.deserialize(filterValues, List<WrappersClass.FilteringSelectionWrappingClass>.class );
+        Map<String,String> filterValuesMap = new Map<String,String>();
+        String myQuery;
+        String queryAdditions = ' WHERE ';
+        System.debug('list: ' + untypedfilterValues);
+
+        for(WrappersClass.FilteringSelectionWrappingClass w : untypedFilterValues){
+            if(w.value != ''){
+                filterValuesMap.put(String.valueOf(w.label),String.valueOf(w.value));
             }
         }
 
+        if(level1 == 'Fiber Optic Cable'){
+            if(filterValuesMap.get('Product Type') != null){
+                queryAdditions += 'Product_Type__c = ' + '\'' +filterValuesMap.get('Product Type') + '\' AND ';
+            }
+
+            if(filterValuesMap.get('Fiber Count') != null){
+                queryAdditions += 'Fiber_Count__c = ' + '\'' +filterValuesMap.get('Fiber Count') + '\' AND ';
+            }
+            if(filterValuesMap.get('Fiber Type') != null){
+                queryAdditions += 'Fiber_Type__c = ' + '\'' +filterValuesMap.get('Fiber Type')+ '\' AND ';
+            }
+            if(filterValuesMap.get('Jacket Type') != null){
+                queryAdditions += 'Jacket_Type__c = ' + '\'' +filterValuesMap.get('Jacket Type') + '\' AND ';
+            }
+
+            if(filterValuesMap.get('Jacket Configuration') != null){
+                queryAdditions += 'Jacket_Configuration__c = ' + '\''+ filterValuesMap.get('Jacket Configuration') + '\' AND ';
+            }
+            if(filterValuesMap.get('Jacket Print') != null){
+                queryAdditions += 'Jacket_Print__c = ' + '\''+ filterValuesMap.get('Jacket Print') + '\' AND ';
+            }
+            if(filterValuesMap.get('Sub-Unit') != null){
+                queryAdditions += 'Sub_Unit__c = ' + '\''+ filterValuesMap.get('Sub-Unit') + '\' AND ';
+            }
+            if(filterValuesMap.get('Armor Type') != null){
+                queryAdditions += 'Armor_Type__c = ' + '\''+ filterValuesMap.get('Armor Type') + '\' AND ';
+            }
+            if(filterValuesMap.get('TightBuff Type') != null){
+                queryAdditions += 'TightBuff_Type__c = ' + '\''+ filterValuesMap.get('TightBuff Type') + '\' AND ';
+            }
+            if(filterValuesMap.get('Max Span at Light') != null){
+                queryAdditions += 'Max_Span_at_Light__c = ' + filterValuesMap.get('Max Span at Light') + ' AND ';
+            }
+            if(filterValuesMap.get('Max Span at Medium') != null){
+                queryAdditions += 'Max_Span_at_Medium__c = ' + filterValuesMap.get('Max Span at Medium') + ' AND ';
+            }
+            if(filterValuesMap.get('Max Span at Heavy') != null){
+                queryAdditions += 'Max_Span_at_Heavy__c = ' + filterValuesMap.get('Max Span at Heavy') + ' AND ';
+            }
+            if(filterValuesMap.get('Packaging') != null){
+                queryAdditions += 'Packaging__c = ' + '\''+ filterValuesMap.get('Packaging') + '\' AND ';
+            }
+            
+        }
+
+        myQuery = 'SELECT Id, Name, Product_Type__c,Fiber_Count__c,Fiber_Type__c,Jacket_Type__c,Jacket_Configuration__c,Jacket_Print__c,Sub_Unit__c,Armor_Type__c,TightBuff_Type__c,Max_Span_at_Light__c,Max_Span_at_Medium__c,Max_Span_at_Heavy__c,Packaging__c,Primary_UOM__c,Length__c FROM Product2'+
+            queryAdditions+'QLE_Search_Method__c = \'FILTERED\' AND ProdLevel1__c = \''+level1+'\' AND Filtered_Grouping__c = \''+filteredGrouping+'\'';
+        
+        System.debug('additions: ' + myQuery);
+
+        List<sObject> lookUpList = database.query(myQuery);
+        System.debug('products : ' + lookUpList.size());
+        return lookUpList;
     }
 
 }

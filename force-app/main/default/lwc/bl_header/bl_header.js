@@ -61,7 +61,7 @@ export default class Bl_header extends LightningElement {
             this.quote = undefined;
             this.error = error;
             const evt = new ShowToastEvent({ title: 'Please Open The IU from the button', message: 'Error connecting with salesforce',
-            variant: 'error', mode: 'dismissable' });
+            variant: 'error', mode: 'sticky' });
             this.dispatchEvent(evt);
         } 
     }
@@ -79,7 +79,7 @@ export default class Bl_header extends LightningElement {
             this.quote = undefined;
             this.error = error;
             const evt = new ShowToastEvent({ title: 'Please Open The IU from the button', message: 'Error connecting with salesforce',
-            variant: 'error', mode: 'dismissable' });
+            variant: 'error', mode: 'sticky' });
             this.dispatchEvent(evt);
         } 
     }

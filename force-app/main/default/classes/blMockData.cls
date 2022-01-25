@@ -29,4 +29,12 @@ public with sharing class blMockData {
         SBQQ__Quote__c quoteName = [SELECT Id, Name FROM SBQQ__Quote__c WHERE Id = :quoteId LIMIT 1];
         return quoteName.Name; 
     }
+
+    @AuraEnabled (cacheable=false)
+    public static void deletingRecordId(string quoteId) {
+        Id actualUser = UserInfo.getUserId(); 
+        system.debug('USER Id: '+actualUser);
+        List<bl_UI_RecordSaver__c> oldRecords = [SELECT Id, quoteId__c FROM bl_UI_RecordSaver__c WHERE CreatedById = :actualUser];
+        delete oldRecords;
+    }
 }
