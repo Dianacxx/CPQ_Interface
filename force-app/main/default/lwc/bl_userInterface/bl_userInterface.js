@@ -43,7 +43,8 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 this.quotelinesString = data; 
                 this.error = undefined;
                 this.isLoading = true; 
-                console.log('quoteLines String SUCCESS: '+ this.quotelinesString);
+                console.log('quoteLines String SUCCESS ');
+                //console.log('quoteLines String SUCCESS: '+ this.quotelinesString);
                 const payload = { 
                     dataString: this.quotelinesString,
                     auxiliar: 'newtable'
@@ -73,6 +74,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             if (data){
                 this.quoteNotesString = data; 
                 this.error = undefined;
+                console.log('notes string SUCCESS');
                 //console.log('notes string SUCCESS: '+ this.quoteNotesString);
             }    
         })
@@ -164,7 +166,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                         console.log(error);
                         this.spinnerLoadingUI = false;
                     }); 
-                }, 6000);
+                }, 8000);
             })
             .catch(error =>{
                 if (error){
@@ -323,13 +325,27 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 };
                 publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload);   
                 console.log('1. Quote lines updated, now proceed with new quote lines');
+                const evt = new ShowToastEvent({
+                    title: 'Success saving the changes on the existing quote lines in Salesforce',
+                    message: 'Your changes have been saved on Salesforce',
+                    variant: 'success',
+                    mode: 'dismissable'
+                });
+                this.dispatchEvent(evt);
             })
             .catch((error)=>{
                 console.log('editAndDeleteQuotes ERROR');
                 console.log(error);
                 let errorMessage;
                 if (error.body.hasOwnProperty("pageErrors")){
-                    errorMessage = error.body.pageErrors[0].statusCode; 
+                    if (error.body.pageErrors.hasOwnProperty("statusCode")){
+                        errorMessage = error.body.pageErrors[0].statusCode; 
+                    } else {
+                        if (error.body.hasOwnProperty("fieldErrors")){
+                            errorMessage = 'Developer: Open console to see error message'
+                            console.log(error); 
+                        }
+                    }
                 } 
                 else {
                     errorMessage = 'Developer: Open console to see error message'
@@ -364,7 +380,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                     this.spinnerLoadingUI = false;
 
                     const evt = new ShowToastEvent({
-                        title: 'Success saving the changes in the UI',
+                        title: 'Success saving the new quote lines created in the UI',
                         message: 'Your additions have been saved on Salesforce',
                         variant: 'success',
                         mode: 'dismissable'

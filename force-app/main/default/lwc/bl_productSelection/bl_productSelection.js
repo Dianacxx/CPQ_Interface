@@ -9,11 +9,13 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
     @api quotelinesString; //Quotelines information in string
     @api quoteNotesString; //Quotelines Notes in string 
 
+    //DISPLAY VALUES IN EVERY TAB
     @api girdDataAcaTab; 
     @api girdDataConnTab; 
     @api girdDataFocTab; 
     @api girdDataCableTab; 
     @api girdDataTandITab; 
+
 
     connectedCallback(){
         let isAddVector = [false, true, true, true];
@@ -23,6 +25,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             //console.log('ACA Data: ' + data);
             for(let i=0; i<this.girdDataAcaTab.length; i++){
                 this.girdDataAcaTab[i].isAdd = isAddVector; 
+                this.girdDataAcaTab[i]['isNew'] = i; 
             }
         })
         .catch((error)=>{
@@ -36,6 +39,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             //console.log('Connectivity Data: ' + data);
             for(let i=0; i<this.girdDataConnTab.length; i++){
                 this.girdDataConnTab[i].isAdd = isAddVector; 
+                this.girdDataConnTab[i]['isNew'] = i; 
             }
         })
         .catch((error)=>{
@@ -49,7 +53,10 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             //console.log('Fiber Optic Cable Data: ' + data);
             for(let i=0; i<this.girdDataFocTab.length; i++){
                 this.girdDataFocTab[i].isAdd = isAddVector; 
+                this.girdDataFocTab[i]['isNew'] = i; 
             }
+            console.log('Fiber Optic Cable Data: ' + JSON.stringify(this.girdDataFocTab));
+
         })
         .catch((error)=>{
             console.log('ERROR Fiber Optic Cable');
@@ -62,6 +69,8 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             //console.log('Cable Data: ' + data);
             for(let i=0; i<this.girdDataCableTab.length; i++){
                 this.girdDataCableTab[i].isAdd = isAddVector; 
+                this.girdDataCableTab[i]['isNew'] = i; 
+
             }
         })
         .catch((error)=>{
@@ -75,6 +84,8 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             //console.log('Test & Inspection Data: ' + data);
             for(let i=0; i<this.girdDataTandITab.length; i++){
                 this.girdDataTandITab[i].isAdd = isAddVector; 
+                this.girdDataTandITab[i]['isNew'] = i; 
+
             }
         })
         .catch((error)=>{

@@ -9,6 +9,7 @@ export default class Bl_listProducts extends LightningElement {
     @track openFilterPopup = false; 
     @track openConfiguredPopup = false; 
     @api tabSelected; 
+    @api trackList = [];
 
     //LIST OF FILTERS AND TEXT INPUTS
     @track listFilters = []; 
@@ -49,14 +50,17 @@ export default class Bl_listProducts extends LightningElement {
         }, 200);
     }
     
+
     callRowAction(event){
         //console.log(Object.getOwnPropertyNames(event.detail));
         let row = event.detail.row; //This way is going to edit the real value.
-        //console.log('Row '+ Object.getOwnPropertyNames(row));
+        console.log('Row '+ Object.getOwnPropertyNames(row));
         //console.log('Row selectionType '+ row.selectionType);
         switch (event.detail.action.name){
             case 'add':
                 if (row.selectionType == 'Filtered'){
+                    //Object.assign({}, data);
+                    this.trackList = JSON.parse(JSON.stringify(row));
                     this.openFilterPopup = true; 
                     this.handleFilterTabActive();
                     this.callFiltersInPopUp(row.lookupCode);
@@ -116,9 +120,9 @@ export default class Bl_listProducts extends LightningElement {
                 this.allReviews.push(this.rowsSelected[i]);
             }
             this.reviewDisplay = this.allReviews; 
-            console.log('ALL '+JSON.stringify(this.allReviews)); 
-            console.log('review '+JSON.stringify(this.reviewDisplay)); 
-            console.log('row '+JSON.stringify(this.rowsSelected)); 
+            //console.log('ALL '+JSON.stringify(this.allReviews)); 
+            //console.log('review '+JSON.stringify(this.reviewDisplay)); 
+            //console.log('row '+JSON.stringify(this.rowsSelected)); 
             //console.log('Filling all Reviews '+ Object.getOwnPropertyNames(this.allReviews[0]));
             this.activeFilterTab = 'Review';
             this.tabOption = true;
@@ -226,8 +230,8 @@ export default class Bl_listProducts extends LightningElement {
         this.listFilters = []; 
         this.filtersLoading = false; 
         this.filtersForApex = []; 
-        this.columnsFilters = [{label: 'Product Name', fieldName: 'Name', editable: false, wrapText: true,},]; 
-        this.columnsReview = [{label: 'Product Name', fieldName: 'Name', editable: false, wrapText: true,},]; 
+        this.columnsFilters = [{label: 'Product Name', fieldName: 'Name', editable: false, wrapText: true, },]; 
+        this.columnsReview = [{label: 'Product Name', fieldName: 'Name', editable: false,  wrapText: true,},]; 
         getProductFiltering({filteredGrouping: filterGroup})
         .then ((data)=>{
             console.log('DATA GETTING FILTERS'); 
@@ -249,8 +253,8 @@ export default class Bl_listProducts extends LightningElement {
                     temporalList[i].options = optionsFilters; 
                     this.listFilters.push(temporalList[i]); 
                 }
-                this.columnsFilters.push({label: temporalList[i].label, fieldName: temporalList[i].apiName, wrapText: true,}); 
-                this.columnsReview.push({label: temporalList[i].label, fieldName: temporalList[i].apiName, editable: true, wrapText: true,}); 
+                this.columnsFilters.push({label: temporalList[i].label, fieldName: temporalList[i].apiName,}); 
+                this.columnsReview.push({label: temporalList[i].label, fieldName: temporalList[i].apiName, editable: true, }); 
                 //console.log('columnsFilters'); 
                 //console.log(Object.getOwnPropertyNames(this.columnsFilters)); 
                 //this.filterSelected.push(temporalList[i].label);
@@ -428,7 +432,22 @@ export default class Bl_listProducts extends LightningElement {
         this.startingRecordR = this.startingRecordR + 1;
     }    
 
+    //PRODUCTS TURNED IN QUOTELINES
+     
     saveAndExitFilterModal(){
+        let trackListInternal = JSON.parse(JSON.stringify(this.trackList));
+        let index = this.listToDisplay.findIndex(product => product.isNew === trackListInternal.isNew);
+        //console.log('index '+ index);
+        console.log(JSON.stringify(trackListInternal));
+        //this.listToDisplay[index].isAdd[0] = true;
+        //this.listToDisplay[index].isAdd[1] = false;
+        //this.listToDisplay[index].isAdd[2] = false;
+        //this.listToDisplay[index].isAdd[3] = false;
+
+        //trackListInternal.isNew = 555; 
+        //this.listToDisplay.push(trackListInternal);
+        //this.trackList = [];
+        console.log('LTD: '+ JSON.stringify(this.listToDisplay));
         const evt = new ShowToastEvent({
             title: 'Here goes the save process',
             message: 'Save in quote format and create another value in list',

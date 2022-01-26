@@ -34,8 +34,8 @@ export default class Bl_dataTable extends LightningElement {
         this.subscribeToMessageChannel();
         //DEPENDING ON TAB, CHANGE COLUMS VALUES
         this.spinnerLoading = true; 
-        const COLUMNS_HOME = [ { label: 'Quote Name', fieldName: 'name', sortable: true, },];
-        const COLUMNS_DETAIL = [ { label: 'Quote Name', fieldName: 'name', sortable: true, },];
+        const COLUMNS_HOME = []; //[ { label: 'Quote Name', fieldName: 'name', sortable: true, },];
+        const COLUMNS_DETAIL = []; //[ { label: 'Quote Name', fieldName: 'name', sortable: true, },];
 
         if (this.quotelinesString){
             this.quoteLines = JSON.parse(this.quotelinesString);
@@ -67,10 +67,12 @@ export default class Bl_dataTable extends LightningElement {
             for (let i=0; i<this.fieldSetLength;i++){
                 if (this.tabSelected == 'Home'){
                     if (this.fieldSet[i].key == 'HOME'){
+                        //console.log('field Set properties: '+ Object.getOwnPropertyNames(this.fieldSet[i]));
                         //console.log('Label: '+this.fieldSet[i].label);
                         //console.log('Property: '+ this.fieldSet[i].property)
                         //console.log('Required '+this.fieldSet[i].required)
                         //console.log('Editable: '+this.fieldSet[i].editable);
+                        //console.log('Api name: '+this.fieldSet[i].apiName);
                         let labelName;
                         this.fieldSet[i].required ? labelName = '*'+this.fieldSet[i].label: labelName = this.fieldSet[i].label;
                         this.fieldSet[i].property == 'additionaldisc.(%)' ? this.fieldSet[i].property = 'additionaldiscount' : this.fieldSet[i].property; 
@@ -80,9 +82,10 @@ export default class Bl_dataTable extends LightningElement {
                             //console.log('Inserting before description');
                         }
                         else {
+                            //HERE GOES  type: 'number' or 'currency', typeAttributes: { maximumFractionDigits: 3, currencyCode: 'USD' }
                             COLUMNS_HOME.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, },);
                             if(this.fieldSet[i].property == 'description'){
-                                indexDes = i+1; //One because Quote Name 
+                                indexDes = i; 
                                 //console.log('Index description '+indexDes);
                             }
                         }
