@@ -261,12 +261,6 @@ public with sharing class QuoteController {
         Set<String> receivedIDs = new Set<String>();
 
 
-
-        //Gets the quote lines from the UI and deserializes them into a list of quote line wrappers
-        // List<WrappersClass.QuoteLineWrapperClass> untypedQuoteLines = (List<WrappersClass.QuoteLineWrapperClass>) JSON.deserialize(quoteLines, List<WrappersClass.QuoteLineWrapperClass>.class);
-        // //Checks the existing quote lines in Salesforce 
-        // List<SBQQ__QuoteLine__c> existingQuoteLines = [SELECT ID FROM SBQQ__QuoteLine__c WHERE SBQQ__Quote__c =: quoteId];
-
         //Add the existing quote line ids to a set
         for (SBQQ__QuoteLine__c line : existingQuoteLines) {
             quoteLineIDs.add(line.id);
@@ -473,103 +467,426 @@ public with sharing class QuoteController {
         Schema.sObjectType sobject_type = Product2.getSObjectType();
         Map<String, Schema.SObjectField> theFieldmap = sobject_type.getDescribe().fields.getMap();
         Map<String, Schema.SObjectField> picklistFields = new Map<String, Schema.SObjectField>(); //Store the picklist fields
+        Map<String, String> fieldsNameMap = new Map<String, String>(); //Store the picklist fields
 
-        Map<String, List<Schema.PicklistEntry>> picklistMap = new Map<String, List<Schema.PicklistEntry>>();
+        Map<String, List<Schema.PicklistEntry>> filtersMap = new Map<String, List<Schema.PicklistEntry>>();
+        List<WrappersClass.FilteringWrappingClass> filtersWrapperToShow = new List<WrappersClass.FilteringWrappingClass>();
+
 
         for(String field: theFieldmap.keyset()){ //for each field in the object
+            String label = theFieldmap.get(field).getDescribe().getLabel(); // Get the label of each field in the product object
             Schema.DisplayType theResult = theFieldmap.get(field).getDescribe().GetType(); //get field type
+            fieldsNameMap.put(label,theFieldmap.get(field).getDescribe().getName()); //Stores the API name of each field object
             if (theResult == Schema.DisplayType.Picklist){ //if it's a picklist
-                String label = theFieldmap.get(field).getDescribe().getLabel();
-                picklistFields.put(label,theFieldmap.get(field));
+                picklistFields.put(label,theFieldmap.get(field)); //put all of the picklist fields in a map, with the label as the key
             }
         }
+        //Get all of the custom field values from the filtered grouping - gets it from the custom settings
+        BL_Product_Filters__c customFilters = custFieldsMap.get(filteredGrouping);
 
-        if(filteredGrouping == 'ADSS Cable'){
-            BL_Product_Filters__c ADSSFilters = custFieldsMap.get(filteredGrouping);
-            //maximum amount of filters = 8-10
-            if(ADSSFilters.Attribute_1__c!= null){
-                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(ADSSFilters.Attribute_1__c).getDescribe().getPickListValues();
+        //Each filtered grouping value can have up to 10 attributes
+        if(customFilters.Attribute_1__c!= null){
+            if(picklistFields.get(customFilters.Attribute_1__c)!=null){
+                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_1__c).getDescribe().getPickListValues();
                 if(pick_list_values.size()>0){
-                    pickListMap.put('Name:' + ADSSFilters.Attribute_1__c,pick_list_values);
+                    filtersMap.put(customFilters.Attribute_1__c,pick_list_values);
                 }
+            }else{
+                filtersMap.put(customFilters.Attribute_1__c,new List<Schema.PicklistEntry>());
             }
-            if(ADSSFilters.Attribute_2__c!= null){
-                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(ADSSFilters.Attribute_2__c).getDescribe().getPickListValues();
+        }
+        if(customFilters.Attribute_2__c!= null){
+            if(picklistFields.get(customFilters.Attribute_2__c)!=null){
+                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_2__c).getDescribe().getPickListValues();
                 if(pick_list_values.size()>0){
-                    pickListMap.put('Name:' + ADSSFilters.Attribute_2__c,pick_list_values);
+                    filtersMap.put(customFilters.Attribute_2__c,pick_list_values);
                 }
+            }else{
+                filtersMap.put(customFilters.Attribute_2__c,new List<Schema.PicklistEntry>());
             }
-            if(ADSSFilters.Attribute_3__c!= null){
-                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(ADSSFilters.Attribute_3__c).getDescribe().getPickListValues();
+        }
+        if(customFilters.Attribute_3__c!= null){
+            if(picklistFields.get(customFilters.Attribute_3__c)!=null){
+                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_3__c).getDescribe().getPickListValues();
                 if(pick_list_values.size()>0){
-                    pickListMap.put('Name:' + ADSSFilters.Attribute_3__c,pick_list_values);
+                    filtersMap.put(customFilters.Attribute_3__c,pick_list_values);
                 }
+            }else{
+                filtersMap.put(customFilters.Attribute_3__c,new List<Schema.PicklistEntry>());
             }
-            if(ADSSFilters.Attribute_4__c!= null){
-                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(ADSSFilters.Attribute_4__c).getDescribe().getPickListValues();
+        }
+        if(customFilters.Attribute_4__c!= null){
+            if(picklistFields.get(customFilters.Attribute_4__c)!=null){
+                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_4__c).getDescribe().getPickListValues();
                 if(pick_list_values.size()>0){
-                    pickListMap.put('Name:' + ADSSFilters.Attribute_4__c,pick_list_values);
+                    filtersMap.put(customFilters.Attribute_4__c,pick_list_values);
                 }
+            }else{
+                filtersMap.put(customFilters.Attribute_4__c,new List<Schema.PicklistEntry>());
             }
-            if(ADSSFilters.Attribute_5__c!= null){
-                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(ADSSFilters.Attribute_5__c).getDescribe().getPickListValues();
+        }
+        if(customFilters.Attribute_5__c!= null){
+            if(picklistFields.get(customFilters.Attribute_5__c)!=null){
+                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_5__c).getDescribe().getPickListValues();
                 if(pick_list_values.size()>0){
-                    pickListMap.put('Name:' + ADSSFilters.Attribute_5__c,pick_list_values);
+                    filtersMap.put(customFilters.Attribute_5__c,pick_list_values);
                 }
+            }else{
+                filtersMap.put(customFilters.Attribute_5__c,new List<Schema.PicklistEntry>());
             }
-            if(ADSSFilters.Attribute_6__c!= null&&picklistFields.get(ADSSFilters.Attribute_6__c)!=null){
-                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(ADSSFilters.Attribute_6__c).getDescribe().getPickListValues();
+        }
+        if(customFilters.Attribute_6__c!= null){
+            if(picklistFields.get(customFilters.Attribute_6__c)!=null){
+                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_6__c).getDescribe().getPickListValues();
                 if(pick_list_values.size()>0){
-                    pickListMap.put('Name:' + ADSSFilters.Attribute_6__c,pick_list_values);
+                    filtersMap.put(customFilters.Attribute_6__c,pick_list_values);
                 }
+            }else{
+                filtersMap.put(customFilters.Attribute_6__c,new List<Schema.PicklistEntry>());
             }
-            if(ADSSFilters.Attribute_7__c!= null&&picklistFields.get(ADSSFilters.Attribute_7__c)!=null){
-                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(ADSSFilters.Attribute_7__c).getDescribe().getPickListValues();
+        }
+        if(customFilters.Attribute_7__c!= null){
+            if(picklistFields.get(customFilters.Attribute_7__c)!=null){
+                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_7__c).getDescribe().getPickListValues();
                 if(pick_list_values.size()>0){
-                    pickListMap.put('Name:' + ADSSFilters.Attribute_7__c,pick_list_values);
+                    filtersMap.put(customFilters.Attribute_7__c,pick_list_values);
                 }
+            }else{
+                filtersMap.put(customFilters.Attribute_1__c,new List<Schema.PicklistEntry>());
             }
-            if(ADSSFilters.Attribute_8__c!= null&&picklistFields.get(ADSSFilters.Attribute_8__c)!=null){
-                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(ADSSFilters.Attribute_8__c).getDescribe().getPickListValues();
+        }
+        if(customFilters.Attribute_8__c!= null){
+            if(picklistFields.get(customFilters.Attribute_8__c)!=null){
+                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_8__c).getDescribe().getPickListValues();
                 if(pick_list_values.size()>0){
-                    pickListMap.put('Name:' + ADSSFilters.Attribute_8__c,pick_list_values);
+                    filtersMap.put(customFilters.Attribute_8__c,pick_list_values);
                 }
+            }else{
+                filtersMap.put(customFilters.Attribute_8__c,new List<Schema.PicklistEntry>());
+            }
+        }
+        if(customFilters.Attribute_9__c!= null){
+            if(picklistFields.get(customFilters.Attribute_9__c)!=null){
+                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_9__c).getDescribe().getPickListValues();
+                if(pick_list_values.size()>0){
+                    filtersMap.put(customFilters.Attribute_9__c,pick_list_values);
+                }
+            }else{
+                filtersMap.put(customFilters.Attribute_9__c,new List<Schema.PicklistEntry>());
+            }
+        }
+        if(customFilters.Attribute_10__c!= null){
+            if(picklistFields.get(customFilters.Attribute_10__c)!=null){
+                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_10__c).getDescribe().getPickListValues();
+                if(pick_list_values.size()>0){
+                    filtersMap.put(customFilters.Attribute_10__c,pick_list_values);
+                }
+            }else{
+                filtersMap.put(customFilters.Attribute_10__c,new List<Schema.PicklistEntry>());
+            }
+        }
+        
+        for(String filter : filtersMap.keyset()){
+            WrappersClass.FilteringWrappingClass wrapper = new WrappersClass.FilteringWrappingClass();
+            wrapper.label = filter;
+            wrapper.options = JSON.serialize(filtersMap.get(filter));
+            wrapper.apiName = fieldsNameMap.get(filter);
+            filtersWrapperToShow.add(wrapper);
+        }
+
+        System.debug(JSON.serialize(filtersWrapperToShow));
+        
+        return JSON.serialize(filtersWrapperToShow);
+    }
+
+    @AuraEnabled
+    public static String getFirstFilter(String filteredGrouping){
+        Map<String,BL_Product_Filters__c> custFieldsMap = BL_Product_Filters__c.getAll(); //Get the custom fields in the custom setting
+
+        Schema.sObjectType sobject_type = Product2.getSObjectType();
+        Map<String, Schema.SObjectField> theFieldmap = sobject_type.getDescribe().fields.getMap();
+        Map<String, Schema.SObjectField> picklistFields = new Map<String, Schema.SObjectField>(); //Store the picklist fields
+        Map<String, String> fieldsNameMap = new Map<String, String>(); //Store the api name of the fields 
+        Map<String, Schema.DisplayType> fieldsTypeMap = new Map<String, Schema.DisplayType>(); //Store the type of the fields
+
+        Map<String, List<Schema.PicklistEntry>> filtersMap = new Map<String, List<Schema.PicklistEntry>>();
+        List<WrappersClass.FilteringWrappingClass> filtersWrapperToShow = new List<WrappersClass.FilteringWrappingClass>();
+
+
+        for(String field: theFieldmap.keyset()){ //for each field in the object
+            String label = theFieldmap.get(field).getDescribe().getLabel(); // Get the label of each field in the product object
+            Schema.DisplayType theResult = theFieldmap.get(field).getDescribe().getType(); //get field type
+            fieldsNameMap.put(label,theFieldmap.get(field).getDescribe().getName()); //Stores the API name of each field object
+            fieldsTypeMap.put(label,theFieldmap.get(field).getDescribe().getType()); //Stores the type of each field object
+            
+            if (theResult == Schema.DisplayType.Picklist){ //if it's a picklist
+                picklistFields.put(label,theFieldmap.get(field)); //put all of the picklist fields in a map, with the label as the key
+            }
+        }
+        //Get all of the custom field values from the filtered grouping - gets it from the custom settings
+        BL_Product_Filters__c customFilters = custFieldsMap.get(filteredGrouping);
+
+        //Each filtered grouping value can have up to 10 attributes
+        if(customFilters.Attribute_1__c!= null){
+            if(picklistFields.get(customFilters.Attribute_1__c)!=null){
+                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_1__c).getDescribe().getPickListValues();
+                if(pick_list_values.size()>0){
+                    filtersMap.put(customFilters.Attribute_1__c,pick_list_values);
+                }
+            }else{
+                filtersMap.put(customFilters.Attribute_1__c,new List<Schema.PicklistEntry>());
             }
             
-            System.debug(pickListMap);
+        }
+
+        for(String filter : filtersMap.keyset()){
+            WrappersClass.FilteringWrappingClass wrapper = new WrappersClass.FilteringWrappingClass();
+            wrapper.label = filter;
+            wrapper.options = JSON.serialize(filtersMap.get(filter));
+            wrapper.apiName = fieldsNameMap.get(filter);    
+            wrapper.type = fieldsTypeMap.get(filter);
+            filtersWrapperToShow.add(wrapper);
+        }
+
+        return JSON.serialize(filtersWrapperToShow);
+
+    }
+
+    @AuraEnabled
+    public static String getProductFilteringv2(String filteredGrouping, String typeSelection){
+
+        Map<String,BL_Product_Filters__c> custFieldsMap = BL_Product_Filters__c.getAll(); //Get the custom fields in the custom setting
+
+        Schema.sObjectType sobject_type = Product2.getSObjectType();
+        Map<String, Schema.SObjectField> theFieldmap = sobject_type.getDescribe().fields.getMap();
+        Map<String, Schema.SObjectField> picklistFields = new Map<String, Schema.SObjectField>(); //Store the picklist fields
+        Map<String, String> fieldsNameMap = new Map<String, String>(); //Store the picklist fields
+        Map<String, Schema.DisplayType> fieldsTypeMap = new Map<String, Schema.DisplayType>(); //Store the type of the fields
+
+        Map<String, List<Schema.PicklistEntry>> filtersMap = new Map<String, List<Schema.PicklistEntry>>();
+        List<WrappersClass.FilteringWrappingClass> filtersWrapperToShow = new List<WrappersClass.FilteringWrappingClass>();
+
+
+        for(String field: theFieldmap.keyset()){ //for each field in the object
+            String label = theFieldmap.get(field).getDescribe().getLabel(); // Get the label of each field in the product object
+            Schema.DisplayType theResult = theFieldmap.get(field).getDescribe().GetType(); //get field type
+            fieldsNameMap.put(label,theFieldmap.get(field).getDescribe().getName()); //Stores the API name of each field object
+            if (theResult == Schema.DisplayType.Picklist){ //if it's a picklist
+                picklistFields.put(label,theFieldmap.get(field)); //put all of the picklist fields in a map, with the label as the key
+            }
+        }
+        //Get all of the custom field values from the filtered grouping - gets it from the custom settings
+        BL_Product_Filters__c customFilters = custFieldsMap.get(filteredGrouping);
+
+        //Each filtered grouping value can have up to 10 attributes
+        if(typeSelection!= null){
+            //Get the dependernt picklist values for the second attribute, depending on the first attribute value.
+            if(customFilters.Attribute_2__c!= null){
+                if(picklistFields.get(customFilters.Attribute_2__c)!=null){
+                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(picklistFields.get(customFilters.Attribute_2__c),typeSelection);
+                    filtersMap.put(customFilters.Attribute_2__c,pickListValues);
+                    // System.debug(pickListValues);
+                }else{
+                    filtersMap.put(customFilters.Attribute_2__c,new List<Schema.PicklistEntry>());
+                }
+            }
+            if(customFilters.Attribute_3__c!= null){
+                if(picklistFields.get(customFilters.Attribute_3__c)!=null){
+                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(picklistFields.get(customFilters.Attribute_3__c),typeSelection);
+                    filtersMap.put(customFilters.Attribute_3__c,pickListValues);
+                }else{
+                    filtersMap.put(customFilters.Attribute_3__c,new List<Schema.PicklistEntry>());
+                }
+            }
+            if(customFilters.Attribute_4__c!= null){
+                if(picklistFields.get(customFilters.Attribute_4__c)!=null){
+                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(picklistFields.get(customFilters.Attribute_4__c),typeSelection);
+                    filtersMap.put(customFilters.Attribute_4__c,pickListValues);
+                }else{
+                    filtersMap.put(customFilters.Attribute_4__c,new List<Schema.PicklistEntry>());
+                }
+            }
+            if(customFilters.Attribute_5__c!= null){
+                if(picklistFields.get(customFilters.Attribute_5__c)!=null){
+                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(picklistFields.get(customFilters.Attribute_5__c),typeSelection);
+                    filtersMap.put(customFilters.Attribute_5__c,pickListValues);
+                }else{
+                    filtersMap.put(customFilters.Attribute_5__c,new List<Schema.PicklistEntry>());
+                }
+            }
+            if(customFilters.Attribute_6__c!= null){
+                if(picklistFields.get(customFilters.Attribute_6__c)!=null){
+                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(picklistFields.get(customFilters.Attribute_6__c),typeSelection);
+                    filtersMap.put(customFilters.Attribute_6__c,pickListValues);
+                }else{
+                    filtersMap.put(customFilters.Attribute_6__c,new List<Schema.PicklistEntry>());
+                }
+            }
+            if(customFilters.Attribute_7__c!= null){
+                if(picklistFields.get(customFilters.Attribute_7__c)!=null){
+                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(picklistFields.get(customFilters.Attribute_7__c),typeSelection);
+                    filtersMap.put(customFilters.Attribute_7__c,pickListValues);
+                }else{
+                    filtersMap.put(customFilters.Attribute_7__c,new List<Schema.PicklistEntry>());
+                }
+            }
+            if(customFilters.Attribute_8__c!= null){
+                if(picklistFields.get(customFilters.Attribute_8__c)!=null){
+                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(picklistFields.get(customFilters.Attribute_8__c),typeSelection);
+                    filtersMap.put(customFilters.Attribute_8__c,pickListValues);
+                }else{
+                    filtersMap.put(customFilters.Attribute_8__c,new List<Schema.PicklistEntry>());
+                }
+            }
+            if(customFilters.Attribute_9__c!= null){
+                if(picklistFields.get(customFilters.Attribute_9__c)!=null){
+                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(picklistFields.get(customFilters.Attribute_9__c),typeSelection);
+                    filtersMap.put(customFilters.Attribute_9__c,pickListValues);
+                }else{
+                    filtersMap.put(customFilters.Attribute_9__c,new List<Schema.PicklistEntry>());
+                }
+            }
+            if(customFilters.Attribute_10__c!= null){
+                if(picklistFields.get(customFilters.Attribute_10__c)!=null){
+                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(picklistFields.get(customFilters.Attribute_10__c),typeSelection);
+                    filtersMap.put(customFilters.Attribute_10__c,pickListValues);
+                }else{
+                    filtersMap.put(customFilters.Attribute_10__c,new List<Schema.PicklistEntry>());
+                }
+            }
         }
         
-        return JSON.serialize(pickListMap);
+        for(String filter : filtersMap.keyset()){
+            WrappersClass.FilteringWrappingClass wrapper = new WrappersClass.FilteringWrappingClass();
+            wrapper.label = filter;
+            wrapper.options = JSON.serialize(filtersMap.get(filter));
+            wrapper.apiName = fieldsNameMap.get(filter);
+            wrapper.type = fieldsTypeMap.get(filter);
+            filtersWrapperToShow.add(wrapper);
+        }
 
-
-
-
-        // Sobject object_name = Product2;
+        // System.debug(JSON.serialize(filtersWrapperToShow));
         
-        // Map<String, Schema.SObjectField> pickListFields = sobject_type.getDescribe().fields.getMap();
+        return JSON.serialize(filtersWrapperToShow);
+    }
 
-        // list<cObjects> myobjects = new list<cObjects>();  
+    public static List<Schema.PicklistEntry> getDependentPicklistValues(Schema.sObjectField dependToken, String prodTypeSelection) {
+        Schema.DescribeFieldResult depend = dependToken.getDescribe();
+        Schema.sObjectField controlToken = depend.getController();
+        if (controlToken == null) {
+            List<String> valuesToPrint = new List<String>();
+            List<Schema.PicklistEntry> pickListValues = dependToken.getDescribe().getPickListValues();
+            // List<String> pickListLabels = dependToken.getDescribe().getPickListValues().getLabel();
+            for(Schema.PicklistEntry p : pickListValues){
+                String value = p.getLabel();
+                valuesToPrint.add(value);
+            }
+            return pickListValues;
+        }
+     
+        Schema.DescribeFieldResult control = controlToken.getDescribe();
+        List<Schema.PicklistEntry> controlEntries;
+        if(control.getType() != Schema.DisplayType.Boolean) {
+            controlEntries = control.getPicklistValues();
+        }
+     
+        String base64map = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+        Map<String,List<Schema.PicklistEntry>> dependentPicklistValues = new Map<String,List<Schema.PicklistEntry>>();
+        for (Schema.PicklistEntry entry : depend.getPicklistValues()) {
+            if (entry.isActive() && String.isNotEmpty(String.valueOf(((Map<String,Object>) JSON.deserializeUntyped(JSON.serialize(entry))).get('validFor')))) {
+                List<String> base64chars =
+                        String.valueOf(((Map<String,Object>) JSON.deserializeUntyped(JSON.serialize(entry))).get('validFor')).split('');
+                for (Integer index = 0; index < (controlEntries != null ? controlEntries.size() : 2); index++) {
+                    Object controlValue =
+                            (controlEntries == null
+                                    ?   (Object) (index == 1)
+                                    :   (Object) (controlEntries[index].isActive() ? controlEntries[index].getLabel() : null)
+                            );
+                    Integer bitIndex = index / 6;
+                    if (bitIndex > base64chars.size() - 1) {
+                        break;
+                    }
+                    Integer bitShift = 5 - Math.mod(index, 6);
+                    if  (controlValue == null || (base64map.indexOf( base64chars[ bitIndex ] ) & (1 << bitShift)) == 0)
+                        continue;
+                    if (!dependentPicklistValues.containsKey((String) controlValue)) {
+                        dependentPicklistValues.put((String) controlValue, new List<Schema.PicklistEntry>());
+                    }
+                    dependentPicklistValues.get((String) controlValue).add(entry);
+                }
+            }
+        }
+        List<Schema.PicklistEntry> pickListValues = dependentPicklistValues.get(prodTypeSelection);
+        return pickListValues;
+    }
 
-        // for(String field: theFieldmap.keyset()){ //for each field in the object
-              
-        //     Schema.DisplayType theResult = theFieldmap.get(field).getDescribe().GetType(); //get field type
+    @AuraEnabled
+    public static List<sObject> filteredProductPrinter(String filterValues,String level1,String filteredGrouping){
+        List<WrappersClass.FilteringSelectionWrappingClass> untypedfilterValues = (List<WrappersClass.FilteringSelectionWrappingClass>) JSON.deserialize(filterValues, List<WrappersClass.FilteringSelectionWrappingClass>.class );
+        Map<String,String> filterValuesMap = new Map<String,String>();
+        String myQuery;
+        String queryAdditions = ' WHERE ';
+        System.debug('list: ' + untypedfilterValues);
 
-        //     if (theResult == Schema.DisplayType.Picklist){ //if it's a picklist
-        //         list<Schema.PicklistEntry> pick_list_values = theFieldmap.get(field).getDescribe().getPickListValues();
-                
-        //         for (Schema.PicklistEntry a : pick_list_values) {  
+        for(WrappersClass.FilteringSelectionWrappingClass w : untypedFilterValues){
+            if(w.value != ''){
+                filterValuesMap.put(String.valueOf(w.label),String.valueOf(w.value));
+            }
+        }
 
-        //             // //for each value, add item to myobjects list
-        //             // cObjects tempObject = new cObjects();
-        //             // tempObject.myObjectName = f.getDescribe().getLabel();
-        //             // tempObject.myFieldName = theFieldmap.get(field).GetDescribe().Name;
-        //             // tempObject.myFieldValue = a.getValue();
-        //             // myobjects.add(tempObject);
+        if(level1 == 'Fiber Optic Cable'){
+            if(filterValuesMap.get('Product Type') != null){
+                queryAdditions += 'Product_Type__c = ' + '\'' +filterValuesMap.get('Product Type') + '\' AND ';
+            }
 
-        //        }
-        //     }
-        // }
+            if(filterValuesMap.get('Fiber Count') != null){
+                queryAdditions += 'Fiber_Count__c = ' + '\'' +filterValuesMap.get('Fiber Count') + '\' AND ';
+            }
+            if(filterValuesMap.get('Fiber Type') != null){
+                queryAdditions += 'Fiber_Type__c = ' + '\'' +filterValuesMap.get('Fiber Type')+ '\' AND ';
+            }
+            if(filterValuesMap.get('Jacket Type') != null){
+                queryAdditions += 'Jacket_Type__c = ' + '\'' +filterValuesMap.get('Jacket Type') + '\' AND ';
+            }
 
+            if(filterValuesMap.get('Jacket Configuration') != null){
+                queryAdditions += 'Jacket_Configuration__c = ' + '\''+ filterValuesMap.get('Jacket Configuration') + '\' AND ';
+            }
+            if(filterValuesMap.get('Jacket Print') != null){
+                queryAdditions += 'Jacket_Print__c = ' + '\''+ filterValuesMap.get('Jacket Print') + '\' AND ';
+            }
+            if(filterValuesMap.get('Sub-Unit') != null){
+                queryAdditions += 'Sub_Unit__c = ' + '\''+ filterValuesMap.get('Sub-Unit') + '\' AND ';
+            }
+            if(filterValuesMap.get('Armor Type') != null){
+                queryAdditions += 'Armor_Type__c = ' + '\''+ filterValuesMap.get('Armor Type') + '\' AND ';
+            }
+            if(filterValuesMap.get('TightBuff Type') != null){
+                queryAdditions += 'TightBuff_Type__c = ' + '\''+ filterValuesMap.get('TightBuff Type') + '\' AND ';
+            }
+            if(filterValuesMap.get('Max Span at Light') != null){
+                queryAdditions += 'Max_Span_at_Light__c = ' + filterValuesMap.get('Max Span at Light') + ' AND ';
+            }
+            if(filterValuesMap.get('Max Span at Medium') != null){
+                queryAdditions += 'Max_Span_at_Medium__c = ' + filterValuesMap.get('Max Span at Medium') + ' AND ';
+            }
+            if(filterValuesMap.get('Max Span at Heavy') != null){
+                queryAdditions += 'Max_Span_at_Heavy__c = ' + filterValuesMap.get('Max Span at Heavy') + ' AND ';
+            }
+            if(filterValuesMap.get('Packaging') != null){
+                queryAdditions += 'Packaging__c = ' + '\''+ filterValuesMap.get('Packaging') + '\' AND ';
+            }
+            
+        }
+
+        myQuery = 'SELECT Id, Name, Product_Type__c,Fiber_Count__c,Fiber_Type__c,Jacket_Type__c,Jacket_Configuration__c,Jacket_Print__c,Sub_Unit__c,Armor_Type__c,TightBuff_Type__c,Max_Span_at_Light__c,Max_Span_at_Medium__c,Max_Span_at_Heavy__c,Packaging__c,Primary_UOM__c,Length__c FROM Product2'+
+            queryAdditions+'QLE_Search_Method__c = \'FILTERED\' AND ProdLevel1__c = \''+level1+'\' AND Filtered_Grouping__c = \''+filteredGrouping+'\'';
+        
+        System.debug('additions: ' + myQuery);
+
+        List<sObject> lookUpList = database.query(myQuery);
+        System.debug('products : ' + lookUpList.size());
+        return lookUpList;
     }
 
 }

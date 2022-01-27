@@ -90,7 +90,14 @@ public with sharing class WrappersClass {
     public class FilteringWrappingClass{
         public String label {get;set;}
         public String options {get;set;}
+        public String apiName {get;set;}
+        public Schema.DisplayType type {get;set;}
         public String filterSelection {get;set;}
+        
+    }
+    public class FilteringSelectionWrappingClass{
+        public String label {get;set;}
+        public String value {get;set;}
         
     }
     
