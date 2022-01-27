@@ -446,12 +446,14 @@ public with sharing class QuoteController {
    
     @AuraEnabled
     public static String getProductLevels(String level1){
-        List<AFL_Lookups__c> lookupList = [SELECT Name, BL_Selection_Type__c,toLabel(Product_Class_1__c), Lookup_Code__c, CreatedDate, Id, CurrencyIsoCode, LastModifiedDate, SystemModstamp FROM AFL_Lookups__c WHERE Lookup_Type__c = 'Product Configurations' AND Enabled_Flag__c = true AND Product_Class_1__c =:level1 ORDER BY Product_Class_1__c ASC NULLS FIRST, Id ASC NULLS FIRST];
+        List<AFL_Lookups__c> lookupList = [SELECT Id,Name,BL_Selection_Type__c,Lookup_Code__c,Product_Class_1__c FROM AFL_Lookups__c WHERE Lookup_Type__c = 'BL Attribute Groupings' AND Product_Class_1__c =:level1];
+        // List<AFL_Lookups__c> lookupList = [SELECT Name, BL_Selection_Type__c,toLabel(Product_Class_1__c), Lookup_Code__c, CreatedDate, Id, CurrencyIsoCode, LastModifiedDate, SystemModstamp FROM AFL_Lookups__c WHERE Lookup_Type__c = 'Product Configurations' AND Enabled_Flag__c = true AND Product_Class_1__c =:level1 ORDER BY Product_Class_1__c ASC NULLS FIRST, Id ASC NULLS FIRST];
         List<WrappersClass.LookupWrapperClass> wrappersToPrintList = new List<WrappersClass.LookupWrapperClass>();
 
         for(AFL_Lookups__c lookup : lookupList){
             WrappersClass.LookupWrapperClass wrapper = new WrappersClass.LookupWrapperClass();
             wrapper.lookupCode = lookup.Lookup_Code__c;
+            wrapper.level1 = lookup.Product_Class_1__c;
             wrapper.selectionType = lookup.BL_Selection_Type__c;
             wrappersToPrintList.add(wrapper);
         }
@@ -459,8 +461,66 @@ public with sharing class QuoteController {
         return JSON.serialize(wrappersToPrintList);
 
     }
+
     @AuraEnabled
-    public static String getProductFiltering(String filteredGrouping){
+    public static String getFirstFilter(String filteredGrouping){
+        Map<String,BL_Product_Filters__c> custFieldsMap = BL_Product_Filters__c.getAll(); //Get the custom fields in the custom setting
+
+        Schema.sObjectType sobject_type = Product2.getSObjectType();
+        Map<String, Schema.SObjectField> theFieldmap = sobject_type.getDescribe().fields.getMap();
+        Map<String, Schema.SObjectField> picklistFields = new Map<String, Schema.SObjectField>(); //Store the picklist fields
+        Map<String, String> fieldsNameMap = new Map<String, String>(); //Store the api name of the fields 
+        Map<String, Schema.DisplayType> fieldsTypeMap = new Map<String, Schema.DisplayType>(); //Store the type of the fields
+
+        Map<String, List<Schema.PicklistEntry>> filtersMap = new Map<String, List<Schema.PicklistEntry>>();
+        List<WrappersClass.FilteringWrappingClass> filtersWrapperToShow = new List<WrappersClass.FilteringWrappingClass>();
+
+
+        for(String field: theFieldmap.keyset()){ //for each field in the object
+            String label = theFieldmap.get(field).getDescribe().getLabel(); // Get the label of each field in the product object
+            Schema.DisplayType theResult = theFieldmap.get(field).getDescribe().getType(); //get field type
+            fieldsNameMap.put(label,theFieldmap.get(field).getDescribe().getName()); //Stores the API name of each field object
+            fieldsTypeMap.put(label,theFieldmap.get(field).getDescribe().getType()); //Stores the type of each field object
+            
+            if (theResult == Schema.DisplayType.Picklist){ //if it's a picklist
+                picklistFields.put(label,theFieldmap.get(field)); //put all of the picklist fields in a map, with the label as the key
+            }
+        }
+        //Get all of the custom field values from the filtered grouping - gets it from the custom settings
+        BL_Product_Filters__c customFilters = custFieldsMap.get(filteredGrouping);
+
+        //Each filtered grouping value can have up to 10 attributes
+        if(customFilters.Attribute_1__c!= null){
+            if(picklistFields.get(customFilters.Attribute_1__c)!=null){
+                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_1__c).getDescribe().getPickListValues();
+                if(pick_list_values.size()>0){
+                    filtersMap.put(customFilters.Attribute_1__c,pick_list_values);
+                    System.debug(pick_list_values.size());
+                    // for(Schema.PicklistEntry c : pick_list_values){
+                    //     System.debug(c.label);
+                    // }
+                }
+            }else{
+                filtersMap.put(customFilters.Attribute_1__c,new List<Schema.PicklistEntry>());
+            }
+            
+        }
+
+        for(String filter : filtersMap.keyset()){
+            WrappersClass.FilteringWrappingClass wrapper = new WrappersClass.FilteringWrappingClass();
+            wrapper.label = filter;
+            wrapper.options = JSON.serialize(filtersMap.get(filter));
+            wrapper.apiName = fieldsNameMap.get(filter);    
+            wrapper.type = fieldsTypeMap.get(filter);
+            filtersWrapperToShow.add(wrapper);
+        }
+
+        return JSON.serialize(filtersWrapperToShow);
+
+    }
+
+    @AuraEnabled
+    public static String getProductFilteringv2(String filteredGrouping, String typeSelection){
 
         Map<String,BL_Product_Filters__c> custFieldsMap = BL_Product_Filters__c.getAll(); //Get the custom fields in the custom setting
 
@@ -468,6 +528,7 @@ public with sharing class QuoteController {
         Map<String, Schema.SObjectField> theFieldmap = sobject_type.getDescribe().fields.getMap();
         Map<String, Schema.SObjectField> picklistFields = new Map<String, Schema.SObjectField>(); //Store the picklist fields
         Map<String, String> fieldsNameMap = new Map<String, String>(); //Store the picklist fields
+        Map<String, Schema.DisplayType> fieldsTypeMap = new Map<String, Schema.DisplayType>(); //Store the type of the fields
 
         Map<String, List<Schema.PicklistEntry>> filtersMap = new Map<String, List<Schema.PicklistEntry>>();
         List<WrappersClass.FilteringWrappingClass> filtersWrapperToShow = new List<WrappersClass.FilteringWrappingClass>();
@@ -481,108 +542,84 @@ public with sharing class QuoteController {
                 picklistFields.put(label,theFieldmap.get(field)); //put all of the picklist fields in a map, with the label as the key
             }
         }
-        //Get all of the custom field values from the filtered grouping 
+        //Get all of the custom field values from the filtered grouping - gets it from the custom settings
         BL_Product_Filters__c customFilters = custFieldsMap.get(filteredGrouping);
 
         //Each filtered grouping value can have up to 10 attributes
-        if(customFilters.Attribute_1__c!= null){
-            if(picklistFields.get(customFilters.Attribute_1__c)!=null){
-                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_1__c).getDescribe().getPickListValues();
-                if(pick_list_values.size()>0){
-                    filtersMap.put(customFilters.Attribute_1__c,pick_list_values);
+        if(typeSelection!= null){
+            //Get the dependernt picklist values for the second attribute, depending on the first attribute value.
+            if(customFilters.Attribute_2__c!= null){
+                if(picklistFields.get(customFilters.Attribute_2__c)!=null){
+                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(picklistFields.get(customFilters.Attribute_2__c),typeSelection);
+                    filtersMap.put(customFilters.Attribute_2__c,pickListValues);
+                    // System.debug(pickListValues);
+                }else{
+                    filtersMap.put(customFilters.Attribute_2__c,new List<Schema.PicklistEntry>());
                 }
-            }else{
-                filtersMap.put(customFilters.Attribute_1__c,new List<Schema.PicklistEntry>());
             }
-        }
-        if(customFilters.Attribute_2__c!= null){
-            if(picklistFields.get(customFilters.Attribute_2__c)!=null){
-                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_2__c).getDescribe().getPickListValues();
-                if(pick_list_values.size()>0){
-                    filtersMap.put(customFilters.Attribute_2__c,pick_list_values);
+            if(customFilters.Attribute_3__c!= null){
+                if(picklistFields.get(customFilters.Attribute_3__c)!=null){
+                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(picklistFields.get(customFilters.Attribute_3__c),typeSelection);
+                    filtersMap.put(customFilters.Attribute_3__c,pickListValues);
+                }else{
+                    filtersMap.put(customFilters.Attribute_3__c,new List<Schema.PicklistEntry>());
                 }
-            }else{
-                filtersMap.put(customFilters.Attribute_2__c,new List<Schema.PicklistEntry>());
             }
-        }
-        if(customFilters.Attribute_3__c!= null){
-            if(picklistFields.get(customFilters.Attribute_3__c)!=null){
-                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_3__c).getDescribe().getPickListValues();
-                if(pick_list_values.size()>0){
-                    filtersMap.put(customFilters.Attribute_3__c,pick_list_values);
+            if(customFilters.Attribute_4__c!= null){
+                if(picklistFields.get(customFilters.Attribute_4__c)!=null){
+                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(picklistFields.get(customFilters.Attribute_4__c),typeSelection);
+                    filtersMap.put(customFilters.Attribute_4__c,pickListValues);
+                }else{
+                    filtersMap.put(customFilters.Attribute_4__c,new List<Schema.PicklistEntry>());
                 }
-            }else{
-                filtersMap.put(customFilters.Attribute_3__c,new List<Schema.PicklistEntry>());
             }
-        }
-        if(customFilters.Attribute_4__c!= null){
-            if(picklistFields.get(customFilters.Attribute_4__c)!=null){
-                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_4__c).getDescribe().getPickListValues();
-                if(pick_list_values.size()>0){
-                    filtersMap.put(customFilters.Attribute_4__c,pick_list_values);
+            if(customFilters.Attribute_5__c!= null){
+                if(picklistFields.get(customFilters.Attribute_5__c)!=null){
+                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(picklistFields.get(customFilters.Attribute_5__c),typeSelection);
+                    filtersMap.put(customFilters.Attribute_5__c,pickListValues);
+                }else{
+                    filtersMap.put(customFilters.Attribute_5__c,new List<Schema.PicklistEntry>());
                 }
-            }else{
-                filtersMap.put(customFilters.Attribute_4__c,new List<Schema.PicklistEntry>());
             }
-        }
-        if(customFilters.Attribute_5__c!= null){
-            if(picklistFields.get(customFilters.Attribute_5__c)!=null){
-                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_5__c).getDescribe().getPickListValues();
-                if(pick_list_values.size()>0){
-                    filtersMap.put(customFilters.Attribute_5__c,pick_list_values);
+            if(customFilters.Attribute_6__c!= null){
+                if(picklistFields.get(customFilters.Attribute_6__c)!=null){
+                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(picklistFields.get(customFilters.Attribute_6__c),typeSelection);
+                    filtersMap.put(customFilters.Attribute_6__c,pickListValues);
+                }else{
+                    filtersMap.put(customFilters.Attribute_6__c,new List<Schema.PicklistEntry>());
                 }
-            }else{
-                filtersMap.put(customFilters.Attribute_5__c,new List<Schema.PicklistEntry>());
             }
-        }
-        if(customFilters.Attribute_6__c!= null){
-            if(picklistFields.get(customFilters.Attribute_6__c)!=null){
-                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_6__c).getDescribe().getPickListValues();
-                if(pick_list_values.size()>0){
-                    filtersMap.put(customFilters.Attribute_6__c,pick_list_values);
+            if(customFilters.Attribute_7__c!= null){
+                if(picklistFields.get(customFilters.Attribute_7__c)!=null){
+                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(picklistFields.get(customFilters.Attribute_7__c),typeSelection);
+                    filtersMap.put(customFilters.Attribute_7__c,pickListValues);
+                }else{
+                    filtersMap.put(customFilters.Attribute_7__c,new List<Schema.PicklistEntry>());
                 }
-            }else{
-                filtersMap.put(customFilters.Attribute_6__c,new List<Schema.PicklistEntry>());
             }
-        }
-        if(customFilters.Attribute_7__c!= null){
-            if(picklistFields.get(customFilters.Attribute_7__c)!=null){
-                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_7__c).getDescribe().getPickListValues();
-                if(pick_list_values.size()>0){
-                    filtersMap.put(customFilters.Attribute_7__c,pick_list_values);
+            if(customFilters.Attribute_8__c!= null){
+                if(picklistFields.get(customFilters.Attribute_8__c)!=null){
+                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(picklistFields.get(customFilters.Attribute_8__c),typeSelection);
+                    filtersMap.put(customFilters.Attribute_8__c,pickListValues);
+                }else{
+                    filtersMap.put(customFilters.Attribute_8__c,new List<Schema.PicklistEntry>());
                 }
-            }else{
-                filtersMap.put(customFilters.Attribute_1__c,new List<Schema.PicklistEntry>());
             }
-        }
-        if(customFilters.Attribute_8__c!= null){
-            if(picklistFields.get(customFilters.Attribute_8__c)!=null){
-                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_8__c).getDescribe().getPickListValues();
-                if(pick_list_values.size()>0){
-                    filtersMap.put(customFilters.Attribute_8__c,pick_list_values);
+            if(customFilters.Attribute_9__c!= null){
+                if(picklistFields.get(customFilters.Attribute_9__c)!=null){
+                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(picklistFields.get(customFilters.Attribute_9__c),typeSelection);
+                    filtersMap.put(customFilters.Attribute_9__c,pickListValues);
+                }else{
+                    filtersMap.put(customFilters.Attribute_9__c,new List<Schema.PicklistEntry>());
                 }
-            }else{
-                filtersMap.put(customFilters.Attribute_8__c,new List<Schema.PicklistEntry>());
             }
-        }
-        if(customFilters.Attribute_9__c!= null){
-            if(picklistFields.get(customFilters.Attribute_9__c)!=null){
-                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_9__c).getDescribe().getPickListValues();
-                if(pick_list_values.size()>0){
-                    filtersMap.put(customFilters.Attribute_9__c,pick_list_values);
+            if(customFilters.Attribute_10__c!= null){
+                if(picklistFields.get(customFilters.Attribute_10__c)!=null){
+                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(picklistFields.get(customFilters.Attribute_10__c),typeSelection);
+                    filtersMap.put(customFilters.Attribute_10__c,pickListValues);
+                }else{
+                    filtersMap.put(customFilters.Attribute_10__c,new List<Schema.PicklistEntry>());
                 }
-            }else{
-                filtersMap.put(customFilters.Attribute_9__c,new List<Schema.PicklistEntry>());
-            }
-        }
-        if(customFilters.Attribute_10__c!= null){
-            if(picklistFields.get(customFilters.Attribute_10__c)!=null){
-                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_10__c).getDescribe().getPickListValues();
-                if(pick_list_values.size()>0){
-                    filtersMap.put(customFilters.Attribute_10__c,pick_list_values);
-                }
-            }else{
-                filtersMap.put(customFilters.Attribute_10__c,new List<Schema.PicklistEntry>());
             }
         }
         
@@ -591,12 +628,63 @@ public with sharing class QuoteController {
             wrapper.label = filter;
             wrapper.options = JSON.serialize(filtersMap.get(filter));
             wrapper.apiName = fieldsNameMap.get(filter);
+            wrapper.type = fieldsTypeMap.get(filter);
             filtersWrapperToShow.add(wrapper);
         }
 
-        System.debug(JSON.serialize(filtersWrapperToShow));
+        // System.debug(JSON.serialize(filtersWrapperToShow));
         
         return JSON.serialize(filtersWrapperToShow);
+    }
+
+    public static List<Schema.PicklistEntry> getDependentPicklistValues(Schema.sObjectField dependToken, String prodTypeSelection) {
+        Schema.DescribeFieldResult depend = dependToken.getDescribe();
+        Schema.sObjectField controlToken = depend.getController();
+        if (controlToken == null) {
+            List<String> valuesToPrint = new List<String>();
+            List<Schema.PicklistEntry> pickListValues = dependToken.getDescribe().getPickListValues();
+            // List<String> pickListLabels = dependToken.getDescribe().getPickListValues().getLabel();
+            for(Schema.PicklistEntry p : pickListValues){
+                String value = p.getLabel();
+                valuesToPrint.add(value);
+            }
+            return pickListValues;
+        }
+     
+        Schema.DescribeFieldResult control = controlToken.getDescribe();
+        List<Schema.PicklistEntry> controlEntries;
+        if(control.getType() != Schema.DisplayType.Boolean) {
+            controlEntries = control.getPicklistValues();
+        }
+     
+        String base64map = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+        Map<String,List<Schema.PicklistEntry>> dependentPicklistValues = new Map<String,List<Schema.PicklistEntry>>();
+        for (Schema.PicklistEntry entry : depend.getPicklistValues()) {
+            if (entry.isActive() && String.isNotEmpty(String.valueOf(((Map<String,Object>) JSON.deserializeUntyped(JSON.serialize(entry))).get('validFor')))) {
+                List<String> base64chars =
+                        String.valueOf(((Map<String,Object>) JSON.deserializeUntyped(JSON.serialize(entry))).get('validFor')).split('');
+                for (Integer index = 0; index < (controlEntries != null ? controlEntries.size() : 2); index++) {
+                    Object controlValue =
+                            (controlEntries == null
+                                    ?   (Object) (index == 1)
+                                    :   (Object) (controlEntries[index].isActive() ? controlEntries[index].getLabel() : null)
+                            );
+                    Integer bitIndex = index / 6;
+                    if (bitIndex > base64chars.size() - 1) {
+                        break;
+                    }
+                    Integer bitShift = 5 - Math.mod(index, 6);
+                    if  (controlValue == null || (base64map.indexOf( base64chars[ bitIndex ] ) & (1 << bitShift)) == 0)
+                        continue;
+                    if (!dependentPicklistValues.containsKey((String) controlValue)) {
+                        dependentPicklistValues.put((String) controlValue, new List<Schema.PicklistEntry>());
+                    }
+                    dependentPicklistValues.get((String) controlValue).add(entry);
+                }
+            }
+        }
+        List<Schema.PicklistEntry> pickListValues = dependentPicklistValues.get(prodTypeSelection);
+        return pickListValues;
     }
 
     @AuraEnabled
@@ -654,11 +742,109 @@ public with sharing class QuoteController {
             }
             if(filterValuesMap.get('Packaging') != null){
                 queryAdditions += 'Packaging__c = ' + '\''+ filterValuesMap.get('Packaging') + '\' AND ';
-            }
-            
+            }            
         }
 
-        myQuery = 'SELECT Id, Name, Product_Type__c,Fiber_Count__c,Fiber_Type__c,Jacket_Type__c,Jacket_Configuration__c,Jacket_Print__c,Sub_Unit__c,Armor_Type__c,TightBuff_Type__c,Max_Span_at_Light__c,Max_Span_at_Medium__c,Max_Span_at_Heavy__c,Packaging__c,Primary_UOM__c,Length__c FROM Product2'+
+        if(level1 == 'ACA'){
+            if(filterValuesMap.get('Product Type') != null){
+                queryAdditions += 'Product_Type__c = ' + '\'' +filterValuesMap.get('Product Type') + '\' AND ';
+            }
+
+            if(filterValuesMap.get('Bus Size or Width') != null){
+                queryAdditions += 'Bus_Size_or_Width__c = ' + '\'' +filterValuesMap.get('Bus Size or Width') + '\' AND ';
+            }
+            if(filterValuesMap.get('Bus Schedule') != null){
+                queryAdditions += 'Bus_Schedule__c = ' + '\'' +filterValuesMap.get('Bus Schedule')+ '\' AND ';
+            }
+            if(filterValuesMap.get('Bus Alloy') != null){
+                queryAdditions += 'Bus_Alloy__c = ' + '\'' +filterValuesMap.get('Bus Alloy') + '\' AND ';
+            }
+
+            if(filterValuesMap.get('Bus Temper') != null){
+                queryAdditions += 'Bus_Temper__c = ' + '\''+ filterValuesMap.get('Bus Temper') + '\' AND ';
+            }
+            if(filterValuesMap.get('Bus Thickness') != null){
+                queryAdditions += 'Bus_Thickness__c = ' + '\''+ filterValuesMap.get('Bus Thickness') + '\' AND ';
+            }
+            if(filterValuesMap.get('Packaging') != null){
+                queryAdditions += 'Packaging__c = ' + '\''+ filterValuesMap.get('Packaging') + '\' AND ';
+            }
+            if(filterValuesMap.get('AW_Industry Name') != null){
+                queryAdditions += 'AW_Industry_Name__c = ' + '\''+ filterValuesMap.get('AW_Industry Name') + '\' AND ';
+            }
+            if(filterValuesMap.get('AW_Number of Strands') != null){
+                queryAdditions += 'AW_Number_of_Strands__c = ' + '\''+ filterValuesMap.get('AW_Number of Strands') + '\' AND ';
+            }
+            if(filterValuesMap.get('AW_Wire Size') != null){
+                queryAdditions += 'AW_Wire_Size__c = ' + filterValuesMap.get('AW_Wire Size') + ' AND ';
+            }
+            if(filterValuesMap.get('Model') != null){
+                queryAdditions += 'Model__c = ' + filterValuesMap.get('Model') + ' AND ';
+            }
+            if(filterValuesMap.get('Sub Configuration') != null){
+                queryAdditions += 'Sub_Configuration__c = ' + filterValuesMap.get('Sub Configuration') + ' AND ';
+            }
+            if(filterValuesMap.get('Jacket Type') != null){
+                queryAdditions += 'Jacket_Type__c = ' + '\''+ filterValuesMap.get('Jacket Type') + '\' AND ';
+            }            
+        }
+
+        if(level1 == 'Test and Inspection'){
+            if(filterValuesMap.get('Product Type') != null){
+                queryAdditions += 'Product_Type__c = ' + '\'' +filterValuesMap.get('Product Type') + '\' AND ';
+            }
+
+            if(filterValuesMap.get('Fiber Type') != null){
+                queryAdditions += 'Fiber_Type__c = ' + '\'' +filterValuesMap.get('Fiber Type') + '\' AND ';
+            }
+            if(filterValuesMap.get('Length Picklist') != null){
+                queryAdditions += 'Length_Picklist__c = ' + '\'' +filterValuesMap.get('Length Picklist')+ '\' AND ';
+            }
+            if(filterValuesMap.get('Connector A') != null){
+                queryAdditions += 'Connector_A__c = ' + '\'' +filterValuesMap.get('Connector A') + '\' AND ';
+            }
+
+            if(filterValuesMap.get('Connector B') != null){
+                queryAdditions += 'Connector_B__c = ' + '\''+ filterValuesMap.get('Connector B') + '\' AND ';
+            }            
+        }
+
+        if(level1 == 'Cable'){
+            if(filterValuesMap.get('Product Type') != null){
+                queryAdditions += 'Product_Type__c = ' + '\'' +filterValuesMap.get('Product Type') + '\' AND ';
+            }
+            if(filterValuesMap.get('Sub Configuration') != null){
+                queryAdditions += 'Sub_Configuration__c = ' + filterValuesMap.get('Sub Configuration') + ' AND ';
+            }
+            if(filterValuesMap.get('Breaking Strength') != null){
+                queryAdditions += 'Breaking_Strength__c = ' + '\'' +filterValuesMap.get('Breaking Strength') + '\' AND ';
+            }            
+            if(filterValuesMap.get('AW_Number of Strands') != null){
+                queryAdditions += 'AW_Number_of_Strands__c = ' + '\''+ filterValuesMap.get('AW_Number of Strands') + '\' AND ';
+            }
+            if(filterValuesMap.get('AW_Wire Size') != null){
+                queryAdditions += 'AW_Wire_Size__c = ' + filterValuesMap.get('AW_Wire Size') + ' AND ';
+            }
+            if(filterValuesMap.get('Lay Direction') != null){
+                queryAdditions += 'Lay_Direction__c = ' + '\'' +filterValuesMap.get('Lay Direction')+ '\' AND ';
+            }
+            if(filterValuesMap.get('Diameter Tolerance') != null){
+                queryAdditions += 'Diameter_Tolerance__c = ' + '\'' +filterValuesMap.get('Diameter Tolerance') + '\' AND ';
+            }
+            if(filterValuesMap.get('Packaging') != null){
+                queryAdditions += 'Packaging__c = ' + '\''+ filterValuesMap.get('Packaging') + '\' AND ';
+            }
+            if(filterValuesMap.get('Core Annealing') != null){
+                queryAdditions += 'Core_Annealing__c = ' + '\''+ filterValuesMap.get('Core Annealing') + '\' AND ';
+            }
+            if(filterValuesMap.get('Wire Shape') != null){
+                queryAdditions += 'Wire_Shape__c = ' + '\''+ filterValuesMap.get('Wire Shape') + '\' AND ';
+            }                 
+        }
+
+        myQuery = 'SELECT Id, Name, Product_Type__c,Fiber_Count__c,Fiber_Type__c,Jacket_Type__c,Jacket_Configuration__c,Jacket_Print__c,Sub_Unit__c,Armor_Type__c,TightBuff_Type__c,Max_Span_at_Light__c,Max_Span_at_Medium__c,'+
+            'Max_Span_at_Heavy__c,Packaging__c,Primary_UOM__c,Length__c,Bus_Size_or_Width__c,Bus_Schedule__c,Bus_Alloy__c,Bus_Temper__c,Bus_Thickness__c,AW_Industry_Name__c,AW_Number_of_Strands__c,AW_Wire_Size__c,'+
+            'Model__c,Sub_Configuration__c,Length_Picklist__c,Connector_A__c,Connector_B__c,Breaking_Strength__c,Lay_Direction__c,Diameter_Tolerance__c,Core_Annealing__c,Wire_Shape__c FROM Product2'+
             queryAdditions+'QLE_Search_Method__c = \'FILTERED\' AND ProdLevel1__c = \''+level1+'\' AND Filtered_Grouping__c = \''+filteredGrouping+'\'';
         
         System.debug('additions: ' + myQuery);

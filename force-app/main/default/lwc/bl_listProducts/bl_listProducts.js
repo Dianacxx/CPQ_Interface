@@ -1,7 +1,9 @@
 import { LightningElement, api , track} from 'lwc';
-import getProductFiltering from '@salesforce/apex/QuoteController.getProductFiltering'; 
-import filteredProductPrinter from '@salesforce/apex/QuoteController.filteredProductPrinter';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+
+import filteredProductPrinter from '@salesforce/apex/QuoteController.filteredProductPrinter';
+import getFirstFilter from '@salesforce/apex/QuoteController.getFirstFilter'; 
+import getProductFilteringv2 from '@salesforce/apex/QuoteController.getProductFilteringv2';
 
 export default class Bl_listProducts extends LightningElement {
 
@@ -28,7 +30,7 @@ export default class Bl_listProducts extends LightningElement {
     constructor() {
         super();
         this.gridColumns = [ 
-            { label: '', fieldName: 'lookupCode' ,initialWidth: 200, hideDefaultActions: true}, 
+            { label: '', fieldName: 'lookupCode' ,initialWidth: 280, hideDefaultActions: true}, 
             { type: 'action', typeAttributes: { rowActions: this.getRowActions.bind(this) } },
         ];
     }
@@ -50,11 +52,10 @@ export default class Bl_listProducts extends LightningElement {
         }, 200);
     }
     
-
     callRowAction(event){
         //console.log(Object.getOwnPropertyNames(event.detail));
         let row = event.detail.row; //This way is going to edit the real value.
-        console.log('Row '+ Object.getOwnPropertyNames(row));
+        //console.log('Row '+ Object.getOwnPropertyNames(row));
         //console.log('Row selectionType '+ row.selectionType);
         switch (event.detail.action.name){
             case 'add':
@@ -85,7 +86,6 @@ export default class Bl_listProducts extends LightningElement {
             break; 
         }
     }
-
 
     //FILTERED POP UP FUNCTIONS
     @track tabOption = false; 
@@ -173,7 +173,7 @@ export default class Bl_listProducts extends LightningElement {
             //console.log(Object.getOwnPropertyNames(this.columnsFilters[0]));
             //console.log(apiPropertyIndex);
             for (let rec of this.reviewDisplay){
-                console.log('Property: '+this.reviewSelectedLabel)
+                //console.log('Property: '+this.reviewSelectedLabel)
                 //console.log(apiPropertyIndex.fieldName);
                 console.log(rec[apiPropertyIndex.fieldName]); 
                 if (rec[apiPropertyIndex.fieldName] == this.reviewSelectedValue){
@@ -223,32 +223,91 @@ export default class Bl_listProducts extends LightningElement {
 	}
 
     //FILTERS CALLING
+
+    @track productType; 
+    @track requiredApex; 
+    @track productTypeShow = false; 
+
     @track columnsFilters = [{label: 'Product Name', fieldName: 'Name', editable: false, wrapText: true,},];
-    @track columnsReview = [{label: 'Product Name', fieldName: 'Name', editable: false, wrapText: true,},]; 
+    @track columnsReview = [{label: 'Product Name', fieldName: 'Name', editable: false, },]; 
+    @track columnsRequired = []; 
+
     callFiltersInPopUp(filterGroup){
         this.listTextFilters = []; 
         this.listFilters = []; 
         this.filtersLoading = false; 
         this.filtersForApex = []; 
         this.columnsFilters = [{label: 'Product Name', fieldName: 'Name', editable: false, wrapText: true, },]; 
-        this.columnsReview = [{label: 'Product Name', fieldName: 'Name', editable: false,  wrapText: true,},]; 
-        getProductFiltering({filteredGrouping: filterGroup})
-        .then ((data)=>{
-            console.log('DATA GETTING FILTERS'); 
+        this.columnsReview = [{label: 'Product Name', fieldName: 'Name', editable: false, },]; 
+        this.columnsRequired = [];
+        this.productTypeShow = false; 
+        this.filtersLoading = false;
+        //console.log('filterGroup: '+ filterGroup);
+        getFirstFilter({filteredGrouping: filterGroup})
+        .then((data)=>{
+            console.log('FIRST PRODUCT TYPE');
             console.log(data); 
+            this.productType = JSON.parse(data);
+            console.log(this.productType); 
+            for (let i =0; i < this.productType.length; i++){
+                this.productType[i].options = JSON.parse(this.productType[i].options); 
+                this.columnsRequired.push(this.productType[i]); 
+            }
+            
+            this.productTypeShow = true; 
+            this.filtersLoading = true;
+               
+            console.log('columnsRequired');
+            console.log(this.columnsRequired);
+        })
+        .catch((error)=>{
+            const evt = new ShowToastEvent({
+                title: 'Required Filters Error',
+                message: 'Unexpected error loading the filters - Please close the pop-up',
+                variant: 'error',
+                mode: 'sticky'
+            });
+            this.dispatchEvent(evt);
+            console.log(error);
+        });
+    }
+
+    //PRODUCT TYPE CALL FILTERS DEPENDENCIES
+    handleProductTypeChange(event){
+        this.filtersLoading = false;
+        this.requiredApex = event.detail.value;
+
+        //console.log('filteredGrouping: '+ this.trackList.lookupCode)
+        //console.log('typeSelection: '+ this.requiredApex);
+
+        this.listTextFilters = [];
+        this.listFilters = [];
+        this.columnsFilters = [{label: 'Product Name', fieldName: 'Name', editable: false, wrapText: true, },]; 
+        this.columnsReview = [{label: 'Product Name', fieldName: 'Name', editable: false, },]; 
+
+        //GETTING FILTES DEPENDENCIES
+        getProductFilteringv2({filteredGrouping: this.trackList.lookupCode, typeSelection: this.requiredApex })
+        .then((data)=>{
+            //console.log('SECOND PRODUCT TYPE');
+            //console.log(data);
             let temporalList = JSON.parse(data);
+            //console.log('temporalList PROPERTY: ' + Object.getOwnPropertyNames(temporalList));
             for(let i = 0; i< temporalList.length; i++){
                 if (temporalList[i].options == '[]'){
                     this.listTextFilters.push({label: temporalList[i].label, name: temporalList[i].label});
-                    //console.log('Empty Option -> Is not a pickList'); 
-                }
-                else {
+                    //console.log('TEXT FILTER');
+                } else if (temporalList[i].options == null || temporalList[i].options == "null") {
+                    //console.log('WITH NO OPTIONS FILTER');
+                    this.listFilters.push(temporalList[i]); 
+                } else {
+                    //console.log('PICKLIST FILTER');
                     let optionsFilters = JSON.parse(temporalList[i].options);  
                     //console.log(JSON.stringify(optionsFilters));
                     //console.log(Object.getOwnPropertyNames(optionsFilters));
                     
                     for (let j = 0; j < optionsFilters.length; j++){
                         optionsFilters[j] = {label: optionsFilters[j].label, value: optionsFilters[j].value}; 
+                        //console.log('LAST YES');
                     }
                     temporalList[i].options = optionsFilters; 
                     this.listFilters.push(temporalList[i]); 
@@ -263,12 +322,15 @@ export default class Bl_listProducts extends LightningElement {
             }}); 
             this.filtersLoading = true; 
             //console.log(JSON.stringify(this.listFilters));
-           
+
         })
-        .catch ((error)=>{
-            console.log('ERROR GETTING FILTERS'); 
-            console.log(error); 
-        })
+        .catch((error)=>{
+            this.error = error;
+            console.log('');
+            console.log(this.error);
+        });
+        //SHOW PRODUCTS BY REQUIRED FIELDS
+        this.printProducts();
     }
     
     //FILTERS CHANGES
@@ -279,7 +341,6 @@ export default class Bl_listProducts extends LightningElement {
         //console.log(JSON.stringify(this.listFilters));
         //console.log(JSON.stringify(this.listTextFilters));
         if (this.filtersForApex.length == 0){
-            //console.log('List to apex full');
             for (let i = 0; i < this.listFilters.length; i++){
                 this.filtersForApex.push({label: this.listFilters[i].label, value: ''}); 
             }
@@ -294,12 +355,23 @@ export default class Bl_listProducts extends LightningElement {
         } else {
             this.filtersForApex.push({label: event.target.label, value:event.detail.value}); 
         }
-        
         //console.log(JSON.stringify(this.filtersForApex));
         //console.log(this.tabSelected);
+        this.printProducts();
+    }
 
+    //FILTERING BY REQUIRED OR OTHER FILTERS
+    printProducts(){
         this.loadingFilteData = true;
-        filteredProductPrinter({filterValues: JSON.stringify(this.filtersForApex), level1: this.tabSelected, filteredGrouping: 'Premise Cable'})
+        let filters = this.filtersForApex;
+        for(let i = 0; i< this.columnsRequired.length; i++){
+            filters.push(this.columnsRequired[i]);
+        }  
+        //console.log('filters:');
+        //console.log(filters);
+        //console.log('tab: ' +this.tabSelected);
+        //console.log('filteredGrouping: ' + this.trackList.lookupCode);
+        filteredProductPrinter({filterValues: JSON.stringify(filters), level1: this.tabSelected, filteredGrouping: this.trackList.lookupCode})
         .then((data)=>{
             //console.log('Products Filtered');
             //console.log(data);
@@ -312,9 +384,9 @@ export default class Bl_listProducts extends LightningElement {
             console.log('ERROR Products Filtered');
             console.log(error);
         });
-        
-        //CALL HERE THE FILTER METHOD FROM APEX SENDING THE VALUE AND THE TYPE OF FILTER ACTIVE!
     }
+
+
     //FILTERS RESET
     clearFilters(){
         //Clearing filters with button in Filter Tab
@@ -433,7 +505,6 @@ export default class Bl_listProducts extends LightningElement {
     }    
 
     //PRODUCTS TURNED IN QUOTELINES
-     
     saveAndExitFilterModal(){
         let trackListInternal = JSON.parse(JSON.stringify(this.trackList));
         let index = this.listToDisplay.findIndex(product => product.isNew === trackListInternal.isNew);
@@ -447,6 +518,8 @@ export default class Bl_listProducts extends LightningElement {
         //trackListInternal.isNew = 555; 
         //this.listToDisplay.push(trackListInternal);
         //this.trackList = [];
+
+        //SHOWS ERROR FROM 
         console.log('LTD: '+ JSON.stringify(this.listToDisplay));
         const evt = new ShowToastEvent({
             title: 'Here goes the save process',
@@ -458,6 +531,7 @@ export default class Bl_listProducts extends LightningElement {
 
         this.closeFilterAndSelected(); 
     }
+
     //CONFIGURED POP UP FUNCTIONS
     closeConfiguredAlert(){
         this.openConfiguredPopup = false; 

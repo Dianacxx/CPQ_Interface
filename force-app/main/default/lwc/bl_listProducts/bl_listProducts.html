@@ -11,24 +11,34 @@
         <section aria-modal="true" class="slds-modal slds-fade-in-open">
             <div class="slds-modal__container ">
                 <header class="slds-modal__header">
-                    <h2 class="slds-text-heading_medium slds-hyphenate">Filter & Select</h2>
+                    <h2 class="slds-text-heading_medium slds-hyphenate">Filter & Select: {trackList.lookupCode}</h2>
                     <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeFilterAndSelected}></lightning-icon>
                 </header>
                 <div class="slds-modal__content">
-                    <div class="slds-var-p-around_small slds-align_absolute-center slds-var-m-left_small">
+                    <div class="slds-var-p-around_small slds-align_absolute-center slds-var-m-left_large">
                         <lightning-tabset active-tab-value={activeFilterTab}>
                             <!--FILTER TAB START-->
                             <lightning-tab label="Filter" value="Filter" onactive={handleFilterTabActive}>
-                                <div class="slds-align_absolute-center">
+                                <div class="slds-grid slds-gutters slds-var-m-bottom_small slds-var-m-left_large slds-var-m-right_small">
+                                    <template if:true={productTypeShow}>
+                                        <lightning-layout multiple-rows="false">
+                                            <template for:each={productType} for:item="productType1">
+                                                <lightning-combobox class="slds-var-m-right_xx-small" label={productType1.label} key={productType1.label} 
+                                                options={productType1.options} onchange={handleProductTypeChange}></lightning-combobox>
+                                            </template>
+                                        </lightning-layout>
+                                    </template>                                
+                                </div>
+                                <div class="slds-grid slds-gutters slds-var-m-bottom_small slds-var-m-left_large slds-var-m-right_small">
                                     <lightning-spinner if:false={filtersLoading} alternative-text="Loading" size="small"></lightning-spinner>
                                     <template if:true={filtersLoading}>
-                                        <lightning-layout multiple-rows="false" >
+                                        <lightning-layout multiple-rows="false">
                                             <template for:each={listFilters} for:item="comboboxFilters">
-                                                <lightning-combobox class="slds-var-m-right_xx-small" key={comboboxFilters.label} label={comboboxFilters.label} value={comboboxFilters.value}
+                                                <lightning-combobox class="slds-var-m-right_x-small" key={comboboxFilters.label} label={comboboxFilters.label} value={comboboxFilters.value}
                                                 options={comboboxFilters.options} onchange={handleInputChange}></lightning-combobox>
                                             </template>
                                             <template for:each={listTextFilters} for:item="textFilters">
-                                                <lightning-input class="slds-var-m-right_xx-small" key={textFilters.label} name={textFilters.label} type="text" label={textFilters.label} 
+                                                <lightning-input class="slds-var-m-right_x-small" key={textFilters.label} name={textFilters.label} type="text" label={textFilters.label} 
                                                 onchange={handleInputChange}></lightning-input>
                                             </template>
                                         </lightning-layout>
@@ -63,8 +73,18 @@
                             <!--FILTER TAB END-->
                             <!--REVIEW TAB START-->
                             <lightning-tab label="Review" value="Review" onactive={handleReviewTabActive}>
+                                <template if:true={productTypeShow}>
+                                    <div class="slds-grid slds-gutters slds-var-m-left_small">
+                                    <lightning-layout multiple-rows="false">
+                                        <template for:each={columnsRequired} for:item="required">
+                                            <lightning-combobox class="slds-var-m-right_xx-small" label={required.label} key={required.label} 
+                                            options={required.options} onchange={handleInputChangeSelected}></lightning-combobox>
+                                        </template>
+                                    </lightning-layout>
+                                    </div>
+                                </template>  
                                 <template if:true={filtersLoading}>
-                                    <div class="slds-align_absolute-center">
+                                    <div class="slds-grid slds-gutters slds-var-m-left_small slds-align_absolute-center">
                                     <lightning-layout multiple-rows="false" >
                                         <template for:each={listFilters} for:item="comboboxFilters">
                                             <lightning-combobox class="slds-var-m-right_xx-small" key={comboboxFilters.label} label={comboboxFilters.label} value={comboboxFilters.value}

@@ -55,7 +55,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                 this.girdDataFocTab[i].isAdd = isAddVector; 
                 this.girdDataFocTab[i]['isNew'] = i; 
             }
-            console.log('Fiber Optic Cable Data: ' + JSON.stringify(this.girdDataFocTab));
+            //console.log('Fiber Optic Cable Data: ' + JSON.stringify(this.girdDataFocTab));
 
         })
         .catch((error)=>{
