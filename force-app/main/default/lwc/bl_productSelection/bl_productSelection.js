@@ -81,7 +81,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         getProductLevels({level1: 'Test and Inspection'})
         .then((data)=>{
             this.girdDataTandITab = JSON.parse(data);
-            //console.log('Test & Inspection Data: ' + data);
+            console.log('Test & Inspection Data: ' + data);
             for(let i=0; i<this.girdDataTandITab.length; i++){
                 this.girdDataTandITab[i].isAdd = isAddVector; 
                 this.girdDataTandITab[i]['isNew'] = i; 
@@ -96,6 +96,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         
     }
 
+    //DELETE THIS ONE ONCE THE CONFIGURED ARE DONE
     @api productId; 
     handleProductSelectionBundle(){
 
@@ -111,6 +112,13 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             }
         })
     }
+
+    //Event meaning to move to Configured Bundle Page
+    saveBeforeConfigured(event){
+        console.log('Send to UI Object');
+        this.dispatchEvent(new CustomEvent('savebeforeconfiguredtwo', { detail: event.detail })); 
+    }
+    
     //When click cancel button in Product Selection UI
     handleCancel(){
         this.dispatchEvent(new CustomEvent('cancelps'));

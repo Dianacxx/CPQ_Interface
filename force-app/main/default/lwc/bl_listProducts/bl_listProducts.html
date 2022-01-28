@@ -117,7 +117,8 @@
                                         <!--PAGINATION CONTROL END-->
                                         <lightning-spinner if:true={reviewLoading} alternative-text="Loading" size="small"></lightning-spinner>
                                         <template if:false={reviewLoading}>
-                                            <lightning-datatable key-field="Id" data={dataPagesR} columns={columnsReview} hide-checkbox-column=true draft-values={draftValues} onrowaction={handleRowAction}>
+                                            <lightning-datatable key-field="Id" data={dataPagesR} columns={columnsReview} hide-checkbox-column=true onrowaction={handleRowAction}
+                                            draft-values={draftValues} onsave={handleSaveEditionReviewTable}>
                                             </lightning-datatable>
                                         </template>
                                     </div>
@@ -158,7 +159,7 @@
                 </div>
                 <footer class="slds-modal__footer">
                     <lightning-button variant="brand" label="Cancel" title="Close"  onclick={closeConfiguredAlert} class="slds-var-m-right_small"></lightning-button>   
-                    <lightning-button variant="brand" label="Continue" title="Continue"  onclick={continueCofiguredQLE} ></lightning-button>    
+                    <lightning-button variant="brand" label="Continue" title="Continue"  onclick={continueConfiguredQLE} ></lightning-button>    
                 </footer>
             </div>
         </section>

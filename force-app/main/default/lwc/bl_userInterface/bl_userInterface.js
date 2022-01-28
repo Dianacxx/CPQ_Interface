@@ -310,6 +310,8 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         this.desactiveCloneButton();
     }
 
+    @api notGoodToGoBundle = [false, false]; 
+
     handleDiscount(){
         this.handleSaveAndCalculate();
         this.desactiveCloneButton();
@@ -323,6 +325,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                     dataString: this.quotelinesString,
                     auxiliar: 'updatetable'
                 };
+                this.notGoodToGoBundle[0] = false; 
                 publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload);   
                 console.log('1. Quote lines updated, now proceed with new quote lines');
                 const evt = new ShowToastEvent({
@@ -334,6 +337,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 this.dispatchEvent(evt);
             })
             .catch((error)=>{
+                this.notGoodToGoBundle[0] = true; 
                 console.log('editAndDeleteQuotes ERROR');
                 console.log(error);
                 let errorMessage;
@@ -378,7 +382,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                     console.log('TOTAL SUCCESS');
                     this.callData();
                     this.spinnerLoadingUI = false;
-
+                    this.notGoodToGoBundle[1] = false;
                     const evt = new ShowToastEvent({
                         title: 'Success saving the new quote lines created in the UI',
                         message: 'Your additions have been saved on Salesforce',
@@ -392,7 +396,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             .catch((error)=>{
                 console.log('quoteLineCreator ERROR');
                 console.log(error);
-
+                this.notGoodToGoBundle[1] = true;
                 this.spinnerLoadingUI = false;
                 const evt = new ShowToastEvent({
                     title: 'Creating new quotelines ERROR',
@@ -436,6 +440,39 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         let endTime = performance.now();
         console.log(`Saving and Exit method took ${endTime - startTime} milliseconds`);
     }
+
+    @track configBundleId; 
+    saveBeforeConfigBundle(event){
+
+        this.configBundleId = event.detail; 
+        console.log('Product Id to Bundle: '+this.configBundleId);
+        this.handleSaveAndCalculate();
+
+        if (this.notGoodToGoBundle[0] || this.notGoodToGoBundle[1]){
+            const evt = new ShowToastEvent({
+                title: 'The changes done cannot be saved.',
+                message: 'There are values in the QLE that cannot be saved, Review them and try again.',
+                variant: 'error',
+                mode: 'sticky '
+            });
+            this.dispatchEvent(evt);
+        } else {
+            //IF THERE ARE NO ERRORS, GET ID OF PRODUCT IN ROW AND GO TO CONFIGURED PRODUCT 
+            console.log('relatedProductId: '+this.configBundleId); 
+            let link = '/apex/sbqq__sb?id='+this.recordId+
+            '&tour=&isdtp=p1&ltn_app_id=06m8A0000004jM5QAI&clc=0#/product/pc?qId='+
+            this.recordId+'&aId=a5e8A000000EK29QAG&pId='+this.configBundleId+'&redirectUrl=LineEditor&open=0';
+            this[NavigationMixin.Navigate]({
+                type: 'standard__webPage',
+                attributes: {
+                    url: link,
+                    recordId : this.recordId,
+                }
+            })
+        }
+        
+    }
+
 
     //NAVIGATE BACK TO UI FROM PRODUCT SELECTION TAB WHEN CANCEL
     returnToUiCancel(){

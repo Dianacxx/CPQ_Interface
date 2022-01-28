@@ -1,17 +1,20 @@
 import { LightningElement, api , track} from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import { NavigationMixin } from 'lightning/navigation';
 
 import filteredProductPrinter from '@salesforce/apex/QuoteController.filteredProductPrinter';
 import getFirstFilter from '@salesforce/apex/QuoteController.getFirstFilter'; 
 import getProductFilteringv2 from '@salesforce/apex/QuoteController.getProductFilteringv2';
 
-export default class Bl_listProducts extends LightningElement {
+export default class Bl_listProducts extends NavigationMixin(LightningElement) {
+    @api recordId; 
 
     @api listToDisplay = []; 
     @track openFilterPopup = false; 
     @track openConfiguredPopup = false; 
     @api tabSelected; 
     @api trackList = [];
+    @api trackConfig = [];
 
     //LIST OF FILTERS AND TEXT INPUTS
     @track listFilters = []; 
@@ -68,6 +71,7 @@ export default class Bl_listProducts extends LightningElement {
                     //console.log('Is filtered');
                 } else if (row.selectionType == 'Configured'){
                     //Must save process before turning there
+                    this.trackConfig = row.relatedProduct;
                     this.openConfiguredPopup = true; 
                 } else {
                     alert('This row has no type (Filtered or configured)');
@@ -94,6 +98,7 @@ export default class Bl_listProducts extends LightningElement {
         this.openFilterPopup = false;
         this.clearFilters();
         this.reviewDisplay = []; 
+        this.allReviews = [];
         this.goReview = true;
         this.updateReviewTable(); 
 
@@ -152,7 +157,8 @@ export default class Bl_listProducts extends LightningElement {
             this.goReview = false; 
             this.rowsSelected = JSON.parse(JSON.stringify(event.detail.selectedRows)); 
             for (let i = 0; i< this.rowsSelected.length; i++){
-                this.rowsSelected[i]['idTemporal'] = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(2, 10);
+                this.rowsSelected[i]['idTemporal'] = this.rowsSelected[i].Id;
+                this.rowsSelected[i].Id = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(2, 10);
             }
             //console.log(Object.getOwnPropertyNames(this.rowsSelected[0]));
         }
@@ -175,7 +181,7 @@ export default class Bl_listProducts extends LightningElement {
             for (let rec of this.reviewDisplay){
                 //console.log('Property: '+this.reviewSelectedLabel)
                 //console.log(apiPropertyIndex.fieldName);
-                console.log(rec[apiPropertyIndex.fieldName]); 
+                //console.log(rec[apiPropertyIndex.fieldName]); 
                 if (rec[apiPropertyIndex.fieldName] == this.reviewSelectedValue){
                     recs.push(rec); 
                 }
@@ -184,7 +190,7 @@ export default class Bl_listProducts extends LightningElement {
         } else {
             this.reviewDisplay = this.allReviews; 
         }
-        console.log('review data: '+ JSON.stringify(this.reviewDisplay)); 
+        //console.log('review data: '+ JSON.stringify(this.reviewDisplay)); 
         this.updateReviewTable();
         this.reviewLoading = false; 
         //WATCH HERE IF THIS IS WORKING! 
@@ -197,8 +203,8 @@ export default class Bl_listProducts extends LightningElement {
 		if (event.detail.action.name === "delete") {
             let newData = JSON.parse(JSON.stringify(this.allReviews));
             
-            let row = newData.findIndex(x => x.idTemporal === dataRow.idTemporal);
-            console.log('row '+dataRow.idTemporal+' array '+newData[row].idTemporal); 
+            let row = newData.findIndex(x => x.Id === dataRow.Id);
+            //console.log('row '+dataRow.id+' array '+newData[row].Id); 
             console.log('DELETE row '+row);
 
 		    this.allReviews = newData;
@@ -218,8 +224,8 @@ export default class Bl_listProducts extends LightningElement {
         setTimeout(()=>{
             this.reviewLoading = false; 
         }, 500);
-        console.log('All reviews');
-        console.log(this.allReviews); 
+        //console.log('All reviews');
+        //console.log(this.allReviews); 
 	}
 
     //FILTERS CALLING
@@ -246,9 +252,9 @@ export default class Bl_listProducts extends LightningElement {
         getFirstFilter({filteredGrouping: filterGroup})
         .then((data)=>{
             console.log('FIRST PRODUCT TYPE');
-            console.log(data); 
+            //console.log(data); 
             this.productType = JSON.parse(data);
-            console.log(this.productType); 
+            //console.log(this.productType); 
             for (let i =0; i < this.productType.length; i++){
                 this.productType[i].options = JSON.parse(this.productType[i].options); 
                 this.columnsRequired.push(this.productType[i]); 
@@ -257,8 +263,8 @@ export default class Bl_listProducts extends LightningElement {
             this.productTypeShow = true; 
             this.filtersLoading = true;
                
-            console.log('columnsRequired');
-            console.log(this.columnsRequired);
+            //console.log('columnsRequired');
+            //console.log(this.columnsRequired);
         })
         .catch((error)=>{
             const evt = new ShowToastEvent({
@@ -321,6 +327,7 @@ export default class Bl_listProducts extends LightningElement {
             this.columnsReview.push({type: 'button-icon', initialWidth: 30,typeAttributes:{ iconName: 'utility:delete', name: 'delete', iconClass: 'slds-icon-text-error'
             }}); 
             this.filtersLoading = true; 
+            //console.log('Filter List');
             //console.log(JSON.stringify(this.listFilters));
 
         })
@@ -528,17 +535,60 @@ export default class Bl_listProducts extends LightningElement {
             mode: 'dismissible '
         });
         this.dispatchEvent(evt);
-
         this.closeFilterAndSelected(); 
     }
 
+    handleSaveEditionReviewTable(event){
+        const updatedFields = event.detail.draftValues;
+        //console.log(updatedFields); 
+        for(let i=0; i<updatedFields.length; i++){
+            let rowIndex = this.allReviews.findIndex(x => x.Id === updatedFields[i].Id);
+            let inputsItems = updatedFields.slice().map(draft => {
+                const fields = Object.assign({}, draft);
+                return { fields };
+            });
+            //console.log('inputsItems '+ Object.getOwnPropertyNames(inputsItems[i].fields));
+            let prop = Object.getOwnPropertyNames(inputsItems[i].fields); 
+            //console.log('prop '+ Object.getOwnPropertyNames(prop)); 
+            for(let j= 0; j<prop.length-1; j++){
+                //console.log('Value before edition: '+this.allReviews[rowIndex][prop[j]]);
+                //console.log('Value after edition: ' +inputsItems[i].fields[prop[j]]);
+                this.allReviews[rowIndex][prop[j]] = inputsItems[i].fields[prop[j]];
+            }            
+        } 
+        const evt = new ShowToastEvent({
+            title: 'Edits in Review Table saved',
+            message: 'Changes are sucessfully saved',
+            variant: 'success',
+            mode: 'dismissable'
+        });
+        this.dispatchEvent(evt);
+        this.template.querySelectorAll('lightning-datatable').forEach(each => {
+            each.draftValues = [];
+        });
+    }
+    //--------------------------------------------------------------------------------------
     //CONFIGURED POP UP FUNCTIONS
     closeConfiguredAlert(){
         this.openConfiguredPopup = false; 
     }
 
-    continueCofiguredQLE(){
+    continueConfiguredQLE(){
+
         //HERE SAVE THE PROCESS BEFORE
-        //IF THERE ARE NO ERRORS, GET ID OF PRODUCT IN ROW AND GO TO CONFIGURED PRODUCT 
+        const evt = new ShowToastEvent({
+            title: 'Remember to the save process',
+            message: 'Remember to the save process',
+            variant: 'warning',
+            mode: 'sticky '
+        });
+        this.dispatchEvent(evt);
+        //DISPATCH THE EVENT TO SAVE THE VALUES FIRST
+        setTimeout(()=>{
+            this.closeConfiguredAlert();
+            this.dispatchEvent(new CustomEvent('savebeforeconfigured', { detail: this.trackConfig }));
+            console.log('Send to PS component');
+        }, 1000);
+
     }
 }
