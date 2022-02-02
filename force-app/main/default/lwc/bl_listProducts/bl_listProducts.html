@@ -83,44 +83,16 @@
                             <!--FILTER TAB END-->
                             <!--REVIEW TAB START-->
                             <lightning-tab label="Review" value="Review" onactive={handleReviewTabActive}>
-                                <!--FILTER REQUIRED START-->
-                                <template if:true={productTypeShow}>
-                                    <div class="slds-grid slds-gutters slds-var-m-left_small">
-                                    <lightning-layout multiple-rows="false">
-                                        <template for:each={columnsRequired} for:item="required">
-                                            <lightning-combobox class="slds-var-m-right_xx-small" label={required.label} key={required.label} 
-                                            options={required.options} onchange={handleInputChangeSelected}></lightning-combobox>
-                                        </template>
-                                    </lightning-layout>
-                                    </div>
-                                </template>  
-                                <!--FILTER REQUIRED END-->
-                                <template if:true={filtersLoading}>
-                                    <div class="slds-grid slds-gutters slds-var-m-left_small slds-align_absolute-center">
-                                    <!--FILTER DEPENDENCIES START-->
-                                    <lightning-layout multiple-rows="false" >
-                                        <template for:each={listFilters} for:item="comboboxFilters">
-                                            <lightning-combobox class="slds-var-m-right_xx-small" key={comboboxFilters.label} label={comboboxFilters.label} value={comboboxFilters.value}
-                                            options={comboboxFilters.options} onchange={handleInputChangeSelected}></lightning-combobox>
-                                        </template>
-                                        <template for:each={listTextFilters} for:item="textFilters">
-                                            <lightning-input class="slds-var-m-right_xx-small" key={textFilters.label} name={textFilters.label} type="text" label={textFilters.label} 
-                                            onchange={handleInputChangeSelected}></lightning-input>
-                                        </template>
-                                    </lightning-layout>
-                                    <!--FILTER DEPENDENCIES END-->
-                                    <!--CLEAR FILTER START-->
-                                    </div>
-                                    <div class="slds-grid slds-gutters slds-var-m-left_large slds-align_absolute-center slds-var-m-right_small">
-                                        <lightning-button variant="brand" label="Clear Filters" title="Clear"  onclick={clearFilters} class="slds-var-m-left_small slds-var-m-top_large"></lightning-button>
-                                    </div>
-                                    <!--CLEAR FILTER END-->
-                                    <!--RECORDS SELECTED START-->
+                                <template if:true={filtersLoading}> 
+                                    <h2 class="slds-align_absolute-center slds-text-heading_medium slds-var-m-bottom_medium">
+                                        Set attributes values for NSP(Non-Standard Product).
+                                    </h2>                                   
+                                    <!--RECORDS INFORMATION START-->
                                     <div class="slds-grid slds-gutters slds-var-m-left_large slds-var-m-top_medium">
                                         <lightning-icon icon-name="standard:filter" alternative-text="filter" size="small" class=" slds-var-m-right_small"></lightning-icon>
                                         <p style="color: rgb(21, 35, 233); font-size:16px;">Reviewing, {reviewDisplay.length} records.</p>
                                     </div>
-                                    <!--RECORDS SELECTED END-->
+                                    <!--RECORDS INFORMATION END-->
                                     <div>
                                         <!--PAGINATION CONTROL START-->
                                         <div>

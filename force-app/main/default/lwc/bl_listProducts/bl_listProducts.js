@@ -120,10 +120,6 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     }
     addAndReview(){ //Button in pop up that says Add and Review
         //Change to review tab
-        
-       
-        //console.log(Object.getOwnPropertyNames(this.listFilters[0].options)); 
-        //console.log(Object.getOwnPropertyNames(this.listFiltersReview[0].options));
 
         if (!(this.rowsSelected == [])){
             for(let i = 0; i< this.rowsSelected.length; i++){
@@ -141,21 +137,6 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             this.template.querySelectorAll('lightning-datatable').forEach(each => {
                 each.selectedRows = [];
             });
-            this.filtersLoading = false; 
-            for (let rec of this.listFilters){
-                let uniqueOptions = [...new Set(this.allReviews.map(item => item[rec.apiName]))];
-                console.log('rec.fieldName: '+rec.apiName)
-                console.log(uniqueOptions);
-                if(!(uniqueOptions == undefined)){
-                    this.listFiltersReview.push({label: rec.label, value: rec.label, options: uniqueOptions}); 
-                } else {
-                    this.listFiltersReview.push({label: rec.label, value: rec.label, options: []});
-                }
-            }
-            setTimeout(()=>{
-                this.filtersLoading = true;
-            }, 500);
-            //NO ESTA SIRVIENDO ESTO!
         } else {
             const evt = new ShowToastEvent({
                 title: 'Not selected rows',
@@ -190,7 +171,6 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     @track reviewDisplay = [];
     @track allReviews = [];
 
-    @track listFiltersReview= [];
     handleInputChangeSelected(event){
         this.reviewDisplay = this.allReviews; 
         this.reviewLoading = true; 
@@ -202,8 +182,6 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         } else {
             this.reviewSelectedValue[aux] = event.detail.value;
         }
-        
-
         let recs = [];
         for(let i=0;i<this.reviewSelectedLabel.length; i++){
             //console.log('Filtered by: '+ this.reviewSelectedLabel[i])
@@ -321,7 +299,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             //console.log('FIRST PRODUCT TYPE:');
             //console.log(filterGroup); 
             this.productType = JSON.parse(data);
-            console.log('Required filters: '+data); 
+            //console.log('Required filters: '+data); 
             for (let i =0; i < this.productType.length; i++){
                 this.productType[i].options = JSON.parse(this.productType[i].options); 
                 this.columnsRequired.push(this.productType[i]); 
@@ -446,8 +424,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         //console.log('filteredGrouping: ' + this.trackList.lookupCode);
         filteredProductPrinter({filterValues: JSON.stringify(filters), level1: this.tabSelected, filteredGrouping: this.trackList.lookupCode})
         .then((data)=>{
-            console.log('Products Filtered');
-            console.log(data);
+            //console.log('Products Filtered');
+            //console.log(data);
             this.recordsAmount = data.length; 
             this.filterResults = data; 
             this.loadingFilteData = false;
