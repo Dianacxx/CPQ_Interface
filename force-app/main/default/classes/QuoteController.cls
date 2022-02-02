@@ -253,6 +253,102 @@ public with sharing class QuoteController {
 
         return JSON.serialize(linesToPrint);
     }
+    @AuraEnabled(cacheable=true)
+    public static String addSelectorQuoteLine(String quoteId, String products) { 
+        
+        QuoteReader quoteReader = new QuoteReader();
+        // QuoteModel quote = quoteReader.read('a0q5f0000013pc3AAA');
+        List<WrappersClass.QuoteLineWrapperClass> linesToPrint = new List<WrappersClass.QuoteLineWrapperClass>();
+        List<ProductModel> prodModelList = new List<ProductModel>();
+        List<QuoteLineModel> newlyAddedLines = new List<QuoteLineModel>(); //Will storee a list of the added lines
+        QuoteModel quote = quoteReader.read(quoteId);
+        List<QuoteLineModel> previousLines = quote.getLineItems();//gets the lines that are currently in salesforce
+        ProductReader productReader = new ProductReader();
+        Pricebook2 prodPriceBook = [SELECT Id FROM Pricebook2 WHERE Id IN (SELECT SBQQ__PriceBook__c FROM SBQQ__Quote__c WHERE Id =: quoteId) LIMIT 1];
+        List<WrappersClass.ProductWrapperClass> untypedProductValues = (List<WrappersClass.ProductWrapperClass>) JSON.deserialize(products, List<WrappersClass.ProductWrapperClass>.class );
+        for(WrappersClass.ProductWrapperClass prod : untypedProductValues){ //puts the values of the produst that comes from the UI before converting into a quote line
+            ProductModel product = productReader.read(prod.id,prodPriceBook.Id,'USD');
+            product.record.Fiber_Count__c = prod.fiberCount;
+            product.record.Fiber_Type__c = prod.fiberType;
+            product.record.Jacket_Type__c = prod.jacketType;
+            product.record.Jacket_Configuration__c = prod.jacketConfiguration;
+            product.record.Jacket_Print__c = prod.jacketPrint;
+            product.record.Sub_Unit__c = prod.subUnit;
+            product.record.Armor_Type__c = prod.armorType;
+            product.record.TightBuff_Type__c = prod.tightbuffType;
+            product.record.Max_Span_at_Light__c = prod.maxSpanAtLight;
+            product.record.Max_Span_at_Medium__c = prod.maxSpanAtMedium;
+            product.record.Max_Span_at_Heavy__c = prod.maxSpanAtHeavy;
+            product.record.Packaging__c = prod.packaging;
+            product.record.Primary_UOM__c = prod.tightbuffType;
+            product.record.Length__c = prod.lenght;
+            product.record.Bus_Size_or_Width__c = prod.busSizeOrWidth;
+            product.record.Bus_Schedule__c = prod.busSchedule;
+            product.record.Bus_Alloy__c = prod.busAlloy;
+            product.record.Bus_Temper__c = prod.busTemper;
+            product.record.Bus_Thickness__c = prod.busThickness;
+            product.record.AW_Industry_Name__c = prod.industryName;
+            product.record.AW_Number_of_Strands__c = prod.numberOfStrands;
+            product.record.AW_Wire_Size__c = prod.wireSize;
+            product.record.Model__c = prod.model;
+            product.record.Sub_Configuration__c = prod.subConfiguration;
+            product.record.Length_Picklist__c = prod.lenghtPickList;
+            product.record.Connector_A__c = prod.connectorA;
+            product.record.Connector_B__c = prod.connectorB;
+            product.record.Breaking_Strength__c = prod.breakingStrength;
+            product.record.Lay_Direction__c = prod.layDirection;
+            product.record.Diameter_Tolerance__c = prod.diameterTolerance;
+            product.record.Core_Annealing__c = prod.coreAnnealing;
+            product.record.Wire_Shape__c = prod.wireShape;
+            prodModelList.add(product);
+        }
+        
+        ProductAdder adder = new ProductAdder(); 
+        QuoteModel quoteWithProducts = adder.add(quote, prodModelList, 0);
+        List<QuoteLineModel> newLines = quoteWithProducts.getLineItems();
+        System.debug('previous lines -- ' + previousLines.size());
+        System.debug('new lines -- ' + newLines.size());
+        
+        for (QuoteLineModel newLine : newLines) {
+            if (newLine.record.id == null) { 
+                newlyAddedLines.add(newLine); //Puts all of the added lines in a list
+            }
+        }
+        // System.debug('List of new lines '+ newlyAddedLines.size());
+        for (QuoteLineModel newlyAddedLine : newlyAddedLines) { //Converts the new lines in a wrapper to print
+            WrappersClass.QuoteLineWrapperClass wrapper = new WrappersClass.QuoteLineWrapperClass();
+            wrapper.id = newlyAddedLine.record.id;
+            wrapper.product = newlyAddedLine.record.SBQQ__Product__r.Name;
+            wrapper.productid = newlyAddedLine.record.SBQQ__Product__c;
+            wrapper.productobj = newlyAddedLine.record.SBQQ__Product__r;
+            wrapper.name = newlyAddedLine.record.Name;
+            wrapper.description = newlyAddedLine.record.SBQQ__Description__c;
+            wrapper.uom = newlyAddedLine.record.UOM__c;
+            wrapper.listunitprice = newlyAddedLine.record.SBQQ__ListPrice__c;
+            wrapper.additionaldiscount = newlyAddedLine.record.SBQQ__Discount__c;
+            wrapper.netunitprice = newlyAddedLine.record.SBQQ__NetPrice__c; 
+            wrapper.billingtolerance = newlyAddedLine.record.BL_Billing_Tolerance__c; 
+            wrapper.source = newlyAddedLine.record.BL_Source__c; 
+            wrapper.destination = newlyAddedLine.record.BL_Destination__c;
+            wrapper.alternativeindicator = newlyAddedLine.record.BL_Alternative_Indicator__c;
+            // wrapper.nspofferingdetails = newlyAddedLine.record.SBQQ__Optional__c;
+            wrapper.billingfrequency = newlyAddedLine.record.SBQQ__BillingFrequency__c;
+            wrapper.approvalstatus = newlyAddedLine.record.ApprovalStatus__c;
+            wrapper.billingtype = newlyAddedLine.record.SBQQ__BillingType__c;
+            wrapper.componenttotal = newlyAddedLine.record.SBQQ__ComponentTotal__c;
+            wrapper.enddate = newlyAddedLine.record.SBQQ__EndDate__c;
+            wrapper.length = newlyAddedLine.record.Length__c;
+            wrapper.originalprice = newlyAddedLine.record.SBQQ__OriginalPrice__c;
+            wrapper.packagetype = newlyAddedLine.record.Package_Type__c;
+            wrapper.volumediscount = newlyAddedLine.record.SBQQ__VolumeDiscount__c;
+
+            linesToPrint.add(wrapper); 
+        }
+        System.debug('lines to print '+ linesToPrint.size());
+        
+
+        return JSON.serialize(linesToPrint);
+    }
 
     @AuraEnabled
     public static String deleteQuoteLines(List<SBQQ__QuoteLine__c> existingQuoteLines, List<WrappersClass.QuoteLineWrapperClass> receivedQuoteLines){
@@ -446,7 +542,7 @@ public with sharing class QuoteController {
    
     @AuraEnabled
     public static String getProductLevels(String level1){
-        List<AFL_Lookups__c> lookupList = [SELECT Id,Name,BL_Selection_Type__c,Lookup_Code__c,Product_Class_1__c FROM AFL_Lookups__c WHERE Lookup_Type__c = 'BL Attribute Groupings' AND Product_Class_1__c =:level1];
+        List<AFL_Lookups__c> lookupList = [SELECT Id,Name,BL_Selection_Type__c,Lookup_Code__c,Product_Class_1__c,BL_Configured_Product__c FROM AFL_Lookups__c WHERE Lookup_Type__c = 'BL Attribute Groupings' AND Product_Class_1__c =:level1];
         // List<AFL_Lookups__c> lookupList = [SELECT Name, BL_Selection_Type__c,toLabel(Product_Class_1__c), Lookup_Code__c, CreatedDate, Id, CurrencyIsoCode, LastModifiedDate, SystemModstamp FROM AFL_Lookups__c WHERE Lookup_Type__c = 'Product Configurations' AND Enabled_Flag__c = true AND Product_Class_1__c =:level1 ORDER BY Product_Class_1__c ASC NULLS FIRST, Id ASC NULLS FIRST];
         List<WrappersClass.LookupWrapperClass> wrappersToPrintList = new List<WrappersClass.LookupWrapperClass>();
 
@@ -455,6 +551,7 @@ public with sharing class QuoteController {
             wrapper.lookupCode = lookup.Lookup_Code__c;
             wrapper.level1 = lookup.Product_Class_1__c;
             wrapper.selectionType = lookup.BL_Selection_Type__c;
+            wrapper.relatedProduct = lookup.BL_Configured_Product__c;
             wrappersToPrintList.add(wrapper);
         }
 
@@ -489,17 +586,12 @@ public with sharing class QuoteController {
         //Get all of the custom field values from the filtered grouping - gets it from the custom settings
         BL_Product_Filters__c customFilters = custFieldsMap.get(filteredGrouping);
 
-        //Each filtered grouping value can have up to 10 attributes
         if(customFilters.Attribute_1__c!= null){
             if(picklistFields.get(customFilters.Attribute_1__c)!=null){
-                List<Schema.PicklistEntry> pick_list_values = picklistFields.get(customFilters.Attribute_1__c).getDescribe().getPickListValues();
-                if(pick_list_values.size()>0){
-                    filtersMap.put(customFilters.Attribute_1__c,pick_list_values);
-                    System.debug(pick_list_values.size());
-                    // for(Schema.PicklistEntry c : pick_list_values){
-                    //     System.debug(c.label);
-                    // }
-                }
+
+                List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(picklistFields.get(customFilters.Attribute_1__c),filteredGrouping);
+                filtersMap.put(customFilters.Attribute_1__c,pickListValues);    
+            
             }else{
                 filtersMap.put(customFilters.Attribute_1__c,new List<Schema.PicklistEntry>());
             }

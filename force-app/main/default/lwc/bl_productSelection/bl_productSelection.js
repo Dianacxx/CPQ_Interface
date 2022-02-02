@@ -33,7 +33,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             console.log(error);
         });
 
-        getProductLevels({level1: 'Connectivity'})
+        getProductLevels({level1: 'OCA'}) //Connectivity
         .then((data)=>{
             this.girdDataConnTab = JSON.parse(data);
             //console.log('Connectivity Data: ' + data);
@@ -81,7 +81,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         getProductLevels({level1: 'Test and Inspection'})
         .then((data)=>{
             this.girdDataTandITab = JSON.parse(data);
-            console.log('Test & Inspection Data: ' + data);
+            //console.log('Test & Inspection Data: ' + data);
             for(let i=0; i<this.girdDataTandITab.length; i++){
                 this.girdDataTandITab[i].isAdd = isAddVector; 
                 this.girdDataTandITab[i]['isNew'] = i; 
@@ -122,6 +122,44 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
     //When click cancel button in Product Selection UI
     handleCancel(){
         this.dispatchEvent(new CustomEvent('cancelps'));
+    }
+
+    @api quotesAdded = []; 
+    //When products are add or edited. 
+    saveProductsAsQuotelines(event){
+        //console.log('Save in PS');
+        //console.log(JSON.stringify(event.detail));
+        this.quotesAdded.push(event.detail); 
+        //console.log('quotes Added: '+JSON.stringify(this.quotesAdded));
+    }
+    //Keep List that is display upgraded. 
+    saveListToDisplay(event){
+        //console.log('Save List To Display in PS');
+        //console.log(JSON.stringify(event.detail));
+        
+        switch (event.detail.tab){
+            case 'ACA':
+                this.girdDataAcaTab = event.detail.list;
+            break; 
+            case 'Connectivity':
+                this.girdDataConnTab = event.detail.list;
+            break; 
+            case 'Fiber Optic Cable':
+                //console.log('Before '+ JSON.stringify(this.girdDataFocTab));
+                this.girdDataFocTab = event.detail.list;
+                //console.log('After '+ JSON.stringify(this.girdDataFocTab));
+            break; 
+            case 'Cable':
+                this.girdDataCableTab = event.detail.list;
+            break; 
+            case 'Test and Inspection':
+                this.girdDataTandITab = event.detail.list;
+            break; 
+            case 'Manual Items':
+            break; 
+            default:
+            break; 
+        }
     }
     //When click Save and Exit button in Product Selection UI
     handleSaveAndExit(){

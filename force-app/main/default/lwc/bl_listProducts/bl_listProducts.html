@@ -1,10 +1,10 @@
 <template>
     <!--DATATABLE START-->
-        <!-- sldsValidatorIgnoreNextLine -->
+    <!-- sldsValidatorIgnoreNextLine -->
+    <template if:false={showLookupList}>
         <lightning-datatable key-field="Id" data={listToDisplay} columns={gridColumns}  hide-checkbox-column="true"  
-        onrowaction={callRowAction} hide-table-header="true"></lightning-datatable>  
-        
-        
+        onrowaction={callRowAction} hide-table-header="true"></lightning-datatable>
+    </template>
     <!--DATATABLE END-->
     <!--FILTERED POP-UP START-->
     <template if:true={openFilterPopup}>
@@ -19,6 +19,7 @@
                         <lightning-tabset active-tab-value={activeFilterTab}>
                             <!--FILTER TAB START-->
                             <lightning-tab label="Filter" value="Filter" onactive={handleFilterTabActive}>
+                                <!--FILTERS REQUIRED START-->
                                 <div class="slds-grid slds-gutters slds-var-m-bottom_small slds-var-m-left_large slds-var-m-right_small">
                                     <template if:true={productTypeShow}>
                                         <lightning-layout multiple-rows="false">
@@ -29,6 +30,8 @@
                                         </lightning-layout>
                                     </template>                                
                                 </div>
+                                <!--FILTERS REQUIRED END-->
+                                <!--FILTERS DEPENDENCIES START-->
                                 <div class="slds-grid slds-gutters slds-var-m-bottom_small slds-var-m-left_large slds-var-m-right_small">
                                     <lightning-spinner if:false={filtersLoading} alternative-text="Loading" size="small"></lightning-spinner>
                                     <template if:true={filtersLoading}>
@@ -44,13 +47,18 @@
                                         </lightning-layout>
                                     </template>
                                 </div>
+                                <!--FILTERS DEPENDENCIES END-->
+                                <!--CLEAR FILTERS START-->
                                 <div class="slds-grid slds-gutters slds-var-m-left_large slds-align_absolute-center slds-var-m-right_small">
                                     <lightning-button variant="brand" label="Clear Filters" title="Clear"  onclick={clearFilters} class="slds-var-m-left_small slds-var-m-top_large"></lightning-button>
                                 </div>
+                                <!--CLEAR FILTERS END-->
+                                <!--RECORDS FILTERED START-->
                                 <div class="slds-grid slds-gutters slds-var-m-left_large slds-var-m-top_medium">
                                     <lightning-icon icon-name="standard:filter" alternative-text="filter" size="small" class=" slds-var-m-right_small"></lightning-icon>
                                     <p style="color: rgb(21, 35, 233); font-size:16px;">Filtered, {recordsAmount} records found.</p>
                                 </div>
+                                <!--RECORDS FILTERED END-->
                                 <div>
                                     <lightning-spinner if:true={loadingFilteData} alternative-text="Loading" size="medium"></lightning-spinner>
                                     <!--PAGINATION CONTROL START-->
@@ -64,15 +72,18 @@
                                         </lightning-button-group>
                                     </div>
                                     <!--PAGINATION CONTROL END-->
+                                    <!--TABLE START-->
                                     <template if:true={filtersLoading}>
                                         <lightning-datatable key-field="Id" data={dataPages} columns={columnsFilters} onrowselection={handleRowSelection}>
                                         </lightning-datatable>
                                     </template>
+                                    <!--TABLE END-->
                                 </div>
                             </lightning-tab>
                             <!--FILTER TAB END-->
                             <!--REVIEW TAB START-->
                             <lightning-tab label="Review" value="Review" onactive={handleReviewTabActive}>
+                                <!--FILTER REQUIRED START-->
                                 <template if:true={productTypeShow}>
                                     <div class="slds-grid slds-gutters slds-var-m-left_small">
                                     <lightning-layout multiple-rows="false">
@@ -83,8 +94,10 @@
                                     </lightning-layout>
                                     </div>
                                 </template>  
+                                <!--FILTER REQUIRED END-->
                                 <template if:true={filtersLoading}>
                                     <div class="slds-grid slds-gutters slds-var-m-left_small slds-align_absolute-center">
+                                    <!--FILTER DEPENDENCIES START-->
                                     <lightning-layout multiple-rows="false" >
                                         <template for:each={listFilters} for:item="comboboxFilters">
                                             <lightning-combobox class="slds-var-m-right_xx-small" key={comboboxFilters.label} label={comboboxFilters.label} value={comboboxFilters.value}
@@ -95,14 +108,19 @@
                                             onchange={handleInputChangeSelected}></lightning-input>
                                         </template>
                                     </lightning-layout>
+                                    <!--FILTER DEPENDENCIES END-->
+                                    <!--CLEAR FILTER START-->
                                     </div>
                                     <div class="slds-grid slds-gutters slds-var-m-left_large slds-align_absolute-center slds-var-m-right_small">
                                         <lightning-button variant="brand" label="Clear Filters" title="Clear"  onclick={clearFilters} class="slds-var-m-left_small slds-var-m-top_large"></lightning-button>
                                     </div>
+                                    <!--CLEAR FILTER END-->
+                                    <!--RECORDS SELECTED START-->
                                     <div class="slds-grid slds-gutters slds-var-m-left_large slds-var-m-top_medium">
                                         <lightning-icon icon-name="standard:filter" alternative-text="filter" size="small" class=" slds-var-m-right_small"></lightning-icon>
                                         <p style="color: rgb(21, 35, 233); font-size:16px;">Reviewing, {reviewDisplay.length} records.</p>
                                     </div>
+                                    <!--RECORDS SELECTED END-->
                                     <div>
                                         <!--PAGINATION CONTROL START-->
                                         <div>
@@ -116,11 +134,13 @@
                                         </div>
                                         <!--PAGINATION CONTROL END-->
                                         <lightning-spinner if:true={reviewLoading} alternative-text="Loading" size="small"></lightning-spinner>
+                                        <!--RECORDS SELECTED TABLE START-->
                                         <template if:false={reviewLoading}>
                                             <lightning-datatable key-field="Id" data={dataPagesR} columns={columnsReview} hide-checkbox-column=true onrowaction={handleRowAction}
                                             draft-values={draftValues} onsave={handleSaveEditionReviewTable}>
                                             </lightning-datatable>
                                         </template>
+                                        <!--RECORDS SELECTED TABLE END-->
                                     </div>
                                 </template>
                             </lightning-tab>
