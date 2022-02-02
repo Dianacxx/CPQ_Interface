@@ -246,8 +246,6 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         } else {
             this.reviewSelectedValue[aux] = event.detail.value;
         }
-        
-
         let recs = [];
         for(let i=0;i<this.reviewSelectedLabel.length; i++){
             //console.log('Filtered by: '+ this.reviewSelectedLabel[i])
