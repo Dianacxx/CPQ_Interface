@@ -9,7 +9,6 @@ import addSelectorQuoteLine from '@salesforce/apex/QuoteController.addSelectorQu
 
 export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     @api recordId; 
-
     @api listToDisplay = []; 
     @track openFilterPopup = false; 
     @track openConfiguredPopup = false; 
@@ -28,9 +27,9 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     connectedCallback(){
         this.filtersLoading = false; 
         //ADSS Cable - Loose Tube Cable - Premise Cable - SkyWrap Cable - Wrapping Tube Cable
-        
     }
 
+    //Get actions depending on the value and the process in the UI
     constructor() {
         super();
         this.gridColumns = [ 
@@ -56,6 +55,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         }, 200);
     }
     
+    //Depending the row and action selected, do the process
     callRowAction(event){
         //console.log(Object.getOwnPropertyNames(event.detail));
         let row = event.detail.row; //This way is going to edit the real value.
@@ -94,6 +94,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     //FILTERED POP UP FUNCTIONS
     @track tabOption = false; 
     @track activeFilterTab = 'Filter';
+    //Close the pop up and restart the values
     closeFilterAndSelected(){
         this.openFilterPopup = false;
         this.clearFilters();
@@ -103,6 +104,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         this.updateReviewTable(); 
 
     }
+    //Add more products in the filter tab
     moreAdd(){ //Button in pop up that says Add More
         //Change to filter tab
         this.activeFilterTab = 'Filter';
@@ -110,21 +112,42 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         this.rowsSelected = [];
         
     }
+    //If the user clicks the Filter Tab
     handleFilterTabActive(){ //If user returns to tab clicking in the name
         this.activeFilterTab = 'Filter';
         this.tabOption = false;
     }
+    //If the user clicks the Review Tab
     handleReviewTabActive(){ //If user returns to tab clicking in the name
         this.activeFilterTab = 'Review';
         this.tabOption = true;
     }
-    addAndReview(){ //Button in pop up that says Add and Review
-        //Change to review tab
-        
-       
-        //console.log(Object.getOwnPropertyNames(this.listFilters[0].options)); 
-        //console.log(Object.getOwnPropertyNames(this.listFiltersReview[0].options));
+    //Button to add products from filter tab to the list without changing Tab
+    addProducts(){
 
+        if (!(this.rowsSelected.length == 0)){
+            for(let i = 0; i< this.rowsSelected.length; i++){
+                this.allReviews.push(this.rowsSelected[i]);
+            }
+            this.reviewDisplay = this.allReviews; 
+            this.rowsSelected = [];
+            this.template.querySelectorAll('lightning-datatable').forEach(each => {
+                each.selectedRows = [];
+            });
+        } else {
+            const evt = new ShowToastEvent({
+                title: 'Not selected products yet',
+                message: 'Please, select a product to add to the list',
+                variant: 'warning',
+                mode: 'pester'
+            });
+            this.dispatchEvent(evt);
+        }
+        this.fillReviewFilters();
+    }
+    //Button to add products from filter tab to the list and pass to Review Tab
+    reviewProducts(){ 
+        //Change to review tab
         if (!(this.rowsSelected == [])){
             for(let i = 0; i< this.rowsSelected.length; i++){
                 this.allReviews.push(this.rowsSelected[i]);
@@ -132,43 +155,61 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             this.reviewDisplay = this.allReviews; 
             //console.log('ALL '+JSON.stringify(this.allReviews)); 
             //console.log('review '+JSON.stringify(this.reviewDisplay)); 
-            //console.log('row '+JSON.stringify(this.rowsSelected)); 
-            //console.log('Filling all Reviews '+ Object.getOwnPropertyNames(this.allReviews[0]));
-            this.activeFilterTab = 'Review';
+            //console.log('row '+JSON.stringify(this.rowsSelected));
+        } 
+        this.activeFilterTab = 'Review';
             this.tabOption = true;
             this.updateReviewTable();
             this.rowsSelected = [];
             this.template.querySelectorAll('lightning-datatable').forEach(each => {
                 each.selectedRows = [];
-            });
-            this.filtersLoading = false; 
-            for (let rec of this.listFilters){
-                let uniqueOptions = [...new Set(this.allReviews.map(item => item[rec.apiName]))];
-                console.log('rec.fieldName: '+rec.apiName)
-                console.log(uniqueOptions);
-                if(!(uniqueOptions == undefined)){
-                    this.listFiltersReview.push({label: rec.label, value: rec.label, options: uniqueOptions}); 
+        });
+        
+    }
+    //Funtion that gets the values available to display in Review table depending on values of the list saved before. 
+    @track columnsRequiredReview = [];
+    fillReviewFilters(){
+        this.filtersLoading = false; 
+        this.productTypeShow = false; 
+        this.columnsRequiredReview = [];
+        this.listFiltersReview = []; 
+
+        for(let i =0; i<this.columnsRequired.length;i++){
+            let availableOptions = [...new Set(this.allReviews.map(item => item[this.columnsRequired[i].apiName]))];
+            //console.log('availableOptions R: '+JSON.stringify(availableOptions));
+            for (let j=0; j<availableOptions.length;j++){
+                if(availableOptions[j] == null ||  availableOptions[j] == 'null'){
+                    availableOptions[j] = [];
                 } else {
-                    this.listFiltersReview.push({label: rec.label, value: rec.label, options: []});
+                    availableOptions[j] = {label: availableOptions[j], value: availableOptions[j]};
                 }
             }
-            setTimeout(()=>{
-                this.filtersLoading = true;
-            }, 500);
-            //NO ESTA SIRVIENDO ESTO!
-        } else {
-            const evt = new ShowToastEvent({
-                title: 'Not selected rows',
-                message: 'Please, select a row to review',
-                variant: 'warning',
-                mode: 'dismissable'
-            });
-            this.dispatchEvent(evt);
+            this.columnsRequiredReview.push({label: this.columnsRequired[i].label, apiName: this.columnsRequired[i].apiName, options: availableOptions });
         }
+        for(let i =0; i<this.listFilters.length;i++){
+            let availableOptions = [...new Set(this.allReviews.map(item => item[this.listFilters[i].apiName]))];
+            //console.log('availableOptions O: '+JSON.stringify(availableOptions));
+            for (let j=0; j<availableOptions.length;j++){
+                if(availableOptions[j] == null ||  availableOptions[j] == 'null'){
+                    availableOptions[j] = [];
+                } else {
+                    availableOptions[j] = {label: availableOptions[j], value: availableOptions[j]};
+                }
+            }
+            this.listFiltersReview.push({label: this.listFilters[i].label, apiName: this.listFilters[i].apiName, options: availableOptions });
+        }
+        //console.log('columnsRequiredReview');
+        //console.log(this.columnsRequiredReview);
+        //console.log('listFiltersReview');
+        //console.log(this.listFiltersReview);
         
+        this.filtersLoading = true; 
+        this.productTypeShow = true; 
+
     }
 
     //SELECTING PRODUCTS
+    //Function to create temporal Id to delete the product from list in case the row is selected to delete
     @track goReview = true;
     handleRowSelection(event){
         if(event.detail.selectedRows.length == 0){
@@ -184,6 +225,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         }
         
     }
+
     @track reviewSelectedValue = []; 
     @track reviewSelectedLabel = [];
     @track reviewLoading = false;
@@ -191,6 +233,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     @track allReviews = [];
 
     @track listFiltersReview= [];
+
+    //Function that handles lookup in REVIEW TAB just to see the selected ones.
     handleInputChangeSelected(event){
         this.reviewDisplay = this.allReviews; 
         this.reviewLoading = true; 
@@ -263,17 +307,16 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         //WATCH HERE IF THIS IS WORKING! 
 
     }
+
     //DELETING PRODUCT FROM REVIEW TABLE
     handleRowAction(event) {
         this.reviewLoading = true; 
         let dataRow = event.detail.row; 
 		if (event.detail.action.name === "delete") {
             let newData = JSON.parse(JSON.stringify(this.allReviews));
-            
             let row = newData.findIndex(x => x.Id === dataRow.Id);
             //console.log('row '+dataRow.id+' array '+newData[row].Id); 
-            console.log('DELETE row '+row);
-
+            //console.log('DELETE row '+row);
 		    this.allReviews = newData;
             if (newData.length > 1){
                 newData.splice(row,1); 
@@ -296,7 +339,6 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
 	}
 
     //FILTERS CALLING
-
     @track productType; 
     @track requiredApex; 
     @track productTypeShow = false; 
@@ -305,6 +347,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     @track columnsReview = [{label: 'Product Name', fieldName: 'Name', editable: false, },]; 
     @track columnsRequired = []; 
 
+    //Calling the first product (Required one)
     callFiltersInPopUp(filterGroup){
         this.listTextFilters = []; 
         this.listFilters = []; 
@@ -321,7 +364,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             //console.log('FIRST PRODUCT TYPE:');
             //console.log(filterGroup); 
             this.productType = JSON.parse(data);
-            console.log('Required filters: '+data); 
+            //console.log('Required filters: '+data); 
             for (let i =0; i < this.productType.length; i++){
                 this.productType[i].options = JSON.parse(this.productType[i].options); 
                 this.columnsRequired.push(this.productType[i]); 
@@ -387,7 +430,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                     this.listFilters.push(temporalList[i]); 
                 }
                 this.columnsFilters.push({label: temporalList[i].label, fieldName: temporalList[i].apiName,}); 
-                this.columnsReview.push({label: temporalList[i].label, fieldName: temporalList[i].apiName, editable: true,});
+                this.columnsReview.push({label: temporalList[i].label, fieldName: temporalList[i].apiName, editable: false,});
                             
                 //console.log('columnsFilters'); 
                 //console.log(Object.getOwnPropertyNames(this.columnsFilters)); 
@@ -413,6 +456,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     @track filterResults = []; 
     @track recordsAmount = 0; 
     @track loadingFilteData = false; 
+
+    //Handle the changes in picklist to show products in FILTER TAB
     handleInputChange(event){
         //console.log(JSON.stringify(this.listFilters));
         //console.log(JSON.stringify(this.listTextFilters));
@@ -437,6 +482,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     }
 
     //FILTERING BY REQUIRED OR OTHER FILTERS
+    //Display products depending on changes done in picklists
     printProducts(){
         this.loadingFilteData = true;
         let filters = this.filtersForApex;  
@@ -446,8 +492,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         //console.log('filteredGrouping: ' + this.trackList.lookupCode);
         filteredProductPrinter({filterValues: JSON.stringify(filters), level1: this.tabSelected, filteredGrouping: this.trackList.lookupCode})
         .then((data)=>{
-            console.log('Products Filtered');
-            console.log(data);
+            //console.log('Products Filtered');
+            //console.log(data);
             this.recordsAmount = data.length; 
             this.filterResults = data; 
             this.loadingFilteData = false;
@@ -458,7 +504,6 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             console.log(error);
         });
     }
-
 
     //FILTERS RESET
     clearFilters(){
@@ -495,6 +540,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     @track totalPage = 0;
     @track pageSize = 15; 
 
+    //Update pagination in FILTER TAB TABLE
     updateFilterTable(){
         this.totalRecountCount = this.filterResults.length;  
         this.totalPage = Math.ceil(this.totalRecountCount / this.pageSize); 
@@ -541,6 +587,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     @track totalPageR = 0;
     @track pageSizeR = 15; 
 
+    //Updates pagination in REVIEW TAB TABLE
     updateReviewTable(){
         //console.log('review data: '+ JSON.stringify(this.reviewDisplay)); 
         this.totalRecountCountR = this.reviewDisplay.length;  
@@ -581,6 +628,23 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
 
     @track showLookupList = false; 
     //PRODUCTS TURNED IN QUOTELINES
+    @track listNSP = [];
+    @track popupNSP = false;
+    saveLookingNSP(){
+        this.popupNSP = true;
+        this.listNSP = JSON.parse(JSON.stringify(this.allReviews));
+        for (let nsp of this.listNSP){
+            nsp['nspFields'] = {Field1: 'Value1', Field2: 'Value2', Field3: 'Value3', Field4: 'Value4'};
+        }
+
+        //After this process is correct call saveAndExitFilterModal to close the modal,
+        //turn the products into quotelines and the list grows once again
+    }
+
+    continueNSP(){
+        this.popupNSP = false;
+    }
+
     saveAndExitFilterModal(){
         let auxQuoteLines = JSON.parse(JSON.stringify(this.allReviews)); 
         for(let i=0; i<auxQuoteLines.length; i++){
@@ -589,7 +653,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             auxQuoteLines[i].idTemporal = auxId; 
         }
 
-        console.log('Data before addSelectorQuoteLine'+ JSON.stringify( auxQuoteLines ));
+        //console.log('Data before addSelectorQuoteLine'+ JSON.stringify( auxQuoteLines ));
         addSelectorQuoteLine({quoteId: this.recordId, products: JSON.stringify(auxQuoteLines)})
         .then((data)=>{
             console.log('Data after addSelectorQuoteLine'+ data);
@@ -637,35 +701,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         })
     }
 
-    handleSaveEditionReviewTable(event){
-        const updatedFields = event.detail.draftValues;
-        //console.log(updatedFields); 
-        for(let i=0; i<updatedFields.length; i++){
-            let rowIndex = this.allReviews.findIndex(x => x.Id === updatedFields[i].Id);
-            let inputsItems = updatedFields.slice().map(draft => {
-                const fields = Object.assign({}, draft);
-                return { fields };
-            });
-            //console.log('inputsItems '+ Object.getOwnPropertyNames(inputsItems[i].fields));
-            let prop = Object.getOwnPropertyNames(inputsItems[i].fields); 
-            //console.log('prop '+ Object.getOwnPropertyNames(prop)); 
-            for(let j= 0; j<prop.length-1; j++){
-                //console.log('Value before edition: '+this.allReviews[rowIndex][prop[j]]);
-                //console.log('Value after edition: ' +inputsItems[i].fields[prop[j]]);
-                this.allReviews[rowIndex][prop[j]] = inputsItems[i].fields[prop[j]];
-            }            
-        } 
-        const evt = new ShowToastEvent({
-            title: 'Edits in Review Table saved',
-            message: 'Changes are sucessfully saved',
-            variant: 'success',
-            mode: 'dismissable'
-        });
-        this.dispatchEvent(evt);
-        this.template.querySelectorAll('lightning-datatable').forEach(each => {
-            each.draftValues = [];
-        });
-    }
+    
+   
     //--------------------------------------------------------------------------------------
     //CONFIGURED POP UP FUNCTIONS
     closeConfiguredAlert(){
