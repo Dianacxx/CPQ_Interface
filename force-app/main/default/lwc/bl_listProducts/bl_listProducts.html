@@ -1,7 +1,8 @@
 <template>
     <!--DATATABLE START-->
     <!-- sldsValidatorIgnoreNextLine -->
-    <template if:false={showLookupList}>
+    <lightning-spinner if:false={showLookupList} alternative-text="Loading" size="medium"></lightning-spinner>
+    <template if:true={showLookupList}>
         <lightning-datatable key-field="Id" data={listToDisplay} columns={gridColumns}  hide-checkbox-column="true"  
         onrowaction={callRowAction} hide-table-header="true"></lightning-datatable>
     </template>
@@ -152,7 +153,7 @@
                     <template if:false={tabOption}>
                         <lightning-button variant="brand" label="Cancel" title="Close"  onclick={closeFilterAndSelected} class="slds-var-m-right_small"></lightning-button>   
                         <lightning-button variant="brand" label="Add" title="Add"  onclick={addProducts} class="slds-var-m-right_small"></lightning-button>    
-                        <lightning-button variant="brand" label="Review" title="Add & Review"  onclick={reviewProducts} disabled={goReview}></lightning-button>    
+                        <lightning-button variant="brand" label="Add & Review" title="Add & Review"  onclick={reviewProducts} disabled={goReview}></lightning-button>    
 
                     </template>
                     <template if:true={tabOption}>
@@ -168,24 +169,29 @@
     <!--NSP POP-UP START-->
     <template if:true={popupNSP}>
         <section aria-modal="true" class="slds-modal slds-fade-in-open slds-align_absolute-center" style="background-color: rgba(28, 91, 199, 0.404)">
-            <div class="slds-modal__container ">
-                <header class="slds-modal__header">
+            <div class="slds-modal__container slds-var-m-left_medium  slds-var-m-right_medium">
+                <header class="slds-modal__header slds-var-m-left_medium slds-var-m-right_medium">
                     <h2 class="slds-text-heading_medium slds-hyphenate">Action Required! Populate NSP Fields</h2>
-                    <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={continueNSP}></lightning-icon>
+                    <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeNSP}></lightning-icon>
                 </header>
-                <div class="slds-modal__content">
-                    <template for:each={listNSP} for:item="nspP">
-                    <div key={nspP.Id} class="slds-var-p-around_medium lgc-bg slds-var-p-around_small slds-align_absolute-center">
-                        {nspP.Name}
-                        Field 1: {nspP.nspFields.Field1}
-                        Field 2: {nspP.nspFields.Field2}
-                        Field 3: {nspP.nspFields.Field3}
-                        Field 4: {nspP.nspFields.Field4}
-                    </div>
-                </template>
+                <div class="slds-modal__content  slds-var-m-left_medium  slds-var-m-right_medium">
+                    <lightning-tabset active-tab-value={firstNSP}>
+                        <template for:each={listNSP} for:item="nspP">
+                            <lightning-tab class="slds-var-m-left_medium" key={nspP.Id} onactive={handleNSPTab} label={nspP.tabNsp} value={nspP.tabNsp}>
+                                <p>Product: {nspP.Name}</p>
+                                <p>Field 1: {nspP.nspFields.Field1}</p>
+                                <p>Field 2: {nspP.nspFields.Field2}</p>
+                                <p>Field 3: {nspP.nspFields.Field3}</p>
+                                <p>Field 4: {nspP.nspFields.Field4}</p>
+                                <lightning-button class="slds-float_right slds-var-m-bottom_medium  slds-var-m-right_medium" 
+                                icon-name="standard:sales_cadence" variant="destructive" label="Next Product" value={nspP.Name}
+                                onclick={continueNSP} ></lightning-button>    
+                            </lightning-tab>
+                        </template>
+                    </lightning-tabset>
                 </div>
-                <footer class="slds-modal__footer">
-                    <lightning-button variant="brand" label="Continue" title="Continue"  onclick={continueNSP} ></lightning-button>    
+                <footer class="slds-modal__footer slds-var-m-left_medium  slds-var-m-right_medium">
+                    <lightning-button variant="brand" label="Close" title="Close"  onclick={closeNSP} ></lightning-button>    
                 </footer>
             </div>
         </section>

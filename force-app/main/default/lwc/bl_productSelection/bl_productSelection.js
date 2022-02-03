@@ -25,7 +25,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             //console.log('ACA Data: ' + data);
             for(let i=0; i<this.girdDataAcaTab.length; i++){
                 this.girdDataAcaTab[i].isAdd = isAddVector; 
-                this.girdDataAcaTab[i]['isNew'] = i; 
+                this.girdDataAcaTab[i]['isNew'] = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(2, 10); 
             }
         })
         .catch((error)=>{
@@ -39,7 +39,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             //console.log('Connectivity Data: ' + data);
             for(let i=0; i<this.girdDataConnTab.length; i++){
                 this.girdDataConnTab[i].isAdd = isAddVector; 
-                this.girdDataConnTab[i]['isNew'] = i; 
+                this.girdDataConnTab[i]['isNew'] = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(2, 10); 
             }
         })
         .catch((error)=>{
@@ -53,7 +53,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             //console.log('Fiber Optic Cable Data: ' + data);
             for(let i=0; i<this.girdDataFocTab.length; i++){
                 this.girdDataFocTab[i].isAdd = isAddVector; 
-                this.girdDataFocTab[i]['isNew'] = i; 
+                this.girdDataFocTab[i]['isNew'] = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(2, 10); 
             }
             //console.log('Fiber Optic Cable Data: ' + JSON.stringify(this.girdDataFocTab));
 
@@ -69,7 +69,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             //console.log('Cable Data: ' + data);
             for(let i=0; i<this.girdDataCableTab.length; i++){
                 this.girdDataCableTab[i].isAdd = isAddVector; 
-                this.girdDataCableTab[i]['isNew'] = i; 
+                this.girdDataCableTab[i]['isNew'] = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(2, 10);
 
             }
         })
@@ -84,7 +84,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             //console.log('Test & Inspection Data: ' + data);
             for(let i=0; i<this.girdDataTandITab.length; i++){
                 this.girdDataTandITab[i].isAdd = isAddVector; 
-                this.girdDataTandITab[i]['isNew'] = i; 
+                this.girdDataTandITab[i]['isNew'] = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(2, 10);
 
             }
         })

@@ -6,6 +6,8 @@ import filteredProductPrinter from '@salesforce/apex/QuoteController.filteredPro
 import getFirstFilter from '@salesforce/apex/QuoteController.getFirstFilter'; 
 import getProductFilteringv2 from '@salesforce/apex/QuoteController.getProductFilteringv2';
 import addSelectorQuoteLine from '@salesforce/apex/QuoteController.addSelectorQuoteLine'; 
+import getAdditionalFiltering from '@salesforce/apex/QuoteController.getAdditionalFiltering';
+
 
 export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     @api recordId; 
@@ -26,6 +28,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
 
     connectedCallback(){
         this.filtersLoading = false; 
+        this.showLookupList = true;
         //ADSS Cable - Loose Tube Cable - Premise Cable - SkyWrap Cable - Wrapping Tube Cable
     }
 
@@ -80,10 +83,28 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                 }
             break; 
             case 'clone':
+                //console.log('Row attr: '+Object.getOwnPropertyNames(row));
+                console.log('Clone!')
+                this.showLookupList = false;
+                let copyRow = JSON.parse(JSON.stringify(row));
+                copyRow.isNew = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 10); 
+                this.listToDisplay.push(copyRow);
+                this.dispatchEvent(new CustomEvent('listtodisplayadd', { detail: {list: this.listToDisplay, tab: this.tabSelected} }));
+                setTimeout(()=>{
+                    this.showLookupList = true;
+                }, 2000);
             break; 
             case 'edit':
             break; 
             case 'delete':
+                console.log('Delete!')
+                this.showLookupList = false;
+                let deleteLookupcodeList = this.listToDisplay.findIndex(x => x.isNew == row.isNew);
+                this.listToDisplay.splice(deleteLookupcodeList,1);
+                this.dispatchEvent(new CustomEvent('listtodisplayadd', { detail: {list: this.listToDisplay, tab: this.tabSelected} }));
+                setTimeout(()=>{
+                    this.showLookupList = true;
+                }, 2000);
             break; 
             default:
                 alert('MEGA ERROR WITH ROW ACTIONS');
@@ -164,7 +185,9 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             this.template.querySelectorAll('lightning-datatable').forEach(each => {
                 each.selectedRows = [];
         });
-        
+        this.filtersLoading = true; 
+        this.productTypeShow = true; 
+        this.fillReviewFilters();
     }
     //Funtion that gets the values available to display in Review table depending on values of the list saved before. 
     @track columnsRequiredReview = [];
@@ -174,10 +197,10 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         this.columnsRequiredReview = [];
         this.listFiltersReview = []; 
 
-        for(let i =0; i<this.columnsRequired.length;i++){
+        for(let i = 0; i<this.columnsRequired.length;i++){
             let availableOptions = [...new Set(this.allReviews.map(item => item[this.columnsRequired[i].apiName]))];
             //console.log('availableOptions R: '+JSON.stringify(availableOptions));
-            for (let j=0; j<availableOptions.length;j++){
+            for (let j= 0; j<availableOptions.length;j++){
                 if(availableOptions[j] == null ||  availableOptions[j] == 'null'){
                     availableOptions[j] = [];
                 } else {
@@ -185,6 +208,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                 }
             }
             this.columnsRequiredReview.push({label: this.columnsRequired[i].label, apiName: this.columnsRequired[i].apiName, options: availableOptions });
+            //console.log('Review R: ');
+            //console.log(this.columnsRequiredReview);
         }
         for(let i =0; i<this.listFilters.length;i++){
             let availableOptions = [...new Set(this.allReviews.map(item => item[this.listFilters[i].apiName]))];
@@ -197,6 +222,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                 }
             }
             this.listFiltersReview.push({label: this.listFilters[i].label, apiName: this.listFilters[i].apiName, options: availableOptions });
+            //console.log('Review L: ');
+            //console.log(this.listFiltersReview);
         }
         //console.log('columnsRequiredReview');
         //console.log(this.columnsRequiredReview);
@@ -226,8 +253,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         
     }
 
-    @track reviewSelectedValue = []; 
-    @track reviewSelectedLabel = [];
+    @track reviewSelectedValue ; 
+    @track reviewSelectedLabel ;
     @track reviewLoading = false;
     @track reviewDisplay = [];
     @track allReviews = [];
@@ -236,74 +263,25 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
 
     //Function that handles lookup in REVIEW TAB just to see the selected ones.
     handleInputChangeSelected(event){
-        this.reviewDisplay = this.allReviews; 
         this.reviewLoading = true; 
-        let aux = this.reviewSelectedLabel.findIndex(element => element == event.target.label);
-        //console.log('Aux here: '+aux)
-        if (aux == -1) {
-            this.reviewSelectedLabel.push(event.target.label);
-            this.reviewSelectedValue.push(event.detail.value);
+        this.reviewSelectedLabel = event.target.label;
+        this.reviewSelectedValue = event.detail.value;
+
+        if (this.reviewSelectedLabel == 'Product Type'){
+            this.reviewDisplay = this.allReviews; 
+            let filteredByType= this.reviewDisplay.filter(x => x.Product_Type__c == this.reviewSelectedValue);
+            //console.log('Filtered: '+ JSON.stringify(filteredByType));
+            //console.log('All: '+ JSON.stringify(this.allReviews));
+            this.reviewDisplay = filteredByType; 
         } else {
-            this.reviewSelectedValue[aux] = event.detail.value;
+            let apiPropertyIndex = this.columnsReview.find(element => element.label == this.reviewSelectedLabel);
+            let filteredByField= this.reviewDisplay.filter(x => x[apiPropertyIndex.fieldName] == this.reviewSelectedValue);
+            console.log(); 
+            this.reviewDisplay = filteredByField; 
         }
-        let recs = [];
-        for(let i=0;i<this.reviewSelectedLabel.length; i++){
-            //console.log('Filtered by: '+ this.reviewSelectedLabel[i])
-            if(this.reviewSelectedLabel[i] == 'Product Type'){
-                let filteredByType= this.reviewDisplay.filter(x => x.Product_Type__c == this.reviewSelectedValue[i]);
-                //let filteredByType = this.allReviews.find(({Product_Type__c}) => Product_Type__c === this.reviewSelectedValue);
-                //console.log('Filtered: '+ JSON.stringify(filteredByType));
-                //console.log('All: '+ JSON.stringify(this.allReviews));
-                this.reviewDisplay = filteredByType; 
-            } else {
-                let apiPropertyIndex = this.columnsReview.find(element => element.label == this.reviewSelectedLabel[i]);
-                for (let rec of this.reviewDisplay){
-                    //console.log('Property: '+this.reviewSelectedLabel)
-                    //console.log(apiPropertyIndex.fieldName);
-                    //console.log(rec[apiPropertyIndex.fieldName]); 
-                    if (rec[apiPropertyIndex.fieldName] == this.reviewSelectedValue[i]){
-                        recs.push(rec); 
-                    }
-                }
-                this.reviewDisplay = recs; 
-            }
-            
-            
-            
-        }
-            
-
-            /*
-            if(this.reviewSelectedLabel == 'Product Type'){
-                let filteredByType= this.allReviews.filter(x => x.Product_Type__c == this.reviewSelectedValue);
-                //let filteredByType = this.allReviews.find(({Product_Type__c}) => Product_Type__c === this.reviewSelectedValue);
-                //console.log('Filtered: '+ JSON.stringify(filteredByType));
-                //console.log('All: '+ JSON.stringify(this.allReviews));
-                this.reviewDisplay = filteredByType; 
-            }
-            else {
-                let apiPropertyIndex = this.columnsReview.find(element => element.label == this.reviewSelectedLabel);
-                if (apiPropertyIndex){
-                    for (let rec of this.reviewDisplay){
-                        //console.log('Property: '+this.reviewSelectedLabel)
-                        //console.log(apiPropertyIndex.fieldName);
-                        //console.log(rec[apiPropertyIndex.fieldName]); 
-                        if (rec[apiPropertyIndex.fieldName] == this.reviewSelectedValue){
-                            recs.push(rec); 
-                        }
-                    }
-                    this.reviewDisplay = recs; 
-                } else {
-                    this.reviewDisplay = this.allReviews;
-                }
-            }
-            */
-
         //console.log('review data: '+ JSON.stringify(this.reviewDisplay)); 
         this.updateReviewTable();
         this.reviewLoading = false; 
-        //WATCH HERE IF THIS IS WORKING! 
-
     }
 
     //DELETING PRODUCT FROM REVIEW TABLE
@@ -357,39 +335,76 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         this.productTypeShow = false; 
         this.filtersLoading = false;
         //console.log('filterGroup: '+ filterGroup);
-        getFirstFilter({filteredGrouping: filterGroup})
-        .then((data)=>{
-            //console.log('FIRST PRODUCT TYPE:');
-            //console.log(filterGroup); 
-            this.productType = JSON.parse(data);
-            //console.log('Required filters: '+data); 
-            for (let i =0; i < this.productType.length; i++){
-                this.productType[i].options = JSON.parse(this.productType[i].options); 
-                this.columnsRequired.push(this.productType[i]); 
-            }
-            
-            this.productTypeShow = true; 
-            this.filtersLoading = true;
-               
-            //console.log('columnsRequired');
-            //console.log(this.columnsRequired);
-        })
-        .catch((error)=>{
-            const evt = new ShowToastEvent({
-                title: 'Required Filters Error',
-                message: 'Unexpected error loading the filters - Please close the pop-up',
-                variant: 'error',
-                mode: 'sticky'
+        if (this.trackList.lookupCode == 'Closures'){ 
+            console.log('WORKING ON CLOSURES');
+            getFirstFilter({filteredGrouping: filterGroup})
+            .then((data)=>{
+                this.productType = JSON.parse(data);
+                //console.log('Required filters: '+data); 
+                for (let i =0; i < this.productType.length; i++){
+                    this.productType[i].options = JSON.parse(this.productType[i].options); 
+                    this.columnsRequired.push(this.productType[i]); 
+                    this.columnsFilters.push({label: this.productType[i].label, fieldName: this.productType[i].apiName,}); 
+                    this.columnsReview.push({label: this.productType[i].label, fieldName: this.productType[i].apiName, editable: false,});
+                    this.filtersForApex.push({label: this.productType[i].label, value: ''});
+                }
+                this.productTypeShow = true; 
+                this.filtersLoading = true;
+            })
+            .catch((error)=>{
+                console.log('Closures error'); 
+                console.log(error); 
+            })
+        } else {
+            getFirstFilter({filteredGrouping: filterGroup})
+            .then((data)=>{
+                //console.log('FIRST PRODUCT TYPE:');
+                //console.log(filterGroup); 
+                this.productType = JSON.parse(data);
+                //console.log('Required filters: '+data); 
+                for (let i =0; i < this.productType.length; i++){
+                    this.productType[i].options = JSON.parse(this.productType[i].options); 
+                    this.columnsRequired.push(this.productType[i]); 
+                }
+                
+                this.productTypeShow = true; 
+                this.filtersLoading = true;
+                   
+                //console.log('columnsRequired');
+                //console.log(this.columnsRequired);
+            })
+            .catch((error)=>{
+                const evt = new ShowToastEvent({
+                    title: 'Required Filters Error',
+                    message: 'Unexpected error loading the filters - Please close the pop-up',
+                    variant: 'error',
+                    mode: 'sticky'
+                });
+                this.dispatchEvent(evt);
+                console.log(error);
             });
-            this.dispatchEvent(evt);
-            console.log(error);
-        });
+        }
+        
     }
 
     //PRODUCT TYPE CALL FILTERS DEPENDENCIES
     handleProductTypeChange(event){
-        this.filtersForApex = [];
         this.filtersLoading = false;
+
+        //GETTING FILTES DEPENDENCIES
+        if (this.trackList.lookupCode == 'Closures'){
+            this.filtersLoading = true; 
+            this.requiredApex = event.detail.value;
+            let indexFilter = this.filtersForApex.findIndex(x => x.label == event.target.label); 
+            //console.log('Index in filterSelected: '+indexFilter);
+            if( indexFilter > -1){
+                this.filtersForApex[indexFilter].value = event.detail.value; 
+            } else {
+                this.filtersForApex.push({label: event.target.label, value:event.detail.value}); 
+            }
+            this.printProducts();
+        } else {
+        this.filtersForApex = [];
         this.requiredApex = event.detail.value;
         //let index = this.filtersForApex.findIndex(label => label.label === event.detail.label);
         this.filtersForApex.push({label: event.target.label, value: this.requiredApex});
@@ -399,8 +414,6 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         this.listFilters = [];
         this.columnsFilters = [{label: 'Product Name', fieldName: 'Name', editable: false, wrapText: true, },]; 
         this.columnsReview = [{label: 'Product Name', fieldName: 'Name', editable: false, },]; 
-        
-        //GETTING FILTES DEPENDENCIES
         getProductFilteringv2({filteredGrouping: this.trackList.lookupCode, typeSelection: this.requiredApex })
         .then((data)=>{
             //console.log('SECOND PRODUCT TYPE');
@@ -446,6 +459,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             console.log('');
             console.log(this.error);
         });
+        }
         //SHOW PRODUCTS BY REQUIRED FIELDS
         this.printProducts();
     }
@@ -469,10 +483,65 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         }
         let indexFilter = this.filtersForApex.findIndex(x => x.label == event.target.label); 
         //console.log('Index in filterSelected: '+indexFilter);
+        
         if( indexFilter > -1){
             this.filtersForApex[indexFilter].value = event.detail.value; 
         } else {
             this.filtersForApex.push({label: event.target.label, value:event.detail.value}); 
+        }
+
+        //ONLY FOR CAMBLE ASSEMBLIES + CUSTOMER REQUIRED FILTER
+        if ( this.trackList.lookupCode == 'Cable Assemblies' && event.target.label == 'Customer'){
+            //console.log('Customer Value: '+JSON.stringify(event.detail.value));
+            getAdditionalFiltering({customerSelection: JSON.stringify(event.detail.value)})
+            .then((data)=>{
+                console.log('Cable Assemblies');
+                console.log(data); 
+                let temporalList = JSON.parse(data); 
+                //console.log('Times: '+temporalList.length);
+                for (let i=0; i<temporalList.length;i++){
+                    let ind = this.listFilters.findIndex(element => element.label == temporalList[i].label)
+                    if (ind == -1){
+                        if (temporalList[i].options == '[]'){
+                            this.listTextFilters.push({label: temporalList[i].label, name: temporalList[i].label});
+                            //console.log('TEXT FILTER');
+                        } else if (temporalList[i].options == null || temporalList[i].options == "null") {
+                            //console.log('WITH NO OPTIONS FILTER');
+                            this.listFilters.push(temporalList[i]); 
+                        } else {
+                            //console.log('PICKLIST FILTER');
+                            let optionsFilters = JSON.parse(temporalList[i].options);  
+                            for (let j = 0; j < optionsFilters.length; j++){
+                                optionsFilters[j] = {label: optionsFilters[j].label, value: optionsFilters[j].value}; 
+                            }
+                            temporalList[i].options = optionsFilters; 
+                            this.listFilters.push(temporalList[i]); 
+                        }
+                    } else {
+                        if (temporalList[i].options == '[]'){
+                            //this.listTextFilters.push({label: temporalList[i].label, name: temporalList[i].label});
+                            //console.log('TEXT FILTER');
+                        } else if (temporalList[i].options == null || temporalList[i].options == "null") {
+                            //console.log('WITH NO OPTIONS FILTER');
+                            //this.listFilters.push(temporalList[i]); 
+                        } else {
+                            //console.log('PICKLIST FILTER');
+                            let optionsFilters = JSON.parse(temporalList[i].options);  
+                            for (let j = 0; j < optionsFilters.length; j++){
+                                optionsFilters[j] = {label: optionsFilters[j].label, value: optionsFilters[j].value}; 
+                            }
+                            temporalList[i].options = optionsFilters; 
+                            this.listFilters[ind] = temporalList[i]; 
+                        }
+                    }
+                    
+                }
+               
+            })
+            .catch((error)=>{
+                console.log('Not Cable Assemblies');
+                console.log(error)
+            })
         }
         //console.log(JSON.stringify(this.filtersForApex));
         //console.log(this.tabSelected);
@@ -487,8 +556,12 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         //console.log('filters:');
         //console.log(filters);
         //console.log('tab: ' +this.tabSelected);
-        //console.log('filteredGrouping: ' + this.trackList.lookupCode);
-        filteredProductPrinter({filterValues: JSON.stringify(filters), level1: this.tabSelected, filteredGrouping: this.trackList.lookupCode})
+        console.log('filteredGrouping: ' + this.trackList.lookupCode);
+        //--------FOR OCA / CAONNECTIVITY VALUE IN SANDBOX ----------------
+        let tabSelectedValue;
+        this.tabSelected == 'Connectivity' ? tabSelectedValue = 'OCA' : tabSelectedValue = this.tabSelected; 
+        //--------FOR OCA / CAONNECTIVITY VALUE IN SANDBOX ----------------
+        filteredProductPrinter({filterValues: JSON.stringify(filters), level1: tabSelectedValue, filteredGrouping: this.trackList.lookupCode})
         .then((data)=>{
             //console.log('Products Filtered');
             //console.log(data);
@@ -627,22 +700,62 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     @track showLookupList = false; 
     //PRODUCTS TURNED IN QUOTELINES
     @track listNSP = [];
+    @track firstNSP; 
     @track popupNSP = false;
-    saveLookingNSP(){
-        this.popupNSP = true;
-        this.listNSP = JSON.parse(JSON.stringify(this.allReviews));
-        for (let nsp of this.listNSP){
-            nsp['nspFields'] = {Field1: 'Value1', Field2: 'Value2', Field3: 'Value3', Field4: 'Value4'};
-        }
 
+    //Open NSP pop ups for each product
+    saveLookingNSP(){
+        console.log('Tab: '+this.tabSelected + 'LookupCode: ' +this.trackList.lookupCode)
+        if ( 
+        ((this.tabSelected == 'ACA')) || 
+        ((this.tabSelected == 'Fiber Optic Cable') && ( (this.trackList.lookupCode == 'Premise Cable') || 
+        (this.trackList.lookupCode == 'Loose Tube Cable') || (this.trackList.lookupCode == 'ADSS Cable')) ) || 
+        ((this.tabSelected == 'Cable')) ||
+        ((this.tabSelected == 'Connectivity') && ( (this.trackList.lookupCode == 'Cable Assemblies') || (this.trackList.lookupCode == 'Patch Panels') ))
+        ){
+            this.popupNSP = true;
+            this.listNSP = JSON.parse(JSON.stringify(this.allReviews));
+            let i = 1;
+            for (let nsp of this.listNSP){
+            nsp['nspFields'] = {Field1: 'Value1', Field2: 'Value2', Field3: 'Value3', Field4: 'Value4'};
+            nsp['tabNsp'] = i; 
+            i += 1;
+            }
+            this.firstNSP = 1;
         //After this process is correct call saveAndExitFilterModal to close the modal,
         //turn the products into quotelines and the list grows once again
+        }
+        else {
+            this.saveAndExitFilterModal();
+            this.closeFilterAndSelected();
+        }
+        
     }
-
-    continueNSP(){
+    handleNSPTab(event){
+        this.firstNSP = event.target.value;
+    }
+    continueNSP(event){
+        let activeTabValue = Number(this.firstNSP) + 1;
+        if (activeTabValue > this.listNSP.length){
+            console.log('Progress here to saveAndExitFilterModal');
+            this.closeNSP();
+            this.firstNSP = 1; 
+        } else {
+            this.firstNSP = activeTabValue.toString();
+            //console.log(this.firstNSP); 
+        }
+        
+    }
+    closeNSP(){
+        this.showLookupList = false;
         this.popupNSP = false;
+        //CHANGE THIS TO CLOSE AND SAVE WHEN BUTTON IS CLICK NOT X CLOSE 
+        this.saveAndExitFilterModal();
+        this.closeFilterAndSelected(); 
+        
     }
 
+    //TRABAJAR AQUI CUANDO EL QUOTE SAVER ESTE LISTO. 
     saveAndExitFilterModal(){
         let auxQuoteLines = JSON.parse(JSON.stringify(this.allReviews)); 
         for(let i=0; i<auxQuoteLines.length; i++){
@@ -660,7 +773,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             let trackListInternal = JSON.parse(JSON.stringify(this.trackList));
             let listToDisplayInternal = JSON.parse(JSON.stringify(this.listToDisplay));
             let index = listToDisplayInternal.findIndex(product => product.isNew === trackListInternal.isNew);
-            this.showLookupList = true;
+            this.showLookupList = false;
             //console.log('index '+ index);
             listToDisplayInternal[index]['listOfProducts'] = auxQuoteLines; 
             listToDisplayInternal[index].isAdd[0] = true;
@@ -691,7 +804,10 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             });
             this.dispatchEvent(evt);
             this.closeFilterAndSelected(); 
-            this.showLookupList = false;
+            setTimeout(()=>{
+                this.showLookupList = true;
+            }, 1000);
+            
         })
         .catch((error)=>{
             console.log('Error from addSelectorQuoteLine');
