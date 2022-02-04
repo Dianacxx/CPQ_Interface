@@ -3,25 +3,29 @@
     <!-- sldsValidatorIgnoreNextLine -->
     <lightning-spinner if:false={showLookupList} alternative-text="Loading" size="medium"></lightning-spinner>
     <template if:true={showLookupList}>
-        <lightning-datatable key-field="Id" data={listToDisplay} columns={gridColumns}  hide-checkbox-column="true"  
-        onrowaction={callRowAction} hide-table-header="true"></lightning-datatable>
+        <lightning-layout multiple-rows="false">
+            <lightning-datatable key-field="Id" data={listToDisplay} columns={gridColumns}  hide-checkbox-column="true"  
+            onrowaction={callRowAction} hide-table-header="true"></lightning-datatable>
+            <lightning-datatable key-field="Id" data={listToDisplayAdd} columns={gridColumnsAdd}  hide-checkbox-column="true"  
+            onrowaction={callRowAction} hide-table-header="true"></lightning-datatable>
+        </lightning-layout>
     </template>
     <!--DATATABLE END-->
     <!--FILTERED POP-UP START-->
     <template if:true={openFilterPopup}>
-        <section aria-modal="true" class="slds-modal slds-fade-in-open">
-            <div class="slds-modal__container ">
-                <header class="slds-modal__header">
+        <section aria-modal="true" class="slds-modal slds-fade-in-open slds-align_absolute-center">
+            <div class="slds-modal__container slds-var-m-left_medium slds-var-m-right_medium">
+                <header class="slds-modal__header slds-var-m-left_medium slds-var-m-right_medium">
                     <h2 class="slds-text-heading_medium slds-hyphenate">Filter & Select: {trackList.lookupCode}</h2>
                     <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeFilterAndSelected}></lightning-icon>
                 </header>
-                <div class="slds-modal__content">
-                    <div class="slds-var-p-around_small slds-align_absolute-center slds-var-m-left_large">
+                <div class="slds-modal__content slds-var-m-left_medium slds-var-m-right_medium">
+                    <div class="slds-var-p-around_small slds-align_absolute-center slds-var-m-left_medium slds-var-m-right_medium">
                         <lightning-tabset active-tab-value={activeFilterTab}>
                             <!--FILTER TAB START-->
                             <lightning-tab label="Filter" value="Filter" onactive={handleFilterTabActive}>
                                 <!--FILTERS REQUIRED START-->
-                                <div class="slds-grid slds-gutters slds-var-m-bottom_small slds-var-m-left_large slds-var-m-right_small">
+                                <div class="slds-grid slds-gutters slds-var-m-bottom_small slds-var-m-left_medium slds-var-m-right_medium">
                                     <template if:true={productTypeShow}>
                                         <lightning-layout multiple-rows="false">
                                             <template for:each={productType} for:item="productType1">
@@ -33,7 +37,7 @@
                                 </div>
                                 <!--FILTERS REQUIRED END-->
                                 <!--FILTERS DEPENDENCIES START-->
-                                <div class="slds-grid slds-gutters slds-var-m-bottom_small slds-var-m-left_large slds-var-m-right_small">
+                                <div class="slds-grid slds-gutters slds-var-m-bottom_small slds-var-m-left_medium slds-var-m-right_medium">
                                     <lightning-spinner if:false={filtersLoading} alternative-text="Loading" size="small"></lightning-spinner>
                                     <template if:true={filtersLoading}>
                                         <lightning-layout multiple-rows="false">
@@ -50,12 +54,12 @@
                                 </div>
                                 <!--FILTERS DEPENDENCIES END-->
                                 <!--CLEAR FILTERS START-->
-                                <div class="slds-grid slds-gutters slds-var-m-left_large slds-align_absolute-center slds-var-m-right_small">
+                                <div class="slds-grid slds-gutters slds-var-m-left_medium slds-align_absolute-center slds-var-m-right_medium">
                                     <lightning-button variant="brand" label="Clear Filters" title="Clear"  onclick={clearFilters} class="slds-var-m-left_small slds-var-m-top_large"></lightning-button>
                                 </div>
                                 <!--CLEAR FILTERS END-->
                                 <!--RECORDS FILTERED START-->
-                                <div class="slds-grid slds-gutters slds-var-m-left_large slds-var-m-top_medium">
+                                <div class="slds-grid slds-gutters slds-var-m-left_medium slds-var-m-right_medium slds-var-m-top_medium">
                                     <lightning-icon icon-name="standard:filter" alternative-text="filter" size="small" class=" slds-var-m-right_small"></lightning-icon>
                                     <p style="color: rgb(21, 35, 233); font-size:16px;">Filtered, {recordsAmount} records found.</p>
                                 </div>
@@ -149,7 +153,7 @@
                         </lightning-tabset>
                     </div>
                 </div>
-                <footer class="slds-modal__footer">
+                <footer class="slds-modal__footer slds-var-m-left_medium slds-var-m-right_medium">
                     <template if:false={tabOption}>
                         <lightning-button variant="brand" label="Cancel" title="Close"  onclick={closeFilterAndSelected} class="slds-var-m-right_small"></lightning-button>   
                         <lightning-button variant="brand" label="Add" title="Add"  onclick={addProducts} class="slds-var-m-right_small"></lightning-button>    
@@ -174,7 +178,10 @@
                     <h2 class="slds-text-heading_medium slds-hyphenate">Action Required! Populate NSP Fields</h2>
                     <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeNSP}></lightning-icon>
                 </header>
-                <div class="slds-modal__content  slds-var-m-left_medium  slds-var-m-right_medium">
+                <div class="slds-modal__content  slds-var-m-left_medium slds-var-m-right_medium slds-var-m-right_medium">
+                    <div class="slds-var-m-left_medium slds-var-m-top_small">                    
+                    <lightning-icon icon-name="standard:product_service_campaign" alternative-text="ProductList" title="ProductList"></lightning-icon>
+                    <h1 class="slds-var-m-left_xx-small slds-form-element__label" >Products: </h1>
                     <lightning-tabset active-tab-value={firstNSP}>
                         <template for:each={listNSP} for:item="nspP">
                             <lightning-tab class="slds-var-m-left_medium" key={nspP.Id} onactive={handleNSPTab} label={nspP.tabNsp} value={nspP.tabNsp}>
@@ -189,6 +196,7 @@
                             </lightning-tab>
                         </template>
                     </lightning-tabset>
+                    </div>
                 </div>
                 <footer class="slds-modal__footer slds-var-m-left_medium  slds-var-m-right_medium">
                     <lightning-button variant="brand" label="Close" title="Close"  onclick={closeNSP} ></lightning-button>    

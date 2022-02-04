@@ -12,6 +12,8 @@ import getAdditionalFiltering from '@salesforce/apex/QuoteController.getAddition
 export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     @api recordId; 
     @api listToDisplay = []; 
+    @api listToDisplayAdd = []; 
+
     @track openFilterPopup = false; 
     @track openConfiguredPopup = false; 
     @api tabSelected; 
@@ -36,7 +38,11 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     constructor() {
         super();
         this.gridColumns = [ 
-            { label: '', fieldName: 'lookupCode' ,initialWidth: 280, hideDefaultActions: true}, 
+            { label: '', fieldName: 'lookupCode' ,initialWidth: 250, hideDefaultActions: true}, 
+            { type: 'action', typeAttributes: { rowActions: this.getRowActions.bind(this) } },
+        ];
+        this.gridColumnsAdd = [ 
+            { label: '', fieldName: 'lookupCode' ,initialWidth: 250, hideDefaultActions: true}, 
             { type: 'action', typeAttributes: { rowActions: this.getRowActions.bind(this) } },
         ];
     }
@@ -88,23 +94,23 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                 this.showLookupList = false;
                 let copyRow = JSON.parse(JSON.stringify(row));
                 copyRow.isNew = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 10); 
-                this.listToDisplay.push(copyRow);
-                this.dispatchEvent(new CustomEvent('listtodisplayadd', { detail: {list: this.listToDisplay, tab: this.tabSelected} }));
+                this.listToDisplayAdd.push(copyRow);
+                this.dispatchEvent(new CustomEvent('listtodisplayadd', { detail: {list: this.listToDisplayAdd, tab: this.tabSelected} }));
                 setTimeout(()=>{
                     this.showLookupList = true;
-                }, 2000);
+                }, 1000);
             break; 
             case 'edit':
             break; 
             case 'delete':
                 console.log('Delete!')
                 this.showLookupList = false;
-                let deleteLookupcodeList = this.listToDisplay.findIndex(x => x.isNew == row.isNew);
-                this.listToDisplay.splice(deleteLookupcodeList,1);
-                this.dispatchEvent(new CustomEvent('listtodisplayadd', { detail: {list: this.listToDisplay, tab: this.tabSelected} }));
+                let deleteLookupcodeList = this.listToDisplayAdd.findIndex(x => x.isNew == row.isNew);
+                this.listToDisplayAdd.splice(deleteLookupcodeList,1);
+                this.dispatchEvent(new CustomEvent('listtodisplayadd', { detail: {list: this.listToDisplayAdd, tab: this.tabSelected} }));
                 setTimeout(()=>{
                     this.showLookupList = true;
-                }, 2000);
+                }, 1000);
             break; 
             default:
                 alert('MEGA ERROR WITH ROW ACTIONS');
@@ -155,6 +161,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             this.template.querySelectorAll('lightning-datatable').forEach(each => {
                 each.selectedRows = [];
             });
+            console.log('Length of products added: '+this.allReviews.length)
         } else {
             const evt = new ShowToastEvent({
                 title: 'Not selected products yet',
@@ -757,44 +764,41 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
 
     //TRABAJAR AQUI CUANDO EL QUOTE SAVER ESTE LISTO. 
     saveAndExitFilterModal(){
+        this.showLookupList = false;
+
         let auxQuoteLines = JSON.parse(JSON.stringify(this.allReviews)); 
+        let auxQuoteLinesLength;
         for(let i=0; i<auxQuoteLines.length; i++){
             let auxId = auxQuoteLines[i].Id; 
             auxQuoteLines[i].Id = auxQuoteLines[i].idTemporal; 
             auxQuoteLines[i].idTemporal = auxId; 
         }
-
-        //console.log('Data before addSelectorQuoteLine'+ JSON.stringify( auxQuoteLines ));
+        //console.log('Length of products before close: '+ this.allReviews.length)
         addSelectorQuoteLine({quoteId: this.recordId, products: JSON.stringify(auxQuoteLines)})
         .then((data)=>{
             console.log('Data after addSelectorQuoteLine'+ data);
             auxQuoteLines = JSON.parse(data); 
-            
+            auxQuoteLinesLength = auxQuoteLines.length; 
+            console.log('Length of products: '+ auxQuoteLinesLength)
             let trackListInternal = JSON.parse(JSON.stringify(this.trackList));
-            let listToDisplayInternal = JSON.parse(JSON.stringify(this.listToDisplay));
-            let index = listToDisplayInternal.findIndex(product => product.isNew === trackListInternal.isNew);
-            this.showLookupList = false;
+            let listToDisplayInternal = JSON.parse(JSON.stringify(this.listToDisplayAdd));
             //console.log('index '+ index);
-            listToDisplayInternal[index]['listOfProducts'] = auxQuoteLines; 
-            listToDisplayInternal[index].isAdd[0] = true;
-            listToDisplayInternal[index].isAdd[1] = false;
-            listToDisplayInternal[index].isAdd[2] = false;
-            listToDisplayInternal[index].isAdd[3] = false;
-            listToDisplayInternal[index].lookupCode = listToDisplayInternal[index].lookupCode+' ('+this.allReviews.length+' Products Added)'
-    
-            trackListInternal.isNew = listToDisplayInternal[listToDisplayInternal.length-1].isNew + 1; 
-            //console.log('Long Before'+ this.listToDisplay.length);
+            trackListInternal['listOfProducts'] = auxQuoteLines; 
+            trackListInternal.isAdd[0] = true;
+            trackListInternal.isAdd[1] = false;
+            trackListInternal.isAdd[2] = false;
+            trackListInternal.isAdd[3] = false;
+            trackListInternal.lookupCode = trackListInternal.lookupCode+' ('+auxQuoteLinesLength+' Products)';
+            trackListInternal.isNew = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 10); 
             listToDisplayInternal.push(trackListInternal);
             this.trackList = [];
-            this.listToDisplay = listToDisplayInternal; 
-            //console.log('Long After'+ this.listToDisplay.length);
-            console.log(JSON.stringify(this.listToDisplay));
+            this.listToDisplayAdd = listToDisplayInternal; 
     
             //Posiblemente quitar esta funcion y en la otra si oprimen save, enviar a la lista de quotelines
             //el arreglo de los listOfProducts de cada uno de los mostrados en pantalla
             this.dispatchEvent(new CustomEvent('reviewitems', { detail: this.allReviews }));
             setTimeout(()=>{
-                this.dispatchEvent(new CustomEvent('listtodisplayadd', { detail: {list: this.listToDisplay, tab: this.tabSelected} }));
+                this.dispatchEvent(new CustomEvent('listtodisplayadd', { detail: {list: this.listToDisplayAdd, tab: this.tabSelected} }));
             }, 500);
             const evt = new ShowToastEvent({
                 title: 'Here goes the save process',

@@ -15,6 +15,12 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
     @api girdDataFocTab; 
     @api girdDataCableTab; 
     @api girdDataTandITab; 
+    //SAVING VALUES IN EVERY TAB
+    @api girdDataAcaTabAdd; 
+    @api girdDataConnTabAdd; 
+    @api girdDataFocTabAdd; 
+    @api girdDataCableTabAdd; 
+    @api girdDataTandITabAdd; 
 
 
     connectedCallback(){
@@ -139,21 +145,21 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         
         switch (event.detail.tab){
             case 'ACA':
-                this.girdDataAcaTab = event.detail.list;
+                this.girdDataAcaTabAdd = event.detail.list;
             break; 
             case 'Connectivity':
-                this.girdDataConnTab = event.detail.list;
+                this.girdDataConnTabAdd = event.detail.list;
             break; 
             case 'Fiber Optic Cable':
                 //console.log('Before '+ JSON.stringify(this.girdDataFocTab));
-                this.girdDataFocTab = event.detail.list;
+                this.girdDataFocTabAdd = event.detail.list;
                 //console.log('After '+ JSON.stringify(this.girdDataFocTab));
             break; 
             case 'Cable':
-                this.girdDataCableTab = event.detail.list;
+                this.girdDataCableTabAdd = event.detail.list;
             break; 
             case 'Test and Inspection':
-                this.girdDataTandITab = event.detail.list;
+                this.girdDataTandITabAdd = event.detail.list;
             break; 
             case 'Manual Items':
             break; 
