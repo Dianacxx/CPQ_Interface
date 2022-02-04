@@ -319,7 +319,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     @track requiredApex; 
     @track productTypeShow = false; 
 
-    @track columnsFilters = [{label: 'Product Name', fieldName: 'Name', editable: false, wrapText: true,},];
+    @track columnsFilters = [{label: 'Product Name', fieldName: 'Name', editable: false, wrapText: false,},];
     @track columnsReview = [{label: 'Product Name', fieldName: 'Name', editable: false, },]; 
     @track columnsRequired = []; 
 
@@ -329,7 +329,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         this.listFilters = []; 
         this.filtersLoading = false; 
         this.filtersForApex = []; 
-        this.columnsFilters = [{label: 'Product Name', fieldName: 'Name', editable: false, wrapText: true, },]; 
+        this.columnsFilters = [{label: 'Product Name', fieldName: 'Name', editable: false, wrapText: false, },]; 
         this.columnsReview = [{label: 'Product Name', fieldName: 'Name', editable: false, },]; 
         this.columnsRequired = [];
         this.productTypeShow = false; 
@@ -412,7 +412,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         //console.log('typeSelection: '+ this.requiredApex);
         this.listTextFilters = [];
         this.listFilters = [];
-        this.columnsFilters = [{label: 'Product Name', fieldName: 'Name', editable: false, wrapText: true, },]; 
+        this.columnsFilters = [{label: 'Product Name', fieldName: 'Name', editable: false, wrapText: false, },]; 
         this.columnsReview = [{label: 'Product Name', fieldName: 'Name', editable: false, },]; 
         getProductFilteringv2({filteredGrouping: this.trackList.lookupCode, typeSelection: this.requiredApex })
         .then((data)=>{
@@ -795,7 +795,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             this.dispatchEvent(new CustomEvent('reviewitems', { detail: this.allReviews }));
             setTimeout(()=>{
                 this.dispatchEvent(new CustomEvent('listtodisplayadd', { detail: {list: this.listToDisplay, tab: this.tabSelected} }));
-            }, 1000);
+            }, 500);
             const evt = new ShowToastEvent({
                 title: 'Here goes the save process',
                 message: 'Save in quote format and create another value in list',
@@ -806,7 +806,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             this.closeFilterAndSelected(); 
             setTimeout(()=>{
                 this.showLookupList = true;
-            }, 1000);
+            }, 500);
             
         })
         .catch((error)=>{
