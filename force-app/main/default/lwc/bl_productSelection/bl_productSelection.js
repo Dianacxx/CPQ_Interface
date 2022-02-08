@@ -10,17 +10,17 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
     @api quoteNotesString; //Quotelines Notes in string 
 
     //DISPLAY VALUES IN EVERY TAB
-    @api girdDataAcaTab; 
-    @api girdDataConnTab; 
-    @api girdDataFocTab; 
-    @api girdDataCableTab; 
-    @api girdDataTandITab; 
+    @api girdDataAcaTab = []; 
+    @api girdDataConnTab = []; 
+    @api girdDataFocTab = []; 
+    @api girdDataCableTab = []; 
+    @api girdDataTandITab = []; 
     //SAVING VALUES IN EVERY TAB
-    @api girdDataAcaTabAdd; 
-    @api girdDataConnTabAdd; 
-    @api girdDataFocTabAdd; 
-    @api girdDataCableTabAdd; 
-    @api girdDataTandITabAdd; 
+    @api girdDataAcaTabAdd = []; 
+    @api girdDataConnTabAdd = []; 
+    @api girdDataFocTabAdd = []; 
+    @api girdDataCableTabAdd = []; 
+    @api girdDataTandITabAdd = []; 
 
 
     connectedCallback(){
@@ -102,23 +102,6 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         
     }
 
-    //DELETE THIS ONE ONCE THE CONFIGURED ARE DONE
-    @api productId; 
-    handleProductSelectionBundle(){
-
-        //let link = '/apex/sbqq__sb?scontrolCaching=1&id=' + this.recordId + '#quote/le?qId=' + this.recordId; //To QLE of quote. 
-        //To Configure Products of a Bundle one
-        this.productId = '01t8A000007c76KQAQ';
-        let link2 = '/apex/sbqq__sb?id='+this.recordId+'&tour=&isdtp=p1&ltn_app_id=06m8A0000004jM5QAI&clc=0#/product/pc?qId='+this.recordId+'&aId=a5e8A000000EK29QAG&pId='+this.productId+'&redirectUrl=LineEditor&open=0';
-        this[NavigationMixin.Navigate]({
-            type: 'standard__webPage',
-            attributes: {
-                url: link2,
-                recordId : this.recordId,
-            }
-        })
-    }
-
     //Event meaning to move to Configured Bundle Page
     saveBeforeConfigured(event){
         console.log('Send to UI Object');
@@ -131,18 +114,11 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
     }
 
     @api quotesAdded = []; 
-    //When products are add or edited. 
-    saveProductsAsQuotelines(event){
-        //console.log('Save in PS');
-        //console.log(JSON.stringify(event.detail));
-        this.quotesAdded.push(event.detail); 
-        //console.log('quotes Added: '+JSON.stringify(this.quotesAdded));
-    }
+
     //Keep List that is display upgraded. 
     saveListToDisplay(event){
         //console.log('Save List To Display in PS');
         //console.log(JSON.stringify(event.detail));
-        
         switch (event.detail.tab){
             case 'ACA':
                 this.girdDataAcaTabAdd = event.detail.list;
@@ -169,7 +145,36 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
     }
     //When click Save and Exit button in Product Selection UI
     handleSaveAndExit(){
-        this.dispatchEvent(new CustomEvent('saveandexit'));
+
+        for (let list of this.girdDataAcaTabAdd){
+            for (let secondList of list.listOfProducts){
+                this.quotesAdded.push(secondList);
+            }
+        }
+        for (let list of this.girdDataConnTabAdd){
+            for (let secondList of list.listOfProducts){
+                this.quotesAdded.push(secondList);
+            }
+        }
+        for (let list of this.girdDataFocTabAdd){
+            for (let secondList of list.listOfProducts){
+                this.quotesAdded.push(secondList);
+            }
+        }
+        for (let list of this.girdDataCableTabAdd){
+            for (let secondList of list.listOfProducts){
+                this.quotesAdded.push(secondList);
+            }
+        }
+        for (let list of this.girdDataTandITabAdd){
+            for (let secondList of list.listOfProducts){
+                this.quotesAdded.push(secondList);
+            }
+        }
+
+        this.dispatchEvent(new CustomEvent('saveandexitps', {detail: {asQuotelines: this.quotesAdded,
+        acaTAb: this.girdDataAcaTabAdd, connTab: this.girdDataConnTabAdd, focTab: this.girdDataFocTabAdd,
+        cableTab: this.girdDataCableTabAdd, taiTab: this.girdDataTandITabAdd} }));
     }
     
     

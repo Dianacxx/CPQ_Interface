@@ -481,7 +481,39 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     }
     //NAVIGATE BACK TO UI FROM PRODUCT SELECTION TAB WHEN SAVE AN EXIT
     //(MISSING SAVE IN ARRAY)
-    returnToUiSave(){
+    @api girdDataFocTabAdd = [];
+    @api girdDataAcaTabAdd = []; 
+    @api girdDataConnTabAdd = []; 
+    @api girdDataCableTabAdd = []; 
+    @api girdDataTandITabAdd = [];
+    returnToUiSave(event){
+
+        console.log('Product Selection Values Saved in QLE');
+        console.log(this.quotelinesString);
+        console.log(event.detail.asQuotelines);
+        this.girdDataFocTabAdd = event.detail.focTab;
+        this.girdDataAcaTabAdd = event.detail.acaTAb; 
+        this.girdDataConnTabAdd = event.detail.connTab; 
+        this.girdDataCableTabAdd = event.detail.cableTab; 
+        this.girdDataTandITabAdd = event.detail.taiTab; 
+        if (event.detail.asQuotelines){
+            let quotelineStringUpdate = JSON.parse(this.quotelinesString); 
+            console.log('new quotelines from PS')
+            console.log(event.detail.asQuotelines);
+            for (let newList of event.detail.asQuotelines){
+                quotelineStringUpdate.push(newList);
+            }
+            console.log(quotelineStringUpdate); 
+            this.quotelinesString = JSON.stringify(quotelineStringUpdate);
+        }
+        console.log('Table Updated');
+        
+        const payload = { 
+            dataString: this.quotelinesString,
+            auxiliar: 'updatetable'
+          };
+        publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
+
         this.showPSTab = false; 
         this.activeTab = 'UI';
         const evt = new ShowToastEvent({
@@ -503,14 +535,6 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     //APPLY BUTTON WITH DISCOUNT VALUES
     @track valueDiscount;
     handleValueDiscount(event) {
-        /* IN CASE IT'S LIMIT BY SOMETHING
-        if (event.detail.value < 0 || event.detail.value > 100){
-            alert('Value greater than 100% or less than 0%'); 
-            this.valueDiscount = null;
-        } else {
-            this.valueDiscount = event.detail.value;
-        }
-        */
         this.valueDiscount = event.detail.value;
     }
     handleApplyDiscount(){

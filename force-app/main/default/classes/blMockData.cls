@@ -2,13 +2,17 @@ public with sharing class blMockData {
     @AuraEnabled (cacheable=false)
     public static void savingRecordId(string quoteId) {
         Id actualUser = UserInfo.getUserId(); 
-        system.debug('USER Id: '+actualUser);
+        System.debug('USER Id: '+actualUser);
         List<bl_UI_RecordSaver__c> oldRecords = [SELECT Id, quoteId__c FROM bl_UI_RecordSaver__c WHERE CreatedById = :actualUser];
-        delete oldRecords;
-        bl_UI_RecordSaver__c blAction = new bl_UI_RecordSaver__c();
-        blAction.quoteId__c = quoteId; 
-        system.debug('Record in Object Save: '+blAction); 
-        insert blAction; 
+        if(oldRecords[0].Id != quoteId){
+            delete oldRecords;
+            bl_UI_RecordSaver__c blAction = new bl_UI_RecordSaver__c();
+            blAction.quoteId__c = quoteId; 
+            System.debug('Record in Object Save: '+blAction); 
+            insert blAction; 
+        } else {
+            System.debug('Not necessary to create new record'); 
+        }
     }
 
     @AuraEnabled (cacheable=false)

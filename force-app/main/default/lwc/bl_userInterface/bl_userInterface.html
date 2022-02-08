@@ -94,7 +94,13 @@
                         <c-bl_header record-id={recordId}></c-bl_header>
                     </div>
                     <!--HEADER END-->
-                    <c-bl_product-selection record-id={recordId} quotelines-string={quotelinesString} quote-notes-string={quoteNotesString} oncancelps={returnToUiCancel} onsaveandexit={returnToUiSave} onsavebeforeconfiguredtwo={saveBeforeConfigBundle}></c-bl_product-selection>
+                    <c-bl_product-selection record-id={recordId} quotelines-string={quotelinesString} 
+                    quote-notes-string={quoteNotesString} oncancelps={returnToUiCancel}
+                    onsaveandexitps={returnToUiSave} onsavebeforeconfiguredtwo={saveBeforeConfigBundle}
+                    gird-data-foc-tab-add={girdDataFocTabAdd} gird-data-aca-tab-add={girdDataAcaTabAdd}
+                    gird-data-conn-tab-add={girdDataConnTabAdd} gird-data-cable-tab-add={girdDataCableTabAdd}
+                    gird-data-t-and-i-tab-add={girdDataTandITabAdd}>
+                    </c-bl_product-selection>
                 </lightning-tab>
             </template>
             <!--PRODUCT SELECTION TAB END-->

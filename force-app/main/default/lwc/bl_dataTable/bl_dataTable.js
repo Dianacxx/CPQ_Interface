@@ -40,7 +40,9 @@ export default class Bl_dataTable extends LightningElement {
         if (this.quotelinesString){
             this.quoteLines = JSON.parse(this.quotelinesString);
             for(let i=0;i<this.quoteLines.length;i++){
-                this.quoteLines[i].product = this.quoteLines[i].product.replace(/['"]+/g, '');
+                if(this.quoteLines[i].product.includes('"')){
+                    this.quoteLines[i].product = this.quoteLines[i].product.replace(/['"]+/g, '');
+                }
                 //console.log('No double quotes: '+ this.quoteLines[i].product);
             }
             this.quoteLinesString = JSON.stringify(this.quoteLines);
@@ -108,9 +110,9 @@ export default class Bl_dataTable extends LightningElement {
                 } 
             }
             this.columns.push(
-                { type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:new_note', name: 'NSP', variant:'brand', size:'xx-small'}},
-                { type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:description', name: 'Tiers', variant:'brand', size:'xx-small'}},
-                { type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:delete', name: 'Delete', variant:'border-filled', size:'xx-small'}}
+                { label: 'NSP', type: 'button-icon',initialWidth: 35,typeAttributes:{iconName: 'action:new_note', name: 'NSP', variant:'brand', size:'xx-small'}},
+                { label: 'Tiers', type: 'button-icon',initialWidth: 35,typeAttributes:{iconName: 'action:description', name: 'Tiers', variant:'brand', size:'xx-small'}},
+                { label: '', type: 'button-icon',initialWidth: 35,typeAttributes:{iconName: 'action:delete', name: 'Delete', variant:'border-filled', size:'xx-small'}}
             );
             this.spinnerLoading = false; 
             //console.log('No rows selected');
@@ -151,8 +153,10 @@ export default class Bl_dataTable extends LightningElement {
             if (this.quotelinesString){
                 this.quoteLines = JSON.parse(this.quotelinesString);
                 for(let i=0;i<this.quoteLines.length;i++){
+                    if(this.quoteLines[i].product.includes('"')){
                     this.quoteLines[i].product = this.quoteLines[i].product.replace(/['"]+/g, '');
                     //console.log('No double quotes: '+ this.quoteLines[i].product);
+                    }
                 }
                 this.quoteLinesString = JSON.stringify(this.quoteLines);
                 this.updateTable();

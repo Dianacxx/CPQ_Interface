@@ -27,6 +27,9 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     @track filtersForApex = [];
     @track draftValues = []; 
     @track filtersLoading = false; 
+    //TO EDIT FILTERED QUOTELINES
+    @track editFiltered = false; 
+    @track columnsEdit = [];
 
     connectedCallback(){
         this.filtersLoading = false; 
@@ -38,12 +41,12 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     constructor() {
         super();
         this.gridColumns = [ 
-            { label: '', fieldName: 'lookupCode' ,initialWidth: 250, hideDefaultActions: true}, 
-            { type: 'action', typeAttributes: { rowActions: this.getRowActions.bind(this) } },
+            { label: 'Select a product (Change name here)', fieldName: 'lookupCode' ,initialWidth: 250, hideDefaultActions: true}, 
+            { label: '', type: 'action', typeAttributes: { rowActions: this.getRowActions.bind(this) } },
         ];
         this.gridColumnsAdd = [ 
-            { label: '', fieldName: 'lookupCode' ,initialWidth: 250, hideDefaultActions: true}, 
-            { type: 'action', typeAttributes: { rowActions: this.getRowActions.bind(this) } },
+            { label: 'Quote lines added (Change name here)', fieldName: 'lookupCode' ,initialWidth: 250, hideDefaultActions: true}, 
+            { label: '', type: 'action', typeAttributes: { rowActions: this.getRowActions.bind(this) } },
         ];
     }
     getRowActions(row, doneCallback) {
@@ -90,7 +93,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             break; 
             case 'clone':
                 //console.log('Row attr: '+Object.getOwnPropertyNames(row));
-                console.log('Clone!')
+                //console.log('Clone!')
                 this.showLookupList = false;
                 let copyRow = JSON.parse(JSON.stringify(row));
                 copyRow.isNew = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 10); 
@@ -98,19 +101,25 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                 this.dispatchEvent(new CustomEvent('listtodisplayadd', { detail: {list: this.listToDisplayAdd, tab: this.tabSelected} }));
                 setTimeout(()=>{
                     this.showLookupList = true;
-                }, 1000);
+                }, 500);
             break; 
             case 'edit':
+                this.editFiltered = true; 
+                this.editLookupCodeRow = row; 
+                this.editQuoteLines = JSON.parse(JSON.stringify(row.listOfProducts)); 
+                this.columnsEdit = [{label: 'Product', fieldName: 'product'},{label: 'Description', fieldName: 'description', wrapText: true}, {type: "button-icon", initialWidth: 30, typeAttributes: {iconName: "utility:delete", name: "delete"}} ];
+                this.updateEditTable();
+
             break; 
             case 'delete':
-                console.log('Delete!')
+                //console.log('Delete!')
                 this.showLookupList = false;
                 let deleteLookupcodeList = this.listToDisplayAdd.findIndex(x => x.isNew == row.isNew);
                 this.listToDisplayAdd.splice(deleteLookupcodeList,1);
                 this.dispatchEvent(new CustomEvent('listtodisplayadd', { detail: {list: this.listToDisplayAdd, tab: this.tabSelected} }));
                 setTimeout(()=>{
                     this.showLookupList = true;
-                }, 1000);
+                }, 500);
             break; 
             default:
                 alert('MEGA ERROR WITH ROW ACTIONS');
@@ -151,7 +160,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     }
     //Button to add products from filter tab to the list without changing Tab
     addProducts(){
-
+       if (this.rowsSelected){
         if (!(this.rowsSelected.length == 0)){
             for(let i = 0; i< this.rowsSelected.length; i++){
                 this.allReviews.push(this.rowsSelected[i]);
@@ -162,6 +171,16 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                 each.selectedRows = [];
             });
             console.log('Length of products added: '+this.allReviews.length)
+            }
+            else {
+                const evt = new ShowToastEvent({
+                    title: 'Not selected products yet',
+                    message: 'Please, select a product to add to the list',
+                    variant: 'warning',
+                    mode: 'pester'
+                });
+                this.dispatchEvent(evt);
+            }
         } else {
             const evt = new ShowToastEvent({
                 title: 'Not selected products yet',
@@ -343,7 +362,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         this.filtersLoading = false;
         //console.log('filterGroup: '+ filterGroup);
         if (this.trackList.lookupCode == 'Closures'){ 
-            console.log('WORKING ON CLOSURES');
+            //console.log('WORKING ON CLOSURES');
             getFirstFilter({filteredGrouping: filterGroup})
             .then((data)=>{
                 this.productType = JSON.parse(data);
@@ -499,14 +518,15 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
 
         //ONLY FOR CAMBLE ASSEMBLIES + CUSTOMER REQUIRED FILTER
         if ( this.trackList.lookupCode == 'Cable Assemblies' && event.target.label == 'Customer'){
-            //console.log('Customer Value: '+JSON.stringify(event.detail.value));
-            getAdditionalFiltering({customerSelection: JSON.stringify(event.detail.value)})
+            console.log('Customer Value: '+JSON.stringify(event.detail.value));
+            getAdditionalFiltering({customerSelection: event.detail.value})
             .then((data)=>{
                 console.log('Cable Assemblies');
                 console.log(data); 
                 let temporalList = JSON.parse(data); 
                 //console.log('Times: '+temporalList.length);
                 for (let i=0; i<temporalList.length;i++){
+                    this.columnsFilters.push({label: temporalList[i].label, fieldName: temporalList[i].apiName}); 
                     let ind = this.listFilters.findIndex(element => element.label == temporalList[i].label)
                     if (ind == -1){
                         if (temporalList[i].options == '[]'){
@@ -779,7 +799,13 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             console.log('Data after addSelectorQuoteLine'+ data);
             auxQuoteLines = JSON.parse(data); 
             auxQuoteLinesLength = auxQuoteLines.length; 
-            console.log('Length of products: '+ auxQuoteLinesLength)
+            //console.log('Length of products: '+ auxQuoteLinesLength);
+            for (let putId of auxQuoteLines){
+                let randomId = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(2, 10);
+                let randomName = Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 6); 
+                putId.id =  'new'+randomId;
+                putId.name = 'New QL-'+randomName;
+            }
             let trackListInternal = JSON.parse(JSON.stringify(this.trackList));
             let listToDisplayInternal = JSON.parse(JSON.stringify(this.listToDisplayAdd));
             //console.log('index '+ index);
@@ -796,7 +822,6 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     
             //Posiblemente quitar esta funcion y en la otra si oprimen save, enviar a la lista de quotelines
             //el arreglo de los listOfProducts de cada uno de los mostrados en pantalla
-            this.dispatchEvent(new CustomEvent('reviewitems', { detail: this.allReviews }));
             setTimeout(()=>{
                 this.dispatchEvent(new CustomEvent('listtodisplayadd', { detail: {list: this.listToDisplayAdd, tab: this.tabSelected} }));
             }, 500);
@@ -819,7 +844,87 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         })
     }
 
-    
+    //WHEN CLICK EDIT FILTERED PRODUCTS
+    @track editLookupCodeRow = []; 
+    closeEditFiltered(){
+        this.editFiltered = false; 
+    }
+
+    //EDIT POPUP PAGINATION
+    @track editQuoteLines = []; 
+    @track draftValuesQuote = [];
+    @track startingRecordEdit = 1;
+    @track endingRecordEdit = 0; 
+    @track pageEdit = 1; 
+    @track totalRecountCountEdit = 0;
+    @track dataPagesEdit = []; 
+    @track totalPageEdit = 0;
+    @track pageSizeEdit = 15; 
+    @track editLoading = false; 
+    //Updates pagination in EDIT POP UP TABLE
+    updateEditTable(){
+        //console.log('review data: '+ JSON.stringify(this.reviewDisplay)); 
+        this.totalRecountCountEdit = this.editQuoteLines.length;  
+        this.totalPageEdit = Math.ceil(this.totalRecountCountEdit / this.pageSizeEdit); 
+        this.dataPagesEdit = this.editQuoteLines.slice(0,this.pageSizeEdit); 
+        this.endingRecordEdit = this.pageSizeEdit;
+    }
+    previousHandlerEdit() {
+        if (this.pageEdit > 1) {
+            this.pageEdit = this.pageEdit - 1; //decrease page by 1
+            this.displayRecordPerPageEdit(this.pageEdit);
+        }
+    }
+    nextHandlerEdit() {
+        if((this.pageEdit<this.totalPageEdit) && this.pageEdit !== this.totalPageEdit){
+            this.pageEdit = this.pageEdit + 1; //increase page by 1
+            this.displayRecordPerPageEdit(this.pageEdit);            
+        }             
+    }
+    firstHandlerEdit() {
+        this.pageEdit = 1; //turn to page 1
+        this.displayRecordPerPageEdit(this.pageEdit);                   
+    }
+    lastHandlerEdit() {
+        this.pageEdit = this.totalPageEdit; //turn to last page 
+        this.displayRecordPerPageEdit(this.pageEdit);                   
+    }
+    displayRecordPerPageEdit(page){
+        this.startingRecordEdit = ((page -1) * this.pageSizeEdit);
+        this.endingRecordEdit = (this.pageSizeEdit * page);
+        this.endingRecordEdit = (this.endingRecordEdit > this.totalRecountCountEdit) 
+                            ? this.totalRecountCountEdit : this.endingRecordEdit;
+        this.dataPagesEdit = this.editQuoteLines.slice(this.startingRecordEdit, this.endingRecordEdit);
+        //console.log('dataPages');
+        //console.log(this.dataPages);
+        this.startingRecordEdit = this.startingRecordEdit + 1;
+    }   
+    //Delete from edit popup
+    handleDeleteEdit(event){
+        this.editLoading = true; 
+        let row = event.detail.row; 
+        let deleteQuoteLine = this.editQuoteLines.findIndex(x => x.id == row.id);
+        this.editQuoteLines.splice(deleteQuoteLine,1);
+        this.updateEditTable();
+        setTimeout(()=>{
+            this.editLoading = false;
+        },500);
+    }
+    handleSaveEditionEdit(){
+        alert('Edit');
+    }
+    saveEditPopUp(){
+        this.editLookupCodeRow.listOfProducts = this.editQuoteLines; 
+        let a = this.editLookupCodeRow.lookupCode.indexOf('(');
+        let auxLookUp = this.editLookupCodeRow.lookupCode.slice(0,a-1);
+        this.editLookupCodeRow.lookupCode = auxLookUp +' ('+this.editQuoteLines.length+' Products)';
+        //console.log('After '+this.editLookupCodeRow.lookupCode);
+        this.showLookupList = false;  
+        this.closeEditFiltered();
+        setTimeout(()=>{
+            this.showLookupList = true;
+        },500);
+    }
    
     //--------------------------------------------------------------------------------------
     //CONFIGURED POP UP FUNCTIONS
@@ -842,7 +947,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             this.closeConfiguredAlert();
             this.dispatchEvent(new CustomEvent('savebeforeconfigured', { detail: this.trackConfig }));
             console.log('Send to PS component');
-        }, 1000);
+        }, 500);
 
     }
 }
