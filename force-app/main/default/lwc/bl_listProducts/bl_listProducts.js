@@ -41,11 +41,11 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     constructor() {
         super();
         this.gridColumns = [ 
-            { label: 'Select a product (Change name here)', fieldName: 'lookupCode' ,initialWidth: 250, hideDefaultActions: true}, 
+            { label: 'Select a Product', fieldName: 'lookupCode' ,initialWidth: 250, hideDefaultActions: true}, 
             { label: '', type: 'action', typeAttributes: { rowActions: this.getRowActions.bind(this) } },
         ];
         this.gridColumnsAdd = [ 
-            { label: 'Quote lines added (Change name here)', fieldName: 'lookupCode' ,initialWidth: 250, hideDefaultActions: true}, 
+            { label: 'Currently Selected Products', fieldName: 'lookupCode' ,initialWidth: 250, hideDefaultActions: true}, 
             { label: '', type: 'action', typeAttributes: { rowActions: this.getRowActions.bind(this) } },
         ];
     }
@@ -341,7 +341,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
 	}
 
     //FILTERS CALLING
-    @track productType; 
+    @track productType = []; 
     @track requiredApex; 
     @track productTypeShow = false; 
 
@@ -365,31 +365,45 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             //console.log('WORKING ON CLOSURES');
             getFirstFilter({filteredGrouping: filterGroup})
             .then((data)=>{
-                this.productType = JSON.parse(data);
+                let filters = JSON.parse(data);
                 //console.log('Required filters: '+data); 
-                for (let i =0; i < this.productType.length; i++){
-                    this.productType[i].options = JSON.parse(this.productType[i].options); 
-                    this.columnsRequired.push(this.productType[i]); 
-                    this.columnsFilters.push({label: this.productType[i].label, fieldName: this.productType[i].apiName,}); 
-                    this.columnsReview.push({label: this.productType[i].label, fieldName: this.productType[i].apiName, editable: false,});
-                    this.filtersForApex.push({label: this.productType[i].label, value: ''});
+                for (let i =0; i < filters.length; i++){
+                    filters[i].options = JSON.parse(filters[i].options); 
+                    //console.log(filters[i].options)
+                    if (JSON.stringify(filters[i].options) == '[]'){
+                        this.listTextFilters.push({label: filters[i].label, name: filters[i].label});
+                    } else {
+                        for (let optionvalue of filters[i].options){
+                            optionvalue.value = optionvalue.label;
+                        }
+                        this.productType.push(filters[i]); 
+                        this.columnsRequired.push(this.productType[i]); 
+                    }
+                    this.columnsFilters.push({label: filters[i].label, fieldName: filters[i].apiName,}); 
+                    this.columnsReview.push({label: filters[i].label, fieldName: filters[i].apiName, editable: false,});
+                    this.filtersForApex.push({label: filters[i].label, value: ''});
                 }
                 this.productTypeShow = true; 
                 this.filtersLoading = true;
             })
             .catch((error)=>{
+                this.closeFilterAndSelected();
                 console.log('Closures error'); 
                 console.log(error); 
             })
         } else {
             getFirstFilter({filteredGrouping: filterGroup})
             .then((data)=>{
-                //console.log('FIRST PRODUCT TYPE:');
-                //console.log(filterGroup); 
+                console.log('FIRST PRODUCT TYPE:');
+                console.log(filterGroup); 
                 this.productType = JSON.parse(data);
-                //console.log('Required filters: '+data); 
+                console.log('Required filters: '+data); 
                 for (let i =0; i < this.productType.length; i++){
                     this.productType[i].options = JSON.parse(this.productType[i].options); 
+                    //console.log(this.productType[i].options);
+                    for (let optionvalue of this.productType[i].options){
+                        optionvalue.value = optionvalue.label;
+                    }
                     this.columnsRequired.push(this.productType[i]); 
                 }
                 
@@ -407,6 +421,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                     mode: 'sticky'
                 });
                 this.dispatchEvent(evt);
+                this.closeFilterAndSelected();
                 console.log(error);
             });
         }
@@ -431,11 +446,12 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             this.printProducts();
         } else {
         this.filtersForApex = [];
+        //console.log('Options of Req filters: '+JSON.stringify(event.detail));
         this.requiredApex = event.detail.value;
         //let index = this.filtersForApex.findIndex(label => label.label === event.detail.label);
         this.filtersForApex.push({label: event.target.label, value: this.requiredApex});
-        //console.log('filteredGrouping: '+ this.trackList.lookupCode)
-        //console.log('typeSelection: '+ this.requiredApex);
+        console.log('filteredGrouping: '+ this.trackList.lookupCode)
+        console.log('typeSelection: '+ this.requiredApex);
         this.listTextFilters = [];
         this.listFilters = [];
         this.columnsFilters = [{label: 'Product Name', fieldName: 'Name', editable: false, wrapText: false, },]; 
@@ -455,13 +471,12 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                     this.listFilters.push(temporalList[i]); 
                 } else {
                     //console.log('PICKLIST FILTER');
-                    let optionsFilters = JSON.parse(temporalList[i].options);  
+                    let optionsFilters = JSON.parse(temporalList[i].options); 
                     //console.log(JSON.stringify(optionsFilters));
                     //console.log(Object.getOwnPropertyNames(optionsFilters));
-                    
                     for (let j = 0; j < optionsFilters.length; j++){
-                        optionsFilters[j] = {label: optionsFilters[j].label, value: optionsFilters[j].value}; 
-                        //console.log('LAST YES');
+                        optionsFilters[j] = {label: optionsFilters[j].label, value: optionsFilters[j].label}; 
+                        //console.log(optionsFilters[j]);
                     }
                     temporalList[i].options = optionsFilters; 
                     this.listFilters.push(temporalList[i]); 
@@ -509,7 +524,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         }
         let indexFilter = this.filtersForApex.findIndex(x => x.label == event.target.label); 
         //console.log('Index in filterSelected: '+indexFilter);
-        
+        console.log('Options of filters: '+JSON.stringify(event.detail));
         if( indexFilter > -1){
             this.filtersForApex[indexFilter].value = event.detail.value; 
         } else {
