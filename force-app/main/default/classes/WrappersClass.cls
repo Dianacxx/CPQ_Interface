@@ -42,6 +42,47 @@ public with sharing class WrappersClass {
         public Decimal volumediscount{get;set;}
         public String notes{get;set;}
     }
+
+    public class ProductWrapperClass{
+        public String id{get;set;}    
+        public String name{get;set;}
+        public String color{get;set;}
+        public String productType{get;set;}
+        public String fiberCount{get;set;}
+        public String fiberType{get;set;}
+        public String jacketType{get;set;}
+        public String jacketConfiguration{get;set;}
+        public String jacketPrint{get;set;}
+        public String subUnit{get;set;}
+        public String subUnitColor{get;set;}
+        public String armorType{get;set;}
+        public String tightbuffType{get;set;}
+        public Integer maxSpanAtLight{get;set;}
+        public Integer maxSpanAtMedium{get;set;}
+        public Integer maxSpanAtHeavy{get;set;}
+        public String packaging{get;set;}
+        public String primaryUOM{get;set;}
+        public String lenght{get;set;}
+        public String busSizeOrWidth{get;set;}
+        public String busSchedule{get;set;}
+        public String busAlloy{get;set;}
+        public String busTemper{get;set;}
+        public String busThickness{get;set;}
+        public String industryName{get;set;}
+        public String numberOfStrands{get;set;}
+        public String wireSize{get;set;}
+        public String model{get;set;}
+        public String subConfiguration{get;set;}
+        public String lenghtPickList{get;set;}
+        public String connectorA{get;set;}
+        public String connectorB{get;set;}
+        public String breakingStrength{get;set;}
+        public String layDirection{get;set;}
+        public String diameterTolerance{get;set;}
+        public String coreAnnealing{get;set;}
+        public String wireShape{get;set;}
+    }
+
     public class DiscountTierWrapperClass{
         public String id{get;set;}
         public String name{get;set;}
@@ -57,35 +98,12 @@ public with sharing class WrappersClass {
         public String product{get;set;}
         public String notetext {get;set;}
     }
-    public class level1WrapperClass{
-        public String name {get; set;}
-        public String id {get; set;}
-        public String level1 {get; set;}
-        public String level2 {get; set;}
-        public String selectionType {get; set;}
-        public String children {get; set;}
-    }
-    public class level2WrapperClass{
-        public String id {get; set;}
-        public String name {get; set;}
-        public String level3 {get; set;}
-        public String selectionType {get; set;}
-        public String children {get; set;}
-        public List<Boolean> isAdd {get;set;}
-
-    }
-    public class level3WrapperClass{
-        public String id {get; set;}
-        public String name {get; set;}
-        public String level4 {get; set;}
-        public String selectionType {get; set;}
-    }
-
     public class LookupWrapperClass{
         public String lookupCode {get;set;}
         public String selectionType {get;set;}
+        public Id relatedProduct {get;set;}
         public List<Boolean> isAdd {get;set;}
-        // public String productClass1 {get;set;}
+        public String level1 {get;set;}
     }
     public class FilteringWrappingClass{
         public String label {get;set;}
