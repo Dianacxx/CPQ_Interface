@@ -4,13 +4,19 @@ public with sharing class blMockData {
         Id actualUser = UserInfo.getUserId(); 
         System.debug('USER Id: '+actualUser);
         List<bl_UI_RecordSaver__c> oldRecords = [SELECT Id, quoteId__c FROM bl_UI_RecordSaver__c WHERE CreatedById = :actualUser];
-        if(oldRecords[0].Id != quoteId){
+        System.debug(oldRecords); 
+        if (oldRecords.isEmpty()){
+            bl_UI_RecordSaver__c blAction = new bl_UI_RecordSaver__c();
+            blAction.quoteId__c = quoteId; 
+            System.debug('Record in Object Save: '+blAction); 
+            insert blAction; 
+        } else if(oldRecords[0].Id != quoteId){
             delete oldRecords;
             bl_UI_RecordSaver__c blAction = new bl_UI_RecordSaver__c();
             blAction.quoteId__c = quoteId; 
             System.debug('Record in Object Save: '+blAction); 
             insert blAction; 
-        } else {
+        } else if (oldRecords[0].Id == quoteId){
             System.debug('Not necessary to create new record'); 
         }
     }

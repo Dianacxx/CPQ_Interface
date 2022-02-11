@@ -1,16 +1,21 @@
 <template>
-    <lightning-card>
+    <lightning-card class="slds-align_absolute-center">
         <template if:true={recordId}>
-            <h2 class="slds-var-m-left_small slds-text-heading_medium slds-var-m-bottom_medium">
-                Returning to Quote Editor UI for the quote: {quoteName} with Id {recordId} 
+            <h2 style="font-size: 23px;" class="slds-var-m-right_small slds-var-m-left_small slds-text-heading_medium slds-var-m-bottom_medium">
+                <lightning-icon class="slds-var-m-right_x-small" icon-name="standard:quotes" alternative-text="Event" title="Event"></lightning-icon>
+                Returning to Custom QLE UI for the quote: {quoteName} with Id {recordId} 
+                <lightning-dynamic-icon type="trend" option="up" alternative-text="Move"> </lightning-dynamic-icon>
              </h2>
         </template>
         <template if:false={recordId}>
-            <h2 class="slds-var-m-left_small slds-text-heading_medium slds-var-m-bottom_medium">
-                To use the UI please access first from the record page of the quote.  
+            <h2 style="font-size: 23px;" class="slds-var-m-left_small slds-var-m-right_small slds-text-heading_medium slds-var-m-bottom_medium">
+                <lightning-icon class="slds-var-m-right_x-small" icon-name="standard:first_non_empty" alternative-text="Event" title="Event"></lightning-icon>
+                To use the Custom UI please access first from the record page of the quote.  
             </h2>
-            <h2 class="slds-var-m-left_small slds-text-heading_small slds-var-m-bottom_small">
-                This action is only available if you access before from the record page of the quote.            </h2>
+            <h2 style="font-size: 19px;" class="slds-var-m-left_small slds-var-m-right_small slds-text-heading_small slds-var-m-bottom_small">
+                This action is only available if you access before from the record page of the quote.   
+                <lightning-dynamic-icon class="slds-var-m-left_x-small" type="trend" option="down" alternative-text="Move"> </lightning-dynamic-icon>
+            </h2>
         </template>
     </lightning-card>
 </template>

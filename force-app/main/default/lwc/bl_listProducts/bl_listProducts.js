@@ -415,8 +415,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             })
             .catch((error)=>{
                 const evt = new ShowToastEvent({
-                    title: 'Required Filters Error',
-                    message: 'Unexpected error loading the filters - Please close the pop-up',
+                    title: 'Not available filters values',
+                    message: 'Unexpected error loading the filters',
                     variant: 'error',
                     mode: 'sticky'
                 });

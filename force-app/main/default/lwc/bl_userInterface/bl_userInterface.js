@@ -156,10 +156,10 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                         console.log('NEW QUOTE TOTAL data');
                         console.log(data);
                         this.totalValue = data;
-                        this.spinnerLoadingUI = false;
                         this.totalValueLoading = false;
                         var endTime = performance.now();
                         //console.log(`Call to refresh data took ${endTime - startTime} milliseconds`)
+                        setTimeout(()=>{this.spinnerLoadingUI = false;}, 5000);
                     })
                     .catch((error)=>{
                         console.log('NEW QUOTE TOTAL error');
@@ -458,10 +458,11 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             this.dispatchEvent(evt);
         } else {
             //IF THERE ARE NO ERRORS, GET ID OF PRODUCT IN ROW AND GO TO CONFIGURED PRODUCT 
+            let customActionAddProducts = 'a5e8A000000EK29QAG';
             console.log('relatedProductId: '+this.configBundleId); 
             let link = '/apex/sbqq__sb?id='+this.recordId+
             '&tour=&isdtp=p1&ltn_app_id=06m8A0000004jM5QAI&clc=0#/product/pc?qId='+
-            this.recordId+'&aId=a5e8A000000EK29QAG&pId='+this.configBundleId+'&redirectUrl=LineEditor&open=0';
+            this.recordId+'&aId='+customActionAddProducts+'&pId='+this.configBundleId+'&redirectUrl=LineEditor&open=0';
             this[NavigationMixin.Navigate]({
                 type: 'standard__webPage',
                 attributes: {
