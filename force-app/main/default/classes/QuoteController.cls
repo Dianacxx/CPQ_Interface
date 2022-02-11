@@ -193,7 +193,7 @@ public with sharing class QuoteController {
         return JSON.serialize(noteWrapperList);
     }
     @AuraEnabled(cacheable=true)
-    public static String addQuoteLine(String quoteId, String productId) { 
+    public static String addQuoteLine(String quoteId, String productId) { //This method transforms a product added in the QLE into a Quote Line
         QuoteReader quoteReader = new QuoteReader();
         // QuoteModel quote = quoteReader.read('a0q5f0000013pc3AAA');
         List<WrappersClass.QuoteLineWrapperClass> linesToPrint = new List<WrappersClass.QuoteLineWrapperClass>();
@@ -253,8 +253,8 @@ public with sharing class QuoteController {
 
         return JSON.serialize(linesToPrint);
     }
-    @AuraEnabled(cacheable=true)
-    public static String addSelectorQuoteLine(String quoteId, String products) { 
+    @AuraEnabled
+    public static String addSelectorQuoteLine(String quoteId, String products) {  //This method transforms a product added in the Product Selector into a Quote Line
         
         QuoteReader quoteReader = new QuoteReader();
         // QuoteModel quote = quoteReader.read('a0q5f0000013pc3AAA');
@@ -270,38 +270,6 @@ public with sharing class QuoteController {
 
         for(WrappersClass.ProductWrapperClass prod : untypedProductValues){ //puts the values of the produst that comes from the UI before converting into a quote line
             ProductModel product = productReader.read(prod.id,prodPriceBook.Id,'USD');
-            // product.record.Fiber_Count__c = prod.fiberCount;
-            // product.record.Fiber_Type__c = prod.fiberType;
-            // product.record.Jacket_Type__c = prod.jacketType;
-            // product.record.Jacket_Configuration__c = prod.jacketConfiguration;
-            // product.record.Jacket_Print__c = prod.jacketPrint;
-            // product.record.Sub_Unit__c = prod.subUnit;
-            // product.record.Armor_Type__c = prod.armorType;
-            // product.record.TightBuff_Type__c = prod.tightbuffType;
-            // product.record.Max_Span_at_Light__c = prod.maxSpanAtLight;
-            // product.record.Max_Span_at_Medium__c = prod.maxSpanAtMedium;
-            // product.record.Max_Span_at_Heavy__c = prod.maxSpanAtHeavy;
-            // product.record.Packaging__c = prod.packaging;
-            // product.record.Primary_UOM__c = prod.tightbuffType;
-            // product.record.Length__c = prod.lenght;
-            // product.record.Bus_Size_or_Width__c = prod.busSizeOrWidth;
-            // product.record.Bus_Schedule__c = prod.busSchedule;
-            // product.record.Bus_Alloy__c = prod.busAlloy;
-            // product.record.Bus_Temper__c = prod.busTemper;
-            // product.record.Bus_Thickness__c = prod.busThickness;
-            // product.record.AW_Industry_Name__c = prod.industryName;
-            // product.record.AW_Number_of_Strands__c = prod.numberOfStrands;
-            // product.record.AW_Wire_Size__c = prod.wireSize;
-            // product.record.Model__c = prod.model;
-            // product.record.Sub_Configuration__c = prod.subConfiguration;
-            // product.record.Length_Picklist__c = prod.lenghtPickList;
-            // product.record.Connector_A__c = prod.connectorA;
-            // product.record.Connector_B__c = prod.connectorB;
-            // product.record.Breaking_Strength__c = prod.breakingStrength;
-            // product.record.Lay_Direction__c = prod.layDirection;
-            // product.record.Diameter_Tolerance__c = prod.diameterTolerance;
-            // product.record.Core_Annealing__c = prod.coreAnnealing;
-            // product.record.Wire_Shape__c = prod.wireShape;
             prodMap.put(prod.id, prod);
             prodModelList.add(product);
         }
@@ -315,8 +283,52 @@ public with sharing class QuoteController {
         for (QuoteLineModel newLine : newLines) {
             if (newLine.record.id == null) { 
                 newLine.record.Color__c = prodMap.get(newLine.record.SBQQ__Product__c).color;
-                newLine.record.Subunit_Color__c = prodMap.get(newLine.record.SBQQ__Product__c).subUnitColor;
+                newLine.record.Product_Type__c = prodMap.get(newLine.record.SBQQ__Product__c).productType;
+                newLine.record.Fiber_Count__c = prodMap.get(newLine.record.SBQQ__Product__c).fiberCount;
+                newLine.record.Fiber_Type__c = prodMap.get(newLine.record.SBQQ__Product__c).fiberType;
+                newLine.record.Jacket_Type__c = prodMap.get(newLine.record.SBQQ__Product__c).jacketType;
+                newLine.record.Jacket_Configuration__c = prodMap.get(newLine.record.SBQQ__Product__c).jacketConfiguration;
                 newLine.record.Jacket_Print__c = prodMap.get(newLine.record.SBQQ__Product__c).jacketPrint;
+                //newLine.record.Sub_Unit__c = prodMap.get(newLine.record.SBQQ__Product__c).subUnit;
+                newLine.record.Subunit_Color__c = prodMap.get(newLine.record.SBQQ__Product__c).subUnitColor;
+                // newLine.record.Armor_Type__c = prodMap.get(newLine.record.SBQQ__Product__c).armorType;
+                // newLine.record.TightBuff_Type__c = prodMap.get(newLine.record.SBQQ__Product__c).tightbuffType;
+                // newLine.record.Max_Span_at_Light__c = prodMap.get(newLine.record.SBQQ__Product__c).maxSpanAtLight;
+                // newLine.record.Max_Span_at_Medium__c = prodMap.get(newLine.record.SBQQ__Product__c).maxSpanAtMedium;
+                // newLine.record.Max_Span_at_Heavy__c = prodMap.get(newLine.record.SBQQ__Product__c).maxSpanAtHeavy;
+                // newLine.record.Packaging__c = prodMap.get(newLine.record.SBQQ__Product__c).packaging;
+                newLine.record.Primary_UOM__c = prodMap.get(newLine.record.SBQQ__Product__c).primaryUOM;
+                newLine.record.Length__c = prodMap.get(newLine.record.SBQQ__Product__c).lenght;
+                // newLine.record.Bus_Size_or_Width__c = prodMap.get(newLine.record.SBQQ__Product__c).busSizeOrWidth;
+                // newLine.record.Bus_Schedule__c = prodMap.get(newLine.record.SBQQ__Product__c).busSchedule;
+                // newLine.record.Bus_Alloy__c = prodMap.get(newLine.record.SBQQ__Product__c).busAlloy;
+                // newLine.record.Bus_Temper__c = prodMap.get(newLine.record.SBQQ__Product__c).busTemper;
+                // newLine.record.Bus_Thickness__c = prodMap.get(newLine.record.SBQQ__Product__c).busThickness;
+                // newLine.record.AW_Industry_Name__c = prodMap.get(newLine.record.SBQQ__Product__c).industryName;
+                // newLine.record.AW_Number_of_Strands__c = prodMap.get(newLine.record.SBQQ__Product__c).numberOfStrands;
+                // newLine.record.AW_Wire_Size__c = prodMap.get(newLine.record.SBQQ__Product__c).wireSize;
+                // newLine.record.Model__c = prodMap.get(newLine.record.SBQQ__Product__c).model;
+                // newLine.record.Sub_Configuration__c = prodMap.get(newLine.record.SBQQ__Product__c).subConfiguration;
+                // newLine.record.Length_Picklist__c = prodMap.get(newLine.record.SBQQ__Product__c).lenghtPickList;
+                // newLine.record.Connector_A__c = prodMap.get(newLine.record.SBQQ__Product__c).connectorA;
+                // newLine.record.Connector_B__c = prodMap.get(newLine.record.SBQQ__Product__c).connectorB;
+                // newLine.record.Breaking_Strength__c = prodMap.get(newLine.record.SBQQ__Product__c).breakingStrength;
+                // newLine.record.Lay_Direction__c = prodMap.get(newLine.record.SBQQ__Product__c).layDirection;
+                // newLine.record.Diameter_Tolerance__c = prodMap.get(newLine.record.SBQQ__Product__c).diameterTolerance;
+                // newLine.record.Core_Annealing__c = prodMap.get(newLine.record.SBQQ__Product__c).coreAnnealing;
+                // newLine.record.Wire_Shape__c = prodMap.get(newLine.record.SBQQ__Product__c).wireShape;
+                // newLine.record.Plate_Capacity_Style__c = prodMap.get(newLine.record.SBQQ__Product__c).plateCapacity;
+                // newLine.record.Connector_Source_Type__c = prodMap.get(newLine.record.SBQQ__Product__c).connectorSourceType;
+                // newLine.record.Apex_Closure__c = prodMap.get(newLine.record.SBQQ__Product__c).apexClosure;
+                // newLine.record.Closure_Size__c = prodMap.get(newLine.record.SBQQ__Product__c).closureSize;
+                // newLine.record.Basket_Type__c = prodMap.get(newLine.record.SBQQ__Product__c).basketType;
+                // newLine.record.Tray_Type__c = prodMap.get(newLine.record.SBQQ__Product__c).trayType;
+                // newLine.record.NumTray__c = prodMap.get(newLine.record.SBQQ__Product__c).numTray;
+                // newLine.record.NumReliefKits__c = prodMap.get(newLine.record.SBQQ__Product__c).numReliefKits;
+                // newLine.record.NumLugs__c = prodMap.get(newLine.record.SBQQ__Product__c).numLungs;
+                // newLine.record.Inner_Basket__c = prodMap.get(newLine.record.SBQQ__Product__c).innerBasket;
+                // newLine.record.Ru__c = prodMap.get(newLine.record.SBQQ__Product__c).ru;
+
                 newlyAddedLines.add(newLine); //Puts all of the added lines in a list
 
             }
@@ -349,6 +361,17 @@ public with sharing class QuoteController {
             wrapper.packagetype = newlyAddedLine.record.Package_Type__c;
             wrapper.volumediscount = newlyAddedLine.record.SBQQ__VolumeDiscount__c;
 
+            wrapper.color = newlyAddedLine.record.Color__c;
+            wrapper.productType = newlyAddedLine.record.Product_Type__c;
+            wrapper.fiberCount = newlyAddedLine.record.Fiber_Count__c;
+            wrapper.fiberType = newlyAddedLine.record.Fiber_Type__c;
+            wrapper.jacketType = newlyAddedLine.record.Jacket_Type__c;
+            wrapper.jacketConfiguration = newlyAddedLine.record.Jacket_Configuration__c;
+            wrapper.jacketPrint = newlyAddedLine.record.Jacket_Print__c;
+            wrapper.subUnitColor = newlyAddedLine.record.Subunit_Color__c;
+            wrapper.primaryUOM = newlyAddedLine.record.Primary_UOM__c;
+            wrapper.lenght = newlyAddedLine.record.Length__c;
+
             linesToPrint.add(wrapper); 
         }
         System.debug('lines to print '+ linesToPrint.size());
@@ -356,9 +379,8 @@ public with sharing class QuoteController {
 
         return JSON.serialize(linesToPrint);
     }
-
     @AuraEnabled
-    public static String deleteQuoteLines(List<SBQQ__QuoteLine__c> existingQuoteLines, List<WrappersClass.QuoteLineWrapperClass> receivedQuoteLines){
+    public static String deleteQuoteLines(List<SBQQ__QuoteLine__c> existingQuoteLines, List<WrappersClass.QuoteLineWrapperClass> receivedQuoteLines){ //This method is called whenever we want to delete a quote line in salesforce
         List<SBQQ__QuoteLine__c> linesToDelete = new List <SBQQ__QuoteLine__c>();
         Set<String> quoteLineIDs = new Set<String>();
         Set<String> receivedIDs = new Set<String>();
@@ -388,7 +410,7 @@ public with sharing class QuoteController {
     }
     @AuraEnabled
     // @Future
-    public static void editAndDeleteQuotes(String quoteId, String quoteLines){
+    public static void editAndDeleteQuotes(String quoteId, String quoteLines){//This method changes the values in the edited quote lines in salesforce, with the changes made in the QLE
         QuoteReader quoteReader = new QuoteReader();
         QuoteModel quote = quoteReader.read(quoteId);
         
@@ -475,7 +497,7 @@ public with sharing class QuoteController {
        
     }
     @AuraEnabled
-    public static void quoteLineCreator(String quoteId, String quoteLines){
+    public static void quoteLineCreator(String quoteId, String quoteLines){ //This method creates new quote lines in salesforce based on the values in the QLE
         QuoteReader quoteReader = new QuoteReader();
         QuoteModel quote = quoteReader.read(quoteId);
         
@@ -532,7 +554,6 @@ public with sharing class QuoteController {
         insert quoteLinerecordsToInsert;
     }
     @AuraEnabled
-
     public static QuoteModel quoteSaverMethod(QuoteModel quote){
         QuoteSaver saver = new QuoteSaver();
         QuoteModel savedQuote = saver.save(quote);
@@ -605,7 +626,7 @@ public with sharing class QuoteController {
                 }
                 
             }
-        } else{
+        } else{ //If the filtered grouping is Closure, it behaves differently, and we should show only the other attributes
             if(customFilters.Attribute_2__c!= null){
                 if(picklistFields.get(customFilters.Attribute_2__c)!=null){
                     List<Schema.PicklistEntry> pickListValues = picklistFields.get(customFilters.Attribute_2__c).getDescribe().getPickListValues();
@@ -873,6 +894,7 @@ public with sharing class QuoteController {
         return filtersToAdd;
     }
 
+    //  This is a method that returns picklist values depending on the delection in the controlling object. Its used for the filtering methods whenever there is a dependent picklist
     public static List<Schema.PicklistEntry> getDependentPicklistValues(Schema.sObjectField dependToken, String prodTypeSelection) {
         Schema.DescribeFieldResult depend = dependToken.getDescribe();
         Schema.sObjectField controlToken = depend.getController();
