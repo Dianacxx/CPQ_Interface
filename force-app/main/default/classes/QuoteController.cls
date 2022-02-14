@@ -107,6 +107,7 @@ public with sharing class QuoteController {
             // WrappersClass.NoteWrapperClass relatedNotes = noteMap.get(line.record.Name);
             WrappersClass.DiscountTierWrapperClass relatedTier = tiersMap.get(line.record.SBQQ__DiscountTier__c);
             Id discountTier = line.record.SBQQ__DiscountTier__c;
+            Decimal listPriceToRound = line.record.SBQQ__ListPrice__c;
             wrapper.id = line.record.id;
             wrapper.name = line.record.name;
             wrapper.product = JSON.serialize(line.record.SBQQ__Product__r.Name);
@@ -115,7 +116,7 @@ public with sharing class QuoteController {
             wrapper.quantity = line.record.SBQQ__Quantity__c;
             wrapper.description = line.record.SBQQ__Description__c;
             wrapper.uom = line.record.UOM__c;
-            wrapper.listUnitPrice = line.record.SBQQ__ListPrice__c;
+            wrapper.listUnitPrice = listPriceToRound.setScale(2); //Limit to digits.
             wrapper.additionalDiscount = line.record.SBQQ__Discount__c;
             wrapper.netUnitPrice = line.record.SBQQ__NetPrice__c;
             wrapper.netTotal = line.record.SBQQ__NetTotal__c;
@@ -790,7 +791,7 @@ public with sharing class QuoteController {
     }
 
     @AuraEnabled
-    public static String getAdditionalFiltering(String customerSelection){
+    public static String getAdditionalFiltering(String customerSelection,String filteredGrouping){
         Map<String,BL_Product_Filters__c> custFieldsMap = BL_Product_Filters__c.getAll(); //Get the custom fields in the custom setting
 
         Schema.sObjectType sobject_type = Product2.getSObjectType();
@@ -812,7 +813,8 @@ public with sharing class QuoteController {
             }
         }
         //Get all of the custom field values from the filtered grouping - gets it from the custom settings
-        BL_Product_Filters__c customFilters = custFieldsMap.get('Cable Assemblies');
+
+        BL_Product_Filters__c customFilters = custFieldsMap.get(filteredGrouping);
 
         if(customerSelection != null){
             if(customFilters.Attribute_11__c!= null){
