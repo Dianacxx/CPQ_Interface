@@ -7,7 +7,7 @@ import { NavigationMixin } from 'lightning/navigation';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 //QuoteLines and Notes info 
-import printQuoteLines from '@salesforce/apex/QuoteController.printQuoteLines';
+import printQuoteLines from '@salesforce/apex/QuoteController.printQuoteLinesv2';
 import printNotes from '@salesforce/apex/QuoteController.printNotes'; 
 
 //Quote Saver
@@ -159,7 +159,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                         this.totalValueLoading = false;
                         var endTime = performance.now();
                         //console.log(`Call to refresh data took ${endTime - startTime} milliseconds`)
-                        setTimeout(()=>{this.spinnerLoadingUI = false;}, 5000);
+                        setTimeout(()=>{this.spinnerLoadingUI = false;}, 1000);
                     })
                     .catch((error)=>{
                         console.log('NEW QUOTE TOTAL error');
@@ -210,7 +210,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                     this.dispatchEvent(evt);
                 }
             })    
-        }, 5000);    
+        }, 4000);    
     }
 
     //Connect channel
@@ -319,6 +319,8 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     //Method that save the changes and deletions
     async callEditAnDeleteMethod(){
         return new Promise((resolve) => {
+            console.log('Record ID: '+this.recordId);
+            console.log('Before Editing: '+this.quotelinesString);
             editAndDeleteQuotes({quoteId: this.recordId, quoteLines: this.quotelinesString})
             .then(()=>{
                 const payload = { 
@@ -354,7 +356,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 else {
                     errorMessage = 'Developer: Open console to see error message'
                 }
-                this.spinnerLoadingUI = false;
+                //this.spinnerLoadingUI = false;
                 const evt = new ShowToastEvent({
                     title: 'Editing or Deleting ERROR',
                     message: errorMessage,
@@ -370,6 +372,8 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     //Method that saves the new quote lines created in the UI
     async callCreateMethod(){
         return new Promise((resolve) => {
+            console.log('Record ID: '+this.recordId);
+            console.log('Before Creating New: '+this.quotelinesString);
             quoteLineCreator({quoteId: this.recordId, quoteLines: this.quotelinesString})
             .then(()=>{
                 console.log('2. New quote lines created, now proceed with new total');
@@ -488,7 +492,14 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     @api girdDataCableTabAdd = []; 
     @api girdDataTandITabAdd = [];
     returnToUiSave(event){
-
+        //this.handleSaveAndCalculate();
+        setTimeout(()=>{
+            this.callData();
+            this.showPSTab = false; 
+            this.activeTab = 'UI';
+        }, 2000);
+        
+        /*
         console.log('Product Selection Values Saved in QLE');
         console.log(this.quotelinesString);
         console.log(event.detail.asQuotelines);
@@ -514,16 +525,9 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             auxiliar: 'updatetable'
           };
         publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
-
-        this.showPSTab = false; 
-        this.activeTab = 'UI';
-        const evt = new ShowToastEvent({
-            title: 'SAVE HERE PS QUOTELINES WHEN CLICK IN SAVE',
-            message: 'NOT WORKING HERE YET',
-            variant: 'info',
-            mode: 'dismissable'
-        });
-        this.dispatchEvent(evt);
+        */
+          
+        
 
     }
 

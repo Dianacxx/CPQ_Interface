@@ -5,7 +5,7 @@ import { NavigationMixin } from 'lightning/navigation';
 import filteredProductPrinter from '@salesforce/apex/QuoteController.filteredProductPrinter';
 import getFirstFilter from '@salesforce/apex/QuoteController.getFirstFilter'; 
 import getProductFilteringv2 from '@salesforce/apex/QuoteController.getProductFilteringv2';
-import addSelectorQuoteLine from '@salesforce/apex/QuoteController.addSelectorQuoteLine'; 
+import addSelectorQuoteLine from '@salesforce/apex/QuoteController.addSelectorQuoteLine'; //addQuoteLine
 import getAdditionalFiltering from '@salesforce/apex/QuoteController.getAdditionalFiltering';
 
 
@@ -394,10 +394,10 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         } else {
             getFirstFilter({filteredGrouping: filterGroup})
             .then((data)=>{
-                console.log('FIRST PRODUCT TYPE:');
-                console.log(filterGroup); 
+                //console.log('FIRST PRODUCT TYPE:');
+                //console.log(filterGroup); 
                 this.productType = JSON.parse(data);
-                console.log('Required filters: '+data); 
+                //console.log('Required filters: '+data); 
                 for (let i =0; i < this.productType.length; i++){
                     this.productType[i].options = JSON.parse(this.productType[i].options); 
                     //console.log(this.productType[i].options);
@@ -450,8 +450,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         this.requiredApex = event.detail.value;
         //let index = this.filtersForApex.findIndex(label => label.label === event.detail.label);
         this.filtersForApex.push({label: event.target.label, value: this.requiredApex});
-        console.log('filteredGrouping: '+ this.trackList.lookupCode)
-        console.log('typeSelection: '+ this.requiredApex);
+        //console.log('filteredGrouping: '+ this.trackList.lookupCode)
+        //console.log('typeSelection: '+ this.requiredApex);
         this.listTextFilters = [];
         this.listFilters = [];
         this.columnsFilters = [{label: 'Product Name', fieldName: 'Name', editable: false, wrapText: false, },]; 
@@ -497,7 +497,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         })
         .catch((error)=>{
             this.error = error;
-            console.log('');
+            console.log('getProductFilteringv2 error');
             console.log(this.error);
         });
         }
@@ -524,7 +524,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         }
         let indexFilter = this.filtersForApex.findIndex(x => x.label == event.target.label); 
         //console.log('Index in filterSelected: '+indexFilter);
-        console.log('Options of filters: '+JSON.stringify(event.detail));
+        //console.log('Options of filters: '+JSON.stringify(event.detail));
         if( indexFilter > -1){
             this.filtersForApex[indexFilter].value = event.detail.value; 
         } else {
@@ -533,11 +533,11 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
 
         //ONLY FOR CAMBLE ASSEMBLIES + CUSTOMER REQUIRED FILTER
         if ( this.trackList.lookupCode == 'Cable Assemblies' && event.target.label == 'Customer'){
-            console.log('Customer Value: '+JSON.stringify(event.detail.value));
+            //console.log('Customer Value: '+JSON.stringify(event.detail.value));
             getAdditionalFiltering({customerSelection: event.detail.value})
             .then((data)=>{
-                console.log('Cable Assemblies');
-                console.log(data); 
+                //console.log('Cable Assemblies');
+                //console.log(data); 
                 let temporalList = JSON.parse(data); 
                 //console.log('Times: '+temporalList.length);
                 for (let i=0; i<temporalList.length;i++){
@@ -598,7 +598,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         //console.log('filters:');
         //console.log(filters);
         //console.log('tab: ' +this.tabSelected);
-        console.log('filteredGrouping: ' + this.trackList.lookupCode);
+        //console.log('filteredGrouping: ' + this.trackList.lookupCode);
         //--------FOR OCA / CAONNECTIVITY VALUE IN SANDBOX ----------------
         let tabSelectedValue;
         this.tabSelected == 'Connectivity' ? tabSelectedValue = 'OCA' : tabSelectedValue = this.tabSelected; 
@@ -747,7 +747,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
 
     //Open NSP pop ups for each product
     saveLookingNSP(){
-        console.log('Tab: '+this.tabSelected + 'LookupCode: ' +this.trackList.lookupCode)
+        //console.log('Tab: '+this.tabSelected + 'LookupCode: ' +this.trackList.lookupCode)
         if ( 
         ((this.tabSelected == 'ACA')) || 
         ((this.tabSelected == 'Fiber Optic Cable') && ( (this.trackList.lookupCode == 'Premise Cable') || 
@@ -809,9 +809,10 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             auxQuoteLines[i].idTemporal = auxId; 
         }
         //console.log('Length of products before close: '+ this.allReviews.length)
+        //console.log('P: '+JSON.stringify(auxQuoteLines));
         addSelectorQuoteLine({quoteId: this.recordId, products: JSON.stringify(auxQuoteLines)})
         .then((data)=>{
-            console.log('Data after addSelectorQuoteLine'+ data);
+            //console.log('Data after addSelectorQuoteLine'+ data);
             auxQuoteLines = JSON.parse(data); 
             auxQuoteLinesLength = auxQuoteLines.length; 
             //console.log('Length of products: '+ auxQuoteLinesLength);
@@ -824,6 +825,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             let trackListInternal = JSON.parse(JSON.stringify(this.trackList));
             let listToDisplayInternal = JSON.parse(JSON.stringify(this.listToDisplayAdd));
             //console.log('index '+ index);
+            //console.log('listOfProducts add'+ JSON.stringify(auxQuoteLines));
             trackListInternal['listOfProducts'] = auxQuoteLines; 
             trackListInternal.isAdd[0] = true;
             trackListInternal.isAdd[1] = false;
@@ -840,13 +842,6 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             setTimeout(()=>{
                 this.dispatchEvent(new CustomEvent('listtodisplayadd', { detail: {list: this.listToDisplayAdd, tab: this.tabSelected} }));
             }, 500);
-            const evt = new ShowToastEvent({
-                title: 'Here goes the save process',
-                message: 'Save in quote format and create another value in list',
-                variant: 'info',
-                mode: 'dismissible '
-            });
-            this.dispatchEvent(evt);
             this.closeFilterAndSelected(); 
             setTimeout(()=>{
                 this.showLookupList = true;
@@ -924,9 +919,6 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         setTimeout(()=>{
             this.editLoading = false;
         },500);
-    }
-    handleSaveEditionEdit(){
-        alert('Edit');
     }
     saveEditPopUp(){
         this.editLookupCodeRow.listOfProducts = this.editQuoteLines; 

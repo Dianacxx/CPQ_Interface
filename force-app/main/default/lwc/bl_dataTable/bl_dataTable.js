@@ -406,6 +406,12 @@ export default class Bl_dataTable extends LightningElement {
                     //console.log('Value after edition: ' +inputsItems[i].fields[prop[j]]);
                     this.quoteLines[index][prop[j]] = inputsItems[i].fields[prop[j]];
                 }               
+                if(this.quoteLines[index].quantity.length == 0){
+                    this.quoteLines[index].quantity = 0;
+                }
+                if(this.quoteLines[index].netunitprice.length == 0){
+                    this.quoteLines[index].netunitprice = 0;
+                }
             }
             this.quotelinesString = JSON.stringify(this.quoteLines); 
             this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));

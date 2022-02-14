@@ -2,13 +2,14 @@ import { LightningElement, api , track} from 'lwc';
 import { NavigationMixin } from 'lightning/navigation';
 
 import getProductLevels  from '@salesforce/apex/QuoteController.getProductLevels'; 
+import quoteLineCreator from '@salesforce/apex/QuoteController.quoteLineCreator'; 
 
 
 export default class Bl_productSelection extends NavigationMixin(LightningElement) {
     @api recordId; //Quote Record Id that opens the UI
     @api quotelinesString; //Quotelines information in string
     @api quoteNotesString; //Quotelines Notes in string 
-
+    @api savePSValues = false; 
     //DISPLAY VALUES IN EVERY TAB
     @api girdDataAcaTab = []; 
     @api girdDataConnTab = []; 
@@ -24,6 +25,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
 
 
     connectedCallback(){
+        //this.savePSValues = true;
         let isAddVector = [false, true, true, true];
         getProductLevels({level1: 'ACA'})
         .then((data)=>{
@@ -98,7 +100,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             console.log('ERROR Test & Inspection');
             console.log(error);
         })
-        
+        //this.savePSValues = true;
         
     }
 
@@ -145,36 +147,62 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
     }
     //When click Save and Exit button in Product Selection UI
     handleSaveAndExit(){
-
+        this.savePSValues = false;
         for (let list of this.girdDataAcaTabAdd){
             for (let secondList of list.listOfProducts){
+                secondList.quantity = 0;
+                secondList.netunitprice = 0;
                 this.quotesAdded.push(secondList);
             }
         }
         for (let list of this.girdDataConnTabAdd){
             for (let secondList of list.listOfProducts){
+                secondList.quantity = 0;
+                secondList.netunitprice = 0;
                 this.quotesAdded.push(secondList);
             }
         }
-        for (let list of this.girdDataFocTabAdd){
+        for (let list of this.girdDataFocTabAdd){            
             for (let secondList of list.listOfProducts){
+                secondList.quantity = 0;
+                secondList.netunitprice = 0;
                 this.quotesAdded.push(secondList);
             }
         }
         for (let list of this.girdDataCableTabAdd){
             for (let secondList of list.listOfProducts){
+                secondList.quantity = 0;
+                secondList.netunitprice = 0;
                 this.quotesAdded.push(secondList);
             }
         }
         for (let list of this.girdDataTandITabAdd){
             for (let secondList of list.listOfProducts){
+                secondList.quantity = 0;
+                secondList.netunitprice = 0;
                 this.quotesAdded.push(secondList);
             }
         }
+        let stringQuotesAdded = JSON.stringify(this.quotesAdded);
+        console.log('Quote ID: '+this.recordId);
+        console.log('Quotelines before process');
+        //console.log('Quotelines before process: '+stringQuotesAdded); 
+        
+        quoteLineCreator({quoteId: this.recordId, quoteLines: stringQuotesAdded})
+        .then(()=>{
+            console.log('Quotes Saved from PS'); 
+            this.savePSValues = true;
+            setTimeout(()=>{
+                this.dispatchEvent(new CustomEvent('saveandexitps')); 
+          }, 1000);
+        })
+        .catch((error)=>{
+            console.log('Error saving from PS'); 
+            console.log(error); 
+        })
+        
+        //this.dispatchEvent(new CustomEvent('saveandexitps')); 
 
-        this.dispatchEvent(new CustomEvent('saveandexitps', {detail: {asQuotelines: this.quotesAdded,
-        acaTAb: this.girdDataAcaTabAdd, connTab: this.girdDataConnTabAdd, focTab: this.girdDataFocTabAdd,
-        cableTab: this.girdDataCableTabAdd, taiTab: this.girdDataTandITabAdd} }));
     }
     
     

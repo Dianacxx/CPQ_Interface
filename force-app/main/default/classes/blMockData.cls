@@ -8,15 +8,15 @@ public with sharing class blMockData {
         if (oldRecords.isEmpty()){
             bl_UI_RecordSaver__c blAction = new bl_UI_RecordSaver__c();
             blAction.quoteId__c = quoteId; 
-            System.debug('Record in Object Save: '+blAction); 
+            System.debug('New Record in Object Save: '+blAction); 
             insert blAction; 
-        } else if(oldRecords[0].Id != quoteId){
+        } else if(oldRecords[0].quoteId__c != quoteId){
             delete oldRecords;
             bl_UI_RecordSaver__c blAction = new bl_UI_RecordSaver__c();
             blAction.quoteId__c = quoteId; 
             System.debug('Record in Object Save: '+blAction); 
             insert blAction; 
-        } else if (oldRecords[0].Id == quoteId){
+        } else if (oldRecords[0].quoteId__c == quoteId){
             System.debug('Not necessary to create new record'); 
         }
     }

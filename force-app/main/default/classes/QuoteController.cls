@@ -86,20 +86,6 @@ public with sharing class QuoteController {
             quoteLineIDs.add(line.record.Id);
         }
         List<WrappersClass.QuoteLineWrapperClass> displayQuoteLine = new List<WrappersClass.QuoteLineWrapperClass> ();
-
-        // List<AFL_Note__c> noteList = [SELECT ID, BL_Quote_Line__r.Name, BL_Quote_Line__r.SBQQ__Product__c, Note_Text__c FROM AFL_Note__c WHERE BL_Quote_Line__r.Id IN : quoteLineIDs];
-        // List<WrappersClass.NoteWrapperClass> noteWrapperList = new List<WrappersClass.NoteWrapperClass>();
-        // Map<String, WrappersClass.NoteWrapperClass> noteMap = new Map<String, WrappersClass.NoteWrapperClass>();
-        // for (AFL_Note__c note : noteList) {
-        //     WrappersClass.NoteWrapperClass wrapper = new WrappersClass.NoteWrapperClass();
-        //     wrapper.id = note.Id;
-        //     wrapper.linename = note.BL_Quote_Line__r.Name;
-        //     wrapper.product = note.BL_Quote_Line__r.SBQQ__Product__c;
-        //     wrapper.notetext = note.Note_Text__c;
-
-        //     noteWrapperList.add(wrapper);
-        //     noteMap.put(wrapper.linename, wrapper);
-        // }
         
         for (QuoteLineModel line : quoteLines) {
             WrappersClass.QuoteLineWrapperClass wrapper = new WrappersClass.QuoteLineWrapperClass();
@@ -133,6 +119,85 @@ public with sharing class QuoteController {
             wrapper.originalPrice = line.record.SBQQ__OriginalPrice__c;
             wrapper.packageType = line.record.Package_Type__c;
             wrapper.volumeDiscount = line.record.SBQQ__VolumeDiscount__c;
+            if (relatedTier != null) {
+                wrapper.tiers = json.serialize(relatedTier);
+            }
+            // if (relatedNotes != null) {
+            //     wrapper.notes = json.serialize(relatedNotes);
+            // }
+
+            System.debug('tiers - '+ wrapper.tiers);
+ 
+            displayQuoteLine.add (wrapper);
+        }
+
+        System.debug(displayQuoteLine);
+        System.debug(displayQuoteLine.size());
+        return JSON.serialize(displayQuoteLine);
+    }
+    @AuraEnabled
+    public static String printQuoteLinesv2 (String quoteId){
+        
+        SBQQ__Quote__c quote = [SELECT ID FROM SBQQ__Quote__c WHERE ID =: quoteId];
+
+        List<Id> tiersIDs = new List<Id>();
+        Map<Id, WrappersClass.DiscountTierWrapperClass> tiersMap = new Map<Id, WrappersClass.DiscountTierWrapperClass>();
+
+        List<SBQQ__QuoteLine__c> quoteLines = [SELECT Id,Name, SBQQ__DiscountTier__c,SBQQ__Product__r.Name,SBQQ__Product__c,SBQQ__Quantity__c,SBQQ__Description__c,UOM__c,SBQQ__Discount__c,SBQQ__ListPrice__c,SBQQ__NetPrice__c,SBQQ__NetTotal__c,BL_Billing_Tolerance__c,BL_Source__c,BL_Destination__c,BL_Alternative_Indicator__c,BL_NSP_Offering_Details__c,ApprovalStatus__c,SBQQ__BillingType__c,SBQQ__ComponentTotal__c,SBQQ__EndDate__c,Length__c,SBQQ__OriginalPrice__c,Package_Type__c,SBQQ__VolumeDiscount__c FROM SBQQ__QuoteLine__c WHERE SBQQ__Quote__c =: quoteId];
+        for (SBQQ__QuoteLine__c line : quoteLines) {
+            tiersIDs.add(line.SBQQ__DiscountTier__c);
+        }
+        List<SBQQ__DiscountTier__c> tiersList = [SELECT Id, Name,SBQQ__LowerBound__c,SBQQ__UpperBound__c,SBQQ__Discount__c,SBQQ__DiscountAmount__c,SBQQ__Price__c FROM SBQQ__DiscountTier__c WHERE Id IN : tiersIDs];
+        for (SBQQ__DiscountTier__c tier : tiersList) {
+            WrappersClass.DiscountTierWrapperClass tierWrapper = new WrappersClass.DiscountTierWrapperClass();
+            tierWrapper.id = tier.Id;
+            tierWrapper.name = tier.Name;
+            tierWrapper.lowerBound = tier.SBQQ__LowerBound__c;
+            tierWrapper.upperBound = tier.SBQQ__UpperBound__c;
+            tierWrapper.discount = tier.SBQQ__Discount__c;
+            tierWrapper.discountAmount = tier.SBQQ__DiscountAmount__c;
+            tierWrapper.price = tier.SBQQ__Price__c;
+            tiersMap.put(tierWrapper.id, tierWrapper);
+        }
+        Set<Id> linesWithNotes = new Set<Id>();
+        Set<Id> quoteLineIDs = new Set<Id>();
+        for (SBQQ__QuoteLine__c line : quoteLines) {
+            quoteLineIDs.add(line.Id);
+        }
+        List<WrappersClass.QuoteLineWrapperClass> displayQuoteLine = new List<WrappersClass.QuoteLineWrapperClass> ();
+        
+        for (SBQQ__QuoteLine__c line : quoteLines) {
+            WrappersClass.QuoteLineWrapperClass wrapper = new WrappersClass.QuoteLineWrapperClass();
+            WrappersClass.DiscountTierWrapperClass tierWrapper = new WrappersClass.DiscountTierWrapperClass();            
+            // WrappersClass.NoteWrapperClass relatedNotes = noteMap.get(line.record.Name);
+            WrappersClass.DiscountTierWrapperClass relatedTier = tiersMap.get(line.SBQQ__DiscountTier__c);
+            Id discountTier = line.SBQQ__DiscountTier__c;
+            Decimal listPriceToRound = line.SBQQ__ListPrice__c;
+            wrapper.id = line.id;
+            wrapper.name = line.name;
+            wrapper.product = JSON.serialize(line.SBQQ__Product__r.Name);
+            wrapper.productid = line.SBQQ__Product__c;
+            wrapper.productobj = line.SBQQ__Product__r;
+            wrapper.quantity = line.SBQQ__Quantity__c;
+            wrapper.description = line.SBQQ__Description__c;
+            wrapper.uom = line.UOM__c;
+            wrapper.listUnitPrice = listPriceToRound.setScale(2); //Limit to digits.
+            wrapper.additionalDiscount = line.SBQQ__Discount__c;
+            wrapper.netUnitPrice = line.SBQQ__NetPrice__c;
+            wrapper.netTotal = line.SBQQ__NetTotal__c;
+            wrapper.billingTolerance = line.BL_Billing_Tolerance__c;
+            wrapper.source = line.BL_Source__c;
+            wrapper.destination = line.BL_Destination__c;
+            wrapper.alternativeIndicator = line.BL_Alternative_Indicator__c;
+            wrapper.nspOfferingDetails = line.BL_NSP_Offering_Details__c;
+            wrapper.approvalStatus = line.ApprovalStatus__c;
+            wrapper.billingType = line.SBQQ__BillingType__c;
+            wrapper.componentTotal = line.SBQQ__ComponentTotal__c;
+            wrapper.endDate = line.SBQQ__EndDate__c;
+            wrapper.length = line.Length__c;
+            wrapper.originalPrice = line.SBQQ__OriginalPrice__c;
+            wrapper.packageType = line.Package_Type__c;
+            wrapper.volumeDiscount = line.SBQQ__VolumeDiscount__c;
             if (relatedTier != null) {
                 wrapper.tiers = json.serialize(relatedTier);
             }

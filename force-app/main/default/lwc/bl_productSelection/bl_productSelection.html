@@ -19,6 +19,7 @@
         <!--BODY START-->
             <!--TAB SET START-->
             <div class="slds-border_top slds-border_bottom slds-border_left slds-border_right slds-var-m-left_large slds-var-m-right_large slds-var-m-top_small">
+                <lightning-spinner if:true={savePSValues} alternative-text="Loading" size="medium"></lightning-spinner>
                 <lightning-tabset variant="scoped">
                     <lightning-tab label="ACA" onactive={handleActive}>
                         <c-bl_list-products record-id={recordId} tab-selected="ACA" 
