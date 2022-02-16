@@ -127,8 +127,11 @@ public with sharing class QuoteController {
             // }
 
             System.debug('tiers - '+ wrapper.tiers);
- 
-            displayQuoteLine.add (wrapper);
+            
+            if(line.record.SBQQ__ProductOption__c == null){
+                displayQuoteLine.add (wrapper);
+            }
+            
         }
 
         System.debug(displayQuoteLine);
@@ -143,7 +146,7 @@ public with sharing class QuoteController {
         List<Id> tiersIDs = new List<Id>();
         Map<Id, WrappersClass.DiscountTierWrapperClass> tiersMap = new Map<Id, WrappersClass.DiscountTierWrapperClass>();
 
-        List<SBQQ__QuoteLine__c> quoteLines = [SELECT Id,Name, SBQQ__DiscountTier__c,SBQQ__Product__r.Name,SBQQ__Product__c,SBQQ__Quantity__c,SBQQ__Description__c,UOM__c,SBQQ__Discount__c,SBQQ__ListPrice__c,SBQQ__NetPrice__c,SBQQ__NetTotal__c,BL_Billing_Tolerance__c,BL_Source__c,BL_Destination__c,BL_Alternative_Indicator__c,BL_NSP_Offering_Details__c,ApprovalStatus__c,SBQQ__BillingType__c,SBQQ__ComponentTotal__c,SBQQ__EndDate__c,Length__c,SBQQ__OriginalPrice__c,Package_Type__c,SBQQ__VolumeDiscount__c FROM SBQQ__QuoteLine__c WHERE SBQQ__Quote__c =: quoteId];
+        List<SBQQ__QuoteLine__c> quoteLines = [SELECT Id,Name, SBQQ__DiscountTier__c,SBQQ__Product__r.Name,SBQQ__Product__c,SBQQ__Quantity__c,SBQQ__Description__c,UOM__c,SBQQ__Discount__c,SBQQ__ListPrice__c,SBQQ__NetPrice__c,SBQQ__NetTotal__c,BL_Billing_Tolerance__c,BL_Source__c,BL_Destination__c,BL_Alternative_Indicator__c,BL_NSP_Offering_Details__c,ApprovalStatus__c,SBQQ__BillingType__c,SBQQ__ComponentTotal__c,SBQQ__EndDate__c,Length__c,SBQQ__OriginalPrice__c,Package_Type__c,SBQQ__VolumeDiscount__c FROM SBQQ__QuoteLine__c WHERE SBQQ__Quote__c =: quoteId AND SBQQ__ProductOption__c = null];
         for (SBQQ__QuoteLine__c line : quoteLines) {
             tiersIDs.add(line.SBQQ__DiscountTier__c);
         }
@@ -399,6 +402,7 @@ public with sharing class QuoteController {
 
         return JSON.serialize(linesToPrint);
     }
+    
     @AuraEnabled
     public static String deleteQuoteLines(List<SBQQ__QuoteLine__c> existingQuoteLines, List<WrappersClass.QuoteLineWrapperClass> receivedQuoteLines){ //This method is called whenever we want to delete a quote line in salesforce
         List<SBQQ__QuoteLine__c> linesToDelete = new List <SBQQ__QuoteLine__c>();
@@ -1235,5 +1239,74 @@ public with sharing class QuoteController {
         System.debug('products : ' + lookUpList.size());
         return lookUpList;
     }
+    @AuraEnabled
+    public static String NSPAdditionalFields(Id productId){
+        Map<String,BL_NSP_Fields__c> custFieldsMap = BL_NSP_Fields__c.getAll(); //Get the custom fields in the custom setting
 
+        Schema.sObjectType sobject_type = Product2.getSObjectType();
+        Map<String, Schema.SObjectField> theFieldmap = sobject_type.getDescribe().fields.getMap();
+        Map<String, Schema.SObjectField> picklistFields = new Map<String, Schema.SObjectField>(); //Store the picklist fields
+        Map<String, String> fieldsNameMap = new Map<String, String>(); //Store the picklist fields
+        Map<String, Schema.DisplayType> fieldsTypeMap = new Map<String, Schema.DisplayType>(); //Store the type of the fields
+
+        Map<String, List<Schema.PicklistEntry>> filtersMap = new Map<String, List<Schema.PicklistEntry>>();
+        List<WrappersClass.FilteringWrappingClass> filtersWrapperToShow = new List<WrappersClass.FilteringWrappingClass>();
+        Product2 product = [SELECT Filtered_Grouping__c FROM Product2 WHERE ID =: productId];
+
+        for(String field: theFieldmap.keyset()){ //for each field in the object
+            String label = theFieldmap.get(field).getDescribe().getLabel(); // Get the label of each field in the product object
+            Schema.DisplayType theResult = theFieldmap.get(field).getDescribe().GetType(); //get field type
+            fieldsNameMap.put(label,theFieldmap.get(field).getDescribe().getName()); //Stores the API name of each field object
+            if (theResult == Schema.DisplayType.Picklist){ //if it's a picklist
+                picklistFields.put(label,theFieldmap.get(field)); //put all of the picklist fields in a map, with the label as the key
+            }
+        }
+        //Get all of the custom field values from the filtered grouping - gets it from the custom settings
+
+        BL_NSP_Fields__c customFilters = custFieldsMap.get(product.Filtered_Grouping__c);
+        if(product.Filtered_Grouping__c == 'Premise Cable'){
+            if(customFilters.Attribute_1__c!= null){
+                if(picklistFields.get(customFilters.Attribute_1__c)!=null){
+                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(picklistFields.get(customFilters.Attribute_1__c),product.Product_Type__c);
+                    filtersMap.put(customFilters.Attribute_1__c,pickListValues);
+                }else{
+                    filtersMap.put(customFilters.Attribute_1__c,new List<Schema.PicklistEntry>());
+                }
+            }
+            if(customFilters.Attribute_2__c!= null){
+                if(picklistFields.get(customFilters.Attribute_2__c)!=null){
+                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(picklistFields.get(customFilters.Attribute_2__c),product.Product_Type__c);
+                    filtersMap.put(customFilters.Attribute_2__c,pickListValues);
+                }else{
+                    filtersMap.put(customFilters.Attribute_2__c,new List<Schema.PicklistEntry>());
+                }
+            }
+            //if(product.Product_Type__c!= 'RIBBON-Link®' || product.Product_Type__c!= 'Circular Premise Cable' || product.Product_Type__c!= 'Dual-Link' || product.Product_Type__c!= 'eABF® - Air Blown Fiber' ||product.Product_Type__c!= 'Indoor/Outdoor Tight Buffer' || product.Product_Type__c!= 'Interconnect Premise MicroCore®' || product.Product_Type__c!= 'Micro-Dual' || product.Product_Type__c!= 'Premise MicroCore® Furcation' || product.Product_Type__c!= 'Quad-Link' || product.Product_Type__c!= 'Simplex' || product.Product_Type__c = 'Zipcord'){
+                if(customFilters.Attribute_3__c!= null){
+                    if(picklistFields.get(customFilters.Attribute_3__c)!=null){
+                        List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(picklistFields.get(customFilters.Attribute_3__c),product.Product_Type__c);
+                        filtersMap.put(customFilters.Attribute_3__c,pickListValues);
+                    }else{
+                        filtersMap.put(customFilters.Attribute_3__c,new List<Schema.PicklistEntry>());
+                    }
+                }
+            //}            
+        }
+
+        for(String filter : filtersMap.keyset()){
+            WrappersClass.FilteringWrappingClass wrapper = new WrappersClass.FilteringWrappingClass();
+            wrapper.label = filter;
+            wrapper.options = JSON.serialize(filtersMap.get(filter));
+            wrapper.apiName = fieldsNameMap.get(filter);
+            wrapper.type = fieldsTypeMap.get(filter);
+            filtersWrapperToShow.add(wrapper);
+        }
+
+        String filtersToAdd = JSON.serialize(filtersWrapperToShow);
+        return filtersToAdd;
+    }
+    // @AuraEnabled
+    // public static String addNSPQuoteLine(String quoteId, String products, String filteredGrouping){
+        
+    // }
 }

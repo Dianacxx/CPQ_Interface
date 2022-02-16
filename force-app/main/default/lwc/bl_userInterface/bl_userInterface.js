@@ -295,7 +295,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
 
     @api labelButtonSave;
     //WHEN CLICK SAVE AND CALCULATE
-    handleSaveAndCalculate(event){
+    async handleSaveAndCalculate(event){
         //CALL APEX METHOD TO SAVE QUOTELINES AND NOTES
 
         //this.labelButtonSave =  event.target.label;
@@ -306,7 +306,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         let startTime = performance.now();
         this.callEditAnDeleteMethod().then(this.callCreateMethod());
         let endTime = performance.now();
-        console.log(`Saving method took ${endTime - startTime} milliseconds`);
+        //console.log(`Saving method took ${endTime - startTime} milliseconds`);
         this.desactiveCloneButton();
     }
 
@@ -330,6 +330,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 this.notGoodToGoBundle[0] = false; 
                 publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload);   
                 console.log('1. Quote lines updated, now proceed with new quote lines');
+                /*
                 const evt = new ShowToastEvent({
                     title: 'Success saving the changes on the existing quote lines in Salesforce',
                     message: 'Your changes have been saved on Salesforce',
@@ -337,6 +338,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                     mode: 'dismissable'
                 });
                 this.dispatchEvent(evt);
+                */
             })
             .catch((error)=>{
                 this.notGoodToGoBundle[0] = true; 
@@ -387,9 +389,18 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                     this.callData();
                     this.spinnerLoadingUI = false;
                     this.notGoodToGoBundle[1] = false;
+                    /*
                     const evt = new ShowToastEvent({
                         title: 'Success saving the new quote lines created in the UI',
                         message: 'Your additions have been saved on Salesforce',
+                        variant: 'success',
+                        mode: 'dismissable'
+                    });
+                    this.dispatchEvent(evt);
+                    */
+                    const evt = new ShowToastEvent({
+                        title: 'Success saving the quote lines',
+                        message: 'All the process have been saved on Salesforce',
                         variant: 'success',
                         mode: 'dismissable'
                     });
@@ -532,9 +543,22 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     }
 
     //NAVIGATE TO PRODUCT SELECTION PAGE (MISSING SENDING INFO)
-    navitageToProductSelection(){
-        this.showPSTab = true; 
-        this.activeTab = 'PS';
+    async navitageToProductSelection(){
+        await this.handleSaveAndCalculate();
+        if (this.notGoodToGoBundle[0] || this.notGoodToGoBundle[1]){
+            const evt = new ShowToastEvent({
+                title: 'ERROR Saving the quotelines',
+                message: 'open console',
+                variant: 'error',
+                mode: 'dismissable'
+            });
+            this.dispatchEvent(evt);
+            this.returnToUiCancel();
+        } else {
+            this.showPSTab = true; 
+            this.activeTab = 'PS';
+        }
+        
     }
     
     //APPLY BUTTON WITH DISCOUNT VALUES
