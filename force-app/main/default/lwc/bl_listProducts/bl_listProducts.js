@@ -7,7 +7,9 @@ import getFirstFilter from '@salesforce/apex/QuoteController.getFirstFilter';
 import getProductFilteringv2 from '@salesforce/apex/QuoteController.getProductFilteringv2';
 import addSelectorQuoteLine from '@salesforce/apex/QuoteController.addSelectorQuoteLine'; //addQuoteLine
 import getAdditionalFiltering from '@salesforce/apex/QuoteController.getAdditionalFiltering';
+import NSPAdditionalFields from '@salesforce/apex/QuoteController.NSPAdditionalFields'; 
 
+import getFeaturesConfigured from '@salesforce/apex/blMockData.getFeaturesConfigured'; 
 
 export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     @api recordId; 
@@ -82,9 +84,13 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                     this.callFiltersInPopUp(row.lookupCode);
                     //console.log('Is filtered');
                 } else if (row.selectionType == 'Configured'){
-                    //Must save process before turning there
-                    this.trackConfig = row.relatedProduct;
+                    //Must save process before turning there SCENARIO 1
+                    //this.trackConfig = row.relatedProduct;
+
+                    //SCENARIO 2
+                    this.trackConfig = row;
                     this.openConfiguredPopup = true; 
+                    this.continueConfiguredQLE();
                 } else {
                     alert('This row has no type (Filtered or configured)');
                     row.isAdd[0] = true; 
@@ -746,6 +752,11 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     @track popupNSP = false;
 
     //Open NSP pop ups for each product
+    @track nspPicklist = [];
+    @track nspNumbers = [];
+    @track nspDisplayOnly = [];
+    @track gettingNspFields = false; 
+    @track nspLoading = false;
     saveLookingNSP(){
         //console.log('Tab: '+this.tabSelected + 'LookupCode: ' +this.trackList.lookupCode)
         if ( 
@@ -755,13 +766,15 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         ((this.tabSelected == 'Cable')) ||
         ((this.tabSelected == 'Connectivity') && ( (this.trackList.lookupCode == 'Cable Assemblies') || (this.trackList.lookupCode == 'Patch Panels') ))
         ){
+            
             this.popupNSP = true;
             this.listNSP = JSON.parse(JSON.stringify(this.allReviews));
+            console.log(this.listNSP[0]); 
             let i = 1;
+            console.log('ID sent: '+this.listNSP[0].idTemporal)
             for (let nsp of this.listNSP){
-            nsp['nspFields'] = {Field1: 'Value1', Field2: 'Value2', Field3: 'Value3', Field4: 'Value4'};
-            nsp['tabNsp'] = i; 
-            i += 1;
+                nsp['tabNsp'] = i; 
+                i += 1;
             }
             this.firstNSP = 1;
         //After this process is correct call saveAndExitFilterModal to close the modal,
@@ -773,30 +786,97 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         }
         
     }
+    clearNSPFields(){
+        this.nspPicklist = [];
+        this.nspNumbers = [];
+        this.nspDisplayOnly = [];
+        this.listNspValuesToDisplay = [];
+    }
     handleNSPTab(event){
+        this.clearNSPFields();
         this.firstNSP = event.target.value;
+        NSPAdditionalFields({productId: this.listNSP[this.firstNSP-1].idTemporal})
+            .then((data)=>{
+                console.log('IN handleNSPTab CALLING THE PRODUCT #' + (this.firstNSP-1).toString());
+                console.log(data);
+                let dataParse = JSON.parse(data); 
+                for (let i=0; i<dataParse.length; i++){
+                    this.listNSP[this.firstNSP-1][dataParse[i].apiName] = 'Value of '+dataParse[i].apiName;
+                    //console.log('New Prop: '+  this.listNSP[this.firstNSP-1][dataParse[i].apiName]);
+                    if (dataParse[i].type == 'PICKLIST'){
+                        //console.log('PickList Field');
+                        dataParse[i].options = JSON.parse(dataParse[i].options);
+                        this.nspPicklist.push(dataParse[i]);
+                    } else if(dataParse[i].action == 'INPUT') {
+                        //console.log('Number Field');
+                        this.nspNumbers.push({label: dataParse[i].label, apiName: dataParse[i].apiName}); 
+                    } else if(dataParse[i].action == 'DISPLAY'){
+                        this.nspDisplayOnly.push({label: dataParse[i].label, value: 'Here goes values'}); 
+                    }
+                }
+                this.gettingNspFields = true;
+
+            })
+            .catch((error)=>{
+                console.log('ERROR IN continueNSP CALLING THE PRODUCT #' + (this.firstNSP-1).toString());
+                console.log(error);
+            })
     }
-    continueNSP(event){
-        let activeTabValue = Number(this.firstNSP) + 1;
-        if (activeTabValue > this.listNSP.length){
-            console.log('Progress here to saveAndExitFilterModal');
-            this.closeNSP();
-            this.firstNSP = 1; 
-        } else {
-            this.firstNSP = activeTabValue.toString();
-            //console.log(this.firstNSP); 
-        }
-        
-    }
+
     closeNSP(){
         this.showLookupList = false;
         this.popupNSP = false;
-        //CHANGE THIS TO CLOSE AND SAVE WHEN BUTTON IS CLICK NOT X CLOSE 
-        this.saveAndExitFilterModal();
-        this.closeFilterAndSelected(); 
-        
+        this.saveAndExitNSPFilteredModeal();
+        this.closeFilterAndSelected();   
     }
 
+    @track listNspValuesToDisplay = [];
+    nspPicklistChange(event){
+        console.log('When select a new value'); 
+        //console.log('Field Name: '+event.target.name);
+        //console.log('Field Label: '+event.target.label);
+        //console.log('Field Value: '+event.target.value);
+        let ind = this.listNspValuesToDisplay.findIndex(element => element.property ==  event.target.label);
+        if(ind == -1){
+            this.listNspValuesToDisplay.push({property: event.target.label, value: event.target.value });
+        } else {
+            this.listNspValuesToDisplay[ind].value =  event.target.value; 
+        }
+        
+        this.listNSP[this.firstNSP-1][event.target.name] = event.target.value; 
+
+    }
+
+    saveAndExitNSPFilteredModeal(){
+        let auxQuoteLines = JSON.parse(JSON.stringify(this.allReviews)); 
+        let auxQuoteLinesLength  = auxQuoteLines.length; //HACER ESTO CUANDO LOS QUOTELINES ESTEN CAMBIADOS
+        for(let i=0; i<auxQuoteLines.length; i++){
+            let auxId = auxQuoteLines[i].Id; 
+            auxQuoteLines[i].Id = auxQuoteLines[i].idTemporal; 
+            auxQuoteLines[i].idTemporal = auxId; 
+        }
+        let trackListInternal = JSON.parse(JSON.stringify(this.trackList));
+        let listToDisplayInternal = JSON.parse(JSON.stringify(this.listToDisplayAdd));
+
+            //CAMBIAR EL  this.listNSP POR LOS QUOTELINES UNA VEZ ENVIADOS AL METODO Y RECIBIDOS
+            trackListInternal['listOfProducts'] = this.listNSP; 
+            trackListInternal.isAdd[0] = true;
+            trackListInternal.isAdd[1] = false;
+            trackListInternal.isAdd[2] = false;
+            trackListInternal.isAdd[3] = false;
+            trackListInternal.lookupCode = trackListInternal.lookupCode+' ('+auxQuoteLinesLength+' Products)';
+            trackListInternal.isNew = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 10); 
+            listToDisplayInternal.push(trackListInternal);
+            this.trackList = [];
+            this.listToDisplayAdd = listToDisplayInternal; 
+        setTimeout(()=>{
+            this.dispatchEvent(new CustomEvent('listtodisplayadd', { detail: {list: this.listToDisplayAdd, tab: this.tabSelected} }));
+        }, 500);
+        this.closeFilterAndSelected(); 
+        setTimeout(()=>{
+            this.showLookupList = true;
+        }, 500);        
+    }
     //TRABAJAR AQUI CUANDO EL QUOTE SAVER ESTE LISTO. 
     saveAndExitFilterModal(){
         this.showLookupList = false;
@@ -938,9 +1018,49 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     closeConfiguredAlert(){
         this.openConfiguredPopup = false; 
     }
+    saveBundle(){
+        const evt = new ShowToastEvent({
+            title: 'Remember to the save process',
+            message: 'Remember to the save process',
+            variant: 'warning',
+            mode: 'sticky '
+        });
+        this.dispatchEvent(evt);
+        this.closeConfiguredAlert();
+    }
+
+    @track bundleLoading = false; 
+    @track bundleFeatures = []; 
+    @track bundleOptions = [];
+    //WORKING HERE TO THE BUNDLE ONES - IN PAUSE! 
 
     continueConfiguredQLE(){
+        //SCENARIO 2
+        this.bundleLoading = true; 
+        //onsole.log('Properties of row selected');
+        //console.log(Object.getOwnPropertyNames(this.trackConfig)); 
+        getFeaturesConfigured({productName: this.trackConfig.lookupCode})
+        .then((data)=>{
+            //console.log(data);
+            this.bundleFeatures = JSON.parse(data);
+            //console.log(Object.getOwnPropertyNames(this.bundleFeatures[0])); 
+            for (let i =0; i<this.bundleFeatures.length; i++){
+                console.log(this.bundleFeatures[i].features); 
+                //let optionsAux = JSON.parse(this.bundleFeatures[i].features);  
+                //this.bundleOptions.push(optionsAux);
+                //console.log(optionsAux);  
+            }
+            this.bundleLoading = false;
+        })
+        .catch((error)=>{
+            console.log('Error getting features for bundle');
+            console.log(error);
+        })
 
+
+
+        //SCENARIO 1
+        /*
         //HERE SAVE THE PROCESS BEFORE
         const evt = new ShowToastEvent({
             title: 'Remember to the save process',
@@ -955,6 +1075,6 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             this.dispatchEvent(new CustomEvent('savebeforeconfigured', { detail: this.trackConfig }));
             console.log('Send to PS component');
         }, 500);
-
+        */
     }
 }

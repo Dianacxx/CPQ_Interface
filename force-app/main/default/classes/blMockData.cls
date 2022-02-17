@@ -48,32 +48,44 @@ public with sharing class blMockData {
         delete oldRecords;
     }
 
+    public class bundleFeaturesWrapper{
+        public String name {get;set;}
+        public List<String> features {get;set;}         
+    } 
+    
+
     @AuraEnabled
-    public static void getFeaturesConfigured(string productName){
+    public static string getFeaturesConfigured(string productName){
         //String product = 'FS200-50'; 
         List<SBQQ__ProductFeature__c> features = [SELECT  name FROM SBQQ__ProductFeature__c 
                         WHERE SBQQ__ConfiguredSKU__r.name =: productName];
         String nameFeatures = '';
         Map <String,List <String>> FeaAndOp = new Map <String,List <String>>(); 
+        List <bundleFeaturesWrapper> featuresAndOptions = new List <bundleFeaturesWrapper>();
         List <SBQQ__ProductOption__c> options = new List<SBQQ__ProductOption__c>();
         for(integer i=0; i<features.size(); i++){
+            bundleFeaturesWrapper aux = new bundleFeaturesWrapper(); 
             nameFeatures = features[i].Name;
-            System.debug('Feature: '+features[i].Name);
+            aux.name =  features[i].Name; 
+            //System.debug('Feature: '+features[i].Name);
             options = [SELECT SBQQ__ProductCode__c, SBQQ__ComponentDescription__c FROM SBQQ__ProductOption__c 
                     WHERE SBQQ__ConfiguredSKU__r.name =:productName AND SBQQ__Feature__r.name =:nameFeatures];
             //System.debug('Option of '+features[i].Name+' '+options+' with size '+options.size());
-            System.debug('Size '+options.size());
+            //System.debug('Size '+options.size());
             List <String> title = new List<String>();
             for (integer j=0; j<options.size(); j++){
                 String a = (options[j].SBQQ__ProductCode__c);
                 String b = (options[j].SBQQ__ComponentDescription__c);
                 title.add('{"productName":'+a+'"description":'+b+'}');        
             }
-            System.debug('title'); 
-            System.debug(title); 
-            FeaAndOp.put(features[i].Name,title);
+            aux.features =  title; 
+            //System.debug('title'); 
+            //System.debug(title); 
+            featuresAndOptions.add(aux);
+            FeaAndOp.put('name: '+features[i].Name,title);
         }
-        System.debug('HERE'); 
-        System.debug(JSON.serialize(FeaAndOp));
+        //System.debug('HERE'); 
+        //System.debug(JSON.serialize(FeaAndOp));
+        return JSON.serialize(featuresAndOptions);
     }
 }

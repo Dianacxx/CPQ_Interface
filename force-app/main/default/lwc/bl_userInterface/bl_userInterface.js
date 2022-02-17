@@ -21,7 +21,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     @api quotelinesString; //Quotelines information in string
     @api quoteNotesString; //Quotelines Notes in string 
     @api totalValue;
-
+    @api originalquotelinesString; 
     @api disableButton; //To active clone button
 
     @track showPSTab = false; //To open Product Selection TAB
@@ -41,6 +41,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         .then(data =>{
             if (data){
                 this.quotelinesString = data; 
+                this.originalquotelinesString = data; 
                 this.error = undefined;
                 this.isLoading = true; 
                 console.log('quoteLines String SUCCESS ');
@@ -544,19 +545,24 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
 
     //NAVIGATE TO PRODUCT SELECTION PAGE (MISSING SENDING INFO)
     async navitageToProductSelection(){
-        await this.handleSaveAndCalculate();
-        if (this.notGoodToGoBundle[0] || this.notGoodToGoBundle[1]){
-            const evt = new ShowToastEvent({
-                title: 'ERROR Saving the quotelines',
-                message: 'open console',
-                variant: 'error',
-                mode: 'dismissable'
-            });
-            this.dispatchEvent(evt);
-            this.returnToUiCancel();
+        if (!(this.originalquotelinesString == this.quotelinesString)){
+            await this.handleSaveAndCalculate();
+            if (this.notGoodToGoBundle[0] || this.notGoodToGoBundle[1]){
+                const evt = new ShowToastEvent({
+                    title: 'ERROR Saving the quotelines',
+                    message: 'open console',
+                    variant: 'error',
+                    mode: 'dismissable'
+                });
+                this.dispatchEvent(evt);
+                this.returnToUiCancel();
+            } else {
+                this.showPSTab = true; 
+                this.activeTab = 'PS';
+            } 
         } else {
             this.showPSTab = true; 
-            this.activeTab = 'PS';
+                this.activeTab = 'PS';
         }
         
     }

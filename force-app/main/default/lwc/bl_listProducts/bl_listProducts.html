@@ -184,22 +184,53 @@
                     <h1 class="slds-var-m-left_xx-small slds-form-element__label" >Products: </h1>
                     <lightning-tabset active-tab-value={firstNSP}>
                         <template for:each={listNSP} for:item="nspP">
-                            <lightning-tab class="slds-var-m-left_medium" key={nspP.Id} onactive={handleNSPTab} label={nspP.tabNsp} value={nspP.tabNsp}>
-                                <p>Product: {nspP.Name}</p>
-                                <p>Field 1: {nspP.nspFields.Field1}</p>
-                                <p>Field 2: {nspP.nspFields.Field2}</p>
-                                <p>Field 3: {nspP.nspFields.Field3}</p>
-                                <p>Field 4: {nspP.nspFields.Field4}</p>
-                                <lightning-button class="slds-float_right slds-var-m-bottom_medium  slds-var-m-right_medium" 
-                                icon-name="standard:sales_cadence" variant="destructive" label="Next Product" value={nspP.Name}
-                                onclick={continueNSP} ></lightning-button>    
+                            <!--onclick={handleNSPTab} in tab under -->
+                            <lightning-tab class="slds-var-m-left_medium slds-var-m-right_medium"  onactive={handleNSPTab} key={nspP.Id}  label={nspP.tabNsp} value={nspP.tabNsp}>
+                                <div style="background-color:#fab8ce;" class="slds-align_absolute-center slds-var-p-around_xx-small lgc-bg">
+                                    <p><b>Product:</b> {nspP.Name} - <b>Product Type:</b> {nspP.Product_Type__c}</p>
+                                </div>
+                                <template if:true={gettingNspFields}>
+                                    <lightning-layout multiple-rows="false">
+                                    <template for:each={listNspValuesToDisplay} for:item="nspValue">
+                                        <div style="background-color:#a1d5f8c2;" class="slds-var-p-around_xx-small lgc-bg" key={nspValue.label}>
+                                            <p  class="slds-var-m-right_x-small" key={nspValue.label}><b>{nspValue.property}:</b> {nspValue.value}</p>
+                                        </div>
+                                    </template>
+                                    </lightning-layout>
+                                    <lightning-layout multiple-rows="false">
+                                    <template for:each={nspDisplayOnly} for:item="nspDisplay">
+                                        <div style="background-color:#a1d5f8c2;" key={nspDisplay.label} class="slds-var-p-around_xx-small lgc-bg">
+                                            <p  class="slds-var-m-right_x-small" key={nspDisplay.label}><b>{nspDisplay.label}:</b> {nspDisplay.value}</p>
+                                        </div>
+                                    </template>
+                                    </lightning-layout>
+                                    <lightning-layout multiple-rows="false">
+                                    <template for:each={nspPicklist} for:item="nspPicklistItem">
+                                        <div key={nspPicklistItem.label}>
+                                            <lightning-combobox class="slds-var-m-right_x-small" key={nspPicklistItem.label} label={nspPicklistItem.label} 
+                                            options={nspPicklistItem.options} name={nspPicklistItem.apiName} onchange={nspPicklistChange} ></lightning-combobox>
+                                        </div>
+                                    </template>
+                                    </lightning-layout>
+                                    <lightning-layout multiple-rows="false">
+                                    <template for:each={nspNumbers} for:item="nspNumberItem">
+                                        <div key={nspNumberItem.label}>
+                                            <lightning-input class="slds-var-m-right_x-small" key={nspNumberItem.label} type="number" name={nspNumberItem.apiName} label={nspNumberItem.label}
+                                            onchange={nspPicklistChange}></lightning-input>
+                                        </div>
+                                    </template>
+                                    </lightning-layout>
+                                </template>
                             </lightning-tab>
                         </template>
                     </lightning-tabset>
                     </div>
+                    <div style="background-color:#f1ce30;" class="slds-var-p-around_xx-small slds-align_absolute-center lgc-bg">
+                        <b>WARNING: </b> Remember to select all the values of the Non-Standard Product (NSP) before close the window.
+                    </div>
                 </div>
                 <footer class="slds-modal__footer slds-var-m-left_medium  slds-var-m-right_medium">
-                    <lightning-button variant="brand" label="Close" title="Close"  onclick={closeNSP} ></lightning-button>    
+                    <lightning-button variant="brand" label="Done" title="Close"  onclick={closeNSP} ></lightning-button>    
                 </footer>
             </div>
         </section>
@@ -251,7 +282,8 @@
     </template>
     <!--FILTERED EDIT POP-UP END-->
     <!--CONFIGURED POP-UP START-->
-    <!---->
+    <!--WORKING HERE, IN PASUE! BEFORE MAKING CHANGES IN THIS PLACE-->
+    <!--
     <template if:true={openConfiguredPopup}>
         <section aria-modal="true" class="slds-modal slds-fade-in-open">
             <div class="slds-modal__container ">
@@ -268,6 +300,36 @@
                 <footer class="slds-modal__footer">
                     <lightning-button variant="brand" label="Cancel" title="Close"  onclick={closeConfiguredAlert} class="slds-var-m-right_small"></lightning-button>   
                     <lightning-button variant="brand" label="Continue" title="Continue"  onclick={continueConfiguredQLE} ></lightning-button>    
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+    -->
+    <template if:true={openConfiguredPopup}>
+        <section aria-modal="true" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container ">
+                <header class="slds-modal__header">
+                    <h2 class="slds-text-heading_medium slds-hyphenate">Configured Product: {trackConfig.lookupCode}</h2>
+                    <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeConfiguredAlert}></lightning-icon>
+                </header>
+                <div class="slds-modal__content">
+    <!--WORKING HERE TO DISPLAY FEATURES NOT WORKING AS ROWS, MISSING CREATING THE METHOD
+    FOT THAT AND THE CHECKBOXES LISTS-->
+                    <lightning-spinner if:true={bundleLoading} alternative-text="Loading" size="medium"></lightning-spinner>
+                    <div class="slds-var-p-around_medium lgc-bg slds-var-p-around_small slds-align_absolute-center">
+                        <template for:each={bundleFeatures} for:item="features">
+                            <div class="rows" key={features.name}>
+                                <lightning-icon class="slds-var-m-right_x-small" key={features.name} icon-name="standard:bundle_policy" alternative-text="bundle" title="bundle"></lightning-icon>
+                                <h2 key={features.name} class="slds-text-heading_medium slds-var-m-bottom_medium">
+                                {features.name}</h2>
+                            </div>
+                            </template>
+                        </div>
+                    </div>
+                <footer class="slds-modal__footer">
+                    <lightning-button variant="brand" label="Cancel" title="Close"  onclick={closeConfiguredAlert} class="slds-var-m-right_small"></lightning-button>   
+                    <lightning-button variant="brand" label="Save Bundle" title="Save Bundle"  onclick={saveBundle} ></lightning-button>    
                 </footer>
             </div>
         </section>
