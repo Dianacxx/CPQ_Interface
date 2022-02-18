@@ -15,6 +15,7 @@ public with sharing class WrappersClass {
     public class QuoteLineWrapperClass{
         public String id{get;set;}
         public String name {get;set;}
+        public Id requiredBy{get;set;}
         public String product{get;set;}
         public Id productid{get;set;}
         public Product2 productobj{get;set;}
@@ -41,6 +42,53 @@ public with sharing class WrappersClass {
         public String packagetype {get;set;}
         public Decimal volumediscount{get;set;}
         public String notes{get;set;}
+        //Product Selector filter values
+        public String color{get;set;}
+        public String productType{get;set;}
+        public String fiberCount{get;set;}
+        public String fiberType{get;set;}
+        public String jacketType{get;set;}
+        public String jacketConfiguration{get;set;}
+        public String jacketPrint{get;set;}
+        public String subUnit{get;set;} //Not on quote line
+        public String subUnitColor{get;set;}
+        public String armorType{get;set;} //Not on quote line
+        public String tightbuffType{get;set;} // Not on quote line
+        public Integer maxSpanAtLight{get;set;}// Not on quote line
+        public Integer maxSpanAtMedium{get;set;}// Not on quote line
+        public Integer maxSpanAtHeavy{get;set;}// Not on quote line
+        public String packaging{get;set;}// Not on quote line
+        public String primaryUOM{get;set;}
+        public Decimal lenght{get;set;}
+        public String busSizeOrWidth{get;set;}// Not on quote line
+        public String busSchedule{get;set;}// Not on quote line
+        public String busAlloy{get;set;}// Not on quote line
+        public String busTemper{get;set;}// Not on quote line
+        public String busThickness{get;set;}// Not on quote line
+        public String industryName{get;set;}// Not on quote line
+        public String numberOfStrands{get;set;}// Not on quote line
+        public String wireSize{get;set;}// Not on quote line
+        public String model{get;set;}// Not on quote line
+        public String subConfiguration{get;set;}// Not on quote line
+        public String lenghtPickList{get;set;}// Not on quote line
+        public String connectorA{get;set;}// Not on quote line
+        public String connectorB{get;set;}// Not on quote line
+        public String breakingStrength{get;set;}// Not on quote line
+        public String layDirection{get;set;}// Not on quote line
+        public String diameterTolerance{get;set;}// Not on quote line
+        public String coreAnnealing{get;set;}// Not on quote line
+        public String wireShape{get;set;}// Not on quote line
+        public String plateCapacity{get;set;}// Not on quote line
+        public String connectorSourceType{get;set;}// Not on quote line
+        public String apexClosure{get;set;}// Not on quote line
+        public String closureSize{get;set;}// Not on quote line
+        public String basketType{get;set;}// Not on quote line
+        public String trayType{get;set;}// Not on quote line
+        public String numTray{get;set;}// Not on quote line
+        public String numReliefKits{get;set;}// Not on quote line
+        public String numLungs{get;set;}// Not on quote line
+        public String innerBasket{get;set;}// Not on quote line
+        public String ru{get;set;}// Not on quote line
     }
 
     public class ProductWrapperClass{
@@ -62,7 +110,7 @@ public with sharing class WrappersClass {
         public Integer maxSpanAtHeavy{get;set;}
         public String packaging{get;set;}
         public String primaryUOM{get;set;}
-        public String lenght{get;set;}
+        public Decimal lenght{get;set;}
         public String busSizeOrWidth{get;set;}
         public String busSchedule{get;set;}
         public String busAlloy{get;set;}
@@ -81,6 +129,17 @@ public with sharing class WrappersClass {
         public String diameterTolerance{get;set;}
         public String coreAnnealing{get;set;}
         public String wireShape{get;set;}
+        public String plateCapacity{get;set;}
+        public String connectorSourceType{get;set;}
+        public String apexClosure{get;set;}
+        public String closureSize{get;set;}
+        public String basketType{get;set;}
+        public String trayType{get;set;}
+        public String numTray{get;set;}
+        public String numReliefKits{get;set;}
+        public String numLungs{get;set;}
+        public String innerBasket{get;set;}
+        public String ru{get;set;}
     }
 
     public class DiscountTierWrapperClass{
@@ -109,6 +168,7 @@ public with sharing class WrappersClass {
         public String label {get;set;}
         public String options {get;set;}
         public String apiName {get;set;}
+        public String action {get;set;}
         public Schema.DisplayType type {get;set;}
         public String filterSelection {get;set;}
         
