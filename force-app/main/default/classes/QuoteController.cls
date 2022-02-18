@@ -666,93 +666,20 @@ public with sharing class QuoteController {
         //Get all of the custom field values from the filtered grouping - gets it from the custom settings
         BL_Product_Filters__c customFilters = custFieldsMap.get(filteredGrouping);
 
-        if(filteredGrouping!='Closures'){
-            if(customFilters.Attribute_1__c!= null){
-                if(picklistFields.get(customFilters.Attribute_1__c)!=null){
 
-                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(picklistFields.get(customFilters.Attribute_1__c),filteredGrouping);
-                    filtersMap.put(customFilters.Attribute_1__c,pickListValues);    
+        if(customFilters.Attribute_1__c!= null){
+            if(picklistFields.get(customFilters.Attribute_1__c)!=null){
+
+                List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(picklistFields.get(customFilters.Attribute_1__c),filteredGrouping);
+                filtersMap.put(customFilters.Attribute_1__c,pickListValues);    
                 
-                }else{
-                    filtersMap.put(customFilters.Attribute_1__c,new List<Schema.PicklistEntry>());
-                }
+            }else{
+                filtersMap.put(customFilters.Attribute_1__c,new List<Schema.PicklistEntry>());
+            }
                 
-            }
-        } else{ //If the filtered grouping is Closure, it behaves differently, and we should show only the other attributes ignoring the first
-            if(customFilters.Attribute_2__c!= null){
-                if(picklistFields.get(customFilters.Attribute_2__c)!=null){
-                    List<Schema.PicklistEntry> pickListValues = picklistFields.get(customFilters.Attribute_2__c).getDescribe().getPickListValues();
-                    filtersMap.put(customFilters.Attribute_2__c,pickListValues);
-                    // System.debug(pickListValues);
-                }else{
-                    filtersMap.put(customFilters.Attribute_2__c,new List<Schema.PicklistEntry>());
-                }
-            }
-            if(customFilters.Attribute_3__c!= null){
-                if(picklistFields.get(customFilters.Attribute_3__c)!=null){
-                    List<Schema.PicklistEntry> pickListValues = picklistFields.get(customFilters.Attribute_3__c).getDescribe().getPickListValues();
-                    filtersMap.put(customFilters.Attribute_3__c,pickListValues);
-                }else{
-                    filtersMap.put(customFilters.Attribute_3__c,new List<Schema.PicklistEntry>());
-                }
-            }
-            if(customFilters.Attribute_4__c!= null){
-                if(picklistFields.get(customFilters.Attribute_4__c)!=null){
-                    List<Schema.PicklistEntry> pickListValues = picklistFields.get(customFilters.Attribute_4__c).getDescribe().getPickListValues();
-                    filtersMap.put(customFilters.Attribute_4__c,pickListValues);
-                }else{
-                    filtersMap.put(customFilters.Attribute_4__c,new List<Schema.PicklistEntry>());
-                }
-            }
-            if(customFilters.Attribute_5__c!= null){
-                if(picklistFields.get(customFilters.Attribute_5__c)!=null){
-                    List<Schema.PicklistEntry> pickListValues = picklistFields.get(customFilters.Attribute_5__c).getDescribe().getPickListValues();
-                    filtersMap.put(customFilters.Attribute_5__c,pickListValues);
-                }else{
-                    filtersMap.put(customFilters.Attribute_5__c,new List<Schema.PicklistEntry>());
-                }
-            }
-            if(customFilters.Attribute_6__c!= null){
-                if(picklistFields.get(customFilters.Attribute_6__c)!=null){
-                    List<Schema.PicklistEntry> pickListValues = picklistFields.get(customFilters.Attribute_6__c).getDescribe().getPickListValues();
-                    filtersMap.put(customFilters.Attribute_6__c,pickListValues);
-                }else{
-                    filtersMap.put(customFilters.Attribute_6__c,new List<Schema.PicklistEntry>());
-                }
-            }
-            if(customFilters.Attribute_7__c!= null){
-                if(picklistFields.get(customFilters.Attribute_7__c)!=null){
-                    List<Schema.PicklistEntry> pickListValues = picklistFields.get(customFilters.Attribute_7__c).getDescribe().getPickListValues();
-                    filtersMap.put(customFilters.Attribute_7__c,pickListValues);
-                }else{
-                    filtersMap.put(customFilters.Attribute_7__c,new List<Schema.PicklistEntry>());
-                }
-            }
-            if(customFilters.Attribute_8__c!= null){
-                if(picklistFields.get(customFilters.Attribute_8__c)!=null){
-                    List<Schema.PicklistEntry> pickListValues = picklistFields.get(customFilters.Attribute_8__c).getDescribe().getPickListValues();
-                    filtersMap.put(customFilters.Attribute_8__c,pickListValues);
-                }else{
-                    filtersMap.put(customFilters.Attribute_8__c,new List<Schema.PicklistEntry>());
-                }
-            }
-            if(customFilters.Attribute_9__c!= null){
-                if(picklistFields.get(customFilters.Attribute_9__c)!=null){
-                    List<Schema.PicklistEntry> pickListValues = picklistFields.get(customFilters.Attribute_9__c).getDescribe().getPickListValues();
-                    filtersMap.put(customFilters.Attribute_9__c,pickListValues);
-                }else{
-                    filtersMap.put(customFilters.Attribute_9__c,new List<Schema.PicklistEntry>());
-                }
-            }
-            if(customFilters.Attribute_10__c!= null){
-                if(picklistFields.get(customFilters.Attribute_10__c)!=null){
-                    List<Schema.PicklistEntry> pickListValues = picklistFields.get(customFilters.Attribute_10__c).getDescribe().getPickListValues();
-                    filtersMap.put(customFilters.Attribute_10__c,pickListValues);
-                }else{
-                    filtersMap.put(customFilters.Attribute_10__c,new List<Schema.PicklistEntry>());
-                }
-            }
         }
+       
+        
 
         for(String filter : filtersMap.keyset()){
             WrappersClass.FilteringWrappingClass wrapper = new WrappersClass.FilteringWrappingClass();
@@ -766,9 +693,10 @@ public with sharing class QuoteController {
         return JSON.serialize(filtersWrapperToShow);
 
     }
+    
 
     @AuraEnabled
-    public static String getProductFilteringv2(String filteredGrouping, String typeSelection){
+    public static String getProductFilteringv2(String filteredGrouping, String typeSelection, String modelSelection){
 
         Map<String,BL_Product_Filters__c> custFieldsMap = BL_Product_Filters__c.getAll(); //Get the custom fields in the custom setting
 
@@ -798,9 +726,9 @@ public with sharing class QuoteController {
             //Get the dependernt picklist values for the second attribute, depending on the first attribute value.
             
             if(customFilters.Attribute_2__c!= null){
-                if(customFilters.Attribute_2__c!= null == 'AW_Industry Name	'){
+                if(customFilters.Attribute_2__c == 'AW_Industry Name' || customFilters.Attribute_2__c == 'NumTray'){
                     List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(picklistFields.get(customFilters.Attribute_2__c),filteredGrouping);
-                        filtersMap.put(customFilters.Attribute_2__c,pickListValues);
+                    filtersMap.put(customFilters.Attribute_2__c,pickListValues);
                 }else{
                     if(picklistFields.get(customFilters.Attribute_2__c)!=null){
                         List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(picklistFields.get(customFilters.Attribute_2__c),typeSelection);
@@ -812,11 +740,16 @@ public with sharing class QuoteController {
                 }  
             }
             if(customFilters.Attribute_3__c!= null){
-                if(picklistFields.get(customFilters.Attribute_3__c)!=null){
-                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(picklistFields.get(customFilters.Attribute_3__c),typeSelection);
+                if(customFilters.Attribute_3__c == 'Connector/Source Type'){
+                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(picklistFields.get(customFilters.Attribute_3__c),filteredGrouping);
                     filtersMap.put(customFilters.Attribute_3__c,pickListValues);
                 }else{
-                    filtersMap.put(customFilters.Attribute_3__c,new List<Schema.PicklistEntry>());
+                    if(picklistFields.get(customFilters.Attribute_3__c)!=null){
+                        List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(picklistFields.get(customFilters.Attribute_3__c),typeSelection);
+                        filtersMap.put(customFilters.Attribute_3__c,pickListValues);
+                    }else{
+                        filtersMap.put(customFilters.Attribute_3__c,new List<Schema.PicklistEntry>());
+                    }
                 }
             }
             if(customFilters.Attribute_4__c!= null){
@@ -875,6 +808,16 @@ public with sharing class QuoteController {
                     filtersMap.put(customFilters.Attribute_10__c,new List<Schema.PicklistEntry>());
                 }
             }
+            // if(filteredGrouping == 'Pigtails'){
+            //     if(customFilters.Attribute_11__c!= null){
+            //         if(picklistFields.get(customFilters.Attribute_11__c)!=null){
+            //             List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(picklistFields.get(customFilters.Attribute_11__c),modelSelection);
+            //             filtersMap.put(customFilters.Attribute_11__c,pickListValues);
+            //         }else{
+            //             filtersMap.put(customFilters.Attribute_11__c,new List<Schema.PicklistEntry>());
+            //         }
+            //     }
+            // }
         }else{
            
         }
