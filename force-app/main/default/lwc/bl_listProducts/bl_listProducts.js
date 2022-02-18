@@ -357,6 +357,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
 
     //Calling the first product (Required one)
     callFiltersInPopUp(filterGroup){
+        this.productType = [];
         this.listTextFilters = []; 
         this.listFilters = []; 
         this.filtersLoading = false; 
@@ -368,7 +369,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         this.filtersLoading = false;
         //console.log('filterGroup: '+ filterGroup);
         if (this.trackList.lookupCode == 'Closures'){ 
-            //console.log('WORKING ON CLOSURES');
+            //console.log('WORKING ON CLOSURES' + filterGroup);
             getFirstFilter({filteredGrouping: filterGroup})
             .then((data)=>{
                 let filters = JSON.parse(data);
@@ -439,7 +440,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         this.filtersLoading = false;
 
         //GETTING FILTES DEPENDENCIES
-        if (this.trackList.lookupCode == 'Closures'){
+        /*
+        if (this.trackList.lookupCode == 'Closures5s'){
             this.filtersLoading = true; 
             this.requiredApex = event.detail.value;
             let indexFilter = this.filtersForApex.findIndex(x => x.label == event.target.label); 
@@ -450,7 +452,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                 this.filtersForApex.push({label: event.target.label, value:event.detail.value}); 
             }
             this.printProducts();
-        } else {
+        } else { 
+        */
         this.filtersForApex = [];
         //console.log('Options of Req filters: '+JSON.stringify(event.detail));
         this.requiredApex = event.detail.value;
@@ -506,7 +509,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             console.log('getProductFilteringv2 error');
             console.log(this.error);
         });
-        }
+        //}
         //SHOW PRODUCTS BY REQUIRED FIELDS
         this.printProducts();
     }
@@ -537,13 +540,17 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             this.filtersForApex.push({label: event.target.label, value:event.detail.value}); 
         }
 
+        //Extra Filters Dependencies.
         //ONLY FOR CAMBLE ASSEMBLIES + CUSTOMER REQUIRED FILTER
-        if ( this.trackList.lookupCode == 'Cable Assemblies' && event.target.label == 'Customer'){
-            //console.log('Customer Value: '+JSON.stringify(event.detail.value));
-            getAdditionalFiltering({customerSelection: event.detail.value})
+        //ONLY FOR PIGTAILS + MODEL
+        if ( (this.trackList.lookupCode == 'Cable Assemblies' && event.target.label == 'Customer')  
+            || (this.trackList.lookupCode == 'Pigtails' && event.target.label == 'Model')){
+            console.log('LookupCode: '+this.trackList.lookupCode + ' Filed: '+ event.target.label);
+            console.log('Customer/Model Value: '+JSON.stringify(event.detail.value));
+            getAdditionalFiltering({customerSelection: event.detail.value, filteredGrouping: this.trackList.lookupCode})
             .then((data)=>{
-                //console.log('Cable Assemblies');
-                //console.log(data); 
+                console.log('Cable Assemblies or Pigtails');
+                console.log(data); 
                 let temporalList = JSON.parse(data); 
                 //console.log('Times: '+temporalList.length);
                 for (let i=0; i<temporalList.length;i++){
@@ -587,10 +594,11 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                
             })
             .catch((error)=>{
-                console.log('Not Cable Assemblies');
+                console.log('Not Cable Assemblies/Pigtails extra fields');
                 console.log(error)
             })
         }
+    
         //console.log(JSON.stringify(this.filtersForApex));
         //console.log(this.tabSelected);
         this.printProducts();
@@ -627,6 +635,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     //FILTERS RESET
     clearFilters(){
         //Clearing filters with button in Filter Tab
+        this.listFilters = [];
+        this.listTextFilters = [];
         this.reviewSelectedLabel = [];
         this.reviewSelectedValue = [];
         this.filtersForApex = [];
@@ -811,7 +821,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                         //console.log('Number Field');
                         this.nspNumbers.push({label: dataParse[i].label, apiName: dataParse[i].apiName}); 
                     } else if(dataParse[i].action == 'DISPLAY'){
-                        this.nspDisplayOnly.push({label: dataParse[i].label, value: 'Here goes values'}); 
+                        this.nspDisplayOnly.push({label: dataParse[i].label, value: dataParse[i].options}); 
                     }
                 }
                 this.gettingNspFields = true;
