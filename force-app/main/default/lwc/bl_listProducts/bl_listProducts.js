@@ -9,6 +9,8 @@ import addSelectorQuoteLine from '@salesforce/apex/QuoteController.addSelectorQu
 import getAdditionalFiltering from '@salesforce/apex/QuoteController.getAdditionalFiltering';
 import NSPAdditionalFields from '@salesforce/apex/QuoteController.NSPAdditionalFields'; 
 
+import addNSPQuoteLine from '@salesforce/apex/QuoteController.addNSPQuoteLine'; 
+
 import getFeaturesConfigured from '@salesforce/apex/blMockData.getFeaturesConfigured'; 
 
 export default class Bl_listProducts extends NavigationMixin(LightningElement) {
@@ -112,6 +114,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             case 'edit':
                 this.editFiltered = true; 
                 this.editLookupCodeRow = row; 
+                console.log('QL Edit:' + JSON.stringify(row.listOfProducts)); 
                 this.editQuoteLines = JSON.parse(JSON.stringify(row.listOfProducts)); 
                 this.columnsEdit = [{label: 'Product', fieldName: 'product'},{label: 'Description', fieldName: 'description', wrapText: true}, {type: "button-icon", initialWidth: 30, typeAttributes: {iconName: "utility:delete", name: "delete"}} ];
                 this.updateEditTable();
@@ -440,20 +443,6 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         this.filtersLoading = false;
 
         //GETTING FILTES DEPENDENCIES
-        /*
-        if (this.trackList.lookupCode == 'Closures5s'){
-            this.filtersLoading = true; 
-            this.requiredApex = event.detail.value;
-            let indexFilter = this.filtersForApex.findIndex(x => x.label == event.target.label); 
-            //console.log('Index in filterSelected: '+indexFilter);
-            if( indexFilter > -1){
-                this.filtersForApex[indexFilter].value = event.detail.value; 
-            } else {
-                this.filtersForApex.push({label: event.target.label, value:event.detail.value}); 
-            }
-            this.printProducts();
-        } else { 
-        */
         this.filtersForApex = [];
         //console.log('Options of Req filters: '+JSON.stringify(event.detail));
         this.requiredApex = event.detail.value;
@@ -776,9 +765,10 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         ((this.tabSelected == 'Cable')) ||
         ((this.tabSelected == 'Connectivity') && ( (this.trackList.lookupCode == 'Cable Assemblies') || (this.trackList.lookupCode == 'Patch Panels') ))
         ){
-            
+           
             this.popupNSP = true;
             this.listNSP = JSON.parse(JSON.stringify(this.allReviews));
+            console.log('NSP Val 0')
             console.log(this.listNSP[0]); 
             let i = 1;
             console.log('ID sent: '+this.listNSP[0].idTemporal)
@@ -805,13 +795,30 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     handleNSPTab(event){
         this.clearNSPFields();
         this.firstNSP = event.target.value;
+        this.gettingNspFields = false;
         NSPAdditionalFields({productId: this.listNSP[this.firstNSP-1].idTemporal})
             .then((data)=>{
-                console.log('IN handleNSPTab CALLING THE PRODUCT #' + (this.firstNSP-1).toString());
-                console.log(data);
+                //console.log('IN handleNSPTab CALLING THE PRODUCT #' + (this.firstNSP-1).toString());
+                //console.log(data);
                 let dataParse = JSON.parse(data); 
                 for (let i=0; i<dataParse.length; i++){
-                    this.listNSP[this.firstNSP-1][dataParse[i].apiName] = 'Value of '+dataParse[i].apiName;
+
+                    //console.log('Property of actual: '+ JSON.stringify(dataParse[i]));
+                    if(this.listNSP[this.firstNSP-1].hasOwnProperty(dataParse[i].apiName)){
+                        //console.log('No property');
+                        let ind = this.listNspValuesToDisplay.findIndex(element => element.property ==  dataParse[i].label);
+                        //console.log('Properties: '+ Object.getOwnPropertyNames(this.listNSP[this.firstNSP-1]));
+                        //console.log('Index: '+ ind);
+                        if(ind == -1){
+                            if (!(dataParse[i].action == 'DISPLAY')){
+                                this.listNspValuesToDisplay.push({property: dataParse[i].label, value: this.listNSP[this.firstNSP-1][dataParse[i].apiName]});
+                            }
+                        } else {
+                            this.listNspValuesToDisplay[ind].value =   this.listNSP[this.firstNSP-1][dataParse[i].apiName]; 
+                        }
+                    } else {
+                        this.listNSP[this.firstNSP-1][dataParse[i].apiName] = dataParse[i].options;
+                    }
                     //console.log('New Prop: '+  this.listNSP[this.firstNSP-1][dataParse[i].apiName]);
                     if (dataParse[i].type == 'PICKLIST'){
                         //console.log('PickList Field');
@@ -821,9 +828,11 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                         //console.log('Number Field');
                         this.nspNumbers.push({label: dataParse[i].label, apiName: dataParse[i].apiName}); 
                     } else if(dataParse[i].action == 'DISPLAY'){
+                        //console.log('Display Only');
                         this.nspDisplayOnly.push({label: dataParse[i].label, value: dataParse[i].options}); 
                     }
                 }
+
                 this.gettingNspFields = true;
 
             })
@@ -842,7 +851,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
 
     @track listNspValuesToDisplay = [];
     nspPicklistChange(event){
-        console.log('When select a new value'); 
+        //console.log('When select a new value'); 
         //console.log('Field Name: '+event.target.name);
         //console.log('Field Label: '+event.target.label);
         //console.log('Field Value: '+event.target.value);
@@ -852,13 +861,12 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         } else {
             this.listNspValuesToDisplay[ind].value =  event.target.value; 
         }
-        
         this.listNSP[this.firstNSP-1][event.target.name] = event.target.value; 
 
     }
 
     saveAndExitNSPFilteredModeal(){
-        let auxQuoteLines = JSON.parse(JSON.stringify(this.allReviews)); 
+        let auxQuoteLines = JSON.parse(JSON.stringify(this.listNSP)); 
         let auxQuoteLinesLength  = auxQuoteLines.length; //HACER ESTO CUANDO LOS QUOTELINES ESTEN CAMBIADOS
         for(let i=0; i<auxQuoteLines.length; i++){
             let auxId = auxQuoteLines[i].Id; 
@@ -867,7 +875,12 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         }
         let trackListInternal = JSON.parse(JSON.stringify(this.trackList));
         let listToDisplayInternal = JSON.parse(JSON.stringify(this.listToDisplayAdd));
-
+        //HERE THE NSP!!!!!!!!
+        console.log('Before QL NSP¨: '+ JSON.stringify(auxQuoteLines));
+        addSelectorQuoteLine({quoteId: this.recordId, products: JSON.stringify(auxQuoteLines)})//, filteredGrouping: this.trackList.lookupCode})
+        .then((data)=>{
+            console.log('SUCCESS TURNING NSP QUOTELINES');
+            console.log(data);
             //CAMBIAR EL  this.listNSP POR LOS QUOTELINES UNA VEZ ENVIADOS AL METODO Y RECIBIDOS
             trackListInternal['listOfProducts'] = this.listNSP; 
             trackListInternal.isAdd[0] = true;
@@ -879,13 +892,19 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             listToDisplayInternal.push(trackListInternal);
             this.trackList = [];
             this.listToDisplayAdd = listToDisplayInternal; 
-        setTimeout(()=>{
-            this.dispatchEvent(new CustomEvent('listtodisplayadd', { detail: {list: this.listToDisplayAdd, tab: this.tabSelected} }));
-        }, 500);
-        this.closeFilterAndSelected(); 
-        setTimeout(()=>{
-            this.showLookupList = true;
-        }, 500);        
+            setTimeout(()=>{
+                this.dispatchEvent(new CustomEvent('listtodisplayadd', { detail: {list: this.listToDisplayAdd, tab: this.tabSelected} }));
+            }, 500);
+            this.closeFilterAndSelected(); 
+            setTimeout(()=>{
+                this.showLookupList = true;
+            }, 500);   
+        })
+        .catch((error)=>{
+            console.log('ERROR TURNING NSP QUOTELINES');
+            console.log(error);
+        })
+                 
     }
     //TRABAJAR AQUI CUANDO EL QUOTE SAVER ESTE LISTO. 
     saveAndExitFilterModal(){
@@ -1047,8 +1066,9 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     continueConfiguredQLE(){
         //SCENARIO 2
         this.bundleLoading = true; 
-        //onsole.log('Properties of row selected');
+        console.log('Properties of row selected');
         //console.log(Object.getOwnPropertyNames(this.trackConfig)); 
+        
         getFeaturesConfigured({productName: this.trackConfig.lookupCode})
         .then((data)=>{
             //console.log(data);
@@ -1056,6 +1076,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             //console.log(Object.getOwnPropertyNames(this.bundleFeatures[0])); 
             for (let i =0; i<this.bundleFeatures.length; i++){
                 console.log(this.bundleFeatures[i].features); 
+                //this.bundleFeatures[i].features = JSON.parse(this.bundleFeatures[i].features);
                 //let optionsAux = JSON.parse(this.bundleFeatures[i].features);  
                 //this.bundleOptions.push(optionsAux);
                 //console.log(optionsAux);  
@@ -1066,6 +1087,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             console.log('Error getting features for bundle');
             console.log(error);
         })
+
+        
 
 
 

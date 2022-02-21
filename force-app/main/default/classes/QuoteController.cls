@@ -328,6 +328,8 @@ public with sharing class QuoteController {
         QuoteReader quoteReader = new QuoteReader();
         // QuoteModel quote = quoteReader.read('a0q5f0000013pc3AAA');
         List<WrappersClass.QuoteLineWrapperClass> linesToPrint = new List<WrappersClass.QuoteLineWrapperClass>();
+        Schema.sObjectType sobject_type = Product2.getSObjectType();
+        Map<String, Schema.SObjectField> theProductFieldmap = sobject_type.getDescribe().fields.getMap(); //The fields map of the product oject
         List<ProductModel> prodModelList = new List<ProductModel>();
         List<QuoteLineModel> newlyAddedLines = new List<QuoteLineModel>(); //Will storee a list of the added lines
         QuoteModel quote = quoteReader.read(quoteId);
@@ -336,6 +338,24 @@ public with sharing class QuoteController {
         Pricebook2 prodPriceBook = [SELECT Id FROM Pricebook2 WHERE Id IN (SELECT SBQQ__PriceBook__c FROM SBQQ__Quote__c WHERE Id =: quoteId) LIMIT 1];
         List<WrappersClass.ProductWrapperClass> untypedProductValues = (List<WrappersClass.ProductWrapperClass>) JSON.deserialize(products, List<WrappersClass.ProductWrapperClass>.class );
         Map<Id,WrappersClass.ProductWrapperClass> prodMap = new Map<Id,WrappersClass.ProductWrapperClass>();
+
+        String query ='';
+        String strFields = '';
+        for(String fieldName : theProductFieldmap.keyset() ){
+            if(strFields == null || strFields == ''){
+                strFields = fieldName;
+            }else{
+                strFields = strFields + ' , ' + fieldName;
+            }
+        }
+
+        //Create a Map to store all of the Products with their ID as the key
+        // query ='SELECT '+strFields +' FROM Product2';
+        // List<Product2> productList = Database.query(query);
+        // Map<Id, Product2> productsMap = new Map<Id, Product2>();
+        // for(Product2 prod : productList){
+        //     productsMap.put(prod.Id,prod);
+        // }
 
         for(WrappersClass.ProductWrapperClass prod : untypedProductValues){ //puts the values of the produst that comes from the UI before converting into a quote line
             ProductModel product = productReader.read(prod.id,prodPriceBook.Id,'USD');
@@ -359,6 +379,7 @@ public with sharing class QuoteController {
         // System.debug('List of new lines '+ newlyAddedLines.size());
         for (QuoteLineModel newlyAddedLine : newlyAddedLines) { //Converts the new lines in a wrapper to print
             WrappersClass.QuoteLineWrapperClass wrapper = new WrappersClass.QuoteLineWrapperClass();
+            WrappersClass.ProductWrapperClass relatedProd = prodMap.get(newlyAddedLine.record.SBQQ__Product__c);
             wrapper.id = newlyAddedLine.record.id;
             wrapper.product = newlyAddedLine.record.SBQQ__Product__r.Name;
             wrapper.requiredBy = newlyAddedLine.record.SBQQ__RequiredBy__c;
@@ -383,18 +404,25 @@ public with sharing class QuoteController {
             wrapper.length = newlyAddedLine.record.Length__c;
             wrapper.originalprice = newlyAddedLine.record.SBQQ__OriginalPrice__c;
             wrapper.packagetype = newlyAddedLine.record.Package_Type__c;
+            wrapper.packageCover = newlyAddedLine.record.Package_Cover__c;
             wrapper.volumediscount = newlyAddedLine.record.SBQQ__VolumeDiscount__c;
-           // wrapper.
-            // wrapper.color = newlyAddedLine.record.Color__c;
-            // wrapper.productType = newlyAddedLine.record.Product_Type__c;
-            // wrapper.fiberCount = newlyAddedLine.record.Fiber_Count__c;
-            // wrapper.fiberType = newlyAddedLine.record.Fiber_Type__c;
-            // wrapper.jacketType = newlyAddedLine.record.Jacket_Type__c;
-            // wrapper.jacketConfiguration = newlyAddedLine.record.Jacket_Configuration__c;
-            // wrapper.jacketPrint = newlyAddedLine.record.Jacket_Print__c;
-            // wrapper.subUnitColor = newlyAddedLine.record.Subunit_Color__c;
-            // wrapper.primaryUOM = newlyAddedLine.record.Primary_UOM__c;
-            // wrapper.lenght = newlyAddedLine.record.Length__c;
+            wrapper.color = newlyAddedLine.record.Color__c;
+            wrapper.productType = newlyAddedLine.record.Product_Type__c;
+
+            // wrapper.fiberCount1 = relatedProd.fiberCount1;
+            // wrapper.fiberCount2 = relatedProd.fiberCount2;
+            // wrapper.fiberType1 = relatedProd.fiberType1;
+            // wrapper.fiberType2 = relatedProd.fiberType2;
+            // wrapper.regionCode = relatedProd.regionCode;
+            // wrapper.primaryUOM = relatedProd.primaryUOM;
+            // wrapper.lenght = relatedProd.lenght;
+            wrapper.fiberCount1 = newlyAddedLine.record.Mix_Fiber_Count_1__c;
+            wrapper.fiberCount2 = newlyAddedLine.record.Mix_Fiber_Count_2__c;
+            wrapper.fiberType1 = newlyAddedLine.record.Mix_Fiber_Type_1__c;
+            wrapper.fiberType2 = newlyAddedLine.record.Mix_Fiber_Type_2__c;
+            wrapper.regionCode = newlyAddedLine.record.Region_Code__c;
+            wrapper.primaryUOM = newlyAddedLine.record.Primary_UOM__c;
+            wrapper.lenght = newlyAddedLine.record.Length__c;
 
             linesToPrint.add(wrapper); 
         }
@@ -596,6 +624,16 @@ public with sharing class QuoteController {
                 newQuoteLine.BL_Alternative_Indicator__c = line.alternativeindicator;
                 newQuoteLine.BL_NSP_Offering_Details__c = line.nspofferingdetails;
 
+                newQuoteLine.Package_Type__c = line.packagetype;
+                newQuoteLine.Package_Cover__c = line.packageCover;
+                newQuoteLine.Mix_Fiber_Count_1__c = line.fiberCount1;
+                newQuoteLine.Mix_Fiber_Count_2__c = line.fiberCount2;
+                newQuoteLine.Mix_Fiber_Type_1__c = line.fiberType1;
+                newQuoteLine.Mix_Fiber_Type_2__c = line.fiberType2;
+                newQuoteLine.Region_Code__c = line.regionCode;
+                newQuoteLine.Length__c = line.lenght;
+                newQuoteLine.Length_UOM__c = line.primaryUOM;
+
                 QuoteLineModel newModel = new QuoteLineModel();
                 newModel.setRecord(newQuoteLine);
                 linesFromQuote.add(newModel);
@@ -696,7 +734,7 @@ public with sharing class QuoteController {
     
 
     @AuraEnabled
-    public static String getProductFilteringv2(String filteredGrouping, String typeSelection, String modelSelection){
+    public static String getProductFilteringv2(String filteredGrouping, String typeSelection){
 
         Map<String,BL_Product_Filters__c> custFieldsMap = BL_Product_Filters__c.getAll(); //Get the custom fields in the custom setting
 
@@ -725,7 +763,7 @@ public with sharing class QuoteController {
         if(typeSelection!= null){
             //Get the dependernt picklist values for the second attribute, depending on the first attribute value.
             
-            if(customFilters.Attribute_2__c!= null || filteredGrouping != 'Pigtails'){
+            if(customFilters.Attribute_2__c!= null){
                 if(customFilters.Attribute_2__c == 'AW_Industry Name' || customFilters.Attribute_2__c == 'NumTray'){
                     List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(picklistFields.get(customFilters.Attribute_2__c),filteredGrouping);
                     filtersMap.put(customFilters.Attribute_2__c,pickListValues);
@@ -948,6 +986,7 @@ public with sharing class QuoteController {
         return pickListValues;
     }
 
+    //This holds the query that returns the products dependimg on the filter values selected by the user.
     @AuraEnabled
     public static List<sObject> filteredProductPrinter(String filterValues,String level1,String filteredGrouping){
         List<WrappersClass.FilteringSelectionWrappingClass> untypedfilterValues = (List<WrappersClass.FilteringSelectionWrappingClass>) JSON.deserialize(filterValues, List<WrappersClass.FilteringSelectionWrappingClass>.class );
@@ -1558,6 +1597,7 @@ public with sharing class QuoteController {
             wrapper.label = display;
             wrapper.options = String.valueOf(displayFieldsMap.get(display));
             wrapper.action = 'DISPLAY';
+            wrapper.apiName = prodFieldsNameMap.get(display);
             
             filtersWrapperToShow.add(wrapper);
         }
@@ -1584,8 +1624,96 @@ public with sharing class QuoteController {
 
         return valuesMap;
     }
-    // @AuraEnabled
-    // public static String addNSPQuoteLine(String quoteId, String products, String filteredGrouping){
+    @AuraEnabled
+    //Creates quote lines from the NSP products
+    public static String addNSPQuoteLine(String quoteId, String products, String filteredGrouping){
+        QuoteReader quoteReader = new QuoteReader();
+        // QuoteModel quote = quoteReader.read('a0q5f0000013pc3AAA');
+        List<WrappersClass.QuoteLineWrapperClass> linesToPrint = new List<WrappersClass.QuoteLineWrapperClass>();
+        List<ProductModel> prodModelList = new List<ProductModel>();
+        List<QuoteLineModel> newlyAddedLines = new List<QuoteLineModel>(); //Will storee a list of the added lines
+        QuoteModel quote = quoteReader.read(quoteId);
+        List<QuoteLineModel> previousLines = quote.getLineItems();//gets the lines that are currently in salesforce
+        ProductReader productReader = new ProductReader();
+        Pricebook2 prodPriceBook = [SELECT Id FROM Pricebook2 WHERE Id IN (SELECT SBQQ__PriceBook__c FROM SBQQ__Quote__c WHERE Id =: quoteId) LIMIT 1]; //Query for the pricbook that the product is currently
+        List<WrappersClass.ProductWrapperClass> untypedProductValues = (List<WrappersClass.ProductWrapperClass>) JSON.deserialize(products, List<WrappersClass.ProductWrapperClass>.class );
+        Map<Id,WrappersClass.ProductWrapperClass> prodMap = new Map<Id,WrappersClass.ProductWrapperClass>();
+
+        for(WrappersClass.ProductWrapperClass prod : untypedProductValues){ //puts the values of the produst that comes from the UI before converting into a quote line
+            ProductModel product = productReader.read(prod.id,prodPriceBook.Id,'USD');
+            prodMap.put(prod.id, prod);
+            prodModelList.add(product);
+        }
         
-    // }
+
+        ProductAdder adder = new ProductAdder(); 
+        QuoteModel quoteWithProducts = adder.add(quote, prodModelList, 0);
+        List<QuoteLineModel> newLines = quoteWithProducts.getLineItems();
+        System.debug('previous lines -- ' + previousLines.size());
+        System.debug('new lines -- ' + newLines.size());
+        
+        for (QuoteLineModel newLine : newLines) {
+            if (newLine.record.id == null) { 
+                newlyAddedLines.add(newLine); //Puts all of the added lines in a list
+            }
+        }
+
+        for (QuoteLineModel newlyAddedLine : newlyAddedLines){
+            WrappersClass.QuoteLineWrapperClass wrapper = new WrappersClass.QuoteLineWrapperClass();
+            WrappersClass.ProductWrapperClass relatedProd = prodMap.get(newlyAddedLine.record.SBQQ__Product__c);
+            wrapper.id = newlyAddedLine.record.id;
+            wrapper.product = newlyAddedLine.record.SBQQ__Product__r.Name;
+            wrapper.productId = newlyAddedLine.record.SBQQ__Product__c;
+            wrapper.productobj = newlyAddedLine.record.SBQQ__Product__r;
+            // wrapper.description = newlyAddedLine.record.Description__c;
+
+            wrapper.id = newlyAddedLine.record.id;
+            wrapper.product = newlyAddedLine.record.SBQQ__Product__r.Name;
+            wrapper.requiredBy = newlyAddedLine.record.SBQQ__RequiredBy__c;
+            wrapper.productid = newlyAddedLine.record.SBQQ__Product__c;
+            wrapper.productobj = newlyAddedLine.record.SBQQ__Product__r;
+            wrapper.name = newlyAddedLine.record.Name;
+            wrapper.description = newlyAddedLine.record.SBQQ__Description__c;
+            wrapper.uom = newlyAddedLine.record.UOM__c;
+            wrapper.listunitprice = newlyAddedLine.record.SBQQ__ListPrice__c;
+            wrapper.additionaldiscount = newlyAddedLine.record.SBQQ__Discount__c;
+            wrapper.netunitprice = newlyAddedLine.record.SBQQ__NetPrice__c; 
+            wrapper.billingtolerance = newlyAddedLine.record.BL_Billing_Tolerance__c; 
+            wrapper.source = newlyAddedLine.record.BL_Source__c; 
+            wrapper.destination = newlyAddedLine.record.BL_Destination__c;
+            wrapper.alternativeindicator = newlyAddedLine.record.BL_Alternative_Indicator__c;
+            // wrapper.nspofferingdetails = newlyAddedLine.record.SBQQ__Optional__c;
+            wrapper.billingfrequency = newlyAddedLine.record.SBQQ__BillingFrequency__c;
+            wrapper.approvalstatus = newlyAddedLine.record.ApprovalStatus__c;
+            wrapper.billingtype = newlyAddedLine.record.SBQQ__BillingType__c;
+            wrapper.componenttotal = newlyAddedLine.record.SBQQ__ComponentTotal__c;
+            wrapper.enddate = newlyAddedLine.record.SBQQ__EndDate__c;
+            wrapper.length = newlyAddedLine.record.Length__c;
+            wrapper.originalprice = newlyAddedLine.record.SBQQ__OriginalPrice__c;
+            wrapper.packagetype = newlyAddedLine.record.Package_Type__c;
+            wrapper.packageCover = newlyAddedLine.record.Package_Cover__c;
+            wrapper.volumediscount = newlyAddedLine.record.SBQQ__VolumeDiscount__c;
+            wrapper.color = newlyAddedLine.record.Color__c;
+            wrapper.productType = newlyAddedLine.record.Product_Type__c;
+
+            wrapper.fiberCount1 = relatedProd.fiberCount1;
+            wrapper.fiberCount2 = relatedProd.fiberCount2;
+            wrapper.fiberType1 = relatedProd.fiberType1;
+            wrapper.fiberType2 = relatedProd.fiberType2;
+            wrapper.regionCode = relatedProd.regionCode;
+            wrapper.primaryUOM = relatedProd.primaryUOM;
+            wrapper.lenght = relatedProd.lenght;
+
+            linesToPrint.add(wrapper); 
+
+            // if(relatedProd.filteredGrouping == 'Premise Cable'){
+            //     wrapper.color = newlyAddedLine.record.Color__c;
+            //     wrapper.subUnitColor = newlyAddedLine.record.Subunit_Color__c;
+
+            // }
+            
+        }
+        return JSON.serialize(linesToPrint);
+
+    }
 }

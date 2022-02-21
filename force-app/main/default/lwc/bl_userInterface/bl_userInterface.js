@@ -140,7 +140,8 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             printQuoteLines({ quoteId: this.recordId})
             .then(data =>{
                 if (data){
-                    this.quotelinesString = data; 
+                    this.quotelinesString = data;
+                    this.originalquotelinesString = this.quotelinesString;
                     this.error = undefined;
                     this.isLoading = true; 
                     //console.log('quoteLines String SUCCESS: '+ this.quotelinesString);
@@ -450,9 +451,13 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     }
     async navigateToQuoteRecordPage() {
         let startTime = performance.now();
-        await this.callEditAnDeleteMethod();
-        await this.callCreateMethod();
-        await this.exitToRecordPage();
+        if (!(this.originalquotelinesString == this.quotelinesString)){
+            await this.callEditAnDeleteMethod();
+            await this.callCreateMethod();
+            await this.exitToRecordPage();
+        } else {
+            await this.exitToRecordPage();
+        }
         let endTime = performance.now();
         console.log(`Saving and Exit method took ${endTime - startTime} milliseconds`);
     }
