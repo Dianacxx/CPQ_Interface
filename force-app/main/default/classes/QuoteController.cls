@@ -336,8 +336,8 @@ public with sharing class QuoteController {
         List<QuoteLineModel> previousLines = quote.getLineItems();//gets the lines that are currently in salesforce
         ProductReader productReader = new ProductReader();
         Pricebook2 prodPriceBook = [SELECT Id FROM Pricebook2 WHERE Id IN (SELECT SBQQ__PriceBook__c FROM SBQQ__Quote__c WHERE Id =: quoteId) LIMIT 1];
-        List<WrappersClass.ProductWrapperClass> untypedProductValues = (List<WrappersClass.ProductWrapperClass>) JSON.deserialize(products, List<WrappersClass.ProductWrapperClass>.class );
-        Map<Id,WrappersClass.ProductWrapperClass> prodMap = new Map<Id,WrappersClass.ProductWrapperClass>();
+        List<Product2> deserializedProductValues = (List<Product2>) JSON.deserialize(products, List<Product2>.class );
+        // Map<Id,SBQQ__QuoteLine__c> prodMap = new Map<Id,SBQQ__QuoteLine__c>();
 
         String query ='';
         String strFields = '';
@@ -357,11 +357,14 @@ public with sharing class QuoteController {
         //     productsMap.put(prod.Id,prod);
         // }
 
-        for(WrappersClass.ProductWrapperClass prod : untypedProductValues){ //puts the values of the produst that comes from the UI before converting into a quote line
+        for(Product2 prod : deserializedProductValues){ //puts the values of the produst that comes from the UI before converting into a quote line
             ProductModel product = productReader.read(prod.id,prodPriceBook.Id,'USD');
-            prodMap.put(prod.id, prod);
+            
             prodModelList.add(product);
         }
+        
+        
+
         
         ProductAdder adder = new ProductAdder(); 
         QuoteModel quoteWithProducts = adder.add(quote, prodModelList, 0);
@@ -371,15 +374,15 @@ public with sharing class QuoteController {
         
         for (QuoteLineModel newLine : newLines) {
             if (newLine.record.id == null) { 
-
                 newlyAddedLines.add(newLine); //Puts all of the added lines in a list
-
             }
         }
+        
         // System.debug('List of new lines '+ newlyAddedLines.size());
         for (QuoteLineModel newlyAddedLine : newlyAddedLines) { //Converts the new lines in a wrapper to print
             WrappersClass.QuoteLineWrapperClass wrapper = new WrappersClass.QuoteLineWrapperClass();
-            WrappersClass.ProductWrapperClass relatedProd = prodMap.get(newlyAddedLine.record.SBQQ__Product__c);
+            // SBQQ__QuoteLine__c relatedProd = prodMap.get(newlyAddedLine.record.id);
+             // System.debug('related product: ' + relatedProd);
             wrapper.id = newlyAddedLine.record.id;
             wrapper.product = newlyAddedLine.record.SBQQ__Product__r.Name;
             wrapper.requiredBy = newlyAddedLine.record.SBQQ__RequiredBy__c;
@@ -409,26 +412,37 @@ public with sharing class QuoteController {
             wrapper.color = newlyAddedLine.record.Color__c;
             wrapper.productType = newlyAddedLine.record.Product_Type__c;
 
-            // wrapper.fiberCount1 = relatedProd.fiberCount1;
-            // wrapper.fiberCount2 = relatedProd.fiberCount2;
-            // wrapper.fiberType1 = relatedProd.fiberType1;
-            // wrapper.fiberType2 = relatedProd.fiberType2;
-            // wrapper.regionCode = relatedProd.regionCode;
-            // wrapper.primaryUOM = relatedProd.primaryUOM;
-            // wrapper.lenght = relatedProd.lenght;
-            wrapper.fiberCount1 = newlyAddedLine.record.Mix_Fiber_Count_1__c;
-            wrapper.fiberCount2 = newlyAddedLine.record.Mix_Fiber_Count_2__c;
-            wrapper.fiberType1 = newlyAddedLine.record.Mix_Fiber_Type_1__c;
-            wrapper.fiberType2 = newlyAddedLine.record.Mix_Fiber_Type_2__c;
-            wrapper.regionCode = newlyAddedLine.record.Region_Code__c;
-            wrapper.primaryUOM = newlyAddedLine.record.Primary_UOM__c;
-            wrapper.lenght = newlyAddedLine.record.Length__c;
-
+            System.debug('is the wrapper working -- ' + wrapper.fiberType1);
             linesToPrint.add(wrapper); 
         }
         System.debug('lines to print '+ linesToPrint.size());
         
 
+        return JSON.serialize(linesToPrint);
+    }
+
+    @AuraEnabled
+    public static String addNSPProducts(String quoteId, String products){
+
+        List<WrappersClass.QuoteLineWrapperClass> linesToPrint = new List<WrappersClass.QuoteLineWrapperClass>();
+        List<Object> untypedProductValues = (List<Object>) JSON.deserializeuntyped(products);
+
+        for(Object prod : untypedProductValues){ //puts the values of the prod ust that comes from the UI before converting into a quote line
+            Map<String, Object> prodMap = (Map<String, Object>)prod;
+            // wrapper.fiberCount1 = (Decimal)prodMap.get('Mix_Fiber_Count_1__c');
+            // wrapper.fiberCount2 = relatedProd.Mix_Fiber_Count_2__c;
+            WrappersClass.QuoteLineWrapperClass wrapper = new WrappersClass.QuoteLineWrapperClass();
+            wrapper.product = (String)prodMap.get('Id');
+            wrapper.color = (String)prodMap.get('Color__c');
+            wrapper.subUnitColor = (String)prodMap.get('Subunit_Color__c');
+            wrapper.jacketPrint = (String)prodMap.get('Jacket_Print__c');
+            wrapper.packagetype = (String)prodMap.get('Package_Type__c');
+            wrapper.packageCover = (String)prodMap.get('Package_Cover__c');
+            wrapper.fiberType1 = (String)prodMap.get('Mix_Fiber_Type_1__c');
+            wrapper.fiberType2 = (String)prodMap.get('Mix_Fiber_Type_2__c');
+            wrapper.regionCode = (String)prodMap.get('Region_Code__c');
+            linesToPrint.add(wrapper);
+        }
         return JSON.serialize(linesToPrint);
     }
     
@@ -1483,24 +1497,24 @@ public with sharing class QuoteController {
             }        
         } else if(product.Filtered_Grouping__c =='Cable Assemblies' || product.Filtered_Grouping__c =='Patch Panels'){
             if(customFilters.Attribute_1__c!= null){
-                if(productPicklistFields.get(customFilters.Attribute_1__c)!=null){
-                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(productPicklistFields.get(customFilters.Attribute_1__c),product.Product_Type__c);
+                if(linePicklistFields.get(customFilters.Attribute_1__c)!=null){
+                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(linePicklistFields.get(customFilters.Attribute_1__c),product.Product_Type__c);
                     filtersMap.put(customFilters.Attribute_1__c,pickListValues);
                 }else{
                     filtersMap.put(customFilters.Attribute_1__c,new List<Schema.PicklistEntry>());
                 }
             }
             if(customFilters.Attribute_2__c!= null){
-                if(productPicklistFields.get(customFilters.Attribute_2__c)!=null){
-                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(productPicklistFields.get(customFilters.Attribute_2__c),product.Product_Type__c);
+                if(linePicklistFields.get(customFilters.Attribute_2__c)!=null){
+                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(linePicklistFields.get(customFilters.Attribute_2__c),product.Product_Type__c);
                     filtersMap.put(customFilters.Attribute_2__c,pickListValues);
                 }else{
                     filtersMap.put(customFilters.Attribute_2__c,new List<Schema.PicklistEntry>());
                 }
             }
             if(customFilters.Attribute_3__c!= null){
-                if(productPicklistFields.get(customFilters.Attribute_3__c)!=null){
-                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(productPicklistFields.get(customFilters.Attribute_3__c),product.Product_Type__c);
+                if(linePicklistFields.get(customFilters.Attribute_3__c)!=null){
+                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(linePicklistFields.get(customFilters.Attribute_3__c),product.Product_Type__c);
                     filtersMap.put(customFilters.Attribute_3__c,pickListValues);
                 }else{
                     filtersMap.put(customFilters.Attribute_3__c,new List<Schema.PicklistEntry>());

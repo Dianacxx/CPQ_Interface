@@ -50,7 +50,14 @@ public with sharing class blMockData {
 
     public class bundleFeaturesWrapper{
         public String name {get;set;}
-        public List<String> features {get;set;}         
+        public String id {get;set;}
+        public String features {get;set;}         
+    } 
+
+    public class FeaturesOptionsWrapper{
+        public String productName {get;set;}
+        public String description {get;set;}
+        public Boolean disable {get;set;}     
     } 
     
 
@@ -72,20 +79,24 @@ public with sharing class blMockData {
                     WHERE SBQQ__ConfiguredSKU__r.name =:productName AND SBQQ__Feature__r.name =:nameFeatures];
             //System.debug('Option of '+features[i].Name+' '+options+' with size '+options.size());
             //System.debug('Size '+options.size());
-            List <String> title = new List<String>();
+            List <FeaturesOptionsWrapper> title = new List<FeaturesOptionsWrapper>();
             for (integer j=0; j<options.size(); j++){
+                FeaturesOptionsWrapper test = new FeaturesOptionsWrapper(); 
                 String a = (options[j].SBQQ__ProductCode__c);
                 String b = (options[j].SBQQ__ComponentDescription__c);
-                title.add('{"productName":'+a+'"description":'+b+'}');        
+                test.productName = a;
+                test.description = b; 
+                test.disable = false;
+                title.add(test);        
             }
-            aux.features =  title; 
-            //System.debug('title'); 
-            //System.debug(title); 
+            aux.features =  JSON.serialize(title); 
             featuresAndOptions.add(aux);
-            FeaAndOp.put('name: '+features[i].Name,title);
         }
-        //System.debug('HERE'); 
-        //System.debug(JSON.serialize(FeaAndOp));
         return JSON.serialize(featuresAndOptions);
+    }
+
+    @AuraEnabled
+    public static string constrainsConfigured(string optionSelected){
+        
     }
 }

@@ -185,7 +185,7 @@
                     <lightning-tabset active-tab-value={firstNSP}>
                         <template for:each={listNSP} for:item="nspP">
                             <!--onclick={handleNSPTab} in tab under -->
-                            <lightning-tab class="slds-var-m-left_medium slds-var-m-right_medium"  onactive={handleNSPTab} key={nspP.Id}  label={nspP.tabNsp} value={nspP.tabNsp}>
+                            <lightning-tab icon-name={nspP.iconName} class="slds-has-success slds-var-m-left_medium slds-var-m-right_medium" onactive={handleNSPTab} key={nspP.Id}  label={nspP.tabNsp} value={nspP.tabNsp}>
                                 <div style="background-color:#fab8ce;" class="slds-align_absolute-center slds-var-p-around_xx-small lgc-bg">
                                     <p style="font-size:16px;"><b>Product:</b> {nspP.Name} - <b>Product Type:</b> {nspP.Product_Type__c}</p>
                                 </div>
@@ -324,13 +324,16 @@
                             <template for:each={bundleFeatures} for:item="featuresA">
                                 <li key={featuresA.name}>
                                     <h2 class="slds-text-heading_medium slds-var-m-bottom_small slds-var-m-top_small">
-                                    <lightning-icon class="slds-var-m-right_x-small" icon-name="standard:bundle_policy" alternative-text="bundle" title="bundle"></lightning-icon>
+                                    <lightning-icon class="slds-var-m-right_x-small" icon-name="standard:product" alternative-text="bundle" title="bundle"></lightning-icon>
                                     {featuresA.name}</h2>
                                     <template for:each={featuresA.features} for:item="options">
-                                        {options}
+                                        <lightning-layout multiple-rows="false" key={options.productName}>
                                         <lightning-input key={options.productName} type="checkbox" 
                                         label={options.productName} name={options.productName}
-                                        disabled={options.disable}></lightning-input>
+                                        disabled={options.disable}>
+                                        </lightning-input>
+                                        <p key={options.productName} class="slds-var-m-right_small">({options.description})</p>
+                                        </lightning-layout>
                                     </template>
                                 </li>
                             </template>

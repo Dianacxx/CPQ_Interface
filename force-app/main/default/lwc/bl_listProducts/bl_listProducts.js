@@ -9,6 +9,7 @@ import addSelectorQuoteLine from '@salesforce/apex/QuoteController.addSelectorQu
 import getAdditionalFiltering from '@salesforce/apex/QuoteController.getAdditionalFiltering';
 import NSPAdditionalFields from '@salesforce/apex/QuoteController.NSPAdditionalFields'; 
 
+import addNSPProducts from '@salesforce/apex/QuoteController.addNSPProducts';
 import addNSPQuoteLine from '@salesforce/apex/QuoteController.addNSPQuoteLine'; 
 
 import getFeaturesConfigured from '@salesforce/apex/blMockData.getFeaturesConfigured'; 
@@ -792,6 +793,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         this.nspDisplayOnly = [];
         this.listNspValuesToDisplay = [];
     }
+
+    @track checkNSPFields = []; 
     handleNSPTab(event){
         this.clearNSPFields();
         this.firstNSP = event.target.value;
@@ -802,7 +805,11 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                 //console.log(data);
                 let dataParse = JSON.parse(data); 
                 for (let i=0; i<dataParse.length; i++){
-
+                    
+                    let indNSP = this.checkNSPFields.findIndex(element => element.field ==  dataParse[i].apiName);
+                    if(indNSP == -1){
+                        this.checkNSPFields.push({field:dataParse[i].apiName, fill: false});
+                    } 
                     //console.log('Property of actual: '+ JSON.stringify(dataParse[i]));
                     if(this.listNSP[this.firstNSP-1].hasOwnProperty(dataParse[i].apiName)){
                         //console.log('No property');
@@ -817,7 +824,11 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                             this.listNspValuesToDisplay[ind].value =   this.listNSP[this.firstNSP-1][dataParse[i].apiName]; 
                         }
                     } else {
-                        this.listNSP[this.firstNSP-1][dataParse[i].apiName] = dataParse[i].options;
+                        if(dataParse[i].action == 'DISPLAY'){
+                            this.listNSP[this.firstNSP-1][dataParse[i].apiName] = dataParse[i].options;
+                        } else {
+                            this.listNSP[this.firstNSP-1][dataParse[i].apiName] = '';
+                        }
                     }
                     //console.log('New Prop: '+  this.listNSP[this.firstNSP-1][dataParse[i].apiName]);
                     if (dataParse[i].type == 'PICKLIST'){
@@ -852,17 +863,39 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     @track listNspValuesToDisplay = [];
     nspPicklistChange(event){
         //console.log('When select a new value'); 
-        //console.log('Field Name: '+event.target.name);
-        //console.log('Field Label: '+event.target.label);
-        //console.log('Field Value: '+event.target.value);
+        console.log('Field Name: '+event.target.name);
+        console.log('Field Label: '+event.target.label);
+        console.log('Field Value: '+event.target.value);
         let ind = this.listNspValuesToDisplay.findIndex(element => element.property ==  event.target.label);
         if(ind == -1){
             this.listNspValuesToDisplay.push({property: event.target.label, value: event.target.value });
         } else {
+            console.log(event.target.value);
             this.listNspValuesToDisplay[ind].value =  event.target.value; 
         }
         this.listNSP[this.firstNSP-1][event.target.name] = event.target.value; 
 
+        let indNSP = this.checkNSPFields.findIndex(element => element.field ==  event.target.name);
+        if (indNSP != -1){
+            this.checkNSPFields[indNSP]['fill'] = true; 
+        }
+        if(!(this.listNSP[this.firstNSP-1]['checked'])){
+            let aux = [];
+            for(let i =0; i<this.checkNSPFields.length;i++){
+                aux.push(this.checkNSPFields[i]['fill']);
+            }
+            let isFull = aux.every(function (e) {
+                return e == true;
+            });
+            this.listNSP[this.firstNSP-1]['checked'] = isFull; 
+            console.log('Is full:'+ isFull); 
+        }
+        if(this.listNSP[this.firstNSP-1]['checked']){
+            this.listNSP[this.firstNSP-1]['iconName'] = "utility:check"; 
+            console.log('ALL porperties done!');
+            this.checkNSPFields = [];
+        } 
+        
     }
 
     saveAndExitNSPFilteredModeal(){
@@ -876,8 +909,29 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         let trackListInternal = JSON.parse(JSON.stringify(this.trackList));
         let listToDisplayInternal = JSON.parse(JSON.stringify(this.listToDisplayAdd));
         //HERE THE NSP!!!!!!!!
+        /*
         console.log('Before QL NSP¨: '+ JSON.stringify(auxQuoteLines));
-        addSelectorQuoteLine({quoteId: this.recordId, products: JSON.stringify(auxQuoteLines)})//, filteredGrouping: this.trackList.lookupCode})
+         //CAMBIAR EL  this.listNSP POR LOS QUOTELINES UNA VEZ ENVIADOS AL METODO Y RECIBIDOS
+         trackListInternal['listOfProducts'] = this.listNSP; 
+         trackListInternal.isAdd[0] = true;
+         trackListInternal.isAdd[1] = false;
+         trackListInternal.isAdd[2] = false;
+         trackListInternal.isAdd[3] = false;
+         trackListInternal.lookupCode = trackListInternal.lookupCode+' ('+auxQuoteLinesLength+' Products)';
+         trackListInternal.isNew = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 10); 
+         listToDisplayInternal.push(trackListInternal);
+         this.trackList = [];
+         this.listToDisplayAdd = listToDisplayInternal; 
+         setTimeout(()=>{
+             this.dispatchEvent(new CustomEvent('listtodisplayadd', { detail: {list: this.listToDisplayAdd, tab: this.tabSelected} }));
+         }, 500);
+         this.closeFilterAndSelected(); 
+         setTimeout(()=>{
+             this.showLookupList = true;
+         }, 500);   
+*/
+         
+        addNSPProducts({quoteId: this.recordId, products: JSON.stringify(auxQuoteLines)})//, filteredGrouping: this.trackList.lookupCode})
         .then((data)=>{
             console.log('SUCCESS TURNING NSP QUOTELINES');
             console.log(data);
@@ -904,6 +958,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             console.log('ERROR TURNING NSP QUOTELINES');
             console.log(error);
         })
+        
                  
     }
     //TRABAJAR AQUI CUANDO EL QUOTE SAVER ESTE LISTO. 
@@ -1073,10 +1128,10 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         .then((data)=>{
             //console.log(data);
             this.bundleFeatures = JSON.parse(data);
-            //console.log(Object.getOwnPropertyNames(this.bundleFeatures[0])); 
+            console.log(JSON.stringify(this.bundleFeatures)); 
             for (let i =0; i<this.bundleFeatures.length; i++){
                 console.log(this.bundleFeatures[i].features); 
-                //this.bundleFeatures[i].features = JSON.parse(this.bundleFeatures[i].features);
+                this.bundleFeatures[i].features = JSON.parse(this.bundleFeatures[i].features);
                 //let optionsAux = JSON.parse(this.bundleFeatures[i].features);  
                 //this.bundleOptions.push(optionsAux);
                 //console.log(optionsAux);  
