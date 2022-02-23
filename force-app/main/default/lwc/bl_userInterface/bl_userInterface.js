@@ -88,9 +88,9 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 console.log('notes string ERROR: ');
                 console.log(this.error);
                 const evt = new ShowToastEvent({
-                    title: 'UI NOTES Error',
-                    message: 'Unexpected error using UI - NOTES',
-                    variant: 'error',
+                    title: 'Product Notes Warning:',
+                    message: 'There are not notes available for this quote.',
+                    variant: 'warning',
                     mode: 'sticky'
                 });
                 this.dispatchEvent(evt);
@@ -212,7 +212,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                     this.dispatchEvent(evt);
                 }
             })    
-        }, 4000);    
+        }, 30000);    
     }
 
     //Connect channel
@@ -322,7 +322,18 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     async callEditAnDeleteMethod(){
         return new Promise((resolve) => {
             console.log('Record ID: '+this.recordId);
-            console.log('Before Editing: '+this.quotelinesString);
+            let quoteEdition = JSON.parse(this.quotelinesString);
+            for(let i = 0; i< quoteEdition.length; i++){
+                if(quoteEdition[i].quantity == null || quoteEdition[i].quantity == 'null'){
+                    quoteEdition[i].quantity = 1;
+                }
+                if(quoteEdition[i].netunitprice == null || quoteEdition[i].netunitprice == 'null'){
+                    quoteEdition[i].netunitprice = 0;
+                }
+            }
+            this.quotelinesString = JSON.stringify(quoteEdition);
+            console.log('Before Editing but with quantity and nup: '+this.quotelinesString);
+
             editAndDeleteQuotes({quoteId: this.recordId, quoteLines: this.quotelinesString})
             .then(()=>{
                 const payload = { 

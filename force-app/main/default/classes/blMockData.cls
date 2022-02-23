@@ -57,14 +57,15 @@ public with sharing class blMockData {
     public class FeaturesOptionsWrapper{
         public String productName {get;set;}
         public String description {get;set;}
-        public Boolean disable {get;set;}     
+        public Boolean disable {get;set;} 
+        public String productId {get;set;}    
     } 
     
 
     @AuraEnabled
     public static string getFeaturesConfigured(string productName){
         //String product = 'FS200-50'; 
-        List<SBQQ__ProductFeature__c> features = [SELECT  name FROM SBQQ__ProductFeature__c 
+        List<SBQQ__ProductFeature__c> features = [SELECT name FROM SBQQ__ProductFeature__c 
                         WHERE SBQQ__ConfiguredSKU__r.name =: productName];
         String nameFeatures = '';
         Map <String,List <String>> FeaAndOp = new Map <String,List <String>>(); 
@@ -75,7 +76,8 @@ public with sharing class blMockData {
             nameFeatures = features[i].Name;
             aux.name =  features[i].Name; 
             //System.debug('Feature: '+features[i].Name);
-            options = [SELECT SBQQ__ProductCode__c, SBQQ__ComponentDescription__c FROM SBQQ__ProductOption__c 
+            //SBQQ__OptionalSKU__c is Product Id
+            options = [SELECT SBQQ__ProductCode__c, SBQQ__ComponentDescription__c, SBQQ__OptionalSKU__c FROM SBQQ__ProductOption__c 
                     WHERE SBQQ__ConfiguredSKU__r.name =:productName AND SBQQ__Feature__r.name =:nameFeatures];
             //System.debug('Option of '+features[i].Name+' '+options+' with size '+options.size());
             //System.debug('Size '+options.size());
@@ -84,6 +86,7 @@ public with sharing class blMockData {
                 FeaturesOptionsWrapper test = new FeaturesOptionsWrapper(); 
                 String a = (options[j].SBQQ__ProductCode__c);
                 String b = (options[j].SBQQ__ComponentDescription__c);
+                test.productId = options[j].SBQQ__OptionalSKU__c;
                 test.productName = a;
                 test.description = b; 
                 test.disable = false;
@@ -96,7 +99,16 @@ public with sharing class blMockData {
     }
 
     @AuraEnabled
-    public static string constrainsConfigured(string optionSelected){
-        
+    public static void constrainsConfigured(string optionSelected){
+        /*TRABAJAR AQUI CON 
+
+        SELECT  SBQQ__ConfiguredSKU__r.name, SBQQ__ConstrainedOption__r.SBQQ__Feature__c
+        ,SBQQ__ConstrainingOption__r.Feature_Name__c, Name, SBQQ__OptionConstraintGroup__c, 
+        SBQQ__Type__c FROM SBQQ__OptionConstraint__c WHERE SBQQ__ConfiguredSKU__r.name = 'FS200-50'
+
+        PARA QUE SEGUN EL optionSelected VEA LAS LIMITACIONES DE SELECCION 
+        BUSCAR EL FIELD QUE SEA DE COMPARACIÓN CON SELECCION Y ADEMAS AÑADIRLE DE ENTRADA EL QUE LIMITA EL 
+        SBQQ__ConfiguredSKU__r.name
+        */
     }
 }

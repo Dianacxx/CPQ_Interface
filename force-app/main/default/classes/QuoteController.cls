@@ -432,15 +432,42 @@ public with sharing class QuoteController {
             // wrapper.fiberCount1 = (Decimal)prodMap.get('Mix_Fiber_Count_1__c');
             // wrapper.fiberCount2 = relatedProd.Mix_Fiber_Count_2__c;
             WrappersClass.QuoteLineWrapperClass wrapper = new WrappersClass.QuoteLineWrapperClass();
-            wrapper.product = (String)prodMap.get('Id');
-            wrapper.color = (String)prodMap.get('Color__c');
-            wrapper.subUnitColor = (String)prodMap.get('Subunit_Color__c');
-            wrapper.jacketPrint = (String)prodMap.get('Jacket_Print__c');
-            wrapper.packagetype = (String)prodMap.get('Package_Type__c');
-            wrapper.packageCover = (String)prodMap.get('Package_Cover__c');
-            wrapper.fiberType1 = (String)prodMap.get('Mix_Fiber_Type_1__c');
-            wrapper.fiberType2 = (String)prodMap.get('Mix_Fiber_Type_2__c');
-            wrapper.regionCode = (String)prodMap.get('Region_Code__c');
+            if((String)prodMap.get('filtered_grouping__c') == 'Premise Cable'){
+                wrapper.color = (String)prodMap.get('Color__c'); 
+                wrapper.jacketPrint = (String)prodMap.get('Jacket_Print__c');
+                if((String)prodMap.get('Subunit_Color__c') != null){
+                    wrapper.subUnitColor = (String)prodMap.get('Subunit_Color__c');
+                }
+                if((String)prodMap.get('Mix_Fiber_Count_1__c') != null && (String)prodMap.get('Mix_Fiber_Count_2__c') != null){
+                    wrapper.fiberCount1 = Decimal.valueOf((String)prodMap.get('Mix_Fiber_Count_1__c'));
+                    wrapper.fiberCount2 = Decimal.valueOf((String)prodMap.get('Mix_Fiber_Count_2__c'));
+                }
+                if((String)prodMap.get('Mix_Fiber_Type_1__c') != null && (String)prodMap.get('Mix_Fiber_Type_2__c') != null){
+                    wrapper.fiberType1 = (String)prodMap.get('Mix_Fiber_Type_1__c');
+                    wrapper.fiberType2 = (String)prodMap.get('Mix_Fiber_Type_2__c');
+                }
+            } else if((String)prodMap.get('filtered_grouping__c') == 'ADSS Cable' || (String)prodMap.get('filtered_grouping__c') == 'Loose Tube Cable'){
+                wrapper.packagetype = (String)prodMap.get('Package_Type__c');
+                wrapper.packageCover = (String)prodMap.get('Package_Cover__c'); 
+                if((String)prodMap.get('Mix_Fiber_Count_1__c') != null && (String)prodMap.get('Mix_Fiber_Count_2__c') != null){
+                    wrapper.fiberCount1 = Decimal.valueOf((String)prodMap.get('Mix_Fiber_Count_1__c'));
+                    wrapper.fiberCount2 = Decimal.valueOf((String)prodMap.get('Mix_Fiber_Count_2__c'));
+                }
+                if((String)prodMap.get('Mix_Fiber_Type_1__c') != null && (String)prodMap.get('Mix_Fiber_Type_2__c') != null){
+                    wrapper.fiberType1 = (String)prodMap.get('Mix_Fiber_Type_1__c');
+                    wrapper.fiberType2 = (String)prodMap.get('Mix_Fiber_Type_2__c');
+                }
+            } else if((String)prodMap.get('filtered_grouping__c') == 'Bus Conductor -Rectangular Bar' || (String)prodMap.get('filtered_grouping__c') == 'Bus Conductor -Seamless Bus Pipe' || (String)prodMap.get('filtered_grouping__c') == 'Bus Conductor -Universal Angle' ){
+                wrapper.regionCode = (String)prodMap.get('Region_Code__c');
+            } else if((String)prodMap.get('filtered_grouping__c') == 'Cable Assemblies'){
+                wrapper.length = Decimal.valueOf((String)prodMap.get('Length__c'));
+                wrapper.primaryUOM = (String)prodMap.get('Length_UOM__c');
+            } else if((String)prodMap.get('filtered_grouping__c') == 'Patch Panels'){
+                wrapper.length = Decimal.valueOf((String)prodMap.get('Length__c'));
+            }
+
+            wrapper.productid = (Id)prodMap.get('Id');
+            wrapper.product = (String)prodMap.get('Name');
             linesToPrint.add(wrapper);
         }
         return JSON.serialize(linesToPrint);
@@ -635,9 +662,12 @@ public with sharing class QuoteController {
                 newQuoteLine.BL_Billing_Tolerance__c = line.billingtolerance;
                 newQuoteLine.BL_Source__c = line.source;
                 newQuoteLine.BL_Destination__c = line.destination;
-                newQuoteLine.BL_Alternative_Indicator__c = line.alternativeindicator;
+                if(line.alternativeindicator == null){
+                    newQuoteLine.BL_Alternative_Indicator__c = false;                    
+                }else{
+                    newQuoteLine.BL_Alternative_Indicator__c = Boolean.valueOf(line.alternativeindicator);                    
+                }
                 newQuoteLine.BL_NSP_Offering_Details__c = line.nspofferingdetails;
-
                 newQuoteLine.Package_Type__c = line.packagetype;
                 newQuoteLine.Package_Cover__c = line.packageCover;
                 newQuoteLine.Mix_Fiber_Count_1__c = line.fiberCount1;

@@ -905,38 +905,27 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             let auxId = auxQuoteLines[i].Id; 
             auxQuoteLines[i].Id = auxQuoteLines[i].idTemporal; 
             auxQuoteLines[i].idTemporal = auxId; 
+            auxQuoteLines[i]['filtered_grouping__c'] = this.trackList.lookupCode; 
         }
         let trackListInternal = JSON.parse(JSON.stringify(this.trackList));
         let listToDisplayInternal = JSON.parse(JSON.stringify(this.listToDisplayAdd));
-        //HERE THE NSP!!!!!!!!
-        /*
         console.log('Before QL NSP¨: '+ JSON.stringify(auxQuoteLines));
-         //CAMBIAR EL  this.listNSP POR LOS QUOTELINES UNA VEZ ENVIADOS AL METODO Y RECIBIDOS
-         trackListInternal['listOfProducts'] = this.listNSP; 
-         trackListInternal.isAdd[0] = true;
-         trackListInternal.isAdd[1] = false;
-         trackListInternal.isAdd[2] = false;
-         trackListInternal.isAdd[3] = false;
-         trackListInternal.lookupCode = trackListInternal.lookupCode+' ('+auxQuoteLinesLength+' Products)';
-         trackListInternal.isNew = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 10); 
-         listToDisplayInternal.push(trackListInternal);
-         this.trackList = [];
-         this.listToDisplayAdd = listToDisplayInternal; 
-         setTimeout(()=>{
-             this.dispatchEvent(new CustomEvent('listtodisplayadd', { detail: {list: this.listToDisplayAdd, tab: this.tabSelected} }));
-         }, 500);
-         this.closeFilterAndSelected(); 
-         setTimeout(()=>{
-             this.showLookupList = true;
-         }, 500);   
-*/
-         
+        
+        //HERE THE NSP
+    
         addNSPProducts({quoteId: this.recordId, products: JSON.stringify(auxQuoteLines)})//, filteredGrouping: this.trackList.lookupCode})
         .then((data)=>{
             console.log('SUCCESS TURNING NSP QUOTELINES');
-            console.log(data);
-            //CAMBIAR EL  this.listNSP POR LOS QUOTELINES UNA VEZ ENVIADOS AL METODO Y RECIBIDOS
-            trackListInternal['listOfProducts'] = this.listNSP; 
+            //console.log(data);
+            let nsqQuotelines = JSON.parse(data); 
+            for (let lines of nsqQuotelines){
+                let randomId = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(2, 10);
+                let randomName = Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 6); 
+                lines.id =  'new'+randomId;
+                lines.name = 'New QL-'+randomName;
+            }
+            console.log('after QL NSP '+ JSON.stringify(nsqQuotelines));
+            trackListInternal['listOfProducts'] = nsqQuotelines; 
             trackListInternal.isAdd[0] = true;
             trackListInternal.isAdd[1] = false;
             trackListInternal.isAdd[2] = false;

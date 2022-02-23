@@ -347,6 +347,8 @@ export default class Bl_dataTable extends LightningElement {
                 randomName = Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 10);//Math.random().toFixed(36).substring(0, 7)); 
                 newQuotelines[i].id = 'new'+randomId; 
                 newQuotelines[i].name = 'New QL-'+randomName; 
+                newQuotelines[i].quantity = 0;
+                newQuotelines[i].netunitprice = 0;
                 this.quoteLines = [...this.quoteLines, newQuotelines[i]];
             }
 
@@ -365,7 +367,8 @@ export default class Bl_dataTable extends LightningElement {
             },250);
         })
         .catch((error) =>{
-            console.log('Add Product ERROR: '+ error);
+            console.log('Add Product ERROR: ');
+            console.log(error);
             this.spinnerLoading = false;
             const evt = new ShowToastEvent({
                 title: 'Error creating QuoteLine',
