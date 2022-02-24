@@ -347,7 +347,7 @@ export default class Bl_dataTable extends LightningElement {
                 randomName = Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 10);//Math.random().toFixed(36).substring(0, 7)); 
                 newQuotelines[i].id = 'new'+randomId; 
                 newQuotelines[i].name = 'New QL-'+randomName; 
-                newQuotelines[i].quantity = 0;
+                newQuotelines[i].quantity = 1;
                 newQuotelines[i].netunitprice = 0;
                 this.quoteLines = [...this.quoteLines, newQuotelines[i]];
             }
@@ -410,7 +410,7 @@ export default class Bl_dataTable extends LightningElement {
                     this.quoteLines[index][prop[j]] = inputsItems[i].fields[prop[j]];
                 }               
                 if(this.quoteLines[index].quantity.length == 0){
-                    this.quoteLines[index].quantity = 0;
+                    this.quoteLines[index].quantity = 1;
                 }
                 if(this.quoteLines[index].netunitprice.length == 0){
                     this.quoteLines[index].netunitprice = 0;

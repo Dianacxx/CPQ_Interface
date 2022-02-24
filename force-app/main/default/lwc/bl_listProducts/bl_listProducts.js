@@ -13,6 +13,7 @@ import addNSPProducts from '@salesforce/apex/QuoteController.addNSPProducts';
 import addNSPQuoteLine from '@salesforce/apex/QuoteController.addNSPQuoteLine'; 
 
 import getFeaturesConfigured from '@salesforce/apex/blMockData.getFeaturesConfigured'; 
+import constrainsConfigured from '@salesforce/apex/blMockData.constrainsConfigured';
 
 export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     @api recordId; 
@@ -1153,5 +1154,21 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             console.log('Send to PS component');
         }, 500);
         */
+    }
+
+    lookRestrictions(event){
+        console.log('Change Checked');
+        console.log(event.target.id);
+        console.log(event.target.name);
+        console.log(event.target.checked);
+        //QUITARLE EL -666 QUE SALE DEL ID, Y PONER EL this.trackConfig.lookupCode EN EL PRODUCTnAME
+        constrainsConfigured({optionSelected: '01t8A000007c76VQAQ', featureSelected:'A', productName: 'FS200-50'})
+        .then((data)=>{
+            console.log(data);
+        })
+        .catch((error)=>{
+            console.log(error);
+        })
+
     }
 }

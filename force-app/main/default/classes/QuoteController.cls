@@ -139,7 +139,7 @@ public with sharing class QuoteController {
         return JSON.serialize(displayQuoteLine);
     }
     @AuraEnabled
-    public static String printQuoteLinesv2 (String quoteId){
+    public static String printQuoteLinesv2(String quoteId){
         
         SBQQ__Quote__c quote = [SELECT ID FROM SBQQ__Quote__c WHERE ID =: quoteId];
 
@@ -468,6 +468,7 @@ public with sharing class QuoteController {
 
             wrapper.productid = (Id)prodMap.get('Id');
             wrapper.product = (String)prodMap.get('Name');
+            System.debug('length value: ' + wrapper.length);
             linesToPrint.add(wrapper);
         }
         return JSON.serialize(linesToPrint);
@@ -581,7 +582,7 @@ public with sharing class QuoteController {
                     newModel.record.BL_Destination__c = relatedQuoteLine.destination;
                     newModel.record.BL_Alternative_Indicator__c = relatedQuoteLine.alternativeindicator;
                     newModel.record.BL_NSP_Offering_Details__c = relatedQuoteLine.nspofferingdetails;
-
+                    System.debug('incoming price : ' + relatedQuoteLine.netunitprice + ' New price: ' + newModel.record.SBQQ__NetPrice__c);
 
                     quoteLinesToInsert.add(newModel);
                 } 
@@ -646,7 +647,9 @@ public with sharing class QuoteController {
 
         for(WrappersClass.QuoteLineWrapperClass line : untypedQuoteLines){
             String stringID = String.valueOf(line.id);
+            System.debug(' line id ' + line.id);
             if (stringID.startsWith('new') || line.id == null || stringID.startsWith('xxx')) {
+            // if (line.id == null) {
                 System.debug('Entered second');
                 SBQQ__QuoteLine__c newQuoteLine = new SBQQ__QuoteLine__c();
                 //newQuoteLine.SBQQ__Product__r = '01t8A000007bfC4QAI';
@@ -675,14 +678,20 @@ public with sharing class QuoteController {
                 newQuoteLine.Mix_Fiber_Type_1__c = line.fiberType1;
                 newQuoteLine.Mix_Fiber_Type_2__c = line.fiberType2;
                 newQuoteLine.Region_Code__c = line.regionCode;
-                newQuoteLine.Length__c = line.lenght;
+                newQuoteLine.Length__c = line.length;
                 newQuoteLine.Length_UOM__c = line.primaryUOM;
-
+                newQuoteLine.Color__c = line.color;
+                newQuoteLine.Subunit_Color__c = line.subUnitColor; 
+                newQuoteLine.Jacket_Print__c = line.jacketPrint; 
+                newQuoteLine.Region_Code__c = line.regionCode;
+                // newQuoteLine.Package_Cover__c = line.packageCover; 
+                // newQuoteLine.Package_Type__c = line.packagetype; 
                 QuoteLineModel newModel = new QuoteLineModel();
                 newModel.setRecord(newQuoteLine);
                 linesFromQuote.add(newModel);
                 quote.setLineItems(linesFromQuote);
                 quoteLinerecordsToInsert.add(newQuoteLine);
+                System.debug('saved length ' + newQuoteLine.Length__c);
             }
         }
         insert quoteLinerecordsToInsert;
@@ -1746,7 +1755,7 @@ public with sharing class QuoteController {
             wrapper.fiberType2 = relatedProd.fiberType2;
             wrapper.regionCode = relatedProd.regionCode;
             wrapper.primaryUOM = relatedProd.primaryUOM;
-            wrapper.lenght = relatedProd.lenght;
+            wrapper.length = relatedProd.lenght;
 
             linesToPrint.add(wrapper); 
 

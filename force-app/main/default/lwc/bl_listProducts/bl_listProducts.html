@@ -329,8 +329,8 @@
                                     <template for:each={featuresA.features} for:item="options">
                                         <lightning-layout multiple-rows="false" key={options.productName}>
                                         <lightning-input key={options.productName} type="checkbox" 
-                                        label={options.productName} name={options.productName}
-                                        disabled={options.disable}>
+                                        label={options.productName} name={options.productName} id={options.productId}
+                                        disabled={options.disable} checked={options.checked} onchange={lookRestrictions}>
                                         </lightning-input>
                                         <p key={options.productName} class="slds-var-m-right_small">({options.description})</p>
                                         </lightning-layout>
