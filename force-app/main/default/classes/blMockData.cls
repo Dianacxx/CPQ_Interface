@@ -55,6 +55,7 @@ public with sharing class blMockData {
     } 
 
     public class FeaturesOptionsWrapper{
+        public string featureName {get;set;}
         public String productName {get;set;}
         public String description {get;set;}
         public Boolean disable {get;set;} 
@@ -91,6 +92,7 @@ public with sharing class blMockData {
                 test.description = b; 
                 test.disable = false;
                 test.checked = false;
+                test.featureName = nameFeatures;
                 title.add(test);        
             }
             aux.features =  JSON.serialize(title); 
@@ -142,12 +144,19 @@ public with sharing class blMockData {
                     test.productName = a;
                     test.description = b; 
                     test.disable = false;
-                    title.add(test);   
-                    if(optionSelected == test.productId){
-                        test.checked = true;
+                    test.featureName = nameFeatures;
+                    title.add(test);  
+                    if (featureSelected == nameFeatures){
+                        if(optionSelected == test.productId){
+                            test.checked = true;
+                        } else {
+                            test.checked = false;
+                            test.disable = true;
+                        }
                     } else {
                         test.checked = false;
                     }
+                    
                 }
                 aux.features =  JSON.serialize(title); 
                 featuresAndOptions.add(aux);

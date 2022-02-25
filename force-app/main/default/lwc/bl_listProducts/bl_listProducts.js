@@ -1091,6 +1091,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     //CONFIGURED POP UP FUNCTIONS
     closeConfiguredAlert(){
         this.openConfiguredPopup = false; 
+        this.bundleFeatures = []; 
+        this.bundleOptions = [];
     }
     saveBundle(){
         const evt = new ShowToastEvent({
@@ -1111,16 +1113,16 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     continueConfiguredQLE(){
         //SCENARIO 2
         this.bundleLoading = true; 
-        console.log('Properties of row selected');
+        //console.log('Properties of row selected');
         //console.log(Object.getOwnPropertyNames(this.trackConfig)); 
         
         getFeaturesConfigured({productName: this.trackConfig.lookupCode})
         .then((data)=>{
             //console.log(data);
             this.bundleFeatures = JSON.parse(data);
-            console.log(JSON.stringify(this.bundleFeatures)); 
+            //console.log(JSON.stringify(this.bundleFeatures)); 
             for (let i =0; i<this.bundleFeatures.length; i++){
-                console.log(this.bundleFeatures[i].features); 
+                //console.log(this.bundleFeatures[i].features); 
                 this.bundleFeatures[i].features = JSON.parse(this.bundleFeatures[i].features);
                 //let optionsAux = JSON.parse(this.bundleFeatures[i].features);  
                 //this.bundleOptions.push(optionsAux);
@@ -1132,10 +1134,6 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             console.log('Error getting features for bundle');
             console.log(error);
         })
-
-        
-
-
 
         //SCENARIO 1
         /*
@@ -1157,14 +1155,36 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     }
 
     lookRestrictions(event){
+        this.bundleLoading = true;
         console.log('Change Checked');
         console.log(event.target.id);
         console.log(event.target.name);
+        console.log(event.target.label);
         console.log(event.target.checked);
+        let frg = event.target.id.split("-");
+        let idSelected = frg[0];
+        console.log('Id without - ### '+idSelected);
+
         //QUITARLE EL -666 QUE SALE DEL ID, Y PONER EL this.trackConfig.lookupCode EN EL PRODUCTnAME
-        constrainsConfigured({optionSelected: '01t8A000007c76VQAQ', featureSelected:'A', productName: 'FS200-50'})
+        constrainsConfigured({optionSelected: idSelected, featureSelected: event.target.name, productName: this.trackConfig.lookupCode})
         .then((data)=>{
             console.log(data);
+            if(data == "No Constrains"){
+                this.bundleLoading = false;
+                console.log('No constrains');
+            } else {
+                this.bundleFeatures = JSON.parse(data);
+                //console.log(JSON.stringify(this.bundleFeatures)); 
+                for (let i =0; i<this.bundleFeatures.length; i++){
+                    //console.log(this.bundleFeatures[i].features); 
+                    this.bundleFeatures[i].features = JSON.parse(this.bundleFeatures[i].features);
+                    //let optionsAux = JSON.parse(this.bundleFeatures[i].features);  
+                    //this.bundleOptions.push(optionsAux);
+                    //console.log(optionsAux);  
+                }
+                this.bundleLoading = false;
+            }
+            
         })
         .catch((error)=>{
             console.log(error);
