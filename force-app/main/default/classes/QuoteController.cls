@@ -139,7 +139,7 @@ public with sharing class QuoteController {
         return JSON.serialize(displayQuoteLine);
     }
     @AuraEnabled
-    public static String printQuoteLinesv2 (String quoteId){
+    public static String printQuoteLinesv2(String quoteId){
         
         SBQQ__Quote__c quote = [SELECT ID FROM SBQQ__Quote__c WHERE ID =: quoteId];
 
@@ -264,12 +264,19 @@ public with sharing class QuoteController {
     @AuraEnabled(cacheable=true)
     public static String addQuoteLine(String quoteId, String productId) { //This method transforms a product added in the QLE into a Quote Line
         QuoteReader quoteReader = new QuoteReader();
+        ProductModel product = new ProductModel();
+        System.debug('product id: '+productId +' quoe id: ' +quoteId);
         // QuoteModel quote = quoteReader.read('a0q5f0000013pc3AAA');
         List<WrappersClass.QuoteLineWrapperClass> linesToPrint = new List<WrappersClass.QuoteLineWrapperClass>();
         QuoteModel quote = quoteReader.read(quoteId);
         ProductReader productReader = new ProductReader();
         Pricebook2 prodPriceBook = [SELECT Id FROM Pricebook2 WHERE Id IN (SELECT SBQQ__PriceBook__c FROM SBQQ__Quote__c WHERE Id =: quoteId) LIMIT 1];
-        ProductModel product = productReader.read(productId,prodPriceBook.Id,'USD');
+        if(prodPriceBook != null){
+            product = productReader.read(productId,prodPriceBook.Id,'USD');
+        }else{
+            product = productReader.read(productId,'01sA0000000TiZnIAK','USD');
+
+        }
         List<QuoteLineModel> newlyAddedLines = new List<QuoteLineModel>();
         List<QuoteLineModel> previousLines = quote.getLineItems();
         // ProductModel product = productReader.read(productId,'01s5f000006Z5SDAA0','USD');
@@ -328,20 +335,43 @@ public with sharing class QuoteController {
         QuoteReader quoteReader = new QuoteReader();
         // QuoteModel quote = quoteReader.read('a0q5f0000013pc3AAA');
         List<WrappersClass.QuoteLineWrapperClass> linesToPrint = new List<WrappersClass.QuoteLineWrapperClass>();
+        Schema.sObjectType sobject_type = Product2.getSObjectType();
+        Map<String, Schema.SObjectField> theProductFieldmap = sobject_type.getDescribe().fields.getMap(); //The fields map of the product oject
         List<ProductModel> prodModelList = new List<ProductModel>();
         List<QuoteLineModel> newlyAddedLines = new List<QuoteLineModel>(); //Will storee a list of the added lines
         QuoteModel quote = quoteReader.read(quoteId);
         List<QuoteLineModel> previousLines = quote.getLineItems();//gets the lines that are currently in salesforce
         ProductReader productReader = new ProductReader();
         Pricebook2 prodPriceBook = [SELECT Id FROM Pricebook2 WHERE Id IN (SELECT SBQQ__PriceBook__c FROM SBQQ__Quote__c WHERE Id =: quoteId) LIMIT 1];
-        List<WrappersClass.ProductWrapperClass> untypedProductValues = (List<WrappersClass.ProductWrapperClass>) JSON.deserialize(products, List<WrappersClass.ProductWrapperClass>.class );
-        Map<Id,WrappersClass.ProductWrapperClass> prodMap = new Map<Id,WrappersClass.ProductWrapperClass>();
+        List<Product2> deserializedProductValues = (List<Product2>) JSON.deserialize(products, List<Product2>.class );
+        // Map<Id,SBQQ__QuoteLine__c> prodMap = new Map<Id,SBQQ__QuoteLine__c>();
 
-        for(WrappersClass.ProductWrapperClass prod : untypedProductValues){ //puts the values of the produst that comes from the UI before converting into a quote line
+        String query ='';
+        String strFields = '';
+        for(String fieldName : theProductFieldmap.keyset() ){
+            if(strFields == null || strFields == ''){
+                strFields = fieldName;
+            }else{
+                strFields = strFields + ' , ' + fieldName;
+            }
+        }
+
+        //Create a Map to store all of the Products with their ID as the key
+        // query ='SELECT '+strFields +' FROM Product2';
+        // List<Product2> productList = Database.query(query);
+        // Map<Id, Product2> productsMap = new Map<Id, Product2>();
+        // for(Product2 prod : productList){
+        //     productsMap.put(prod.Id,prod);
+        // }
+
+        for(Product2 prod : deserializedProductValues){ //puts the values of the produst that comes from the UI before converting into a quote line
             ProductModel product = productReader.read(prod.id,prodPriceBook.Id,'USD');
-            prodMap.put(prod.id, prod);
+            
             prodModelList.add(product);
         }
+        
+        
+
         
         ProductAdder adder = new ProductAdder(); 
         QuoteModel quoteWithProducts = adder.add(quote, prodModelList, 0);
@@ -351,14 +381,15 @@ public with sharing class QuoteController {
         
         for (QuoteLineModel newLine : newLines) {
             if (newLine.record.id == null) { 
-
                 newlyAddedLines.add(newLine); //Puts all of the added lines in a list
-
             }
         }
+        
         // System.debug('List of new lines '+ newlyAddedLines.size());
         for (QuoteLineModel newlyAddedLine : newlyAddedLines) { //Converts the new lines in a wrapper to print
             WrappersClass.QuoteLineWrapperClass wrapper = new WrappersClass.QuoteLineWrapperClass();
+            // SBQQ__QuoteLine__c relatedProd = prodMap.get(newlyAddedLine.record.id);
+             // System.debug('related product: ' + relatedProd);
             wrapper.id = newlyAddedLine.record.id;
             wrapper.product = newlyAddedLine.record.SBQQ__Product__r.Name;
             wrapper.requiredBy = newlyAddedLine.record.SBQQ__RequiredBy__c;
@@ -383,24 +414,70 @@ public with sharing class QuoteController {
             wrapper.length = newlyAddedLine.record.Length__c;
             wrapper.originalprice = newlyAddedLine.record.SBQQ__OriginalPrice__c;
             wrapper.packagetype = newlyAddedLine.record.Package_Type__c;
+            wrapper.packageCover = newlyAddedLine.record.Package_Cover__c;
             wrapper.volumediscount = newlyAddedLine.record.SBQQ__VolumeDiscount__c;
-           // wrapper.
-            // wrapper.color = newlyAddedLine.record.Color__c;
-            // wrapper.productType = newlyAddedLine.record.Product_Type__c;
-            // wrapper.fiberCount = newlyAddedLine.record.Fiber_Count__c;
-            // wrapper.fiberType = newlyAddedLine.record.Fiber_Type__c;
-            // wrapper.jacketType = newlyAddedLine.record.Jacket_Type__c;
-            // wrapper.jacketConfiguration = newlyAddedLine.record.Jacket_Configuration__c;
-            // wrapper.jacketPrint = newlyAddedLine.record.Jacket_Print__c;
-            // wrapper.subUnitColor = newlyAddedLine.record.Subunit_Color__c;
-            // wrapper.primaryUOM = newlyAddedLine.record.Primary_UOM__c;
-            // wrapper.lenght = newlyAddedLine.record.Length__c;
+            wrapper.color = newlyAddedLine.record.Color__c;
+            wrapper.productType = newlyAddedLine.record.Product_Type__c;
 
+            System.debug('is the wrapper working -- ' + wrapper.fiberType1);
             linesToPrint.add(wrapper); 
         }
         System.debug('lines to print '+ linesToPrint.size());
         
 
+        return JSON.serialize(linesToPrint);
+    }
+
+    @AuraEnabled
+    public static String addNSPProducts(String quoteId, String products){
+
+        List<WrappersClass.QuoteLineWrapperClass> linesToPrint = new List<WrappersClass.QuoteLineWrapperClass>();
+        List<Object> untypedProductValues = (List<Object>) JSON.deserializeuntyped(products);
+
+        for(Object prod : untypedProductValues){ //puts the values of the prod ust that comes from the UI before converting into a quote line
+            Map<String, Object> prodMap = (Map<String, Object>)prod;
+            // wrapper.fiberCount1 = (Decimal)prodMap.get('Mix_Fiber_Count_1__c');
+            // wrapper.fiberCount2 = relatedProd.Mix_Fiber_Count_2__c;
+            WrappersClass.QuoteLineWrapperClass wrapper = new WrappersClass.QuoteLineWrapperClass();
+            if((String)prodMap.get('filtered_grouping__c') == 'Premise Cable'){
+                wrapper.color = (String)prodMap.get('Color__c'); 
+                wrapper.jacketPrint = (String)prodMap.get('Jacket_Print__c');
+                if((String)prodMap.get('Subunit_Color__c') != null){
+                    wrapper.subUnitColor = (String)prodMap.get('Subunit_Color__c');
+                }
+                if((String)prodMap.get('Mix_Fiber_Count_1__c') != null && (String)prodMap.get('Mix_Fiber_Count_2__c') != null){
+                    wrapper.fiberCount1 = Decimal.valueOf((String)prodMap.get('Mix_Fiber_Count_1__c'));
+                    wrapper.fiberCount2 = Decimal.valueOf((String)prodMap.get('Mix_Fiber_Count_2__c'));
+                }
+                if((String)prodMap.get('Mix_Fiber_Type_1__c') != null && (String)prodMap.get('Mix_Fiber_Type_2__c') != null){
+                    wrapper.fiberType1 = (String)prodMap.get('Mix_Fiber_Type_1__c');
+                    wrapper.fiberType2 = (String)prodMap.get('Mix_Fiber_Type_2__c');
+                }
+            } else if((String)prodMap.get('filtered_grouping__c') == 'ADSS Cable' || (String)prodMap.get('filtered_grouping__c') == 'Loose Tube Cable'){
+                wrapper.packagetype = (String)prodMap.get('Package_Type__c');
+                wrapper.packageCover = (String)prodMap.get('Package_Cover__c'); 
+                if((String)prodMap.get('Mix_Fiber_Count_1__c') != null && (String)prodMap.get('Mix_Fiber_Count_2__c') != null){
+                    wrapper.fiberCount1 = Decimal.valueOf((String)prodMap.get('Mix_Fiber_Count_1__c'));
+                    wrapper.fiberCount2 = Decimal.valueOf((String)prodMap.get('Mix_Fiber_Count_2__c'));
+                }
+                if((String)prodMap.get('Mix_Fiber_Type_1__c') != null && (String)prodMap.get('Mix_Fiber_Type_2__c') != null){
+                    wrapper.fiberType1 = (String)prodMap.get('Mix_Fiber_Type_1__c');
+                    wrapper.fiberType2 = (String)prodMap.get('Mix_Fiber_Type_2__c');
+                }
+            } else if((String)prodMap.get('filtered_grouping__c') == 'Bus Conductor -Rectangular Bar' || (String)prodMap.get('filtered_grouping__c') == 'Bus Conductor -Seamless Bus Pipe' || (String)prodMap.get('filtered_grouping__c') == 'Bus Conductor -Universal Angle' ){
+                wrapper.regionCode = (String)prodMap.get('Region_Code__c');
+            } else if((String)prodMap.get('filtered_grouping__c') == 'Cable Assemblies'){
+                wrapper.length = Decimal.valueOf((String)prodMap.get('Length__c'));
+                wrapper.primaryUOM = (String)prodMap.get('Length_UOM__c');
+            } else if((String)prodMap.get('filtered_grouping__c') == 'Patch Panels'){
+                wrapper.length = Decimal.valueOf((String)prodMap.get('Length__c'));
+            }
+
+            wrapper.productid = (Id)prodMap.get('Id');
+            wrapper.product = (String)prodMap.get('Name');
+            System.debug('length value: ' + wrapper.length);
+            linesToPrint.add(wrapper);
+        }
         return JSON.serialize(linesToPrint);
     }
     
@@ -512,7 +589,7 @@ public with sharing class QuoteController {
                     newModel.record.BL_Destination__c = relatedQuoteLine.destination;
                     newModel.record.BL_Alternative_Indicator__c = relatedQuoteLine.alternativeindicator;
                     newModel.record.BL_NSP_Offering_Details__c = relatedQuoteLine.nspofferingdetails;
-
+                    System.debug('incoming price : ' + relatedQuoteLine.netunitprice);
 
                     quoteLinesToInsert.add(newModel);
                 } 
@@ -535,6 +612,9 @@ public with sharing class QuoteController {
                 }
                 
             }
+            for(SBQQ__QuoteLine__c q : quoteLineRecordsToUpdate){
+                system.debug('new price : ' +  q.SBQQ__NetPrice__c);
+            }
             update quoteLineRecordsToUpdate;
 
             // quoteLineCreator(quoteId, quoteLines);
@@ -551,7 +631,9 @@ public with sharing class QuoteController {
     @AuraEnabled
     public static void quoteLineCreator(String quoteId, String quoteLines){ //This method creates new quote lines in salesforce based on the values in the QLE
         QuoteReader quoteReader = new QuoteReader();
+        System.debug('quote id : ' + quoteId);
         QuoteModel quote = quoteReader.read(quoteId);
+        System.debug('quote : ' + quote);
         
         SBQQ__Quote__c getQuote = [SELECT ID, ACA_gt_50k__c,ACA_Total_Amount__c,SBQQ__Account__c,SBQQ__CustomerDiscount__c,SBQQ__AdditionalDiscountAmount__c,ApprovalStatus__c,SBQQ__AverageCustomerDiscount__c,SBQQ__AveragePartnerDiscount__c,SBQQ__BillingCity__c,SBQQ__BillingCountry__c,SBQQ__BillingName__c,SBQQ__BillingPostalCode__c,SBQQ__BillingState__c,SBQQ__BillingStreet__c,SBQQ__BillingFrequency__c,Bus_Conductor_gt_20k__c,Compounds_gt_5k__c,Compression_Qty_gt_150__c,SBQQ__ConsumptionRateOverride__c,SBQQ__ContractingMethod__c,CreatedById,CurrencyIsoCode,SBQQ__CustomerAmount__c,SBQQ__DaysQuoteOpen__c,SBQQ__DefaultTemplate__c,SBQQ__DeliveryMethod__c,Discount_Type__c,Discounts_Run__c,SBQQ__Distributor__c,SBQQ__DistributorDiscount__c,SBQQ__DocumentStatus__c,SBQQ__EmailTemplateId__c,SBQQ__EndDate__c,SBQQ__ExpirationDate__c,SBQQ__FirstSegmentTermEndDate__c,SBQQ__GenerateContractedPrice__c,SBQQ__LineItemsGrouped__c,SBQQ__Introduction__c,SBQQ__Key__c,SBQQ__LastCalculatedOn__c,LastModifiedById,SBQQ__LastSavedOn__c,Line_Discount__c,SBQQ__LineItemCount__c,SBQQ__ListAmount__c,Loose_Tube_gt_100k__c,Market__c,SBQQ__MarkupRate__c,SBQQ__MasterContract__c,SBQQ__MasterEvergreenContract__c,SBQQ__NetAmount__c,SBQQ__Notes__c,SBQQ__Opportunity2__c,OptiNID_Adapter_Qty__c,SBQQ__OrderBy__c,SBQQ__OrderByQuoteLineGroup__c,SBQQ__OrderGroupID__c,SBQQ__Ordered__c,SBQQ__OriginalQuote__c,OwnerId,SBQQ__PaperSize__c,SBQQ__Partner__c,SBQQ__PartnerDiscount__c,SBQQ__PaymentTerms__c,PLM_Approver__c,SBQQ__PriceBook__c,SBQQ__PricebookId__c,SBQQ__Primary__c,SBQQ__PrimaryContact__c,SBQQ__LineItemsPrinted__c,SBQQ__ProrationDayOfMonth__c,SBQQ__QuoteLanguage__c,Name,SBQQ__QuoteProcessId__c,SBQQ__QuoteTemplateId__c,Rail_Quoted_Outside_Energy__c,RecordTypeId,SBQQ__RegularAmount__c,SBQQ__RenewalTerm__c,SBQQ__RenewalUpliftRate__c,Review__c,ReviewNumber__c,Sales_Approver__c,SBQQ__SalesRep__c,SBQQ__ShippingCity__c,SBQQ__ShippingCountry__c,SBQQ__ShippingName__c,SBQQ__ShippingPostalCode__c,SBQQ__ShippingState__c,SBQQ__ShippingStreet__c,SBQQ__Source__c,SBQQ__StartDate__c,SBQQ__Status__c,SBQQ__SubscriptionTerm__c,Substation_gt_25k__c,Substation_Quoted_Outside_Energy__c,SBQQ__TargetCustomerAmount__c,SBQQ__TotalCustomerDiscountAmount__c,SBQQ__Type__c,SBQQ__Uncalculated__c,SBQQ__Unopened__c,SBQQ__WatermarkShown__c FROM SBQQ__Quote__c WHERE Id =: quoteId];
         //Checks the quote lines that already exist on salesforce
@@ -577,7 +659,9 @@ public with sharing class QuoteController {
 
         for(WrappersClass.QuoteLineWrapperClass line : untypedQuoteLines){
             String stringID = String.valueOf(line.id);
+            System.debug(' line id ' + line.id);
             if (stringID.startsWith('new') || line.id == null || stringID.startsWith('xxx')) {
+            // if (line.id == null) {
                 System.debug('Entered second');
                 SBQQ__QuoteLine__c newQuoteLine = new SBQQ__QuoteLine__c();
                 //newQuoteLine.SBQQ__Product__r = '01t8A000007bfC4QAI';
@@ -593,14 +677,33 @@ public with sharing class QuoteController {
                 newQuoteLine.BL_Billing_Tolerance__c = line.billingtolerance;
                 newQuoteLine.BL_Source__c = line.source;
                 newQuoteLine.BL_Destination__c = line.destination;
-                newQuoteLine.BL_Alternative_Indicator__c = line.alternativeindicator;
+                if(line.alternativeindicator == null){
+                    newQuoteLine.BL_Alternative_Indicator__c = false;                    
+                }else{
+                    newQuoteLine.BL_Alternative_Indicator__c = Boolean.valueOf(line.alternativeindicator);                    
+                }
                 newQuoteLine.BL_NSP_Offering_Details__c = line.nspofferingdetails;
-
+                newQuoteLine.Package_Type__c = line.packagetype;
+                newQuoteLine.Package_Cover__c = line.packageCover;
+                newQuoteLine.Mix_Fiber_Count_1__c = line.fiberCount1;
+                newQuoteLine.Mix_Fiber_Count_2__c = line.fiberCount2;
+                newQuoteLine.Mix_Fiber_Type_1__c = line.fiberType1;
+                newQuoteLine.Mix_Fiber_Type_2__c = line.fiberType2;
+                newQuoteLine.Region_Code__c = line.regionCode;
+                newQuoteLine.Length__c = line.length;
+                newQuoteLine.Length_UOM__c = line.primaryUOM;
+                newQuoteLine.Color__c = line.color;
+                newQuoteLine.Subunit_Color__c = line.subUnitColor; 
+                newQuoteLine.Jacket_Print__c = line.jacketPrint; 
+                newQuoteLine.Region_Code__c = line.regionCode;
+                // newQuoteLine.Package_Cover__c = line.packageCover; 
+                // newQuoteLine.Package_Type__c = line.packagetype; 
                 QuoteLineModel newModel = new QuoteLineModel();
                 newModel.setRecord(newQuoteLine);
                 linesFromQuote.add(newModel);
                 quote.setLineItems(linesFromQuote);
                 quoteLinerecordsToInsert.add(newQuoteLine);
+                System.debug('saved length ' + newQuoteLine.Length__c);
             }
         }
         insert quoteLinerecordsToInsert;
@@ -696,7 +799,7 @@ public with sharing class QuoteController {
     
 
     @AuraEnabled
-    public static String getProductFilteringv2(String filteredGrouping, String typeSelection, String modelSelection){
+    public static String getProductFilteringv2(String filteredGrouping, String typeSelection){
 
         Map<String,BL_Product_Filters__c> custFieldsMap = BL_Product_Filters__c.getAll(); //Get the custom fields in the custom setting
 
@@ -948,6 +1051,7 @@ public with sharing class QuoteController {
         return pickListValues;
     }
 
+    //This holds the query that returns the products dependimg on the filter values selected by the user.
     @AuraEnabled
     public static List<sObject> filteredProductPrinter(String filterValues,String level1,String filteredGrouping){
         List<WrappersClass.FilteringSelectionWrappingClass> untypedfilterValues = (List<WrappersClass.FilteringSelectionWrappingClass>) JSON.deserialize(filterValues, List<WrappersClass.FilteringSelectionWrappingClass>.class );
@@ -1444,24 +1548,24 @@ public with sharing class QuoteController {
             }        
         } else if(product.Filtered_Grouping__c =='Cable Assemblies' || product.Filtered_Grouping__c =='Patch Panels'){
             if(customFilters.Attribute_1__c!= null){
-                if(productPicklistFields.get(customFilters.Attribute_1__c)!=null){
-                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(productPicklistFields.get(customFilters.Attribute_1__c),product.Product_Type__c);
+                if(linePicklistFields.get(customFilters.Attribute_1__c)!=null){
+                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(linePicklistFields.get(customFilters.Attribute_1__c),product.Product_Type__c);
                     filtersMap.put(customFilters.Attribute_1__c,pickListValues);
                 }else{
                     filtersMap.put(customFilters.Attribute_1__c,new List<Schema.PicklistEntry>());
                 }
             }
             if(customFilters.Attribute_2__c!= null){
-                if(productPicklistFields.get(customFilters.Attribute_2__c)!=null){
-                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(productPicklistFields.get(customFilters.Attribute_2__c),product.Product_Type__c);
+                if(linePicklistFields.get(customFilters.Attribute_2__c)!=null){
+                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(linePicklistFields.get(customFilters.Attribute_2__c),product.Product_Type__c);
                     filtersMap.put(customFilters.Attribute_2__c,pickListValues);
                 }else{
                     filtersMap.put(customFilters.Attribute_2__c,new List<Schema.PicklistEntry>());
                 }
             }
             if(customFilters.Attribute_3__c!= null){
-                if(productPicklistFields.get(customFilters.Attribute_3__c)!=null){
-                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(productPicklistFields.get(customFilters.Attribute_3__c),product.Product_Type__c);
+                if(linePicklistFields.get(customFilters.Attribute_3__c)!=null){
+                    List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(linePicklistFields.get(customFilters.Attribute_3__c),product.Product_Type__c);
                     filtersMap.put(customFilters.Attribute_3__c,pickListValues);
                 }else{
                     filtersMap.put(customFilters.Attribute_3__c,new List<Schema.PicklistEntry>());
@@ -1558,6 +1662,7 @@ public with sharing class QuoteController {
             wrapper.label = display;
             wrapper.options = String.valueOf(displayFieldsMap.get(display));
             wrapper.action = 'DISPLAY';
+            wrapper.apiName = prodFieldsNameMap.get(display);
             
             filtersWrapperToShow.add(wrapper);
         }
@@ -1584,8 +1689,96 @@ public with sharing class QuoteController {
 
         return valuesMap;
     }
-    // @AuraEnabled
-    // public static String addNSPQuoteLine(String quoteId, String products, String filteredGrouping){
+    @AuraEnabled
+    //Creates quote lines from the NSP products
+    public static String addNSPQuoteLine(String quoteId, String products, String filteredGrouping){
+        QuoteReader quoteReader = new QuoteReader();
+        // QuoteModel quote = quoteReader.read('a0q5f0000013pc3AAA');
+        List<WrappersClass.QuoteLineWrapperClass> linesToPrint = new List<WrappersClass.QuoteLineWrapperClass>();
+        List<ProductModel> prodModelList = new List<ProductModel>();
+        List<QuoteLineModel> newlyAddedLines = new List<QuoteLineModel>(); //Will storee a list of the added lines
+        QuoteModel quote = quoteReader.read(quoteId);
+        List<QuoteLineModel> previousLines = quote.getLineItems();//gets the lines that are currently in salesforce
+        ProductReader productReader = new ProductReader();
+        Pricebook2 prodPriceBook = [SELECT Id FROM Pricebook2 WHERE Id IN (SELECT SBQQ__PriceBook__c FROM SBQQ__Quote__c WHERE Id =: quoteId) LIMIT 1]; //Query for the pricbook that the product is currently
+        List<WrappersClass.ProductWrapperClass> untypedProductValues = (List<WrappersClass.ProductWrapperClass>) JSON.deserialize(products, List<WrappersClass.ProductWrapperClass>.class );
+        Map<Id,WrappersClass.ProductWrapperClass> prodMap = new Map<Id,WrappersClass.ProductWrapperClass>();
+
+        for(WrappersClass.ProductWrapperClass prod : untypedProductValues){ //puts the values of the produst that comes from the UI before converting into a quote line
+            ProductModel product = productReader.read(prod.id,prodPriceBook.Id,'USD');
+            prodMap.put(prod.id, prod);
+            prodModelList.add(product);
+        }
         
-    // }
+
+        ProductAdder adder = new ProductAdder(); 
+        QuoteModel quoteWithProducts = adder.add(quote, prodModelList, 0);
+        List<QuoteLineModel> newLines = quoteWithProducts.getLineItems();
+        System.debug('previous lines -- ' + previousLines.size());
+        System.debug('new lines -- ' + newLines.size());
+        
+        for (QuoteLineModel newLine : newLines) {
+            if (newLine.record.id == null) { 
+                newlyAddedLines.add(newLine); //Puts all of the added lines in a list
+            }
+        }
+
+        for (QuoteLineModel newlyAddedLine : newlyAddedLines){
+            WrappersClass.QuoteLineWrapperClass wrapper = new WrappersClass.QuoteLineWrapperClass();
+            WrappersClass.ProductWrapperClass relatedProd = prodMap.get(newlyAddedLine.record.SBQQ__Product__c);
+            wrapper.id = newlyAddedLine.record.id;
+            wrapper.product = newlyAddedLine.record.SBQQ__Product__r.Name;
+            wrapper.productId = newlyAddedLine.record.SBQQ__Product__c;
+            wrapper.productobj = newlyAddedLine.record.SBQQ__Product__r;
+            // wrapper.description = newlyAddedLine.record.Description__c;
+
+            wrapper.id = newlyAddedLine.record.id;
+            wrapper.product = newlyAddedLine.record.SBQQ__Product__r.Name;
+            wrapper.requiredBy = newlyAddedLine.record.SBQQ__RequiredBy__c;
+            wrapper.productid = newlyAddedLine.record.SBQQ__Product__c;
+            wrapper.productobj = newlyAddedLine.record.SBQQ__Product__r;
+            wrapper.name = newlyAddedLine.record.Name;
+            wrapper.description = newlyAddedLine.record.SBQQ__Description__c;
+            wrapper.uom = newlyAddedLine.record.UOM__c;
+            wrapper.listunitprice = newlyAddedLine.record.SBQQ__ListPrice__c;
+            wrapper.additionaldiscount = newlyAddedLine.record.SBQQ__Discount__c;
+            wrapper.netunitprice = newlyAddedLine.record.SBQQ__NetPrice__c; 
+            wrapper.billingtolerance = newlyAddedLine.record.BL_Billing_Tolerance__c; 
+            wrapper.source = newlyAddedLine.record.BL_Source__c; 
+            wrapper.destination = newlyAddedLine.record.BL_Destination__c;
+            wrapper.alternativeindicator = newlyAddedLine.record.BL_Alternative_Indicator__c;
+            // wrapper.nspofferingdetails = newlyAddedLine.record.SBQQ__Optional__c;
+            wrapper.billingfrequency = newlyAddedLine.record.SBQQ__BillingFrequency__c;
+            wrapper.approvalstatus = newlyAddedLine.record.ApprovalStatus__c;
+            wrapper.billingtype = newlyAddedLine.record.SBQQ__BillingType__c;
+            wrapper.componenttotal = newlyAddedLine.record.SBQQ__ComponentTotal__c;
+            wrapper.enddate = newlyAddedLine.record.SBQQ__EndDate__c;
+            wrapper.length = newlyAddedLine.record.Length__c;
+            wrapper.originalprice = newlyAddedLine.record.SBQQ__OriginalPrice__c;
+            wrapper.packagetype = newlyAddedLine.record.Package_Type__c;
+            wrapper.packageCover = newlyAddedLine.record.Package_Cover__c;
+            wrapper.volumediscount = newlyAddedLine.record.SBQQ__VolumeDiscount__c;
+            wrapper.color = newlyAddedLine.record.Color__c;
+            wrapper.productType = newlyAddedLine.record.Product_Type__c;
+
+            wrapper.fiberCount1 = relatedProd.fiberCount1;
+            wrapper.fiberCount2 = relatedProd.fiberCount2;
+            wrapper.fiberType1 = relatedProd.fiberType1;
+            wrapper.fiberType2 = relatedProd.fiberType2;
+            wrapper.regionCode = relatedProd.regionCode;
+            wrapper.primaryUOM = relatedProd.primaryUOM;
+            wrapper.length = relatedProd.lenght;
+
+            linesToPrint.add(wrapper); 
+
+            // if(relatedProd.filteredGrouping == 'Premise Cable'){
+            //     wrapper.color = newlyAddedLine.record.Color__c;
+            //     wrapper.subUnitColor = newlyAddedLine.record.Subunit_Color__c;
+
+            // }
+            
+        }
+        return JSON.serialize(linesToPrint);
+
+    }
 }

@@ -45,50 +45,18 @@ public with sharing class WrappersClass {
         //Product Selector filter values
         public String color{get;set;}
         public String productType{get;set;}
-        public String fiberCount{get;set;}
-        public String fiberType{get;set;}
+        public Decimal fiberCount1{get;set;}
+        public Decimal fiberCount2{get;set;}
+        public String fiberType1{get;set;}
+        public String fiberType2{get;set;}
         public String jacketType{get;set;}
         public String jacketConfiguration{get;set;}
         public String jacketPrint{get;set;}
-        public String subUnit{get;set;} //Not on quote line
         public String subUnitColor{get;set;}
-        public String armorType{get;set;} //Not on quote line
-        public String tightbuffType{get;set;} // Not on quote line
-        public Integer maxSpanAtLight{get;set;}// Not on quote line
-        public Integer maxSpanAtMedium{get;set;}// Not on quote line
-        public Integer maxSpanAtHeavy{get;set;}// Not on quote line
-        public String packaging{get;set;}// Not on quote line
         public String primaryUOM{get;set;}
-        public Decimal lenght{get;set;}
-        public String busSizeOrWidth{get;set;}// Not on quote line
-        public String busSchedule{get;set;}// Not on quote line
-        public String busAlloy{get;set;}// Not on quote line
-        public String busTemper{get;set;}// Not on quote line
-        public String busThickness{get;set;}// Not on quote line
-        public String industryName{get;set;}// Not on quote line
-        public String numberOfStrands{get;set;}// Not on quote line
-        public String wireSize{get;set;}// Not on quote line
-        public String model{get;set;}// Not on quote line
-        public String subConfiguration{get;set;}// Not on quote line
-        public String lenghtPickList{get;set;}// Not on quote line
-        public String connectorA{get;set;}// Not on quote line
-        public String connectorB{get;set;}// Not on quote line
-        public String breakingStrength{get;set;}// Not on quote line
-        public String layDirection{get;set;}// Not on quote line
-        public String diameterTolerance{get;set;}// Not on quote line
-        public String coreAnnealing{get;set;}// Not on quote line
-        public String wireShape{get;set;}// Not on quote line
-        public String plateCapacity{get;set;}// Not on quote line
-        public String connectorSourceType{get;set;}// Not on quote line
-        public String apexClosure{get;set;}// Not on quote line
-        public String closureSize{get;set;}// Not on quote line
-        public String basketType{get;set;}// Not on quote line
-        public String trayType{get;set;}// Not on quote line
-        public String numTray{get;set;}// Not on quote line
-        public String numReliefKits{get;set;}// Not on quote line
-        public String numLungs{get;set;}// Not on quote line
-        public String innerBasket{get;set;}// Not on quote line
-        public String ru{get;set;}// Not on quote line
+        public String packageCover{get;set;}
+        public String regionCode{get;set;}
+        
     }
 
     public class ProductWrapperClass{
@@ -96,6 +64,7 @@ public with sharing class WrappersClass {
         public String name{get;set;}
         public String color{get;set;}
         public String productType{get;set;}
+        public String filteredGrouping{get;set;}
         public String fiberCount{get;set;}
         public String fiberType{get;set;}
         public String jacketType{get;set;}
@@ -140,6 +109,15 @@ public with sharing class WrappersClass {
         public String numLungs{get;set;}
         public String innerBasket{get;set;}
         public String ru{get;set;}
+
+        public Decimal fiberCount1{get;set;}
+        public Decimal fiberCount2{get;set;}
+        public String fiberType1{get;set;}
+        public String fiberType2{get;set;}
+        public String regionCode{get;set;}
+        
+
+        
     }
 
     public class DiscountTierWrapperClass{
