@@ -209,7 +209,8 @@
                                     <template for:each={nspPicklist} for:item="nspPicklistItem">
                                         <div key={nspPicklistItem.label}>
                                             <lightning-combobox class="slds-var-m-right_x-small" key={nspPicklistItem.label} label={nspPicklistItem.label} 
-                                            options={nspPicklistItem.options} name={nspPicklistItem.apiName} onchange={nspPicklistChange} ></lightning-combobox>
+                                            options={nspPicklistItem.options} name={nspPicklistItem.apiName} onchange={nspPicklistChange} 
+                                            value={nspPicklistItem.value}></lightning-combobox>
                                         </div>
                                     </template>
                                     </lightning-layout>
@@ -326,7 +327,16 @@
                                     <h2 class="slds-text-heading_medium slds-var-m-bottom_small slds-var-m-top_small">
                                     <lightning-icon class="slds-var-m-right_x-small" icon-name="standard:product" alternative-text="bundle" title="bundle"></lightning-icon>
                                     {featuresA.name}</h2>
-                                    <template for:each={featuresA.features} for:item="options">
+                                        <lightning-radio-group key={featuresA.name}
+                                        name ={featuresA.name}
+                                        label={featuresA.name}
+                                        options={featuresA.features}
+                                        value={featuresA.selected}
+                                        onchange={handleRadioChange}
+                                        required
+                                        type="radio"></lightning-radio-group>
+                                        <template for:each={featuresA.features} for:item="options">
+                                        <!--
                                         <lightning-layout multiple-rows="false" key={options.productName}>
                                         <lightning-input key={options.productName} type="checkbox" 
                                         label={options.productName} name={options.featureName} id={options.productId}
@@ -334,6 +344,7 @@
                                         </lightning-input>
                                         <p key={options.productName} class="slds-var-m-right_small">({options.description})</p>
                                         </lightning-layout>
+                                    -->
                                     </template>
                                 </li>
                             </template>

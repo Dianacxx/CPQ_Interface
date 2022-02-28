@@ -51,7 +51,8 @@ public with sharing class blMockData {
     public class bundleFeaturesWrapper{
         public String name {get;set;}
         public String id {get;set;}
-        public String features {get;set;}         
+        public String features {get;set;}  
+        public String selected {get; set;}       
     } 
 
     public class FeaturesOptionsWrapper{
@@ -76,6 +77,7 @@ public with sharing class blMockData {
             bundleFeaturesWrapper aux = new bundleFeaturesWrapper(); 
             nameFeatures = features[i].Name;
             aux.name =  features[i].Name; 
+            aux.selected = '';
             //System.debug('Feature: '+features[i].Name);
             //SBQQ__OptionalSKU__c is Product Id
             options = [SELECT SBQQ__ProductCode__c, SBQQ__ComponentDescription__c, SBQQ__OptionalSKU__c FROM SBQQ__ProductOption__c 
@@ -104,6 +106,7 @@ public with sharing class blMockData {
     @AuraEnabled
     public static string constrainsConfigured(string optionSelected, string featureSelected, string productName){
         //blMockData.constrainsConfigured('01t8A000007c76VQAQ','A','FS200-50'); 
+        //CHANGE THIS METHOD HEREEEEEEEREEEEEEEEE
         List <SBQQ__OptionConstraint__c> optionConstrains = new List<SBQQ__OptionConstraint__c>();
         optionConstrains = [SELECT  Name, SBQQ__ConstrainedOption__r.SBQQ__OptionalSKU__c, 
         SBQQ__ConstrainingOption__r.SBQQ__OptionalSKU__c FROM SBQQ__OptionConstraint__c

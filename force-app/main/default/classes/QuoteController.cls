@@ -264,12 +264,19 @@ public with sharing class QuoteController {
     @AuraEnabled(cacheable=true)
     public static String addQuoteLine(String quoteId, String productId) { //This method transforms a product added in the QLE into a Quote Line
         QuoteReader quoteReader = new QuoteReader();
+        ProductModel product = new ProductModel();
+        System.debug('product id: '+productId +' quoe id: ' +quoteId);
         // QuoteModel quote = quoteReader.read('a0q5f0000013pc3AAA');
         List<WrappersClass.QuoteLineWrapperClass> linesToPrint = new List<WrappersClass.QuoteLineWrapperClass>();
         QuoteModel quote = quoteReader.read(quoteId);
         ProductReader productReader = new ProductReader();
         Pricebook2 prodPriceBook = [SELECT Id FROM Pricebook2 WHERE Id IN (SELECT SBQQ__PriceBook__c FROM SBQQ__Quote__c WHERE Id =: quoteId) LIMIT 1];
-        ProductModel product = productReader.read(productId,prodPriceBook.Id,'USD');
+        if(prodPriceBook != null){
+            product = productReader.read(productId,prodPriceBook.Id,'USD');
+        }else{
+            product = productReader.read(productId,'01sA0000000TiZnIAK','USD');
+
+        }
         List<QuoteLineModel> newlyAddedLines = new List<QuoteLineModel>();
         List<QuoteLineModel> previousLines = quote.getLineItems();
         // ProductModel product = productReader.read(productId,'01s5f000006Z5SDAA0','USD');
@@ -582,7 +589,7 @@ public with sharing class QuoteController {
                     newModel.record.BL_Destination__c = relatedQuoteLine.destination;
                     newModel.record.BL_Alternative_Indicator__c = relatedQuoteLine.alternativeindicator;
                     newModel.record.BL_NSP_Offering_Details__c = relatedQuoteLine.nspofferingdetails;
-                    System.debug('incoming price : ' + relatedQuoteLine.netunitprice + ' New price: ' + newModel.record.SBQQ__NetPrice__c);
+                    System.debug('incoming price : ' + relatedQuoteLine.netunitprice);
 
                     quoteLinesToInsert.add(newModel);
                 } 
@@ -605,6 +612,9 @@ public with sharing class QuoteController {
                 }
                 
             }
+            for(SBQQ__QuoteLine__c q : quoteLineRecordsToUpdate){
+                system.debug('new price : ' +  q.SBQQ__NetPrice__c);
+            }
             update quoteLineRecordsToUpdate;
 
             // quoteLineCreator(quoteId, quoteLines);
@@ -621,7 +631,9 @@ public with sharing class QuoteController {
     @AuraEnabled
     public static void quoteLineCreator(String quoteId, String quoteLines){ //This method creates new quote lines in salesforce based on the values in the QLE
         QuoteReader quoteReader = new QuoteReader();
+        System.debug('quote id : ' + quoteId);
         QuoteModel quote = quoteReader.read(quoteId);
+        System.debug('quote : ' + quote);
         
         SBQQ__Quote__c getQuote = [SELECT ID, ACA_gt_50k__c,ACA_Total_Amount__c,SBQQ__Account__c,SBQQ__CustomerDiscount__c,SBQQ__AdditionalDiscountAmount__c,ApprovalStatus__c,SBQQ__AverageCustomerDiscount__c,SBQQ__AveragePartnerDiscount__c,SBQQ__BillingCity__c,SBQQ__BillingCountry__c,SBQQ__BillingName__c,SBQQ__BillingPostalCode__c,SBQQ__BillingState__c,SBQQ__BillingStreet__c,SBQQ__BillingFrequency__c,Bus_Conductor_gt_20k__c,Compounds_gt_5k__c,Compression_Qty_gt_150__c,SBQQ__ConsumptionRateOverride__c,SBQQ__ContractingMethod__c,CreatedById,CurrencyIsoCode,SBQQ__CustomerAmount__c,SBQQ__DaysQuoteOpen__c,SBQQ__DefaultTemplate__c,SBQQ__DeliveryMethod__c,Discount_Type__c,Discounts_Run__c,SBQQ__Distributor__c,SBQQ__DistributorDiscount__c,SBQQ__DocumentStatus__c,SBQQ__EmailTemplateId__c,SBQQ__EndDate__c,SBQQ__ExpirationDate__c,SBQQ__FirstSegmentTermEndDate__c,SBQQ__GenerateContractedPrice__c,SBQQ__LineItemsGrouped__c,SBQQ__Introduction__c,SBQQ__Key__c,SBQQ__LastCalculatedOn__c,LastModifiedById,SBQQ__LastSavedOn__c,Line_Discount__c,SBQQ__LineItemCount__c,SBQQ__ListAmount__c,Loose_Tube_gt_100k__c,Market__c,SBQQ__MarkupRate__c,SBQQ__MasterContract__c,SBQQ__MasterEvergreenContract__c,SBQQ__NetAmount__c,SBQQ__Notes__c,SBQQ__Opportunity2__c,OptiNID_Adapter_Qty__c,SBQQ__OrderBy__c,SBQQ__OrderByQuoteLineGroup__c,SBQQ__OrderGroupID__c,SBQQ__Ordered__c,SBQQ__OriginalQuote__c,OwnerId,SBQQ__PaperSize__c,SBQQ__Partner__c,SBQQ__PartnerDiscount__c,SBQQ__PaymentTerms__c,PLM_Approver__c,SBQQ__PriceBook__c,SBQQ__PricebookId__c,SBQQ__Primary__c,SBQQ__PrimaryContact__c,SBQQ__LineItemsPrinted__c,SBQQ__ProrationDayOfMonth__c,SBQQ__QuoteLanguage__c,Name,SBQQ__QuoteProcessId__c,SBQQ__QuoteTemplateId__c,Rail_Quoted_Outside_Energy__c,RecordTypeId,SBQQ__RegularAmount__c,SBQQ__RenewalTerm__c,SBQQ__RenewalUpliftRate__c,Review__c,ReviewNumber__c,Sales_Approver__c,SBQQ__SalesRep__c,SBQQ__ShippingCity__c,SBQQ__ShippingCountry__c,SBQQ__ShippingName__c,SBQQ__ShippingPostalCode__c,SBQQ__ShippingState__c,SBQQ__ShippingStreet__c,SBQQ__Source__c,SBQQ__StartDate__c,SBQQ__Status__c,SBQQ__SubscriptionTerm__c,Substation_gt_25k__c,Substation_Quoted_Outside_Energy__c,SBQQ__TargetCustomerAmount__c,SBQQ__TotalCustomerDiscountAmount__c,SBQQ__Type__c,SBQQ__Uncalculated__c,SBQQ__Unopened__c,SBQQ__WatermarkShown__c FROM SBQQ__Quote__c WHERE Id =: quoteId];
         //Checks the quote lines that already exist on salesforce

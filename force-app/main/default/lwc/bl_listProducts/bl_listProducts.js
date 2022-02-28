@@ -761,10 +761,9 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     saveLookingNSP(){
         //console.log('Tab: '+this.tabSelected + 'LookupCode: ' +this.trackList.lookupCode)
         if ( 
-        ((this.tabSelected == 'ACA')) || 
+        ((this.tabSelected == 'ACA') && ((this.trackList.lookupCode != 'Copperclad'))) || 
         ((this.tabSelected == 'Fiber Optic Cable') && ( (this.trackList.lookupCode == 'Premise Cable') || 
-        (this.trackList.lookupCode == 'Loose Tube Cable') || (this.trackList.lookupCode == 'ADSS Cable')) ) || 
-        ((this.tabSelected == 'Cable')) ||
+        (this.trackList.lookupCode == 'Loose Tube Cable') || (this.trackList.lookupCode == 'ADSS Cable')) )||
         ((this.tabSelected == 'Connectivity') && ( (this.trackList.lookupCode == 'Cable Assemblies') || (this.trackList.lookupCode == 'Patch Panels') ))
         ){
            
@@ -835,6 +834,14 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                     if (dataParse[i].type == 'PICKLIST'){
                         //console.log('PickList Field');
                         dataParse[i].options = JSON.parse(dataParse[i].options);
+                        if((this.trackList.lookupCode == 'Loose Tube Cable') || (this.trackList.lookupCode == 'ADSS Cable')){ 
+                            dataParse[i].value = dataParse[i].options[0].value; 
+                            this.listNSP[this.firstNSP-1][dataParse[i].apiName] = dataParse[i].options[0].value; 
+
+                        } else {
+                            dataParse[i].value = '';
+                        }
+                        
                         this.nspPicklist.push(dataParse[i]);
                     } else if(dataParse[i].action == 'INPUT') {
                         //console.log('Number Field');
@@ -892,7 +899,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             console.log('Is full:'+ isFull); 
         }
         if(this.listNSP[this.firstNSP-1]['checked']){
-            this.listNSP[this.firstNSP-1]['iconName'] = "utility:check"; 
+            //this.listNSP[this.firstNSP-1]['iconName'] = "utility:check"; 
             console.log('ALL porperties done!');
             this.checkNSPFields = [];
         } 
@@ -1123,7 +1130,15 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             //console.log(JSON.stringify(this.bundleFeatures)); 
             for (let i =0; i<this.bundleFeatures.length; i++){
                 //console.log(this.bundleFeatures[i].features); 
-                this.bundleFeatures[i].features = JSON.parse(this.bundleFeatures[i].features);
+                let options =  JSON.parse(this.bundleFeatures[i].features);
+                let auxiliarOptions = [];
+                for(let j = 0; j<options.length; j++){
+                    auxiliarOptions.push({label: options[j].productName, value: options[j].productId,
+                        description: options[j].description, featureName: options[j].featureName, disable: options[j].disable,
+                        checked: options[j].checked});
+                }
+                this.bundleFeatures[i].features = auxiliarOptions;
+                this.bundleFeatures[i].selected = auxiliarOptions[0].value;
                 //let optionsAux = JSON.parse(this.bundleFeatures[i].features);  
                 //this.bundleOptions.push(optionsAux);
                 //console.log(optionsAux);  
@@ -1152,6 +1167,45 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             console.log('Send to PS component');
         }, 500);
         */
+    }
+
+    handleRadioChange(event) {
+        console.log('Change Checked');
+        //console.log(event.detail.id);
+        //console.log(event.detail.name);
+        //console.log(event.detail.label);
+        console.log(event.target.name); // Name of feature
+        console.log(event.detail.value); //Id of selected product
+        let idSelected = event.detail.value;
+        let featureEdited = event.target.name; 
+        
+        constrainsConfigured({optionSelected: idSelected, featureSelected: featureEdited , productName: this.trackConfig.lookupCode})
+        .then((data)=>{
+            console.log(data);
+            if(data == "No Constrains"){
+                this.bundleLoading = false;
+                console.log('No constrains');
+            } else {
+                console.log('Constrains');
+                //Here put the method that creates and add picklist value with the configured ones
+                /*
+                this.bundleFeatures = JSON.parse(data);
+                //console.log(JSON.stringify(this.bundleFeatures)); 
+                for (let i =0; i<this.bundleFeatures.length; i++){
+                    //console.log(this.bundleFeatures[i].features); 
+                    this.bundleFeatures[i].features = JSON.parse(this.bundleFeatures[i].features);
+                    //let optionsAux = JSON.parse(this.bundleFeatures[i].features);  
+                    //this.bundleOptions.push(optionsAux);
+                    //console.log(optionsAux);  
+                }
+                */
+                this.bundleLoading = false;
+            }
+            
+        })
+        .catch((error)=>{
+            console.log(error);
+        })
     }
 
     lookRestrictions(event){

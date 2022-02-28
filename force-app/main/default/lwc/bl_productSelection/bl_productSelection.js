@@ -174,7 +174,6 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             for (let secondList of list.listOfProducts){
                 secondList.quantity = 1;
                 secondList.netunitprice = 0;
-                //console.log('LUPL'+secondList.listunitprice);
                 if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
                     secondList.listunitprice = 0;
                 }
