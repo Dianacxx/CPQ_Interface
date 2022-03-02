@@ -834,14 +834,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                     if (dataParse[i].type == 'PICKLIST'){
                         //console.log('PickList Field');
                         dataParse[i].options = JSON.parse(dataParse[i].options);
-                        if((this.trackList.lookupCode == 'Loose Tube Cable') || (this.trackList.lookupCode == 'ADSS Cable')){ 
-                            dataParse[i].value = dataParse[i].options[0].value; 
-                            this.listNSP[this.firstNSP-1][dataParse[i].apiName] = dataParse[i].options[0].value; 
-
-                        } else {
-                            dataParse[i].value = '';
-                        }
-                        
+                        dataParse[i].value = dataParse[i].options[0].value; 
+                        this.listNSP[this.firstNSP-1][dataParse[i].apiName] = dataParse[i].options[0].value; 
                         this.nspPicklist.push(dataParse[i]);
                     } else if(dataParse[i].action == 'INPUT') {
                         //console.log('Number Field');
@@ -1138,7 +1132,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                         checked: options[j].checked});
                 }
                 this.bundleFeatures[i].features = auxiliarOptions;
-                this.bundleFeatures[i].selected = auxiliarOptions[0].value;
+                //this.bundleFeatures[i].selected = auxiliarOptions[0].value;
                 //let optionsAux = JSON.parse(this.bundleFeatures[i].features);  
                 //this.bundleOptions.push(optionsAux);
                 //console.log(optionsAux);  
@@ -1169,15 +1163,23 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         */
     }
 
+
+
+    @track constrainList = [];
+    @track showOtherOpt = false; 
     handleRadioChange(event) {
         console.log('Change Checked');
         //console.log(event.detail.id);
         //console.log(event.detail.name);
         //console.log(event.detail.label);
-        console.log(event.target.name); // Name of feature
-        console.log(event.detail.value); //Id of selected product
+        //console.log(event.target.name); // Name of feature
+        //console.log(event.detail.value); //Id of selected product
         let idSelected = event.detail.value;
         let featureEdited = event.target.name; 
+        
+        console.log('Product Id of selection '+idSelected);
+        console.log('Feature selected '+featureEdited);
+        console.log('Bundle '+this.trackConfig.lookupCode);
         
         constrainsConfigured({optionSelected: idSelected, featureSelected: featureEdited , productName: this.trackConfig.lookupCode})
         .then((data)=>{
@@ -1185,8 +1187,30 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             if(data == "No Constrains"){
                 this.bundleLoading = false;
                 console.log('No constrains');
+                this.showOtherOpt = true;
             } else {
+                this.showOtherOpt = false;
                 console.log('Constrains');
+                console.log(data); 
+                let dataParse = JSON.parse(data);
+                if(this.constrainList.findIndex(x => x.label == featureEdited) != -1){
+                    //MISSING HERE
+                } else {
+                    let uniqueFeatures = [...new Set(dataParse.map(item => item.featureName))];
+                    console.log('Feature List: '+uniqueFeatures);
+                    for(let i=0; i<uniqueFeatures.length; i++){
+                        let options = []; 
+                        for(let j=0;j<dataParse.length;j++){
+                            console.log('Feature: '+dataParse[j].featureName);
+                            if(dataParse[j].featureName == uniqueFeatures[i]){
+                                options.push({label: dataParse[j].productName , value: dataParse[j].productId});
+                            }                        
+                        }
+                        this.constrainList.push({label: uniqueFeatures[i], options: options});
+                    }
+
+                }
+                this.showOtherOpt = true;
                 //Here put the method that creates and add picklist value with the configured ones
                 /*
                 this.bundleFeatures = JSON.parse(data);

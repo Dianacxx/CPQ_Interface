@@ -51,6 +51,18 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                     auxiliar: 'newtable'
                   };
                 publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
+                getQuoteTotal({quoteId: this.recordId})
+                .then((data)=>{
+                        //console.log('NEW QUOTE TOTAL data');
+                        //console.log(data);
+                        this.totalValue = data;
+                        this.spinnerLoadingUI = false;
+                })
+                .catch((error)=>{
+                        console.log('NEW QUOTE TOTAL error');
+                        console.log(error);
+                        this.spinnerLoadingUI = false;
+                }); 
             }
         })
         .catch(error =>{
@@ -97,18 +109,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             }
         })
 
-        getQuoteTotal({quoteId: this.recordId})
-        .then((data)=>{
-                //console.log('NEW QUOTE TOTAL data');
-                //console.log(data);
-                this.totalValue = data;
-                this.spinnerLoadingUI = false;
-         })
-        .catch((error)=>{
-                console.log('NEW QUOTE TOTAL error');
-                console.log(error);
-                this.spinnerLoadingUI = false;
-        }); 
+        
         
         var endTime = performance.now();
         console.log(`Starting process took ${endTime - startTime} milliseconds`);
@@ -299,7 +300,6 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     //WHEN CLICK SAVE AND CALCULATE
     async handleSaveAndCalculate(event){
         //CALL APEX METHOD TO SAVE QUOTELINES AND NOTES
-
         //this.labelButtonSave =  event.target.label;
         //console.log('Label '+ label);
         this.spinnerLoadingUI = true;
@@ -307,6 +307,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         
         let startTime = performance.now();
         this.callEditAnDeleteMethod().then(this.callCreateMethod());
+        //this.spinnerLoadingUI = false;
         let endTime = performance.now();
         //console.log(`Saving method took ${endTime - startTime} milliseconds`);
         this.desactiveCloneButton();
@@ -400,7 +401,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 setTimeout(() => {
                     console.log('TOTAL SUCCESS');
                     this.callData();
-                    this.spinnerLoadingUI = false;
+                    //this.spinnerLoadingUI = false;
                     this.notGoodToGoBundle[1] = false;
                     /*
                     const evt = new ShowToastEvent({
@@ -465,6 +466,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         if (!(this.originalquotelinesString == this.quotelinesString)){
             await this.callEditAnDeleteMethod();
             await this.callCreateMethod();
+            //this.spinnerLoadingUI = false;
             await this.exitToRecordPage();
         } else {
             await this.exitToRecordPage();

@@ -324,30 +324,21 @@
                         <ul>
                             <template for:each={bundleFeatures} for:item="featuresA">
                                 <li key={featuresA.name}>
-                                    <h2 class="slds-text-heading_medium slds-var-m-bottom_small slds-var-m-top_small">
-                                    <lightning-icon class="slds-var-m-right_x-small" icon-name="standard:product" alternative-text="bundle" title="bundle"></lightning-icon>
-                                    {featuresA.name}</h2>
-                                        <lightning-radio-group key={featuresA.name}
-                                        name ={featuresA.name}
-                                        label={featuresA.name}
-                                        options={featuresA.features}
-                                        value={featuresA.selected}
-                                        onchange={handleRadioChange}
-                                        required
-                                        type="radio"></lightning-radio-group>
-                                        <template for:each={featuresA.features} for:item="options">
-                                        <!--
-                                        <lightning-layout multiple-rows="false" key={options.productName}>
-                                        <lightning-input key={options.productName} type="checkbox" 
-                                        label={options.productName} name={options.featureName} id={options.productId}
-                                        disabled={options.disable} checked={options.checked} onchange={lookRestrictions}>
-                                        </lightning-input>
-                                        <p key={options.productName} class="slds-var-m-right_small">({options.description})</p>
-                                        </lightning-layout>
-                                    -->
-                                    </template>
+                                    <lightning-radio-group key={featuresA.name} name ={featuresA.name}
+                                    label={featuresA.name} options={featuresA.features} value={featuresA.selected}
+                                    onchange={handleRadioChange} required type="radio"></lightning-radio-group>
                                 </li>
                             </template>
+                            <template if:true={showOtherOpt}>
+                                HEY
+                                <template for:each={constrainList} for:item="otherOptions">
+                                    <lightning-combobox key={otherOptions.label} name={otherOptions.label}
+                                    label={otherOptions.label} 
+                                    options={otherOptions.options}
+                                    onchange={handleChange} ></lightning-combobox>
+                            </template>
+                            </template>
+                            
                         </ul>
                     </div>
                     </div>

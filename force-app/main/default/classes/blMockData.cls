@@ -71,6 +71,34 @@ public with sharing class blMockData {
         List<SBQQ__ProductFeature__c> features = [SELECT name FROM SBQQ__ProductFeature__c 
                         WHERE SBQQ__ConfiguredSKU__r.name =: productName];
         String nameFeatures = '';
+        List <SBQQ__OptionConstraint__c> optionConstrain = new List<SBQQ__OptionConstraint__c>();
+        optionConstrain = [SELECT SBQQ__ConstrainedOption__r.Feature_Name__c
+        FROM SBQQ__OptionConstraint__c WHERE SBQQ__ConfiguredSKU__r.name =: productName];
+        List<String> listFeatures = new  List<String>();
+        for(integer i=0; i<optionConstrain.size(); i++){
+            String auxList = optionConstrain[i].SBQQ__ConstrainedOption__r.Feature_Name__c; 
+            if(auxList.Contains(productName+' -')){
+                //auxList.replace(productName,'xx');
+                auxList = string.valueOf(auxList).replace(productName+' - ','');
+                //System.debug('it has '+productName);
+            }        
+            //System.debug('Features Names w/ constrains '+auxList);
+            if (!listFeatures.contains(auxList)){
+                listFeatures.add(auxList);
+            }
+            
+        }
+        //System.debug(listFeatures); 
+        //System.debug('Before '+JSON.serialize(features));
+        for(integer j=0;j<features.size();j++){
+            for(integer k=0;k<listFeatures.size();k++){
+                if(features[j].name.contains(listFeatures[k])){
+                    features.remove(j);
+                }
+            }
+        }
+        //System.debug('After '+JSON.serialize(features));
+
         List <bundleFeaturesWrapper> featuresAndOptions = new List <bundleFeaturesWrapper>();
         List <SBQQ__ProductOption__c> options = new List<SBQQ__ProductOption__c>();
         for(integer i=0; i<features.size(); i++){
@@ -100,7 +128,7 @@ public with sharing class blMockData {
             aux.features =  JSON.serialize(title); 
             featuresAndOptions.add(aux);
         }
-        return JSON.serialize(featuresAndOptions);
+        return JSON.serialize(featuresAndOptions); 
     }
 
     @AuraEnabled
@@ -108,24 +136,62 @@ public with sharing class blMockData {
         //blMockData.constrainsConfigured('01t8A000007c76VQAQ','A','FS200-50'); 
         //CHANGE THIS METHOD HEREEEEEEEREEEEEEEEE
         List <SBQQ__OptionConstraint__c> optionConstrains = new List<SBQQ__OptionConstraint__c>();
-        optionConstrains = [SELECT  Name, SBQQ__ConstrainedOption__r.SBQQ__OptionalSKU__c, 
-        SBQQ__ConstrainingOption__r.SBQQ__OptionalSKU__c FROM SBQQ__OptionConstraint__c
+        optionConstrains = [SELECT  Name, SBQQ__ConstrainedOption__r.SBQQ__OptionalSKU__c, SBQQ__ConstrainedOption__r.SBQQ__Feature__r.name,
+         SBQQ__ConstrainingOption__r.SBQQ__OptionalSKU__c FROM SBQQ__OptionConstraint__c
         WHERE SBQQ__ConfiguredSKU__r.name =:productName AND //productName is the name of the product bundle
         SBQQ__ConstrainingOption__r.SBQQ__OptionalSKU__c =: optionSelected]; //optionSelected is the Id of the product
+        System.debug('Option Constrains'+optionConstrains);
         if (optionConstrains.size() == 0){
             return 'No Constrains';
         } else {
+            List <String> featureRestricted = new List<String>();
+            for(integer j = 0; j<optionConstrains.size(); j++){
+                if(!(featureRestricted.contains(optionConstrains[j].SBQQ__ConstrainedOption__r.SBQQ__Feature__r.name))){
+                    featureRestricted.add(optionConstrains[j].SBQQ__ConstrainedOption__r.SBQQ__Feature__r.name);
+                }
+            }
+            System.debug('features with restriction: '+featureRestricted); 
             List <String> productIdRestricted = new  List <String>();
             for(integer i =0;  i<optionConstrains.size(); i++){
                 System.debug('Id of products restricted: '+optionConstrains[i].SBQQ__ConstrainedOption__r.SBQQ__OptionalSKU__c);
                 productIdRestricted.add(optionConstrains[i].SBQQ__ConstrainedOption__r.SBQQ__OptionalSKU__c);
             }
+            List <SBQQ__ProductOption__c> options = new List<SBQQ__ProductOption__c>();
+            options = [SELECT SBQQ__ProductCode__c,SBQQ__Feature__r.name, SBQQ__ComponentDescription__c, SBQQ__OptionalSKU__c FROM SBQQ__ProductOption__c 
+            WHERE SBQQ__ConfiguredSKU__r.name =:productName AND SBQQ__Feature__r.name =:featureRestricted 
+            AND SBQQ__OptionalSKU__c !=: productIdRestricted];
+            System.debug('Options for '+options); 
+            List <FeaturesOptionsWrapper> title = new List<FeaturesOptionsWrapper>();
 
+            for (integer j=0; j<options.size(); j++){
+                FeaturesOptionsWrapper test = new FeaturesOptionsWrapper(); 
+                String a = (options[j].SBQQ__ProductCode__c);
+                String b = (options[j].SBQQ__ComponentDescription__c);
+                test.productId = options[j].SBQQ__OptionalSKU__c;
+                test.productName = a;
+                test.description = b; 
+                test.disable = false;
+                test.featureName = options[j].SBQQ__Feature__r.name;
+                title.add(test);  
+                if (featureSelected == featureSelected){
+                    if(optionSelected == test.productId){
+                        test.checked = true;
+                    } else {
+                        test.checked = false;
+                        test.disable = true;
+                    }
+                } else {
+                    test.checked = false;
+                }
+                
+            }
+            /*
             List<SBQQ__ProductFeature__c> features = [SELECT name FROM SBQQ__ProductFeature__c 
                             WHERE SBQQ__ConfiguredSKU__r.name =: productName];
             String nameFeatures = '';
             List <bundleFeaturesWrapper> featuresAndOptions = new List <bundleFeaturesWrapper>();
             List <SBQQ__ProductOption__c> options = new List<SBQQ__ProductOption__c>();
+
             for(integer i=0; i<features.size(); i++){
                 bundleFeaturesWrapper aux = new bundleFeaturesWrapper(); 
                 
@@ -165,8 +231,9 @@ public with sharing class blMockData {
                 featuresAndOptions.add(aux);
 
             }
-            System.debug('Returning '+ JSON.serialize(featuresAndOptions));
-            return JSON.serialize(featuresAndOptions);
+            */
+            System.debug('Returning '+ JSON.serialize(title));
+            return JSON.serialize(title);
         }
 
         //ID OF PRODUCTS THAT HAVE CONSTRAINS WHEN BUNDLE IN A productName Configured on. 
