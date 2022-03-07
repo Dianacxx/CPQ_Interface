@@ -1781,4 +1781,42 @@ public with sharing class QuoteController {
         return JSON.serialize(linesToPrint);
 
     }
+
+     @AuraEnabled
+    //Creates quote lines from the NSP products
+    public static void addBundledItems(){
+        ProductReader reader = new ProductReader();
+        ProductModel product = reader.read('01t8A000007c76KQAQ','01sA0000000TiZnIAK','USD');
+        QuoteReader reader1 = new QuoteReader();
+        QuoteModel quote = reader1.read('a6T2h0000009qSMEAY');
+        ConfigurationModel oTempConfgModel = new ConfigurationModel();
+        oTempConfgModel.configuredProductId = '01t8A000007c76KQAQ';
+        oTempConfgModel.optionId = 'a6I8A000000DGM3UAO';
+        oTempConfgModel.configured = false;
+        oTempConfgModel.changedByProductActions = false;
+        oTempConfgModel.isDynamicOption = false;
+        oTempConfgModel.isUpgrade = false;
+        oTempConfgModel.priceEditable = false;
+        SBQQ__ProductOption__c tempOptionData = [Select Id, SBQQ__OptionalSKU__c, SBQQ__Selected__c, SBQQ__Quantity__c from SBQQ__ProductOption__c where Id ='a6I8A000000DGM3UAO'];
+        tempOptionData.SBQQ__Selected__c = true; //set selected to true
+        tempOptionData.SBQQ__Quantity__c = 5.0; //optional to modify quantity
+        oTempConfgModel.optionData=tempOptionData;
+        oTempConfgModel.configurationData = new SBQQ__ProductOption__c();
+        oTempConfgModel.optionConfigurations = new List<ConfigurationModel>();
+        oTempConfgModel.validationMessages = new List<String>{};
+        List<ConfigurationModel> optionConfigInfo = new List<ConfigurationModel>();
+        optionConfigInfo.add(oTempConfgModel);
+        product.configuration.optionConfigurations.addAll(optionConfigInfo);
+        product.configuration.configured = true; //IMPORTANT! This says that the bundle was manually configured
+        product.configuration.changedByProductActions = true;
+        List<ProductModel> productModels = new List<ProductModel>();
+        productModels.add(product);
+        ProductAdder adder = new ProductAdder();
+        QuoteModel quoteWithProducts = adder.add(quote, productModels, 0);
+        System.debug(quoteWithProducts);
+        quoteWithProducts.lineItems[0].record.SBQQ__Quantity__c = 2;
+        QuoteCalculator calculator = new QuoteCalculator();
+        calculator.calculate(quoteWithProducts, 'MyCallback');
+        
+    }
 }

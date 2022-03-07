@@ -1,0 +1,36 @@
+<apex:page showHeader="false" sidebar="false">
+    <head>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/easyXDM/2.4.20/easyXDM.js" />
+    </head>
+    <body class="slds-scope">    
+        <apex:includeLightning />    
+        <div id="LightningComponentid" />    
+        <script>
+        var configuredObject;
+        var rpc = new easyXDM.Rpc({},{
+            remote: {
+                postMessage: {} 
+            },
+            local: {
+                postMessage: function(message) {
+                    console.log('VS '+message); 
+                    configuredObject = message;
+                    }
+                }
+            });
+        
+        $Lightning.use("c:HelloLWCExampleApp", function() {
+            $Lightning.createComponent("c:bl_configuredData",
+            { 
+                bundleData: configuredObject,
+            },
+            "LightningComponentid",
+            function(cmp) {
+                console.log('LWC Componenet added in VF page');
+            });
+        });
+        
+        </script>
+    </body>
+
+</apex:page>

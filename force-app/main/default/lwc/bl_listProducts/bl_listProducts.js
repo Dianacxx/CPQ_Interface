@@ -952,19 +952,19 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         
                  
     }
-    //TRABAJAR AQUI CUANDO EL QUOTE SAVER ESTE LISTO. 
+
     saveAndExitFilterModal(){
         this.showLookupList = false;
-
         let auxQuoteLines = JSON.parse(JSON.stringify(this.allReviews)); 
         let auxQuoteLinesLength;
+        console.log('THIS '+ JSON.stringify(this.allReviews));
         for(let i=0; i<auxQuoteLines.length; i++){
             let auxId = auxQuoteLines[i].Id; 
             auxQuoteLines[i].Id = auxQuoteLines[i].idTemporal; 
             auxQuoteLines[i].idTemporal = auxId; 
         }
         //console.log('Length of products before close: '+ this.allReviews.length)
-        //console.log('P: '+JSON.stringify(auxQuoteLines));
+        console.log('P: '+JSON.stringify(auxQuoteLines));
         addSelectorQuoteLine({quoteId: this.recordId, products: JSON.stringify(auxQuoteLines)})
         .then((data)=>{
             //console.log('Data after addSelectorQuoteLine'+ data);
@@ -1164,9 +1164,10 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     }
 
 
-
-    @track constrainList = [];
-    @track showOtherOpt = false; 
+    @track listFeaturesSelected = [];
+    @track listOptionsSelected = [];
+    @track checkConstrains = true; 
+    
     handleRadioChange(event) {
         console.log('Change Checked');
         //console.log(event.detail.id);
@@ -1176,11 +1177,27 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         //console.log(event.detail.value); //Id of selected product
         let idSelected = event.detail.value;
         let featureEdited = event.target.name; 
+        let index = this.listFeaturesSelected.indexOf(featureEdited);
+        if(index == -1){
+            this.listFeaturesSelected.push(featureEdited);
+            this.listOptionsSelected.push(idSelected);
+        } else {
+            this.listOptionsSelected[index] = idSelected;
+        }
+
+        if(this.listFeaturesSelected.length == this.bundleFeatures.length){
+            this.checkConstrains = false; 
+        }
         
-        console.log('Product Id of selection '+idSelected);
-        console.log('Feature selected '+featureEdited);
-        console.log('Bundle '+this.trackConfig.lookupCode);
+    
         
+        console.log('Feature: '+ JSON.stringify(this.listFeaturesSelected));
+        console.log('Option: '+ JSON.stringify(this.listOptionsSelected));
+
+        //console.log('Product Id of selection '+idSelected);
+        //console.log('Feature selected '+featureEdited);
+        //console.log('Bundle '+this.trackConfig.lookupCode);
+        /*
         constrainsConfigured({optionSelected: idSelected, featureSelected: featureEdited , productName: this.trackConfig.lookupCode})
         .then((data)=>{
             console.log(data);
@@ -1222,7 +1239,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                     //this.bundleOptions.push(optionsAux);
                     //console.log(optionsAux);  
                 }
-                */
+                
                 this.bundleLoading = false;
             }
             
@@ -1230,8 +1247,11 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         .catch((error)=>{
             console.log(error);
         })
+        */
     }
 
+    @track constrainList = [];
+    @track showOtherOpt = false; 
     lookRestrictions(event){
         this.bundleLoading = true;
         console.log('Change Checked');
