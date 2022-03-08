@@ -6,6 +6,7 @@ import filteredProductPrinter from '@salesforce/apex/QuoteController.filteredPro
 import getFirstFilter from '@salesforce/apex/QuoteController.getFirstFilter'; 
 import getProductFilteringv2 from '@salesforce/apex/QuoteController.getProductFilteringv2';
 import addSelectorQuoteLine from '@salesforce/apex/QuoteController.addSelectorQuoteLine'; //addQuoteLine
+import addQuoteLine from '@salesforce/apex/QuoteController.addQuoteLine'; //addQuoteLine
 import getAdditionalFiltering from '@salesforce/apex/QuoteController.getAdditionalFiltering';
 import NSPAdditionalFields from '@salesforce/apex/QuoteController.NSPAdditionalFields'; 
 
@@ -13,7 +14,9 @@ import addNSPProducts from '@salesforce/apex/QuoteController.addNSPProducts';
 import addNSPQuoteLine from '@salesforce/apex/QuoteController.addNSPQuoteLine'; 
 
 import getFeaturesConfigured from '@salesforce/apex/blMockData.getFeaturesConfigured'; 
-import constrainsConfigured from '@salesforce/apex/blMockData.constrainsConfigured';
+import saveBundle from '@salesforce/apex/blMockData.saveBundle';
+import saveBundle2 from '@salesforce/apex/blMockData.saveBundle2';
+import checkingConstrains from '@salesforce/apex/blMockData.checkingConstrains';
 
 export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     @api recordId; 
@@ -957,7 +960,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         this.showLookupList = false;
         let auxQuoteLines = JSON.parse(JSON.stringify(this.allReviews)); 
         let auxQuoteLinesLength;
-        console.log('THIS '+ JSON.stringify(this.allReviews));
+        //console.log('THIS '+ JSON.stringify(this.allReviews));
         for(let i=0; i<auxQuoteLines.length; i++){
             let auxId = auxQuoteLines[i].Id; 
             auxQuoteLines[i].Id = auxQuoteLines[i].idTemporal; 
@@ -1094,22 +1097,18 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         this.openConfiguredPopup = false; 
         this.bundleFeatures = []; 
         this.bundleOptions = [];
+        this.listFeaturesSelected = [];
+        this.listOptionsSelected = [];
+        this.checkConstrains = true; 
+        this.closeConstrains();
     }
-    saveBundle(){
-        const evt = new ShowToastEvent({
-            title: 'Remember to the save process',
-            message: 'Remember to the save process',
-            variant: 'warning',
-            mode: 'sticky '
-        });
-        this.dispatchEvent(evt);
-        this.closeConfiguredAlert();
-    }
+    
 
     @track bundleLoading = false; 
     @track bundleFeatures = []; 
     @track bundleOptions = [];
-    //WORKING HERE TO THE BUNDLE ONES - IN PAUSE! 
+
+    //WORKING HERE TO THE BUNDLE ONES - WORKING HERE! 
 
     continueConfiguredQLE(){
         //SCENARIO 2
@@ -1128,8 +1127,9 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                 let auxiliarOptions = [];
                 for(let j = 0; j<options.length; j++){
                     auxiliarOptions.push({label: options[j].productName, value: options[j].productId,
-                        description: options[j].description, featureName: options[j].featureName, disable: options[j].disable,
-                        checked: options[j].checked});
+                        description: options[j].description, featureName: options[j].featureName, 
+                        productOption: options[j].productOptionName,
+                        disable: options[j].disable, checked: options[j].checked});
                 }
                 this.bundleFeatures[i].features = auxiliarOptions;
                 //this.bundleFeatures[i].selected = auxiliarOptions[0].value;
@@ -1169,12 +1169,12 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     @track checkConstrains = true; 
     
     handleRadioChange(event) {
-        console.log('Change Checked');
-        //console.log(event.detail.id);
-        //console.log(event.detail.name);
-        //console.log(event.detail.label);
+        //console.log('Change Checked');
         //console.log(event.target.name); // Name of feature
         //console.log(event.detail.value); //Id of selected product
+        //console.log(Object.getOwnPropertyNames(event.detail));
+        //console.log(Object.getOwnPropertyNames(event.target));
+        console.log(event.target.label); // Name of feature
         let idSelected = event.detail.value;
         let featureEdited = event.target.name; 
         let index = this.listFeaturesSelected.indexOf(featureEdited);
@@ -1184,72 +1184,97 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         } else {
             this.listOptionsSelected[index] = idSelected;
         }
-
         if(this.listFeaturesSelected.length == this.bundleFeatures.length){
             this.checkConstrains = false; 
         }
-        
-    
-        
-        console.log('Feature: '+ JSON.stringify(this.listFeaturesSelected));
-        console.log('Option: '+ JSON.stringify(this.listOptionsSelected));
+        //console.log('Feature: '+ JSON.stringify(this.listFeaturesSelected));
+        //console.log('Option: '+ JSON.stringify(this.listOptionsSelected));
 
-        //console.log('Product Id of selection '+idSelected);
-        //console.log('Feature selected '+featureEdited);
-        //console.log('Bundle '+this.trackConfig.lookupCode);
-        /*
-        constrainsConfigured({optionSelected: idSelected, featureSelected: featureEdited , productName: this.trackConfig.lookupCode})
+    }
+    @track showConstrains = false; 
+    @track errorMessConstrains = [];
+    checkConstrainsFunction(){
+        console.log('-----------------------IN PROCESS----------------------------');
+        this.closeConstrains();
+        console.log(JSON.stringify(this.listFeaturesSelected)); 
+        console.log(JSON.stringify(this.listOptionsSelected));
+        console.log(this.trackConfig.lookupCode);
+        checkingConstrains({features: this.listFeaturesSelected, optionsSelected: this.listOptionsSelected,  productName: this.trackConfig.lookupCode})
         .then((data)=>{
+            console.log('data checkingConstrains');
             console.log(data);
-            if(data == "No Constrains"){
-                this.bundleLoading = false;
-                console.log('No constrains');
-                this.showOtherOpt = true;
+            if (data == '[]'){
+                console.log('No constrains in this bundle.');
+                this.saveBundleFunction();
             } else {
-                this.showOtherOpt = false;
-                console.log('Constrains');
-                console.log(data); 
-                let dataParse = JSON.parse(data);
-                if(this.constrainList.findIndex(x => x.label == featureEdited) != -1){
-                    //MISSING HERE
-                } else {
-                    let uniqueFeatures = [...new Set(dataParse.map(item => item.featureName))];
-                    console.log('Feature List: '+uniqueFeatures);
-                    for(let i=0; i<uniqueFeatures.length; i++){
-                        let options = []; 
-                        for(let j=0;j<dataParse.length;j++){
-                            console.log('Feature: '+dataParse[j].featureName);
-                            if(dataParse[j].featureName == uniqueFeatures[i]){
-                                options.push({label: dataParse[j].productName , value: dataParse[j].productId});
-                            }                        
-                        }
-                        this.constrainList.push({label: uniqueFeatures[i], options: options});
-                    }
-
+                this.showConstrains = true; 
+                this.errorMessConstrains = JSON.parse(data);
+                for(let i =0; i<this.errorMessConstrains.length; i++){
+                    this.errorMessConstrains[i] = {Error: this.errorMessConstrains[i]}; 
                 }
-                this.showOtherOpt = true;
-                //Here put the method that creates and add picklist value with the configured ones
-                /*
-                this.bundleFeatures = JSON.parse(data);
-                //console.log(JSON.stringify(this.bundleFeatures)); 
-                for (let i =0; i<this.bundleFeatures.length; i++){
-                    //console.log(this.bundleFeatures[i].features); 
-                    this.bundleFeatures[i].features = JSON.parse(this.bundleFeatures[i].features);
-                    //let optionsAux = JSON.parse(this.bundleFeatures[i].features);  
-                    //this.bundleOptions.push(optionsAux);
-                    //console.log(optionsAux);  
-                }
-                
-                this.bundleLoading = false;
+                console.log('There are constrains');
             }
-            
+       })
+       .catch((error)=>{
+            console.log('error checkingConstrains');
+            console.log(error);
+        })
+    }
+    closeConstrains(){
+        this.showConstrains = false; 
+        this.errorMessConstrains = [];
+    }
+
+    saveBundleFunction(){
+        //this.listOptionsSelected LIST OF ID'S OF FEATURES
+        console.log('quoteId '+ this.recordId);
+        console.log('parentProductId '+ this.trackConfig.relatedProduct);
+        console.log(this.listOptionsSelected);
+        /*
+        addQuoteLine({quoteId:this.recordId,  productId:this.trackConfig.relatedProduct})
+        .then((data)=>{
+            console.log('Bundle parent quote DATA')
+            console.log(data);
         })
         .catch((error)=>{
+            console.log('Bundle parent quote ERROR')
+            console.log(error);
+        })*/
+        var today = new Date(); 
+        var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+        console.log('TIME start: '+time);
+        this.bundleLoading = true; 
+        for(let i=0; i<this.listOptionsSelected.length;i++){
+            saveBundle2({quoteId:this.recordId, parentProductId:this.trackConfig.relatedProduct,featureId:this.listOptionsSelected[i]})
+            .then((data)=>{
+                console.log(i+' saveBundle data');
+                console.log(data);
+                var today = new Date(); 
+                var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+                console.log('TIME: '+time);
+
+            })
+            .catch((error)=>{
+                console.log('saveBundle error');
+                console.log(error);
+            });
+        }
+        this.bundleLoading = false; 
+        /*
+        saveBundle({ quoteId:this.recordId,  parentProductId:this.trackConfig.relatedProduct, listFeaturesId: this.listOptionsSelected})
+        .then((data)=>{
+            console.log('saveBundle data');
+            console.log(data);
+            console.log('-----------------------DONE----------------------------');
+
+        })
+        .catch((error)=>{
+            console.log('saveBundle error');
             console.log(error);
         })
         */
     }
-
+    /*
     @track constrainList = [];
     @track showOtherOpt = false; 
     lookRestrictions(event){
@@ -1289,4 +1314,5 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         })
 
     }
+    */
 }

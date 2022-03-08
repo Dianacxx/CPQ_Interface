@@ -158,7 +158,9 @@ public with sharing class blMockData {
         public String description {get;set;}
         public Boolean disable {get;set;} 
         public Boolean checked {get;set;} 
-        public String productId {get;set;}    
+        public String productId {get;set;}   
+        public String productOptionName {get;set;}  
+         
     } 
     
 
@@ -168,36 +170,6 @@ public with sharing class blMockData {
         List<SBQQ__ProductFeature__c> features = [SELECT name FROM SBQQ__ProductFeature__c 
                         WHERE SBQQ__ConfiguredSKU__r.name =: productName];
         String nameFeatures = '';
-        /*
-        List <SBQQ__OptionConstraint__c> optionConstrain = new List<SBQQ__OptionConstraint__c>();
-        optionConstrain = [SELECT SBQQ__ConstrainedOption__r.Feature_Name__c
-        FROM SBQQ__OptionConstraint__c WHERE SBQQ__ConfiguredSKU__r.name =: productName];
-        List<String> listFeatures = new  List<String>();
-        for(integer i=0; i<optionConstrain.size(); i++){
-            String auxList = optionConstrain[i].SBQQ__ConstrainedOption__r.Feature_Name__c; 
-            if(auxList.Contains(productName+' -')){
-                //auxList.replace(productName,'xx');
-                auxList = string.valueOf(auxList).replace(productName+' - ','');
-                //System.debug('it has '+productName);
-            }        
-            //System.debug('Features Names w/ constrains '+auxList);
-            if (!listFeatures.contains(auxList)){
-                listFeatures.add(auxList);
-            }
-            
-        }
-        //System.debug(listFeatures); 
-        //System.debug('Before '+JSON.serialize(features));
-        
-        for(integer j=0;j<features.size();j++){
-            for(integer k=0;k<listFeatures.size();k++){
-                if(features[j].name.contains(listFeatures[k])){
-                    features.remove(j);
-                }
-            }
-        }
-        */
-        //System.debug('After '+JSON.serialize(features));
 
         List <bundleFeaturesWrapper> featuresAndOptions = new List <bundleFeaturesWrapper>();
         List <SBQQ__ProductOption__c> options = new List<SBQQ__ProductOption__c>();
@@ -208,7 +180,7 @@ public with sharing class blMockData {
             aux.selected = '';
             //System.debug('Feature: '+features[i].Name);
             //SBQQ__OptionalSKU__c is Product Id
-            options = [SELECT SBQQ__ProductCode__c, SBQQ__ComponentDescription__c, SBQQ__OptionalSKU__c FROM SBQQ__ProductOption__c 
+            options = [SELECT Name, SBQQ__ProductCode__c, SBQQ__ComponentDescription__c, SBQQ__OptionalSKU__c, SBQQ__OptionalSKU__r.name FROM SBQQ__ProductOption__c 
                     WHERE SBQQ__ConfiguredSKU__r.name =:productName AND SBQQ__Feature__r.name =:nameFeatures];
             //System.debug('Option of '+features[i].Name+' '+options+' with size '+options.size());
             //System.debug('Size '+options.size());
@@ -218,7 +190,8 @@ public with sharing class blMockData {
                 String a = (options[j].SBQQ__ProductCode__c);
                 String b = (options[j].SBQQ__ComponentDescription__c);
                 test.productId = options[j].SBQQ__OptionalSKU__c;
-                test.productName = a;
+                test.productName = a + ' ('+options[j].SBQQ__OptionalSKU__r.name+')';
+                test.productOptionName = options[j].Name;
                 test.description = b; 
                 test.disable = false;
                 test.checked = false;
@@ -232,6 +205,131 @@ public with sharing class blMockData {
     }
 
     @AuraEnabled
+    public static string checkingConstrains(List<string> features, List<string> optionsSelected, string productName){
+        
+        List <SBQQ__OptionConstraint__c> optionConstrains = new List<SBQQ__OptionConstraint__c>();
+            optionConstrains = [SELECT  Name, SBQQ__ConstrainedOption__r.SBQQ__OptionalSKU__c, SBQQ__ConstrainedOption__r.SBQQ__Feature__r.name,
+            SBQQ__ConstrainingOption__r.SBQQ__OptionalSKU__c, SBQQ__ConstrainingOption__r.SBQQ__OptionalSKU__r.name, 
+            SBQQ__ConstrainedOption__r.SBQQ__OptionalSKU__r.name, SBQQ__ConstrainingOption__r.SBQQ__OptionalSKU__r.ProductCode,
+            SBQQ__ConstrainedOption__r.SBQQ__OptionalSKU__r.ProductCode
+            FROM SBQQ__OptionConstraint__c
+            WHERE SBQQ__ConfiguredSKU__r.name =:productName AND //productName is the name of the product bundle ProductCode
+            SBQQ__ConstrainingOption__r.SBQQ__OptionalSKU__c =: optionsSelected];
+            System.debug(optionConstrains);
+            List<String> errorMessage = new List<String>();
+            for(integer i = 0; i<optionConstrains.size();i++){
+                //SEE HERE WHEN SAYS INCLUDES SOMETHING
+                if(optionsSelected.contains(optionConstrains[i].SBQQ__ConstrainedOption__r.SBQQ__OptionalSKU__c)){
+                    if(!(optionConstrains[i].Name.contains('Is Shown')) || !(optionConstrains[i].Name.contains('Shows'))){
+                        errorMessage.add(optionConstrains[i].SBQQ__ConstrainingOption__r.SBQQ__OptionalSKU__r.ProductCode+
+                        ' does not accept '
+                        +optionConstrains[i].SBQQ__ConstrainedOption__r.SBQQ__OptionalSKU__r.ProductCode); 
+                        /*
+                        errorMessage.add(optionConstrains[i].SBQQ__ConstrainingOption__r.SBQQ__OptionalSKU__r.name+
+                        ' does not accept '
+                        +optionConstrains[i].SBQQ__ConstrainedOption__r.SBQQ__OptionalSKU__r.name); 
+                        */
+                    }
+                    
+                }
+                
+            }
+
+        return JSON.serialize(errorMessage);   
+        }
+
+
+    @AuraEnabled
+    public static string saveBundle2(String quoteId, String parentProductId, String featureId){
+        ProductReader reader = new ProductReader();
+        Pricebook2 prodPriceBook = [SELECT Id FROM Pricebook2 WHERE Id IN (SELECT SBQQ__PriceBook__c 
+        FROM SBQQ__Quote__c WHERE Id =: quoteId) LIMIT 1]; //Query for the pricbook that the product is currently
+        ProductModel product = reader.read(parentProductId,prodPriceBook.Id,'USD');
+        QuoteReader reader1 = new QuoteReader();
+        QuoteModel quote = reader1.read(quoteId);
+        SBQQ__ProductOption__c listFeaturesOptionsId = [SELECT Id, SBQQ__OptionalSKU__c, SBQQ__Selected__c, 
+            SBQQ__Quantity__c FROM SBQQ__ProductOption__c WHERE SBQQ__OptionalSKU__c =: featureId AND 
+            SBQQ__ConfiguredSKU__c =: parentProductId];
+        ConfigurationModel oTempConfgModel = new ConfigurationModel();
+        oTempConfgModel.configuredProductId = parentProductId;
+        oTempConfgModel.optionId = listFeaturesOptionsId.Id;
+        oTempConfgModel.configured = false;
+        oTempConfgModel.changedByProductActions = false;
+        oTempConfgModel.isDynamicOption = false;
+        oTempConfgModel.isUpgrade = false;
+        oTempConfgModel.priceEditable = false;
+        SBQQ__ProductOption__c tempOptionData = [Select Id, SBQQ__OptionalSKU__c, SBQQ__Selected__c, 
+        SBQQ__Quantity__c from SBQQ__ProductOption__c where Id =: listFeaturesOptionsId.Id];
+        tempOptionData.SBQQ__Selected__c = true; //set selected to true
+        tempOptionData.SBQQ__Quantity__c = 5.0; //optional to modify quantity
+        oTempConfgModel.optionData=tempOptionData;
+        oTempConfgModel.configurationData = new SBQQ__ProductOption__c();
+        oTempConfgModel.optionConfigurations = new List<ConfigurationModel>();
+        oTempConfgModel.validationMessages = new List<String>{};
+        List<ConfigurationModel> optionConfigInfo = new List<ConfigurationModel>();
+        optionConfigInfo.add(oTempConfgModel);
+        product.configuration.optionConfigurations.addAll(optionConfigInfo);
+        product.configuration.configured = true; //IMPORTANT! This says that the bundle was manually configured
+        product.configuration.changedByProductActions = true;
+        List<ProductModel> productModels = new List<ProductModel>();
+        productModels.add(product);
+        ProductAdder adder = new ProductAdder();
+        QuoteModel quoteWithProducts = adder.add(quote, productModels, 0);
+        System.debug(quoteWithProducts);
+        quoteWithProducts.lineItems[0].record.SBQQ__Quantity__c = 2;
+        QuoteCalculator calculator = new QuoteCalculator();
+        calculator.calculate(quoteWithProducts, 'MyCallback');
+        return 'Done';
+    }        
+
+    @AuraEnabled
+    public static string saveBundle(String quoteId, String parentProductId, List<String> listFeaturesId){
+        ProductReader reader = new ProductReader();
+        Pricebook2 prodPriceBook = [SELECT Id FROM Pricebook2 WHERE Id IN (SELECT SBQQ__PriceBook__c FROM SBQQ__Quote__c WHERE Id =: quoteId) LIMIT 1]; //Query for the pricbook that the product is currently
+        ProductModel product = reader.read(parentProductId,prodPriceBook.Id,'USD');
+        QuoteReader reader1 = new QuoteReader();
+        QuoteModel quote = reader1.read(quoteId);
+        List<ConfigurationModel> oTempConfgModel = new List<ConfigurationModel>();
+        
+        List<SBQQ__ProductOption__c> listFeaturesOptionsId = [SELECT Id, SBQQ__OptionalSKU__c, SBQQ__Selected__c, 
+            SBQQ__Quantity__c FROM SBQQ__ProductOption__c WHERE SBQQ__OptionalSKU__c =: listFeaturesId];
+        for(integer i =0;i<listFeaturesOptionsId.size();i++){
+            ConfigurationModel feat = new ConfigurationModel();
+            List<ProductModel> productModels = new List<ProductModel>();
+            List<ConfigurationModel> optionConfigInfo = new List<ConfigurationModel>();
+            feat.configuredProductId = parentProductId;
+            feat.optionId = listFeaturesOptionsId[i].Id;
+            feat.configured = false;
+            feat.changedByProductActions = false;
+            feat.isDynamicOption = false;
+            feat.isUpgrade = false;
+            feat.priceEditable = false;
+            SBQQ__ProductOption__c tempOptionData = [SELECT Id, SBQQ__OptionalSKU__c, SBQQ__Selected__c, 
+            SBQQ__Quantity__c FROM SBQQ__ProductOption__c WHERE Id =: listFeaturesOptionsId[i].Id];
+            tempOptionData.SBQQ__Selected__c = true; //set selected to true
+            tempOptionData.SBQQ__Quantity__c = 1; //optional to modify quantity
+            feat.optionData=tempOptionData;
+            feat.configurationData = new SBQQ__ProductOption__c();
+            feat.optionConfigurations = new List<ConfigurationModel>();
+            feat.validationMessages = new List<String>{};
+            optionConfigInfo.add(feat);
+            product.configuration.optionConfigurations.addAll(optionConfigInfo);
+            product.configuration.configured = true; //IMPORTANT! This says that the bundle was manually configured
+            product.configuration.changedByProductActions = true;
+            productModels.add(product);
+            ProductAdder adder = new ProductAdder();
+            QuoteModel quoteWithProducts = adder.add(quote, productModels, 0);
+            System.debug(quoteWithProducts);
+            quoteWithProducts.lineItems[0].record.SBQQ__Quantity__c = 1;
+            QuoteCalculator calculator = new QuoteCalculator();
+            calculator.calculate(quoteWithProducts, 'MyCallback');
+        }
+        
+        
+        return 'Save Done';
+    }
+    /*
+    @AuraEnabled
     public static string constrainsConfigured(string optionSelected, string featureSelected, string productName){
         //blMockData.constrainsConfigured('01t8A000007c76VQAQ','A','FS200-50'); 
         //CHANGE THIS METHOD HEREEEEEEEREEEEEEEEE
@@ -242,7 +340,7 @@ public with sharing class blMockData {
         SBQQ__ConstrainingOption__r.SBQQ__OptionalSKU__c =: optionSelected]; //optionSelected is the Id of the product
         System.debug('Option Constrains'+optionConstrains);
         if (optionConstrains.size() == 0){
-            return 'No Constrains';
+            return featureSelected+' has no Constrains';
         } else {
             List <String> featureRestricted = new List<String>();
             for(integer j = 0; j<optionConstrains.size(); j++){
@@ -331,7 +429,7 @@ public with sharing class blMockData {
                 featuresAndOptions.add(aux);
 
             }
-            */
+            
             System.debug('Returning '+ JSON.serialize(title));
             return JSON.serialize(title);
         }
@@ -357,6 +455,7 @@ public with sharing class blMockData {
         PARA QUE SEGUN EL optionSelected VEA LAS LIMITACIONES DE SELECCION 
         BUSCAR EL FIELD QUE SEA DE COMPARACIÓN CON SELECCION Y ADEMAS AÑADIRLE DE ENTRADA EL QUE LIMITA EL 
         SBQQ__ConfiguredSKU__r.name
-        */
+        *
     }
+    */
 }

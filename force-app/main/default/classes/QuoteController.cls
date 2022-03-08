@@ -1788,7 +1788,7 @@ public with sharing class QuoteController {
         ProductReader reader = new ProductReader();
         ProductModel product = reader.read('01t8A000007c76KQAQ','01sA0000000TiZnIAK','USD');
         QuoteReader reader1 = new QuoteReader();
-        QuoteModel quote = reader1.read('a6T2h0000009qSMEAY');
+        QuoteModel quote = reader1.read('a6T2h0000009qUXEAY');
         ConfigurationModel oTempConfgModel = new ConfigurationModel();
         oTempConfgModel.configuredProductId = '01t8A000007c76KQAQ';
         oTempConfgModel.optionId = 'a6I8A000000DGM3UAO';
@@ -1817,6 +1817,9 @@ public with sharing class QuoteController {
         quoteWithProducts.lineItems[0].record.SBQQ__Quantity__c = 2;
         QuoteCalculator calculator = new QuoteCalculator();
         calculator.calculate(quoteWithProducts, 'MyCallback');
+        System.debug('Final heap size: ' +  Limits.getHeapSize());
+	    System.debug('Final CPU time used: ' +  Limits.getCPUTime() + ' CPU time limit ' + Limits.getLimitCpuTime());
+
         
     }
 }

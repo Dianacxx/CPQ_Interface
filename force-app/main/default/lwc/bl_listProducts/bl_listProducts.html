@@ -310,46 +310,42 @@
     
     -->
     <template if:true={openConfiguredPopup}>
-        <section aria-modal="true" class="slds-modal slds-fade-in-open">
-            <div class="slds-modal__container ">
-                <header class="slds-modal__header">
+        <section aria-modal="true" class="slds-modal slds-fade-in-open slds-align_absolute-center">
+            <div class="slds-modal__container slds-var-m-left_medium slds-var-m-right_medium ">
+                <header class="slds-modal__header slds-var-m-left_medium slds-var-m-right_medium">
                     <h2 class="slds-text-heading_medium slds-hyphenate">Configured Product: {trackConfig.lookupCode}</h2>
                     <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeConfiguredAlert}></lightning-icon>
+                    <template if:true={showConstrains} id="errorsShow" class="slds-var-m-top_x-small">
+                        <template for:each={errorMessConstrains} for:item="messages">
+                            <div key={messages.Error} class="slds-var-p-around_medium lgc-bg" style="background-color:rgba(238, 0, 0, 0.26);">
+                                <h2 class="slds-align_absolute-center slds-text-heading_small">
+                                    {messages.Error}
+                                </h2>
+                            </div>
+                        </template>
+                    </template>
                 </header>
-                <div class="slds-modal__content">
-    <!--WORKING HERE TO DISPLAY FEATURES NOT WORKING AS ROWS, MISSING CREATING THE METHOD
-    FOT THAT AND THE CHECKBOXES LISTS-->
+                <div class="slds-modal__content slds-var-m-left_medium slds-var-m-right_medium">
                     <lightning-spinner if:true={bundleLoading} alternative-text="Loading" size="medium"></lightning-spinner>
                     <div class="slds-var-p-around_medium lgc-bg slds-var-p-around_small slds-align_absolute-center">
                         <ul>
                             <template for:each={bundleFeatures} for:item="featuresA">
                                 <li key={featuresA.name}>
                                     <lightning-radio-group key={featuresA.name} name ={featuresA.name}
-                                    label={featuresA.name} options={featuresA.features} value={featuresA.selected}
+                                    label={featuresA.name} options={featuresA.features} 
                                     onchange={handleRadioChange} required type="radio"></lightning-radio-group>
                                 </li>
                             </template>
-                            <template if:true={showOtherOpt}>
-                            
-                                <template for:each={constrainList} for:item="otherOptions">
-                                    <lightning-combobox key={otherOptions.label} name={otherOptions.label}
-                                    label={otherOptions.label} 
-                                    options={otherOptions.options}
-                                    onchange={handleChange} ></lightning-combobox>
-                            </template>
-                            </template>
-                            
                         </ul>
                     </div>
                     </div>
-                <footer class="slds-modal__footer">
+                <footer class="slds-modal__footer slds-var-m-left_medium slds-var-m-right_medium">
                     <lightning-button variant="brand" label="Cancel" title="Close"  onclick={closeConfiguredAlert} class="slds-var-m-right_small"></lightning-button>   
-                    <lightning-button variant="brand" label="Save Bundle" title="Save Bundle"  onclick={saveBundle} ></lightning-button>    
+                    <lightning-button variant="brand" label="Save Bundle" title="Save Bundle"  onclick={checkConstrainsFunction} disabled={checkConstrains} ></lightning-button>    
                 </footer>
             </div>
         </section>
         <div class="slds-backdrop slds-backdrop_open"></div>
     </template>
-
     <!--CONFIGURED POP-UP END-->
 </template>

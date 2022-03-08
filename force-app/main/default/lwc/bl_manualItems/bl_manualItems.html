@@ -1,0 +1,45 @@
+<template>
+    <lightning-card class="slds-var-m-top_large">
+        <div class="slds-var-p-around_medium lgc-bg" style="background-color:rgba(122, 230, 154, 0.26);">
+            <h2 class="slds-align_absolute-center slds-text-heading_small">
+                Adding a Manual Item:
+            </h2>
+        </div>
+        <lightning-spinner if:true={loadingProcess} alternative-text="Loading" size="medium"></lightning-spinner>
+        <lightning-record-edit-form class="slds-var-m-top_small" object-api-name="Product2" onsuccess={handleSuccess}>
+            <lightning-messages></lightning-messages>
+            <div class="slds-var-m-around_medium">
+                <lightning-input-field field-name="Id" value={productId} ></lightning-input-field> 
+                <lightning-input-field field-name="Name"></lightning-input-field>
+                <div class="slds-grid">
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-input-field field-name="ProdLevel1__c" onchange={showProductLevel}
+                        class="slds-var-m-top_small"></lightning-input-field>
+                        <lightning-input-field field-name="ProdLevel2__c"></lightning-input-field>
+                        <lightning-input-field field-name="ProdLevel3__c"></lightning-input-field>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2">
+                        <!--<lightning-input-field field-name="SBQQ__Quantity__c"></lightning-input-field>-->                        <lightning-input-field field-name="Primary_UOM__c"></lightning-input-field>
+                        <lightning-input-field field-name="IsActive"></lightning-input-field>
+                    </div>
+                </div>
+                <template if:true={PL1_ACA}>
+                    <div>
+                        <lightning-input-field field-name="Unit_Cost__c"></lightning-input-field>
+                    </div>
+                </template>
+                <template if:true={PL1_FOC}>
+                    <div>
+                        <lightning-input-field field-name="Max_Length_Steel__c"></lightning-input-field>
+                        <lightning-input-field field-name="Max_Length_Wood__c"></lightning-input-field>
+                    </div>
+                </template> 
+                <div class="slds-var-m-top_medium">
+                    <lightning-button variant="brand" type="submit" name="save" label="Create Product" onclick={loadingSaving} >
+                    </lightning-button>
+                </div>
+            </div>
+        </lightning-record-edit-form>     
+    </lightning-card>
+    
+</template>
