@@ -49,6 +49,12 @@ public with sharing class blMockData {
         delete oldRecords;
     }
 
+    //MANUAL ITEMS
+    @AuraEnabled
+    public static string getMockProduct() {
+        Product2 mockProduct = [SELECT Id, Name FROM Product2 WHERE Name = 'Product2' LIMIT 1];
+        return mockProduct.Id;
+    }
     //Second try, methods to 'access SF configured window'
     @AuraEnabled
     public static string saveCongifuredSelection(String selection){
