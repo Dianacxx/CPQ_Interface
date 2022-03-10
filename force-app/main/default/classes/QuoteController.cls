@@ -1781,4 +1781,56 @@ public with sharing class QuoteController {
         return JSON.serialize(linesToPrint);
 
     }
+
+     @AuraEnabled
+    //Creates quote lines from the NSP products
+    @Future
+    public static void addBundledItems(){
+        ProductReader reader = new ProductReader();
+        List<ConfigurationModel> optionConfigInfo = new List<ConfigurationModel>();
+
+        // ProductModel product = reader.read('01t8A000007c76KQAQ','01sA0000000TiZnIAK','USD');
+        ProductModel product = reader.read('01t8A000007cATOQA2','01sA0000000TiZnIAK','USD');
+        QuoteReader reader1 = new QuoteReader();
+        QuoteModel quote = reader1.read('a6T2h0000009qUXEAY');
+        List<String> options = new List<String>{'a6I8A000000DHD0UAO','a6I8A000000DHD4UAO','a6I8A000000DHD6UAO','a6I8A000000DHD8UAO','a6I8A000000DHDBUA4','a6I8A000000DHDDUA4','a6I8A000000DHDVUA4', 'a6I8A000000DHDmUAO','a6I8A000000DHDtUAO','a6I8A000000DHE0UAO'};
+        // List<String> options = new List<String>{'a6I8A000000DGM3UAO','a6I8A000000DHYkUAO','a6I8A000000DHYZUA4','a6I8A000000DGM9UAO','a6I8A000000DGMBUA4','a6I8A000000DGMDUA4','a6I8A000000DGMUUA4','a6I8A000000DGMZUA4','a6I8A000000DGMrUAO'};
+        for(String option : options){
+            ConfigurationModel oTempConfgModel = new ConfigurationModel();
+            oTempConfgModel.configuredProductId = '01t8A000007cATOQA2';
+            // oTempConfgModel.configuredProductId = '01t8A000007c76KQAQ';
+            oTempConfgModel.optionId = option;
+            oTempConfgModel.configured = false;
+            oTempConfgModel.changedByProductActions = false;
+            oTempConfgModel.isDynamicOption = false;
+            oTempConfgModel.isUpgrade = false;
+            oTempConfgModel.priceEditable = false;
+            SBQQ__ProductOption__c tempOptionData = [Select Id, SBQQ__OptionalSKU__c, SBQQ__Selected__c, SBQQ__Quantity__c from SBQQ__ProductOption__c where Id =: option];
+            System.debug('ID: ' +option+ ' option data ' + tempOptionData);
+            tempOptionData.SBQQ__Selected__c = true; //set selected to true
+            tempOptionData.SBQQ__Quantity__c = 5.0; //optional to modify quantity
+            oTempConfgModel.optionData=tempOptionData;
+            oTempConfgModel.configurationData = new SBQQ__ProductOption__c();
+            oTempConfgModel.optionConfigurations = new List<ConfigurationModel>();
+            oTempConfgModel.validationMessages = new List<String>{};
+            optionConfigInfo.add(oTempConfgModel);
+
+        }
+        
+        product.configuration.optionConfigurations.addAll(optionConfigInfo);
+        product.configuration.configured = true; //IMPORTANT! This says that the bundle was manually configured
+        product.configuration.changedByProductActions = true;
+        List<ProductModel> productModels = new List<ProductModel>();
+        productModels.add(product);
+        ProductAdder adder = new ProductAdder();
+        QuoteModel quoteWithProducts = adder.add(quote, productModels, 0);
+        System.debug(quoteWithProducts);
+        quoteWithProducts.lineItems[0].record.SBQQ__Quantity__c = 2;
+        QuoteCalculator calculator = new QuoteCalculator();
+        calculator.calculate(quoteWithProducts, 'MyCallback');
+        System.debug('Final heap size: ' +  Limits.getHeapSize());
+	    System.debug('Final CPU time used: ' +  Limits.getCPUTime() + ' CPU time limit ' + Limits.getLimitCpuTime());
+
+        
+    }
 }
