@@ -69,7 +69,7 @@ export default class Bl_dataTable extends LightningElement {
             for (let i=0; i<this.fieldSetLength;i++){
                 if (this.tabSelected == 'Home'){
                     if (this.fieldSet[i].key == 'HOME'){
-                        //console.log('field Set properties: '+ Object.getOwnPropertyNames(this.fieldSet[i]));
+                        console.log('field Set properties: '+ Object.getOwnPropertyNames(this.fieldSet[i]));
                         //console.log('Label: '+this.fieldSet[i].label);
                         //console.log('Property: '+ this.fieldSet[i].property)
                         //console.log('Required '+this.fieldSet[i].required)
@@ -80,15 +80,18 @@ export default class Bl_dataTable extends LightningElement {
                         this.fieldSet[i].property == 'additionaldisc.(%)' ? this.fieldSet[i].property = 'additionaldiscount' : this.fieldSet[i].property; 
                         //console.log('added: '+COLUMNS_HOME.length); 
                         if (this.fieldSet[i].property == 'product'){
-                            COLUMNS_HOME.splice(indexDes, 0, { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, wrapText: true, },);
+                            COLUMNS_HOME.splice(indexDes, 0, { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, wrapText: false, },);
                             //console.log('Inserting before description');
                         }
                         else {
-                            //HERE GOES  type: 'number' or 'currency', typeAttributes: { maximumFractionDigits: 3, currencyCode: 'USD' }
-                            COLUMNS_HOME.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, },);
-                            if(this.fieldSet[i].property == 'description'){
-                                indexDes = i; 
-                                //console.log('Index description '+indexDes);
+                            if(this.fieldSet[i].property == 'quantity' || this.fieldSet[i].property == 'additionaldiscount'){
+                                COLUMNS_HOME.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, type: 'number' },);
+                            } else {
+                                COLUMNS_HOME.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, },);
+                                if(this.fieldSet[i].property == 'description'){
+                                    indexDes = i; 
+                                    //console.log('Index description '+indexDes);
+                                }
                             }
                         }
                     }
@@ -102,7 +105,7 @@ export default class Bl_dataTable extends LightningElement {
                         //console.log('Required '+this.fieldSet[i].required)
                         let labelName;
                         this.fieldSet[i].required ? labelName = '*'+this.fieldSet[i].label: labelName = this.fieldSet[i].label;
-                        COLUMNS_DETAIL.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable, sortable: true, wrapText: true, },);
+                        COLUMNS_DETAIL.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable, sortable: true, wrapText: false, },);
                         //console.log('added: '+COLUMNS_DETAIL.length); 
                     }
                     this.columns = COLUMNS_DETAIL; 
@@ -338,7 +341,7 @@ export default class Bl_dataTable extends LightningElement {
         let randomName;   //Random Name for new quoteline
         addQuoteLine({quoteId: this.recordId, productId: productId})
         .then((data) => {
-            //console.log('Add Product DATA: '+ data); 
+            console.log('Add Product DATA: '+ data); 
             newQuotelines = JSON.parse(data); 
             //console.log('New product object: '+ Object.getOwnPropertyNames(newQuoteline[0]));
             for (let i=0; i< newQuotelines.length; i++){
@@ -348,7 +351,7 @@ export default class Bl_dataTable extends LightningElement {
                 newQuotelines[i].id = 'new'+randomId; 
                 newQuotelines[i].name = 'New QL-'+randomName; 
                 newQuotelines[i].quantity = 1;
-                newQuotelines[i].netunitprice = 0;
+                newQuotelines[i].netunitprice = 1;
                 this.quoteLines = [...this.quoteLines, newQuotelines[i]];
             }
 
@@ -407,13 +410,16 @@ export default class Bl_dataTable extends LightningElement {
                 for(let j= 0; j<prop.length-1; j++){
                     //console.log('Value before edition: '+this.quoteLines[index][prop[j]]);
                     //console.log('Value after edition: ' +inputsItems[i].fields[prop[j]]);
+                    if(prop[j]=='quantity'){
+                        console.log(Number.isInteger(inputsItems[i].fields[prop[j]]));
+                    }
                     this.quoteLines[index][prop[j]] = inputsItems[i].fields[prop[j]];
                 }               
                 if(this.quoteLines[index].quantity.length == 0){
                     this.quoteLines[index].quantity = 1;
                 }
                 if(this.quoteLines[index].netunitprice.length == 0){
-                    this.quoteLines[index].netunitprice = 0;
+                    this.quoteLines[index].netunitprice = 1;
                 }
             }
             this.quotelinesString = JSON.stringify(this.quoteLines); 

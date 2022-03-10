@@ -112,7 +112,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         
         
         var endTime = performance.now();
-        console.log(`Starting process took ${endTime - startTime} milliseconds`);
+        //console.log(`Starting process took ${endTime - startTime} milliseconds`);
 
         if (this.quoteLinesString == '[]'){
             this.quoteLinesString = '[id: \"none\"]';
@@ -213,7 +213,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                     this.dispatchEvent(evt);
                 }
             })    
-        }, 30000);    
+        }, 20000);     //This value has to change depending on the size of quotelines
     }
 
     //Connect channel
@@ -482,7 +482,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         console.log('Product Id to Bundle: '+this.configBundleId);
         this.handleSaveAndCalculate();
 
-        if (this.notGoodToGoBundle[0] || this.notGoodToGoBundle[1]){
+        if (this.notGoodToGoBundle[0] == true || this.notGoodToGoBundle[1] == true){
             const evt = new ShowToastEvent({
                 title: 'The changes done cannot be saved.',
                 message: 'There are values in the QLE that cannot be saved, Review them and try again.',
@@ -565,7 +565,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     async navitageToProductSelection(){
         if (!(this.originalquotelinesString == this.quotelinesString)){
             await this.handleSaveAndCalculate();
-            if (this.notGoodToGoBundle[0] || this.notGoodToGoBundle[1]){
+            if ((this.notGoodToGoBundle[0]==true) || (this.notGoodToGoBundle[1]==true)){
                 const evt = new ShowToastEvent({
                     title: 'ERROR Saving the quotelines',
                     message: 'open console',
@@ -580,7 +580,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             } 
         } else {
             this.showPSTab = true; 
-                this.activeTab = 'PS';
+            this.activeTab = 'PS';
         }
         
     }

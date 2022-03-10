@@ -1784,42 +1784,53 @@ public with sharing class QuoteController {
 
      @AuraEnabled
     //Creates quote lines from the NSP products
-    public static void addBundledItems(){
-        ProductReader reader = new ProductReader();
-        ProductModel product = reader.read('01t8A000007c76KQAQ','01sA0000000TiZnIAK','USD');
-        QuoteReader reader1 = new QuoteReader();
-        QuoteModel quote = reader1.read('a6T2h0000009qUXEAY');
-        ConfigurationModel oTempConfgModel = new ConfigurationModel();
-        oTempConfgModel.configuredProductId = '01t8A000007c76KQAQ';
-        oTempConfgModel.optionId = 'a6I8A000000DGM3UAO';
-        oTempConfgModel.configured = false;
-        oTempConfgModel.changedByProductActions = false;
-        oTempConfgModel.isDynamicOption = false;
-        oTempConfgModel.isUpgrade = false;
-        oTempConfgModel.priceEditable = false;
-        SBQQ__ProductOption__c tempOptionData = [Select Id, SBQQ__OptionalSKU__c, SBQQ__Selected__c, SBQQ__Quantity__c from SBQQ__ProductOption__c where Id ='a6I8A000000DGM3UAO'];
-        tempOptionData.SBQQ__Selected__c = true; //set selected to true
-        tempOptionData.SBQQ__Quantity__c = 5.0; //optional to modify quantity
-        oTempConfgModel.optionData=tempOptionData;
-        oTempConfgModel.configurationData = new SBQQ__ProductOption__c();
-        oTempConfgModel.optionConfigurations = new List<ConfigurationModel>();
-        oTempConfgModel.validationMessages = new List<String>{};
-        List<ConfigurationModel> optionConfigInfo = new List<ConfigurationModel>();
-        optionConfigInfo.add(oTempConfgModel);
-        product.configuration.optionConfigurations.addAll(optionConfigInfo);
-        product.configuration.configured = true; //IMPORTANT! This says that the bundle was manually configured
-        product.configuration.changedByProductActions = true;
-        List<ProductModel> productModels = new List<ProductModel>();
-        productModels.add(product);
-        ProductAdder adder = new ProductAdder();
-        QuoteModel quoteWithProducts = adder.add(quote, productModels, 0);
-        System.debug(quoteWithProducts);
-        quoteWithProducts.lineItems[0].record.SBQQ__Quantity__c = 2;
-        QuoteCalculator calculator = new QuoteCalculator();
-        calculator.calculate(quoteWithProducts, 'MyCallback');
-        System.debug('Final heap size: ' +  Limits.getHeapSize());
-	    System.debug('Final CPU time used: ' +  Limits.getCPUTime() + ' CPU time limit ' + Limits.getLimitCpuTime());
+    public static String displayLevelsOptions(String level,String selection){
+        Schema.sObjectType sobject_type = SBQQ__QuoteLine__c.getSObjectType();
+        Map<String, Schema.SObjectField> theQLFieldMap = sobject_type.getDescribe().fields.getMap(); //The fields map of the quote Line object
+        Map<String, Schema.SObjectField> qLineFields = new Map<String, Schema.SObjectField>(); //Store the Quote Line picklist fields
 
+        Map<String, List<Schema.PicklistEntry>> filtersMap = new Map<String, List<Schema.PicklistEntry>>();
+        List<WrappersClass.FilteringWrappingClass> filtersWrapperToShow = new List<WrappersClass.FilteringWrappingClass>();
+
+
+        for(String field: theQLFieldMap.keyset()){ //for each field in the Quote Line object
+            String label = theQLFieldMap.get(field).getDescribe().getLabel(); // Get the label of each field in the quote line object
+            Schema.DisplayType theResult = theQLFieldMap.get(field).getDescribe().GetType(); //get field type
+            // prodFieldsNameMap.put(label,theQLFieldMap.get(field).getDescribe().getName()); //Stores the API name of each field object
+            qLineFields.put(label,theQLFieldMap.get(field)); //put all of the product fields in a map, with the label as the key            
+        }
         
+        //Gets the picklist values that depend on the value of the level 1
+        if(level == 'level 2'){
+            List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(qLineFields.get('ProdLevel2'),selection);
+            filtersMap.put('ProdLevel2',pickListValues);
+        }else if (level == 'level 3'){
+            List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(qLineFields.get('ProdLevel3'),selection);
+            filtersMap.put('ProdLevel3',pickListValues);
+        }else if (level == 'level 4'){
+            List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(qLineFields.get('ProdLevel4'),selection);
+            filtersMap.put('ProdLevel4',pickListValues);
+        }
+
+        for(String filter : filtersMap.keyset()){
+            WrappersClass.FilteringWrappingClass wrapper = new WrappersClass.FilteringWrappingClass();
+            wrapper.label = filter;
+            wrapper.options = JSON.serialize(filtersMap.get(filter));
+            wrapper.action = 'INPUT';
+            // if(prodFieldsNameMap.get(filter) != null){
+            //     wrapper.apiName = prodFieldsNameMap.get(filter);
+            // }else{
+            //     wrapper.apiName = lineFieldsNameMap.get(filter);
+            // }
+            // if(prodFieldsTypeMap.get(filter) != null){
+            //     wrapper.type = prodFieldsTypeMap.get(filter);
+            // }else{
+            //     wrapper.type = lineFieldsTypeMap.get(filter);
+            // }
+            
+            filtersWrapperToShow.add(wrapper);
+        }
+        String filtersToAdd = JSON.serialize(filtersWrapperToShow);
+        return filtersToAdd;
     }
 }

@@ -3,7 +3,7 @@ import { NavigationMixin } from 'lightning/navigation';
 
 import getProductLevels  from '@salesforce/apex/QuoteController.getProductLevels'; 
 import quoteLineCreator from '@salesforce/apex/QuoteController.quoteLineCreator'; 
-
+import customActionId from '@salesforce/apex/blMockData.customActionId'; 
 
 export default class Bl_productSelection extends NavigationMixin(LightningElement) {
     @api recordId; //Quote Record Id that opens the UI
@@ -104,12 +104,131 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         
     }
 
+    @api notGoodToGoBundle = false; 
     //Event meaning to move to Configured Bundle Page
     saveBeforeConfigured(event){
-        console.log('Send to UI Object');
-        this.dispatchEvent(new CustomEvent('savebeforeconfiguredtwo', { detail: event.detail })); 
+        console.log('Saving in before anything else');
+        //this.dispatchEvent(new CustomEvent('savebeforeconfiguredtwo', { detail: event.detail })); 
+        this.savePSValues = true;
+        for (let list of this.girdDataAcaTabAdd){
+            for (let secondList of list.listOfProducts){
+                secondList.quantity = 1;
+                secondList.netunitprice = 1;
+                //console.log('LUPL'+secondList.listunitprice);
+                if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
+                    secondList.listunitprice = 1;
+                }
+                this.quotesAdded.push(secondList);
+            }
+        }
+        for (let list of this.girdDataConnTabAdd){
+            for (let secondList of list.listOfProducts){
+                secondList.quantity = 1;
+                secondList.netunitprice = 1;
+                //console.log('LUPL'+secondList.listunitprice);
+                if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
+                    secondList.listunitprice = 1;
+                }
+                this.quotesAdded.push(secondList);
+            }
+        }
+        for (let list of this.girdDataFocTabAdd){            
+            for (let secondList of list.listOfProducts){
+                secondList.quantity = 1;
+                secondList.netunitprice = 1;
+                if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
+                    secondList.listunitprice = 1;
+                }
+                this.quotesAdded.push(secondList);
+            }
+        }
+        for (let list of this.girdDataCableTabAdd){
+            for (let secondList of list.listOfProducts){
+                secondList.quantity = 1;
+                secondList.netunitprice = 1;
+                //console.log('LUPL'+secondList.listunitprice);
+                if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
+                    secondList.listunitprice = 1;
+                }
+                this.quotesAdded.push(secondList);
+            }
+        }
+        for (let list of this.girdDataTandITabAdd){
+            for (let secondList of list.listOfProducts){
+                secondList.quantity = 1;
+                secondList.netunitprice = 1;
+                //console.log('LUPL'+secondList.listunitprice);
+                if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
+                    secondList.listunitprice = 1;
+                }
+                this.quotesAdded.push(secondList);
+            }
+        }
+        let stringQuotesAdded = JSON.stringify(this.quotesAdded);
+        console.log('Quote ID: '+this.recordId);
+        console.log('Quotelines before process: '+stringQuotesAdded); 
+        this.configBundleId = event.detail; 
+        if(stringQuotesAdded == '[]'){
+            this.savePSValues = false;
+            console.log('No products, direct to: '+this.configBundleId);   
+            this.notGoodToGoBundle = false;
+            this.navigateToBundle();
+        } else {
+            quoteLineCreator({quoteId: this.recordId, quoteLines: stringQuotesAdded})
+            .then(()=>{
+                console.log('Quotes Saved from PS'); 
+                this.savePSValues = false;
+                setTimeout(()=>{
+                    console.log('Done saving products, direct to: '+this.configBundleId);   
+                    this.notGoodToGoBundle = false;
+                    this.navigateToBundle();
+                }, 1000);
+            })
+            .catch((error)=>{
+                this.notGoodToGoBundle = true;
+                console.log('Error saving from PS'); 
+                console.log(error); 
+            })
+            }
+        
     }
-    
+    //creating and Saving the quotelines from Product Selector
+    navigateToBundle(){
+        if (this.notGoodToGoBundle){
+            const evt = new ShowToastEvent({
+                title: 'The changes done cannot be saved.',
+                message: 'There are values in the Product Selector that cannot be saved, Review them and try again.',
+                variant: 'error',
+                mode: 'sticky '
+            });
+            this.dispatchEvent(evt);
+        } else {
+            //IF THERE ARE NO ERRORS, GET ID OF PRODUCT IN ROW AND GO TO CONFIGURED PRODUCT 
+            customActionId()
+            .then((data)=>{
+                let customActionAddProducts = data; //Add Products Id
+                console.log('relatedProductId: '+this.configBundleId); 
+                let link = '/apex/sbqq__sb?id='+this.recordId+
+                '&tour=&isdtp=p1&ltn_app_id=06m8A0000004jM5QAI&clc=0#/product/pc?qId='+
+                this.recordId+'&aId='+customActionAddProducts+'&pId='+this.configBundleId+'&redirectUrl=LineEditor&open=0';
+                this[NavigationMixin.Navigate]({
+                    type: 'standard__webPage',
+                    attributes: {
+                        url: link,
+                        recordId : this.recordId,
+                    }
+                })})
+            .catch((error)=>{
+                console.log('The custom action does not exist');
+                console.log(error);
+            })
+            
+        }
+    }
+
+
+
+
     //When click cancel button in Product Selection UI
     handleCancel(){
         this.dispatchEvent(new CustomEvent('cancelps'));
@@ -206,19 +325,25 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         console.log('Quote ID: '+this.recordId);
         console.log('Quotelines before process');
         console.log('Quotelines before process: '+stringQuotesAdded); 
+        if(stringQuotesAdded = '[]'){
+            console.log('No quotes to save, going to QLE'); 
+            this.dispatchEvent(new CustomEvent('saveandexitps')); 
+        } else {
+            quoteLineCreator({quoteId: this.recordId, quoteLines: stringQuotesAdded})
+            .then(()=>{
+                console.log('Quotes Saved from PS, going to QLE'); 
+                this.savePSValues = false;
+                setTimeout(()=>{
+                    this.dispatchEvent(new CustomEvent('saveandexitps')); 
+              }, 1000);
+            })
+            .catch((error)=>{
+                console.log('Error saving from PS'); 
+                console.log(error); 
+            })
+        }
+
         
-        quoteLineCreator({quoteId: this.recordId, quoteLines: stringQuotesAdded})
-        .then(()=>{
-            console.log('Quotes Saved from PS'); 
-            this.savePSValues = false;
-            setTimeout(()=>{
-                this.dispatchEvent(new CustomEvent('saveandexitps')); 
-          }, 1000);
-        })
-        .catch((error)=>{
-            console.log('Error saving from PS'); 
-            console.log(error); 
-        })
         
         //this.dispatchEvent(new CustomEvent('saveandexitps')); 
 

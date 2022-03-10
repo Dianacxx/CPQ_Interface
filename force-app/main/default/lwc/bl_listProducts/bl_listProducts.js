@@ -92,11 +92,10 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                     //console.log('Is filtered');
                 } else if (row.selectionType == 'Configured'){
                     //Must save process before turning there SCENARIO 1
-                    //this.trackConfig = row.relatedProduct;
-
+                    this.trackConfig = row.relatedProduct;
+                    //this.openConfiguredPopup = true;
                     //SCENARIO 2
-                    this.trackConfig = row;
-                    this.openConfiguredPopup = true; 
+                    //this.trackConfig = row;
                     this.continueConfiguredQLE();
                 } else {
                     alert('This row has no type (Filtered or configured)');
@@ -1115,7 +1114,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         this.bundleLoading = true; 
         //console.log('Properties of row selected');
         //console.log(Object.getOwnPropertyNames(this.trackConfig)); 
-        
+        /*
         getFeaturesConfigured({productName: this.trackConfig.lookupCode})
         .then((data)=>{
             //console.log(data);
@@ -1143,15 +1142,15 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             console.log('Error getting features for bundle');
             console.log(error);
         })
-
+        */
         //SCENARIO 1
-        /*
+        
         //HERE SAVE THE PROCESS BEFORE
         const evt = new ShowToastEvent({
-            title: 'Remember to the save process',
-            message: 'Remember to the save process',
-            variant: 'warning',
-            mode: 'sticky '
+            title: 'Saving quote lines before changing pages',
+            message: 'This process is going to save what you have done in the Product Selection Page',
+            variant: 'info',
+            mode: 'dismissable '
         });
         this.dispatchEvent(evt);
         //DISPATCH THE EVENT TO SAVE THE VALUES FIRST
@@ -1160,7 +1159,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             this.dispatchEvent(new CustomEvent('savebeforeconfigured', { detail: this.trackConfig }));
             console.log('Send to PS component');
         }, 500);
-        */
+        
     }
 
 

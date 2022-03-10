@@ -49,6 +49,12 @@ public with sharing class blMockData {
         delete oldRecords;
     }
 
+    @AuraEnabled (cacheable=true)
+    public static string customActionId(){
+        SBQQ__CustomAction__c ReturnUI = [SELECT Id, Name FROM SBQQ__CustomAction__c WHERE Name = 'Add Products' LIMIT 1];
+        return ReturnUI.Id; 
+    }
+
     //MANUAL ITEMS
     @AuraEnabled
     public static string getMockProduct() {
