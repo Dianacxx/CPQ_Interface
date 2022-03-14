@@ -3,9 +3,11 @@
         <div class="slds-var-p-around_medium lgc-bg" >
         <lightning-spinner if:true={loadingProcess} alternative-text="Loading" size="medium"></lightning-spinner>
         <div class="slds-grid">
-            <div class="slds-col slds-size_1-of-3" style="background-color:rgba(149, 226, 172, 0.26);">
-                <lightning-button class="slds-align_absolute-center slds-var-m-top_small" label="Submit" 
-                onclick={submitQuoteline} variant="brand"></lightning-button>
+            <div class="slds-col slds-size_1-of-3" style="background-color:rgba(195, 197, 196, 0.288);">
+                <lightning-button-group class="slds-align_absolute-center slds-var-m-top_small">
+                    <lightning-button label="Submit" onclick={submitQuoteline} variant="brand"></lightning-button>
+                    <lightning-button label="Clear" onclick={restarManualForm} variant="destructive"></lightning-button>
+                </lightning-button-group>
                 <template if:true={errorShow} class="slds-align_absolute-center">
                     <div class="slds-var-m-top_small slds-var-p-around_x-small lgc-bg slds-align_absolute-center" 
                     style="background-color:rgba(238, 0, 0, 0.459);">
@@ -21,15 +23,15 @@
                     </lightning-combobox>
                 </template>
                 <!--PRODUCT LEVEL 2 PICKLIST-->
-                <template if:true={productLevel2Picklist.data}>
+                <template if:true={productLevel2Picklist}>
                     <lightning-combobox required name="Product Level 2" label="Product Level 2" value={ProdLevel2}
-                        options={productLevel2Picklist.data.values} onchange={handleChange}>
+                        options={level2} onchange={handleChange}>
                     </lightning-combobox>
                 </template>
                 <!--PRODUCT LEVEL 3 PICKLIST-->
-                <template if:true={productLevel3Picklist.data}>
+                <template if:true={productLevel3Picklist}>
                     <lightning-combobox name="Product Level 3" label="Product Level 3" value={ProdLevel3}
-                        options={productLevel3Picklist.data.values} onchange={handleChange}>
+                        options={level3} onchange={handleChange}>
                     </lightning-combobox>
                 </template>
                 <template if:true={productLevel1Picklist.data}>
@@ -78,55 +80,16 @@
 
             </div>
             <div class="slds-col slds-size_2-of-3">
-                 <div class="slds-align_absolute-center"></div>
-                HERE GOES THE LIST OF QUOTELINES WHEN ADDED TO DELETE OR CLONE
+                <template if:false={showManualTable}>
+                    <div class="slds-align_absolute-center">
+                        <lightning-datatable style="width: 85%;" key-field="name" data={newManualList} columns={newManualColumns}
+                        onrowaction={handleRowAction} hide-checkbox-column></lightning-datatable>
+                     </div>
+                </template>
             </div>
         </div>
-        <!-- 
-        <lightning-input type="PickList" label="Enter some text"></lightning-input>
-        -->
-
-        <!--
-        <lightning-record-edit-form class="slds-var-m-top_small" object-api-name="SBQQ__QuoteLine__c" onsuccess={handleSuccess}>
-            <lightning-messages></lightning-messages>
-            <div class="slds-var-m-around_medium">
-                <lightning-input-field field-name="Id" value={productId} ></lightning-input-field> 
-                <lightning-input-field field-name="SBQQ__Quote__c" value={recordId} ></lightning-input-field> 
-
-                <lightning-input-field field-name="Name"></lightning-input-field>
-                <div class="slds-grid">
-                    <div class="slds-col slds-size_1-of-2">
-                        <lightning-input-field field-name="ProdLevel1__c" onchange={showProductLevel}
-                        class="slds-var-m-top_small"></lightning-input-field>
-                        <lightning-input-field field-name="ProdLevel2__c"></lightning-input-field>
-                        <lightning-input-field field-name="ProdLevel3__c"></lightning-input-field>
-                    </div>
-                    
-                    <div class="slds-col slds-size_1-of-2">
-                        <lightning-input-field field-name="SBQQ__Product__c"></lightning-input-field>
-                        <lightning-input-field field-name="SBQQ__Quantity__c"></lightning-input-field>
-                        
-                    </div>
-                </div>
-                <template if:true={PL1_ACA}>
-                    <div>
-                        <lightning-input-field field-name="SBQQ__UnitCost__c"></lightning-input-field>
-                    </div>
-                </template>
-                <template if:true={PL1_FOC}>
-                    <div>
-                        <lightning-input-field field-name="Max_Length_Steel__c"></lightning-input-field>
-                        <lightning-input-field field-name="Max_Length_Wood__c"></lightning-input-field>
-                    </div>
-                </template> 
-                <div class="slds-var-m-top_medium">
-                    <lightning-button variant="brand" type="submit" name="save" label="Create Product" onclick={loadingSaving} >
-                    </lightning-button>
-                </div>
-            </div>
-        </lightning-record-edit-form>  
-    -->   
 </div>    
 </lightning-card>
     
 </template>
+

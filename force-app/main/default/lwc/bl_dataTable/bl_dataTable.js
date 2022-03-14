@@ -47,7 +47,6 @@ export default class Bl_dataTable extends LightningElement {
             }
             this.quoteLinesString = JSON.stringify(this.quoteLines);
             this.updateTable();
-            
         }
         //Make available the look up field
         if (this.tabSelected == 'Home' || this.tabSelected == 'Detail'){
@@ -197,6 +196,8 @@ export default class Bl_dataTable extends LightningElement {
                     this.quoteLines = [...this.quoteLines, cloneRows[i]];
                 }
                 //console.log('SIZE: ' + this.quoteLines.length);
+                console.log('Clone here');
+                console.log(JSON.stringify(this.quoteLines));
                 this.updateTable();
                 this.quotelinesString = JSON.stringify(this.quoteLines); 
                 this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));

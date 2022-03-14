@@ -325,7 +325,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         console.log('Quote ID: '+this.recordId);
         console.log('Quotelines before process');
         console.log('Quotelines before process: '+stringQuotesAdded); 
-        if(stringQuotesAdded = '[]'){
+        if(stringQuotesAdded == '[]'){
             console.log('No quotes to save, going to QLE'); 
             this.dispatchEvent(new CustomEvent('saveandexitps')); 
         } else {
