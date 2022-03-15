@@ -1193,7 +1193,6 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     @track showConstrains = false; 
     @track errorMessConstrains = [];
     checkConstrainsFunction(){
-        console.log('-----------------------IN PROCESS----------------------------');
         this.closeConstrains();
         console.log(JSON.stringify(this.listFeaturesSelected)); 
         console.log(JSON.stringify(this.listOptionsSelected));

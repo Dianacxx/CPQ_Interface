@@ -12,14 +12,14 @@
                     <div class="slds-var-m-top_small slds-var-p-around_x-small lgc-bg slds-align_absolute-center" 
                     style="background-color:rgba(238, 0, 0, 0.459);">
                         <h2 class="slds-align_absolute-center slds-text-heading_small">
-                            There are fields requires that you did not fill.
+                            There are fields required that you did not fill.
                         </h2>
                     </div>
                 </template>
                 <!--PRODUCT LEVEL 1 PICKLIST-->
                 <template if:true={productLevel1Picklist.data}>
                     <lightning-combobox required name="Product Level 1" label="Product Level 1" value={ProdLevel1}
-                        options={productLevel1Picklist.data.values} onchange={showProductLevel}>
+                        options={productLevel1Picklist.data.values} onchange={showProductLevel} class="slds-var-m-top_small">
                     </lightning-combobox>
                 </template>
                 <!--PRODUCT LEVEL 2 PICKLIST-->
@@ -80,6 +80,7 @@
 
             </div>
             <div class="slds-col slds-size_2-of-3">
+                <lightning-spinner if:true={showManualTable} alternative-text="Loading" variant="brand" size="small"></lightning-spinner>
                 <template if:false={showManualTable}>
                     <div class="slds-align_absolute-center">
                         <lightning-datatable style="width: 85%;" key-field="name" data={newManualList} columns={newManualColumns}

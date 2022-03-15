@@ -98,9 +98,10 @@ public with sharing class QuoteController {
             wrapper.name = line.record.name;
             wrapper.product = JSON.serialize(line.record.SBQQ__Product__r.Name);
             wrapper.productid = line.record.SBQQ__Product__c;
-            wrapper.productobj = line.record.SBQQ__Product__r;
+            // // wrapper.productobj = line.record.SBQQ__Product__r;
             wrapper.quantity = line.record.SBQQ__Quantity__c;
-            wrapper.description = line.record.SBQQ__Description__c;
+            String description =line.record.SBQQ__Description__c;
+            wrapper.description = description.replaceAll('<[^>]+>',' ');
             wrapper.uom = line.record.UOM__c;
             wrapper.listUnitPrice = listPriceToRound.setScale(2); //Limit to digits.
             wrapper.additionalDiscount = line.record.SBQQ__Discount__c;
@@ -180,9 +181,10 @@ public with sharing class QuoteController {
             wrapper.name = line.name;
             wrapper.product = JSON.serialize(line.SBQQ__Product__r.Name);
             wrapper.productid = line.SBQQ__Product__c;
-            wrapper.productobj = line.SBQQ__Product__r;
+            // // wrapper.productobj = line.SBQQ__Product__r;
             wrapper.quantity = line.SBQQ__Quantity__c;
-            wrapper.description = line.SBQQ__Description__c;
+            String description =line.SBQQ__Description__c;
+            wrapper.description = description.replaceAll('<[^>]+>',' ');
             wrapper.uom = line.UOM__c;
             wrapper.listUnitPrice = listPriceToRound.setScale(2); //Limit to digits.
             wrapper.additionalDiscount = line.SBQQ__Discount__c;
@@ -300,9 +302,10 @@ public with sharing class QuoteController {
             wrapper.id = newlyAddedLine.record.id;
             wrapper.product = newlyAddedLine.record.SBQQ__Product__r.Name;
             wrapper.productid = newlyAddedLine.record.SBQQ__Product__c;
-            wrapper.productobj = newlyAddedLine.record.SBQQ__Product__r;
+            // // wrapper.productobj = newlyAddedLine.record.SBQQ__Product__r;
             wrapper.name = newlyAddedLine.record.Name;
-            wrapper.description = newlyAddedLine.record.SBQQ__Description__c;
+            String description = newlyAddedLine.record.SBQQ__Description__c;
+            wrapper.description = description.replaceAll('<[/a-zAZ0-9]*>','');
             wrapper.uom = newlyAddedLine.record.UOM__c;
             wrapper.listunitprice = newlyAddedLine.record.SBQQ__ListPrice__c;
             wrapper.additionaldiscount = newlyAddedLine.record.SBQQ__Discount__c;
@@ -394,7 +397,7 @@ public with sharing class QuoteController {
             wrapper.product = newlyAddedLine.record.SBQQ__Product__r.Name;
             wrapper.requiredBy = newlyAddedLine.record.SBQQ__RequiredBy__c;
             wrapper.productid = newlyAddedLine.record.SBQQ__Product__c;
-            wrapper.productobj = newlyAddedLine.record.SBQQ__Product__r;
+            // wrapper.productobj = newlyAddedLine.record.SBQQ__Product__r;
             wrapper.name = newlyAddedLine.record.Name;
             wrapper.description = newlyAddedLine.record.SBQQ__Description__c;
             wrapper.uom = newlyAddedLine.record.UOM__c;
@@ -633,9 +636,9 @@ public with sharing class QuoteController {
     @AuraEnabled
     public static void quoteLineCreator(String quoteId, String quoteLines){ //This method creates new quote lines in salesforce based on the values in the QLE
         QuoteReader quoteReader = new QuoteReader();
-        System.debug('quote id : ' + quoteId);
+        // System.debug('quote id : ' + quoteId);
         QuoteModel quote = quoteReader.read(quoteId);
-        System.debug('quote : ' + quote);
+        // System.debug('quote : ' + quote);
         
         //Get all the fields from the quote line object
         Map<String, Schema.SObjectField> fieldMap = SBQQ__QuoteLine__c.sObjectType.getDescribe().fields.getMap();
@@ -659,18 +662,21 @@ public with sharing class QuoteController {
         //Gets all the products related to the quote that are configured and puts it in a map, then gets it's configuration in order to create the lines
         // Map<String,Product2> prodMap  = new Map<String,Product2>([Select Name FROM Product2 WHERE QLE_Search_Method__c = 'CONFIGURED']);
         Map<String, List<SBQQ__QuoteLine__c>> linesWithParentsMap = new Map<String, List<SBQQ__QuoteLine__c>>();
-        List<SBQQ__QuoteLine__c> optionLines = Database.query('SELECT SBQQ__RequiredBy__r.Name, ' + String.join(lstFieldNames, ',') + ' FROM SBQQ__QuoteLine__c WHERE SBQQ__RequiredBy__c != null AND  SBQQ__Quote__c =: quoteId');
-        System.debug('query option lines: ' + optionLines);
+        List<SBQQ__QuoteLine__c> optionLines = Database.query('SELECT SBQQ__RequiredBy__r.SBQQ__Product__r.Name, SBQQ__RequiredBy__r.Name, ' + String.join(lstFieldNames, ',') + ' FROM SBQQ__QuoteLine__c WHERE SBQQ__RequiredBy__c != null AND  SBQQ__Quote__c =: quoteId');
+        System.debug('query option lines: ' + optionLines.size());
         // for(SBQQ__QuoteLine__c line : [SELECT ID,SBQQ__RequiredBy__c FROM SBQQ__QuoteLine__c WHERE SBQQ__RequiredBy__c != null] ){
         //Populaate map with the existent configured quote lines and a list of their options
         for(SBQQ__QuoteLine__c line : optionLines ){
-            if(linesWithParentsMap.containsKey(line.SBQQ__RequiredBy__r.Name)){
-                linesWithParentsMap.get(line.SBQQ__RequiredBy__r.Name).add(line);
+            if(linesWithParentsMap.containsKey(line.SBQQ__RequiredBy__r.SBQQ__Product__r.Name)){
+                linesWithParentsMap.get(line.SBQQ__RequiredBy__r.SBQQ__Product__r.Name).add(line);
             }else{
-                linesWithParentsMap.put(line.SBQQ__RequiredBy__r.Name,new List<SBQQ__QuoteLine__c>{line});
+                linesWithParentsMap.put(line.SBQQ__RequiredBy__r.SBQQ__Product__r.Name,new List<SBQQ__QuoteLine__c>{line});
             }
         }
-        System.debug('lines with options: ' + linesWithParentsMap);
+        for(String key:linesWithParentsMap.keySet()){
+            System.debug('Key : ' +key+' options: ' + linesWithParentsMap.get(key));
+        }
+        
         List<QuoteLineModel> linesFromQuote = quote.getLineItems();
 
          //Add the existing quote line ids to a set
@@ -692,7 +698,7 @@ public with sharing class QuoteController {
                 newQuoteLine.SBQQ__Quote__c = getQuote.id;
                 newQuoteLine.SBQQ__Product__c = line.productid;
                 newQuoteLine.SBQQ__Quantity__c = line.quantity;
-                newQuoteLine.SBQQ__Description__c = line.productobj.Description;
+                newQuoteLine.SBQQ__Description__c = line.description;
                 newQuoteLine.UOM__c = line.uom;
                 newQuoteLine.SBQQ__Discount__c = line.additionaldiscount;
                 newQuoteLine.AdditionalDiscountUnit__c = 'Percent';
@@ -720,10 +726,11 @@ public with sharing class QuoteController {
                 newQuoteLine.Subunit_Color__c = line.subUnitColor; 
                 newQuoteLine.Jacket_Print__c = line.jacketPrint; 
                 newQuoteLine.Region_Code__c = line.regionCode;
-                if(linesWithParentsMap.containsKey(line.name)){
+                if(linesWithParentsMap.containsKey(line.product)){
                     System.debug('entered here');
-                    System.debug('number of options: '+linesWithParentsMap.get(line.name).size());
-                    for(SBQQ__QuoteLine__c l :linesWithParentsMap.get(line.name)){
+                    System.debug('number of options: '+linesWithParentsMap.get(line.product).size());
+                    for(SBQQ__QuoteLine__c l :linesWithParentsMap.get(line.product)){
+                        l.id = null;
                         quoteLinerecordsToInsert.add(l);
                         System.debug('to insert size : '+quoteLinerecordsToInsert.size());
                     }
@@ -1760,14 +1767,14 @@ public with sharing class QuoteController {
             wrapper.id = newlyAddedLine.record.id;
             wrapper.product = newlyAddedLine.record.SBQQ__Product__r.Name;
             wrapper.productId = newlyAddedLine.record.SBQQ__Product__c;
-            wrapper.productobj = newlyAddedLine.record.SBQQ__Product__r;
+            // wrapper.productobj = newlyAddedLine.record.SBQQ__Product__r;
             // wrapper.description = newlyAddedLine.record.Description__c;
 
             wrapper.id = newlyAddedLine.record.id;
             wrapper.product = newlyAddedLine.record.SBQQ__Product__r.Name;
             wrapper.requiredBy = newlyAddedLine.record.SBQQ__RequiredBy__c;
             wrapper.productid = newlyAddedLine.record.SBQQ__Product__c;
-            wrapper.productobj = newlyAddedLine.record.SBQQ__Product__r;
+            // wrapper.productobj = newlyAddedLine.record.SBQQ__Product__r;
             wrapper.name = newlyAddedLine.record.Name;
             wrapper.description = newlyAddedLine.record.SBQQ__Description__c;
             wrapper.uom = newlyAddedLine.record.UOM__c;

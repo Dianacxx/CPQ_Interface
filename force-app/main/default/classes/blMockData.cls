@@ -111,7 +111,7 @@ public with sharing class blMockData {
                 newQuoteLine.SBQQ__Quote__c = getQuote.id;
                 newQuoteLine.SBQQ__Product__c = line.productid;
                 newQuoteLine.SBQQ__Quantity__c = line.quantity;
-                newQuoteLine.SBQQ__Description__c = line.productobj.Description;
+                //newQuoteLine.SBQQ__Description__c = line.productobj.Description;
                 newQuoteLine.UOM__c = line.uom;
                 newQuoteLine.SBQQ__Discount__c = line.additionaldiscount;
                 newQuoteLine.AdditionalDiscountUnit__c = 'Percent';

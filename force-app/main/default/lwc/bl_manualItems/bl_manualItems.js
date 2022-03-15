@@ -9,15 +9,14 @@ import { getPicklistValues } from 'lightning/uiObjectInfoApi';
 import { getObjectInfo } from 'lightning/uiObjectInfoApi';
 import QUOTE_LINE_OBJECT from '@salesforce/schema/SBQQ__QuoteLine__c';
 import PRODUCT_LEVEL_1_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.ProdLevel1__c';
-import PRODUCT_LEVEL_2_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.ProdLevel2__c';
-import PRODUCT_LEVEL_3_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.ProdLevel3__c';
 import PRIMARY_UOM_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.Primary_UOM__c';
 
 const columns = [
-    {label: 'Manual Parts', fieldName: 'name'},
-    { label: '', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:clone', name: 'clone', variant:'brand', size:'xx-small'}},
-    { label: '', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:delete', name: 'delete', variant:'brand', size:'xx-small'}}
+    {label: 'Manual Item: Part Number', fieldName: 'partnumber'},
+    { label: 'Clone', type: 'button-icon',initialWidth: 60,typeAttributes:{iconName: 'action:clone', name: 'clone', variant:'brand', size:'xx-small'}},
+    { label: 'Delete', type: 'button-icon',initialWidth: 60,typeAttributes:{iconName: 'action:delete', name: 'delete', variant:'brand', size:'xx-small'}}
    ];
+
 export default class Bl_manualItems extends LightningElement {
     @api productId;
     @api recordId; 
@@ -27,19 +26,9 @@ export default class Bl_manualItems extends LightningElement {
     @wire(getPicklistValues,{ recordTypeId: '$quotelineMetadata.data.defaultRecordTypeId', 
             fieldApiName: PRODUCT_LEVEL_1_FIELD})
     productLevel1Picklist;
-    /*
-    @wire(getPicklistValues,{ recordTypeId: '$quotelineMetadata.data.defaultRecordTypeId', 
-            fieldApiName: PRODUCT_LEVEL_2_FIELD})
-    productLevel2Picklist;
-    
-    @wire(getPicklistValues,{ recordTypeId: '$quotelineMetadata.data.defaultRecordTypeId', 
-            fieldApiName: PRODUCT_LEVEL_3_FIELD})
-    productLevel3Picklist;
-    */
     @wire(getPicklistValues,{ recordTypeId: '$quotelineMetadata.data.defaultRecordTypeId', 
             fieldApiName: PRIMARY_UOM_FIELD})
     primaryUomPicklist;
-    
     @track loadingProcess = false;
     loadingSaving(){
         this.loadingProcess = true;
@@ -51,7 +40,8 @@ export default class Bl_manualItems extends LightningElement {
     {label: 'Description',  property: 'description', value: '', required: true,},
     {label: 'Quantity',  property: 'quantity', value: '', required: true,}, 
     {label: 'Primary UOM',  property: 'primetyUOM', value: '', required: true,},
-    {label: 'Price',  property: 'price', value: '', required: true,}, ]; 
+    {label: 'Price',  property: 'price', value: '', required: true,}, 
+    ]; 
 
     
     @track productLevel2Picklist = false; 
@@ -59,14 +49,15 @@ export default class Bl_manualItems extends LightningElement {
     @track productLevel3Picklist = false; 
     @track level3 = [];
     handleChange(event){
-        console.log('Product Selected: '+event.detail.value);
-        console.log('Check Selected: '+event.detail.checked);
-        console.log('Product Label: '+event.target.label);
+        //console.log('Product Selected: '+event.detail.value);
+        //console.log('Check Selected: '+event.detail.checked);
+        //console.log('Product Label: '+event.target.label);
         let label = event.target.label;
+        let value;
         if(label == 'Alternative' || label == 'Stock' ){
-            let value = event.detail.checked;
+            value = event.detail.checked;
         } else {
-            let value = event.detail.value;
+            value = event.detail.value;
         }
         
         if(label == 'Product Level 1'){
@@ -88,15 +79,11 @@ export default class Bl_manualItems extends LightningElement {
             .catch((error)=>{console.log('Error in Third Level'); console.log(error);})
         }
 
-        if(label == 'Description' || label == 'Line Note'){
-            value.replaceAll('<p>', '');
-            value.replaceAll('</p>', '');
-        }
 
         const index = this.listOfCaracteristics.findIndex(object => {return object.label === label;});
         if(index == -1){
             let propertyValue = label.toLowerCase(); 
-            propertyValue = propertyValue.replace(/\s/g, '')
+            propertyValue = propertyValue.replace(/\s/g, '');
             this.listOfCaracteristics.push({label: label, value: value, property:propertyValue, required: false,});
             //console.log(this.listOfCaracteristics[this.listOfCaracteristics.length-1]);
 
@@ -107,7 +94,7 @@ export default class Bl_manualItems extends LightningElement {
 
     restarManualForm(){
         this.template.querySelectorAll('lightning-combobox').forEach(each => {each.value = undefined;});
-        this.template.querySelectorAll('lightning-input').forEach(each => {each.value = undefined;});
+        this.template.querySelectorAll('lightning-input').forEach(each => {each.value = undefined; each.checked = false;});
         this.template.querySelectorAll('lightning-input-rich-text').forEach(each => {each.value = '';});
         this.listOfCaracteristics = [ {label: 'Product Level 1', property: 'productlevel1', value: '', required: true,}, 
             {label: 'Product Level 2',  property: 'productlevel2', value: '', required: true,},
@@ -153,11 +140,20 @@ export default class Bl_manualItems extends LightningElement {
                     let manualQuoteline = JSON.parse(data);
                     this.numberRowsAdded += 1; 
                     manualQuoteline[0].id = 'new-manual'+Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 10);
-                    manualQuoteline[0].name = 'Custom Product '+(this.numberRowsAdded).toString(); 
+                    //manualQuoteline[0].name = 'Custom Product '+(this.numberRowsAdded).toString(); 
+                    for(let i=0; i< this.listOfCaracteristics.length; i++){
+                        if(this.listOfCaracteristics[i].property == 'description' || this.listOfCaracteristics[i].property == 'linenote'){
+                            this.listOfCaracteristics[i].value = this.listOfCaracteristics[i].value.replace(/<\/?[^>]+(>|$)/g, "");
+                            //this.listOfCaracteristics[i].value.replaceAll('</p>', '');
+                            //console.log('VALUE: '+ this.listOfCaracteristics[i].value);
+                        }
+
+                        manualQuoteline[0][this.listOfCaracteristics[i].property] = this.listOfCaracteristics[i].value; 
+                    }
                     this.loadingProcess = false;
                     this.newManualList.push(manualQuoteline[0]); 
                     console.log('List: ')
-                    console.log(this.listOfCaracteristics); 
+                    console.log(this.newManualList); 
                     //console.log('Manual: '+data);
                     this.showManualTable = false;
                     //console.log(Object.getOwnPropertyNames(manualQuoteline[0]));
