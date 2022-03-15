@@ -157,6 +157,7 @@ export default class Bl_manualItems extends LightningElement {
                     //console.log('Manual: '+data);
                     this.showManualTable = false;
                     //console.log(Object.getOwnPropertyNames(manualQuoteline[0]));
+                    this.dispatchEvent(new CustomEvent('listtodisplayadd', { detail: {list: this.newManualList, tab: 'Manual Items'} }));
                     this.restarManualForm();
                 })
                 .catch((error)=>{

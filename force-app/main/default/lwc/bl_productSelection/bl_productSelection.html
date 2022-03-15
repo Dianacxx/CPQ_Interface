@@ -48,7 +48,7 @@
                     </lightning-tab>
                     <lightning-tab label="Manual Items" onactive={handleActive}>
                         <!--TAB SET MANUAL ITEMS START tab-selected="Manual Items"-->
-                        <c-bl_manual-items record-id={recordId}></c-bl_manual-items>
+                        <c-bl_manual-items record-id={recordId} onlisttodisplayadd={saveListToDisplay}></c-bl_manual-items>
                         <!--
                         <lightning-tabset variant="vertical">
                             <lightning-tab label="ACA">

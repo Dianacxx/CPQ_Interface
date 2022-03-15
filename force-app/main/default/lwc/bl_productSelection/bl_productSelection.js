@@ -22,6 +22,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
     @api girdDataFocTabAdd = []; 
     @api girdDataCableTabAdd = []; 
     @api girdDataTandITabAdd = []; 
+    @api girdDataManualItemTabAdd = []; 
 
 
     connectedCallback(){
@@ -259,6 +260,8 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                 this.girdDataTandITabAdd = event.detail.list;
             break; 
             case 'Manual Items':
+                this.girdDataManualItemTabAdd = event.detail.list;
+                console.log('---------- MANUAL ITEMS IN PARENT, MISSING SAVING ---------');
             break; 
             default:
             break; 
@@ -341,12 +344,8 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                 console.log('Error saving from PS'); 
                 console.log(error); 
             })
-        }
-
-        
-        
-        //this.dispatchEvent(new CustomEvent('saveandexitps')); 
-
+        }     
+        //this.dispatchEvent(new CustomEvent('saveandexitps'));
     }
     
     

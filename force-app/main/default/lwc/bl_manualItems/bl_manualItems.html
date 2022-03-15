@@ -2,8 +2,8 @@
     <lightning-card class="slds-var-m-top_medium">
         <div class="slds-var-p-around_medium lgc-bg" >
         <lightning-spinner if:true={loadingProcess} alternative-text="Loading" size="medium"></lightning-spinner>
-        <div class="slds-grid">
-            <div class="slds-col slds-size_1-of-3" style="background-color:rgba(195, 197, 196, 0.288);">
+        <div class="slds-grid slds-wrap">
+            <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-3" style="background-color:rgba(195, 197, 196, 0.288);">
                 <lightning-button-group class="slds-align_absolute-center slds-var-m-top_small">
                     <lightning-button label="Submit" onclick={submitQuoteline} variant="brand"></lightning-button>
                     <lightning-button label="Clear" onclick={restarManualForm} variant="destructive"></lightning-button>
@@ -59,30 +59,30 @@
                 <lightning-input type="text" label="Customer Part" onchange={handleChange} value={CustomerPart}></lightning-input>
                 <lightning-layout multiple-rows="false">
                     <!--ALTERNATIVE PART TEXT-->
-                    <lightning-input class="slds-var-m-top_small" type="checkbox" label="Alternative" onchange={handleChange} value={Alternative}></lightning-input>
+                    <lightning-input class="slds-var-m-top_small slds-var-m-bottom_x-small" type="checkbox" label="Alternative" onchange={handleChange} value={Alternative}></lightning-input>
                     <!--STOCK PART TEXT-->
-                    <lightning-input class="slds-var-m-top_small" type="checkbox" label="Stock" onchange={handleChange} value={Stock}></lightning-input>   
+                    <lightning-input class="slds-var-m-top_small slds-var-m-bottom_x-small" type="checkbox" label="Stock" onchange={handleChange} value={Stock}></lightning-input>   
                 </lightning-layout>
                 </template>
                 <!--IF LEVEL 1 ACA UNIT COST-->
                 <template if:true={PL1_ACA}>
                     <div>
-                        <lightning-input type="number" label="Unit Cost" onchange={handleChange} value={UnitCost}></lightning-input>
+                        <lightning-input class="slds-var-m-bottom_small" type="number" label="Unit Cost" onchange={handleChange} value={UnitCost}></lightning-input>
                     </div>
                 </template>
                 <!--IF LEVEL 1 FIBER OPTIC CABLE MAX LENGTH STEEL/WOOD-->
                 <template if:true={PL1_FOC}>
                     <div>
                         <lightning-input type="number" label="Max Length on Steel" onchange={handleChange} value={MaxLengthSteel}></lightning-input>
-                        <lightning-input type="number" label="Max Length on Wood" onchange={handleChange} value={MaxLengthWood}></lightning-input>
+                        <lightning-input class="slds-var-m-bottom_small" type="number" label="Max Length on Wood" onchange={handleChange} value={MaxLengthWood}></lightning-input>
                     </div>
                 </template> 
 
             </div>
-            <div class="slds-col slds-size_2-of-3">
+            <div class="slds-col slds-size_1-of-1 slds-large-size_2-of-3">
                 <lightning-spinner if:true={showManualTable} alternative-text="Loading" variant="brand" size="small"></lightning-spinner>
                 <template if:false={showManualTable}>
-                    <div class="slds-align_absolute-center">
+                    <div class="slds-align_absolute-center slds-var-m-top_small">
                         <lightning-datatable style="width: 85%;" key-field="name" data={newManualList} columns={newManualColumns}
                         onrowaction={handleRowAction} hide-checkbox-column></lightning-datatable>
                      </div>

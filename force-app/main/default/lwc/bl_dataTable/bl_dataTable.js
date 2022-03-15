@@ -180,6 +180,7 @@ export default class Bl_dataTable extends LightningElement {
             //MISSING CLONE LINE NOTES FROM THE OTHER OBJECT
             if (this.selectedRows){
                 let cloneRows = JSON.parse(JSON.stringify(this.selectedRows)); 
+                //console.log('cloneRows: '+ Object.getOwnPropertyNames(cloneRows[0]));
                 let randomId; 
                 let randomName; 
                 let last4Name;
@@ -191,6 +192,7 @@ export default class Bl_dataTable extends LightningElement {
                     last4Name = cloneRows[i].name.substr(cloneRows[i].name.length - 4)
                     cloneRows[i].id =  'new'+randomId;
                     cloneRows[i].name = 'Clone QL-'+last4Name+'-'+randomName; 
+                    cloneRows[i].clonedFrom = this.selectedRows[i].id; 
                     //console.log('ID: '+cloneRows[i].id);
                     //console.log('NAME: '+cloneRows[i].name);
                     this.quoteLines = [...this.quoteLines, cloneRows[i]];
