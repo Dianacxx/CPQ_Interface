@@ -18,7 +18,8 @@ public with sharing class WrappersClass {
         public Id requiredBy{get;set;}
         public String product{get;set;}
         public Id productid{get;set;}
-        public Product2 productobj{get;set;}
+        public String clonedFrom{get;set;}
+        // public Product2 productobj{get;set;}
         public String tiers{get;set;}
         public String description{get;set;}
         public Decimal quantity{get;set;}
