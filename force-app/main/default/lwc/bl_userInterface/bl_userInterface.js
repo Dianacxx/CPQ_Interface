@@ -71,9 +71,20 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 this.error = error;
                 console.log('quoteLines String ERROR:');
                 console.log(this.error);
+                let messageError; 
+                if (this.error.hasOwnProperty('body')){
+                    if(this.error.body.hasOwnProperty('pageErrors')){
+                        if(this.error.body.pageErrors[0].hasOwnProperty('message')){
+                            messageError = this.error.body.pageErrors[0].message; 
+                        }
+                    }
+                    
+                } else {
+                    messageError = 'Unexpected error using UI - QUOTELINES'; 
+                }
                 const evt = new ShowToastEvent({
                     title: 'UI QUOTELINES Error',
-                    message: 'Unexpected error using UI - QUOTELINES',
+                    message: messageError,
                     variant: 'error',
                     mode: 'sticky'
                 });
@@ -99,9 +110,20 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 this.quoteNotesString = '[name: \"none\"]';
                 console.log('notes string ERROR: ');
                 console.log(this.error);
+                let messageError; 
+                if (this.error.hasOwnProperty('body')){
+                    if(this.error.body.hasOwnProperty('pageErrors')){
+                        if(this.error.body.pageErrors[0].hasOwnProperty('message')){
+                            messageError = this.error.body.pageErrors[0].message; 
+                        }
+                    }
+                    
+                } else {
+                    messageError = 'Unexpected error using UI - QUOTELINES'; 
+                }
                 const evt = new ShowToastEvent({
                     title: 'Product Notes Warning:',
-                    message: 'There are not notes available for this quote.',
+                    message: messageError,
                     variant: 'warning',
                     mode: 'sticky'
                 });
@@ -177,9 +199,20 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                     this.error = error;
                     console.log('quoteLines String ERROR:');
                     console.log(this.error);
+                    let messageError; 
+                    if (this.error.hasOwnProperty('body')){
+                        if(this.error.body.hasOwnProperty('pageErrors')){
+                            if(this.error.body.pageErrors[0].hasOwnProperty('message')){
+                                messageError = this.error.body.pageErrors[0].message; 
+                            }
+                        }
+                        
+                    } else {
+                        messageError = 'Unexpected error using UI - QUOTELINES'; 
+                    }
                     const evt = new ShowToastEvent({
                         title: 'UI QUOTELINES Error',
-                        message: 'Unexpected error using UI - QUOTELINES',
+                        message: messageError,
                         variant: 'error',
                         mode: 'sticky'
                     });
@@ -344,15 +377,6 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 this.notGoodToGoBundle[0] = false; 
                 publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload);   
                 console.log('1. Quote lines updated, now proceed with new quote lines');
-                /*
-                const evt = new ShowToastEvent({
-                    title: 'Success saving the changes on the existing quote lines in Salesforce',
-                    message: 'Your changes have been saved on Salesforce',
-                    variant: 'success',
-                    mode: 'dismissable'
-                });
-                this.dispatchEvent(evt);
-                */
             })
             .catch((error)=>{
                 this.notGoodToGoBundle[0] = true; 
@@ -360,7 +384,9 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 console.log(error);
                 let errorMessage;
                 if (error.body.hasOwnProperty("pageErrors")){
-                    if (error.body.pageErrors.hasOwnProperty("statusCode")){
+                    if(this.error.body.pageErrors[0].hasOwnProperty('message')){
+                        errorMessage = this.error.body.pageErrors[0].message; 
+                    } else if (error.body.pageErrors[0].hasOwnProperty("statusCode")){
                         errorMessage = error.body.pageErrors[0].statusCode; 
                     } else {
                         if (error.body.hasOwnProperty("fieldErrors")){
@@ -368,8 +394,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                             console.log(error); 
                         }
                     }
-                } 
-                else {
+                } else {
                     errorMessage = 'Developer: Open console to see error message'
                 }
                 //this.spinnerLoadingUI = false;
@@ -403,15 +428,6 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                     this.callData();
                     //this.spinnerLoadingUI = false;
                     this.notGoodToGoBundle[1] = false;
-                    /*
-                    const evt = new ShowToastEvent({
-                        title: 'Success saving the new quote lines created in the UI',
-                        message: 'Your additions have been saved on Salesforce',
-                        variant: 'success',
-                        mode: 'dismissable'
-                    });
-                    this.dispatchEvent(evt);
-                    */
                     const evt = new ShowToastEvent({
                         title: 'Success saving the quote lines',
                         message: 'All the process have been saved on Salesforce',
@@ -427,9 +443,27 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 console.log(error);
                 this.notGoodToGoBundle[1] = true;
                 this.spinnerLoadingUI = false;
+
+                let errorMessage;
+                if (error.body.hasOwnProperty("pageErrors")){
+                    if(this.error.body.pageErrors[0].hasOwnProperty('message')){
+                        errorMessage = this.error.body.pageErrors[0].message; 
+                    } else if (error.body.pageErrors[0].hasOwnProperty("statusCode")){
+                        errorMessage = error.body.pageErrors[0].statusCode; 
+                    } else {
+                        if (error.body.hasOwnProperty("fieldErrors")){
+                            errorMessage = 'Developer: Open console to see error message'
+                            console.log(error); 
+                        }
+                    }
+                } else {
+                    errorMessage = 'Developer: Open console to see error message'
+                }
+
+
                 const evt = new ShowToastEvent({
                     title: 'Creating new quotelines ERROR',
-                    message: 'open console',
+                    message: errorMessage,
                     variant: 'error',
                     mode: 'dismissable'
                 });
@@ -528,36 +562,6 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             this.showPSTab = false; 
             this.activeTab = 'UI';
         }, 2000);
-        
-        /*
-        console.log('Product Selection Values Saved in QLE');
-        console.log(this.quotelinesString);
-        console.log(event.detail.asQuotelines);
-        this.girdDataFocTabAdd = event.detail.focTab;
-        this.girdDataAcaTabAdd = event.detail.acaTAb; 
-        this.girdDataConnTabAdd = event.detail.connTab; 
-        this.girdDataCableTabAdd = event.detail.cableTab; 
-        this.girdDataTandITabAdd = event.detail.taiTab; 
-        if (event.detail.asQuotelines){
-            let quotelineStringUpdate = JSON.parse(this.quotelinesString); 
-            console.log('new quotelines from PS')
-            console.log(event.detail.asQuotelines);
-            for (let newList of event.detail.asQuotelines){
-                quotelineStringUpdate.push(newList);
-            }
-            console.log(quotelineStringUpdate); 
-            this.quotelinesString = JSON.stringify(quotelineStringUpdate);
-        }
-        console.log('Table Updated');
-        
-        const payload = { 
-            dataString: this.quotelinesString,
-            auxiliar: 'updatetable'
-          };
-        publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
-        */
-          
-        
 
     }
 

@@ -213,7 +213,9 @@ export default class Bl_manualItems extends LightningElement {
                 this.showManualTable = true; 
                 console.log('Delete');
                 this.newManualList.splice(index,1); 
-                setTimeout(()=>{ this.showManualTable = false; }, 500);
+                setTimeout(()=>{ this.showManualTable = false; 
+                    this.dispatchEvent(new CustomEvent('listtodisplayadd', { detail: {list: this.newManualList, tab: 'Manual Items'} }));
+                }, 250);
 
             break;
             case 'clone':
@@ -221,9 +223,10 @@ export default class Bl_manualItems extends LightningElement {
                 console.log('Clone');
                 let cloneDataRow = JSON.parse(JSON.stringify(dataRow));
                 cloneDataRow.id = 'new-manual'+Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 10);
-                cloneDataRow.name = cloneDataRow.name+' Copy';  
                 this.newManualList.push(cloneDataRow); 
-                setTimeout(()=>{ this.showManualTable = false; }, 500); 
+                setTimeout(()=>{ this.showManualTable = false; 
+                    this.dispatchEvent(new CustomEvent('listtodisplayadd', { detail: {list: this.newManualList, tab: 'Manual Items'} }));
+                }, 250); 
             break;
             default: 
                 alert('There is an error trying to complete this action');
