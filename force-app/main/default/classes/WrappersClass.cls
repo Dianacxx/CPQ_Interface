@@ -18,7 +18,8 @@ public with sharing class WrappersClass {
         public Id requiredBy{get;set;}
         public String product{get;set;}
         public Id productid{get;set;}
-        public Product2 productobj{get;set;}
+        public String clonedFrom{get;set;}
+        // public Product2 productobj{get;set;}
         public String tiers{get;set;}
         public String description{get;set;}
         public Decimal quantity{get;set;}
@@ -56,6 +57,17 @@ public with sharing class WrappersClass {
         public String primaryUOM{get;set;}
         public String packageCover{get;set;}
         public String regionCode{get;set;}
+        //Manual items fields
+        public String prodLevel1 {get;set;}
+        public String prodLevel2 {get;set;}
+        public String prodLevel3 {get;set;}
+        public String prodLevel4 {get;set;}
+        public String customerpart {get;set;}
+        public String partnumber {get;set;}
+        public Boolean alternative {get;set;}
+        public Boolean stock {get;set;}
+        public Decimal price {get;set;}
+        public String linenote {get;set;}
         
     }
 

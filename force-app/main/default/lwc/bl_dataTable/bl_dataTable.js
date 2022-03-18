@@ -61,14 +61,14 @@ export default class Bl_dataTable extends LightningElement {
             this.fieldSet = JSON.parse(data); 
             //console.log('fieldSet Prop '+ Object.getOwnPropertyNames(this.fieldSet[0])); 
             this.fieldSetLength = this.fieldSet.length;
-            console.log('Length of fieldset '+ this.fieldSetLength); 
+            console.log('Fieldset loaded: '+ this.fieldSetLength); 
         })
         .then(() => {
             let indexDes; 
             for (let i=0; i<this.fieldSetLength;i++){
                 if (this.tabSelected == 'Home'){
                     if (this.fieldSet[i].key == 'HOME'){
-                        console.log('field Set properties: '+ Object.getOwnPropertyNames(this.fieldSet[i]));
+                        //console.log('field Set properties: '+ Object.getOwnPropertyNames(this.fieldSet[i]));
                         //console.log('Label: '+this.fieldSet[i].label);
                         //console.log('Property: '+ this.fieldSet[i].property)
                         //console.log('Required '+this.fieldSet[i].required)
@@ -192,7 +192,14 @@ export default class Bl_dataTable extends LightningElement {
                     last4Name = cloneRows[i].name.substr(cloneRows[i].name.length - 4)
                     cloneRows[i].id =  'new'+randomId;
                     cloneRows[i].name = 'Clone QL-'+last4Name+'-'+randomName; 
-                    cloneRows[i].clonedFrom = this.selectedRows[i].id; 
+                    if(this.selectedRows[i].id.startsWith('new')){
+                        cloneRows[i].clonedFrom = this.selectedRows[i].clonedFrom;
+                        console.log('Clone from new one');
+                    } else {
+                        cloneRows[i].clonedFrom = this.selectedRows[i].id;
+                        console.log('Clone from old one');
+                    }
+                     
                     //console.log('ID: '+cloneRows[i].id);
                     //console.log('NAME: '+cloneRows[i].name);
                     this.quoteLines = [...this.quoteLines, cloneRows[i]];
@@ -355,6 +362,7 @@ export default class Bl_dataTable extends LightningElement {
                 newQuotelines[i].name = 'New QL-'+randomName; 
                 newQuotelines[i].quantity = 1;
                 newQuotelines[i].netunitprice = 1;
+                newQuotelines[i].alternative = false;
                 this.quoteLines = [...this.quoteLines, newQuotelines[i]];
             }
 

@@ -109,12 +109,13 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
     //Event meaning to move to Configured Bundle Page
     saveBeforeConfigured(event){
         console.log('Saving in before anything else');
-        //this.dispatchEvent(new CustomEvent('savebeforeconfiguredtwo', { detail: event.detail })); 
         this.savePSValues = true;
         for (let list of this.girdDataAcaTabAdd){
             for (let secondList of list.listOfProducts){
                 secondList.quantity = 1;
                 secondList.netunitprice = 1;
+                secondList.alternative = false;
+                secondList.stock = false;
                 //console.log('LUPL'+secondList.listunitprice);
                 if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
                     secondList.listunitprice = 1;
@@ -126,6 +127,8 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             for (let secondList of list.listOfProducts){
                 secondList.quantity = 1;
                 secondList.netunitprice = 1;
+                secondList.alternative = false;
+                secondList.stock = false;
                 //console.log('LUPL'+secondList.listunitprice);
                 if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
                     secondList.listunitprice = 1;
@@ -137,6 +140,8 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             for (let secondList of list.listOfProducts){
                 secondList.quantity = 1;
                 secondList.netunitprice = 1;
+                secondList.alternative = false;
+                secondList.stock = false;
                 if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
                     secondList.listunitprice = 1;
                 }
@@ -147,6 +152,8 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             for (let secondList of list.listOfProducts){
                 secondList.quantity = 1;
                 secondList.netunitprice = 1;
+                secondList.alternative = false;
+                secondList.stock = false;
                 //console.log('LUPL'+secondList.listunitprice);
                 if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
                     secondList.listunitprice = 1;
@@ -158,6 +165,8 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             for (let secondList of list.listOfProducts){
                 secondList.quantity = 1;
                 secondList.netunitprice = 1;
+                secondList.alternative = false;
+                secondList.stock = false;
                 //console.log('LUPL'+secondList.listunitprice);
                 if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
                     secondList.listunitprice = 1;
@@ -165,6 +174,22 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                 this.quotesAdded.push(secondList);
             }
         }
+        for (let list of this.girdDataManualItemTabAdd){
+            list.netunitprice = 1;
+            if ((list.listunitprice == null) || (list.listunitprice == 'null')){
+                list.listunitprice = 1;
+            }
+            if((list.stock == null) || (list.stock == 'null')){
+                list.stock = false;
+            }
+            if((list.alternative == null) || (list.alternative == 'null')){
+                list.alternative = false;
+            }
+            this.quotesAdded.push(list);
+        }
+
+
+        
         let stringQuotesAdded = JSON.stringify(this.quotesAdded);
         console.log('Quote ID: '+this.recordId);
         console.log('Quotelines before process: '+stringQuotesAdded); 
@@ -183,12 +208,34 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                     console.log('Done saving products, direct to: '+this.configBundleId);   
                     this.notGoodToGoBundle = false;
                     this.navigateToBundle();
-                }, 1000);
+                }, 500);
             })
             .catch((error)=>{
                 this.notGoodToGoBundle = true;
                 console.log('Error saving from PS'); 
                 console.log(error); 
+                let errorMessage;
+                if (error.body.hasOwnProperty("pageErrors")){
+                    if(this.error.body.pageErrors[0].hasOwnProperty('message')){
+                        errorMessage = this.error.body.pageErrors[0].message; 
+                    } else if (error.body.pageErrors[0].hasOwnProperty("statusCode")){
+                        errorMessage = error.body.pageErrors[0].statusCode; 
+                    } else {
+                        if (error.body.hasOwnProperty("fieldErrors")){
+                            errorMessage = 'Developer: Open console to see error message (F12)'
+                            console.log(error); 
+                        }
+                    }
+                } else {
+                    errorMessage = 'Developer: Open console to see error message (F12)'
+                }
+                const evt = new ShowToastEvent({
+                    title: 'Creating Quote lines ERROR',
+                    message: errorMessage,
+                    variant: 'error',
+                    mode: 'sticky'
+                });
+                this.dispatchEvent(evt);
             })
             }
         
@@ -198,9 +245,9 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         if (this.notGoodToGoBundle){
             const evt = new ShowToastEvent({
                 title: 'The changes done cannot be saved.',
-                message: 'There are values in the Product Selector that cannot be saved, Review them and try again.',
+                message: 'Open the console (F12) to see the error',
                 variant: 'error',
-                mode: 'sticky '
+                mode: 'sticky'
             });
             this.dispatchEvent(evt);
         } else {
@@ -273,10 +320,12 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         for (let list of this.girdDataAcaTabAdd){
             for (let secondList of list.listOfProducts){
                 secondList.quantity = 1;
-                secondList.netunitprice = 0;
+                secondList.netunitprice = 1;
+                secondList.alternative = false;
+                secondList.stock = false;
                 //console.log('LUPL'+secondList.listunitprice);
                 if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
-                    secondList.listunitprice = 0;
+                    secondList.listunitprice = 1;
                 }
                 this.quotesAdded.push(secondList);
             }
@@ -284,10 +333,12 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         for (let list of this.girdDataConnTabAdd){
             for (let secondList of list.listOfProducts){
                 secondList.quantity = 1;
-                secondList.netunitprice = 0;
+                secondList.netunitprice = 1;
+                secondList.alternative = false;
+                secondList.stock = false;
                 //console.log('LUPL'+secondList.listunitprice);
                 if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
-                    secondList.listunitprice = 0;
+                    secondList.listunitprice = 1;
                 }
                 this.quotesAdded.push(secondList);
             }
@@ -295,9 +346,11 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         for (let list of this.girdDataFocTabAdd){            
             for (let secondList of list.listOfProducts){
                 secondList.quantity = 1;
-                secondList.netunitprice = 0;
+                secondList.netunitprice = 1;
+                secondList.alternative = false;
+                secondList.stock = false;
                 if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
-                    secondList.listunitprice = 0;
+                    secondList.listunitprice = 1;
                 }
                 this.quotesAdded.push(secondList);
             }
@@ -305,10 +358,12 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         for (let list of this.girdDataCableTabAdd){
             for (let secondList of list.listOfProducts){
                 secondList.quantity = 1;
-                secondList.netunitprice = 0;
+                secondList.netunitprice = 1;
+                secondList.alternative = false;
+                secondList.stock = false;
                 //console.log('LUPL'+secondList.listunitprice);
                 if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
-                    secondList.listunitprice = 0;
+                    secondList.listunitprice = 1;
                 }
                 this.quotesAdded.push(secondList);
             }
@@ -316,13 +371,28 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         for (let list of this.girdDataTandITabAdd){
             for (let secondList of list.listOfProducts){
                 secondList.quantity = 1;
-                secondList.netunitprice = 0;
+                secondList.netunitprice = 1;
+                secondList.alternative = false;
+                secondList.stock = false;
                 //console.log('LUPL'+secondList.listunitprice);
                 if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
-                    secondList.listunitprice = 0;
+                    secondList.listunitprice = 1;
                 }
                 this.quotesAdded.push(secondList);
             }
+        }
+        for (let list of this.girdDataManualItemTabAdd){
+            list.netunitprice = 1;
+            if ((list.listunitprice == null) || (list.listunitprice == 'null')){
+                list.listunitprice = 1;
+            }
+            if((list.stock == null) || (list.stock == 'null')){
+                list.stock = false;
+            }
+            if((list.alternative == null) || (list.alternative == 'null')){
+                list.alternative = false;
+            }
+            this.quotesAdded.push(list);
         }
         let stringQuotesAdded = JSON.stringify(this.quotesAdded);
         console.log('Quote ID: '+this.recordId);
@@ -338,7 +408,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                 this.savePSValues = false;
                 setTimeout(()=>{
                     this.dispatchEvent(new CustomEvent('saveandexitps')); 
-              }, 1000);
+              }, 500);
             })
             .catch((error)=>{
                 console.log('Error saving from PS'); 

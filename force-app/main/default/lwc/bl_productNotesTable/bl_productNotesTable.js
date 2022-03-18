@@ -14,7 +14,7 @@ export default class Bl_productNotesTable extends LightningElement {
         if(this.quoteNotesString=='[name: \"none\"]'){
             console.log('THERE IS NO NOTES');
         } else {
-            this.quoteNotes = JSON.parse(this.quoteNotesString);
+            this.quoteNotes = this.quoteNotesString;//JSON.parse(this.quoteNotesString);
             this.quoteNotesLength = this.quoteNotes.length;
             this.updateNotes();
         }        

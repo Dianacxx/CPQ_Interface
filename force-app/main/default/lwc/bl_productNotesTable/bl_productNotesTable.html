@@ -9,7 +9,7 @@
             <lightning-button label="Last" icon-name="utility:chevronright" icon-position="right" onclick={lastHandler} class="stretchButton"></lightning-button>
         </lightning-button-group>
     </div>
-    <div class="slds-m-top_small"> 
+    <div class="slds-var-m-top_small"> 
         <table class='slds-table'>
             <thead>
                 <tr>     
@@ -28,7 +28,7 @@
             <tbody>
                 <template for:each={searchable} for:item="notes">
                     <tr key={notes.name}>                
-                        <td key={notes.name}>                                
+                        <td key={notes.name} class="slds-cell-wrap">                                
                             {notes.name}
                         </td>
                         <td key={notes.notetext} class="slds-cell-wrap">                                

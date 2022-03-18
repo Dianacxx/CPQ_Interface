@@ -9,6 +9,8 @@ import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 //QuoteLines and Notes info 
 import printQuoteLines from '@salesforce/apex/QuoteController.printQuoteLinesv2';
 import printNotes from '@salesforce/apex/QuoteController.printNotes'; 
+//import printNotes from '@salesforce/apex/blMockData.printNotes'; 
+
 
 //Quote Saver
 import getQuoteTotal from '@salesforce/apex/QuoteController.getQuoteTotal'; 
@@ -68,14 +70,16 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         .catch(error =>{
             if (error){
                 this.quotelinesString = undefined; 
-                this.error = error;
                 console.log('quoteLines String ERROR:');
-                console.log(this.error);
+                console.log(error);
                 let messageError; 
-                if (this.error.hasOwnProperty('body')){
-                    if(this.error.body.hasOwnProperty('pageErrors')){
-                        if(this.error.body.pageErrors[0].hasOwnProperty('message')){
-                            messageError = this.error.body.pageErrors[0].message; 
+                if (error.hasOwnProperty('body')){
+                    if(error.body.hasOwnProperty('pageErrors')){
+                        if(error.body.pageErrors[0].hasOwnProperty('message')){
+                            messageError = error.body.pageErrors[0].message; 
+                        }
+                        else if (error.body.hasOwnProperty('message')){
+                            messageError = error.body.message; 
                         }
                     }
                     
@@ -97,7 +101,6 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         .then(data =>{
             if (data){
                 this.quoteNotesString = data; 
-                this.error = undefined;
                 console.log('notes string SUCCESS');
                 //console.log('notes string SUCCESS: '+ this.quoteNotesString);
             }    
@@ -105,17 +108,18 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         .catch(error =>{
              if (error){
                 this.quoteNotesString = undefined; 
-                this.error = error;
                 this.disableButton = true;
                 this.quoteNotesString = '[name: \"none\"]';
                 console.log('notes string ERROR: ');
-                console.log(this.error);
+                console.log(error);
                 let messageError; 
-                if (this.error.hasOwnProperty('body')){
-                    if(this.error.body.hasOwnProperty('pageErrors')){
-                        if(this.error.body.pageErrors[0].hasOwnProperty('message')){
-                            messageError = this.error.body.pageErrors[0].message; 
+                if (error.hasOwnProperty('body')){
+                    if(error.body.hasOwnProperty('pageErrors')){
+                        if(error.body.pageErrors[0].hasOwnProperty('message')){
+                            messageError = error.body.pageErrors[0].message; 
                         }
+                    } else if (error.body.hasOwnProperty('message')){
+                        messageError = error.body.message; 
                     }
                     
                 } else {
@@ -196,14 +200,13 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             .catch(error =>{
                 if (error){
                     this.quotelinesString = undefined; 
-                    this.error = error;
                     console.log('quoteLines String ERROR:');
                     console.log(this.error);
                     let messageError; 
-                    if (this.error.hasOwnProperty('body')){
-                        if(this.error.body.hasOwnProperty('pageErrors')){
-                            if(this.error.body.pageErrors[0].hasOwnProperty('message')){
-                                messageError = this.error.body.pageErrors[0].message; 
+                    if (error.hasOwnProperty('body')){
+                        if(error.body.hasOwnProperty('pageErrors')){
+                            if(error.body.pageErrors[0].hasOwnProperty('message')){
+                                messageError = error.body.pageErrors[0].message; 
                             }
                         }
                         
@@ -364,6 +367,12 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 if(quoteEdition[i].netunitprice == null || quoteEdition[i].netunitprice == 'null'){
                     quoteEdition[i].netunitprice = 0;
                 }
+                if(quoteEdition[i].alternative == null || quoteEdition[i].alternative == 'null'){
+                    quoteEdition[i].alternative = false;
+                } 
+                if(quoteEdition[i].stock == null || quoteEdition[i].alternative == 'null'){
+                    quoteEdition[i].stock = false;
+                } 
             }
             this.quotelinesString = JSON.stringify(quoteEdition);
             console.log('Before Editing but with quantity and nup: '+this.quotelinesString);
@@ -383,16 +392,19 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 console.log('editAndDeleteQuotes ERROR');
                 console.log(error);
                 let errorMessage;
-                if (error.body.hasOwnProperty("pageErrors")){
-                    if(this.error.body.pageErrors[0].hasOwnProperty('message')){
-                        errorMessage = this.error.body.pageErrors[0].message; 
-                    } else if (error.body.pageErrors[0].hasOwnProperty("statusCode")){
-                        errorMessage = error.body.pageErrors[0].statusCode; 
-                    } else {
-                        if (error.body.hasOwnProperty("fieldErrors")){
-                            errorMessage = 'Developer: Open console to see error message'
-                            console.log(error); 
+                if(error.hasOwnProperty("body")){
+                    if (error.body.hasOwnProperty("pageErrors")){
+                        if(error.body.pageErrors[0].hasOwnProperty('message')){
+                            errorMessage = error.body.pageErrors[0].message; 
+                        } else if (error.body.pageErrors[0].hasOwnProperty("statusCode")){
+                            errorMessage = error.body.pageErrors[0].statusCode; 
+                        } else {
+                            if (error.body.hasOwnProperty("fieldErrors")){
+                                errorMessage = 'Developer: Open console to see error message'
+                                console.log(error); 
+                            }
                         }
+
                     }
                 } else {
                     errorMessage = 'Developer: Open console to see error message'
@@ -415,6 +427,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         return new Promise((resolve) => {
             console.log('Record ID: '+this.recordId);
             console.log('Before Creating New: '+this.quotelinesString);
+
             quoteLineCreator({quoteId: this.recordId, quoteLines: this.quotelinesString})
             .then(()=>{
                 console.log('2. New quote lines created, now proceed with new total');
@@ -445,17 +458,19 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 this.spinnerLoadingUI = false;
 
                 let errorMessage;
-                if (error.body.hasOwnProperty("pageErrors")){
-                    if(this.error.body.pageErrors[0].hasOwnProperty('message')){
-                        errorMessage = this.error.body.pageErrors[0].message; 
-                    } else if (error.body.pageErrors[0].hasOwnProperty("statusCode")){
-                        errorMessage = error.body.pageErrors[0].statusCode; 
-                    } else {
-                        if (error.body.hasOwnProperty("fieldErrors")){
-                            errorMessage = 'Developer: Open console to see error message'
-                            console.log(error); 
+                if(error.hasOwnProperty("body")){
+                    if (error.body.hasOwnProperty("pageErrors")){
+                        if(error.body.pageErrors[0].hasOwnProperty('message')){
+                            errorMessage = error.body.pageErrors[0].message; 
+                        } else if (error.body.pageErrors[0].hasOwnProperty("statusCode")){
+                            errorMessage = error.body.pageErrors[0].statusCode; 
+                        } else {
+                            if (error.body.hasOwnProperty("fieldErrors")){
+                                errorMessage = 'Developer: Open console to see error message'
+                                console.log(error); 
+                            }
                         }
-                    }
+                    } 
                 } else {
                     errorMessage = 'Developer: Open console to see error message'
                 }
@@ -472,7 +487,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         resolve();
         });   
     }
-    //NAVIGATE TO QUOTE RECORD PAGE (MISSING SAVING INFORMATION)
+    //NAVIGATE TO QUOTE RECORD PAGE 
     async exitToRecordPage(){
         deletingRecordId({quoteId: this.recordId})
         .then(()=>{
@@ -508,40 +523,6 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         let endTime = performance.now();
         console.log(`Saving and Exit method took ${endTime - startTime} milliseconds`);
     }
-
-    @track configBundleId; 
-    saveBeforeConfigBundle(event){
-
-        this.configBundleId = event.detail; 
-        console.log('Product Id to Bundle: '+this.configBundleId);
-        this.handleSaveAndCalculate();
-
-        if (this.notGoodToGoBundle[0] == true || this.notGoodToGoBundle[1] == true){
-            const evt = new ShowToastEvent({
-                title: 'The changes done cannot be saved.',
-                message: 'There are values in the QLE that cannot be saved, Review them and try again.',
-                variant: 'error',
-                mode: 'sticky '
-            });
-            this.dispatchEvent(evt);
-        } else {
-            //IF THERE ARE NO ERRORS, GET ID OF PRODUCT IN ROW AND GO TO CONFIGURED PRODUCT 
-            let customActionAddProducts = 'a5e8A000000EK29QAG';
-            console.log('relatedProductId: '+this.configBundleId); 
-            let link = '/apex/sbqq__sb?id='+this.recordId+
-            '&tour=&isdtp=p1&ltn_app_id=06m8A0000004jM5QAI&clc=0#/product/pc?qId='+
-            this.recordId+'&aId='+customActionAddProducts+'&pId='+this.configBundleId+'&redirectUrl=LineEditor&open=0';
-            this[NavigationMixin.Navigate]({
-                type: 'standard__webPage',
-                attributes: {
-                    url: link,
-                    recordId : this.recordId,
-                }
-            })
-        }
-        
-    }
-
 
     //NAVIGATE BACK TO UI FROM PRODUCT SELECTION TAB WHEN CANCEL
     returnToUiCancel(){

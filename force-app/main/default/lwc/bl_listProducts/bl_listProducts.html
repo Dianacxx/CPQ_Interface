@@ -63,6 +63,14 @@
                                     <lightning-icon icon-name="standard:filter" alternative-text="filter" size="small" class=" slds-var-m-right_small"></lightning-icon>
                                     <p style="color: rgb(21, 35, 233); font-size:16px;">Filtered, {recordsAmount} records found.</p>
                                 </div>
+                                <div class="slds-grid slds-gutters slds-var-m-left_medium slds-var-m-right_medium slds-var-m-top_medium">
+                                    <lightning-icon icon-name="standard:task2" alternative-text="filter" size="small" class=" slds-var-m-left_small"></lightning-icon>
+                                    <p style="color: rgb(0, 0, 0); font-size:14px;">In Stock</p>
+                                    <lightning-icon icon-name="standard:first_non_empty" alternative-text="filter" size="small" class=" slds-var-m-left_small"></lightning-icon>
+                                    <p style="color: rgb(0, 0, 0); font-size:14px;">Not in Stock</p>
+                                    <lightning-icon icon-name="standard:question_feed" alternative-text="filter" size="small" class=" slds-var-m-left_small"></lightning-icon>
+                                    <p style="color: rgb(0, 0, 0); font-size:14px;">No information</p>
+                                </div>
                                 <!--RECORDS FILTERED END-->
                                 <div>
                                     <lightning-spinner if:true={loadingFilteData} alternative-text="Loading" size="medium"></lightning-spinner>
