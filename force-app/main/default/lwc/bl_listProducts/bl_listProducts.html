@@ -226,7 +226,7 @@
                                     <template for:each={nspNumbers} for:item="nspNumberItem">
                                         <div key={nspNumberItem.label}>
                                             <lightning-input class="slds-var-m-right_x-small" key={nspNumberItem.label} type="number" name={nspNumberItem.apiName} label={nspNumberItem.label}
-                                            onchange={nspPicklistChange}></lightning-input>
+                                            value=1 onchange={nspPicklistChange}></lightning-input> 
                                         </div>
                                     </template>
                                     </lightning-layout>
@@ -235,7 +235,8 @@
                         </template>
                     </lightning-tabset>
                     </div>
-                    <div style="background-color:#f1ce30;" class="slds-var-p-around_xx-small slds-align_absolute-center lgc-bg">
+                    <div style="background-color:#f1ce30;" class="slds-var-m-top_medium slds-var-m-bottom_medium
+                     slds-var-p-around_xx-small slds-align_absolute-center lgc-bg">
                         <p><b>WARNING:</b>  Remember to select all the values of the Non-Standard Product (NSP) before closing the window.</p>
                     </div>
                 </div>

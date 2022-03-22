@@ -34,12 +34,12 @@ export default class Bl_manualItems extends LightningElement {
         this.loadingProcess = true;
     }
     
-    @track listOfCaracteristics = [ {label: 'Product Level 1', property: 'productlevel1', value: '', required: true,}, 
-    {label: 'Product Level 2',  property: 'productlevel2', value: '', required: true,},
+    @track listOfCaracteristics = [ {label: 'Product Level 1', property: 'prodLevel1', value: '', required: true,}, 
+    {label: 'Product Level 2',  property: 'prodLevel2', value: '', required: true,},
     {label: 'Part Number',  property: 'partnumber', value: '', required: true,},
     {label: 'Description',  property: 'description', value: '', required: true,},
     {label: 'Quantity',  property: 'quantity', value: '', required: true,}, 
-    {label: 'Primary UOM',  property: 'primetyUOM', value: '', required: true,},
+    {label: 'Primary UOM',  property: 'primaryUOM', value: '', required: true,},
     {label: 'Price',  property: 'price', value: '', required: true,}, 
     ]; 
 
@@ -79,11 +79,16 @@ export default class Bl_manualItems extends LightningElement {
             .catch((error)=>{console.log('Error in Third Level'); console.log(error);})
         }
 
-
+        if (label == 'Product Level 3'){
+            label = 'prodLevel3';
+        }
         const index = this.listOfCaracteristics.findIndex(object => {return object.label === label;});
         if(index == -1){
             let propertyValue = label.toLowerCase(); 
             propertyValue = propertyValue.replace(/\s/g, '');
+            if (propertyValue == 'productlevel3'){
+                propertyValue = 'prodLevel3';
+            }
             this.listOfCaracteristics.push({label: label, value: value, property:propertyValue, required: false,});
             //console.log(this.listOfCaracteristics[this.listOfCaracteristics.length-1]);
 
@@ -96,12 +101,12 @@ export default class Bl_manualItems extends LightningElement {
         this.template.querySelectorAll('lightning-combobox').forEach(each => {each.value = undefined;});
         this.template.querySelectorAll('lightning-input').forEach(each => {each.value = undefined; each.checked = false;});
         this.template.querySelectorAll('lightning-input-rich-text').forEach(each => {each.value = '';});
-        this.listOfCaracteristics = [ {label: 'Product Level 1', property: 'productlevel1', value: '', required: true,}, 
-            {label: 'Product Level 2',  property: 'productlevel2', value: '', required: true,},
+        this.listOfCaracteristics = [ {label: 'Product Level 1', property: 'prodLevel1', value: '', required: true,}, 
+            {label: 'Product Level 2',  property: 'prodLevel2', value: '', required: true,},
             {label: 'Part Number',  property: 'partnumber', value: '', required: true,},
             {label: 'Description',  property: 'description', value: '', required: true,},
             {label: 'Quantity',  property: 'quantity', value: '', required: true,}, 
-            {label: 'Primary UOM',  property: 'primetyUOM', value: '', required: true,},
+            {label: 'Primary UOM',  property: 'primaryUOM', value: '', required: true,},
             {label: 'Price',  property: 'price', value: '', required: true,}, ]; 
             this.productLevel2Picklist = false;
             this.productLevel3Picklist = false;

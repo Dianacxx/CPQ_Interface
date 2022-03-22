@@ -47,7 +47,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 this.error = undefined;
                 this.isLoading = true; 
                 console.log('quoteLines String SUCCESS ');
-                //console.log('quoteLines String SUCCESS: '+ this.quotelinesString);
+                console.log('quoteLines String SUCCESS: '+ this.quotelinesString);
                 const payload = { 
                     dataString: this.quotelinesString,
                     auxiliar: 'newtable'
@@ -370,8 +370,11 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 if(quoteEdition[i].alternative == null || quoteEdition[i].alternative == 'null'){
                     quoteEdition[i].alternative = false;
                 } 
-                if(quoteEdition[i].stock == null || quoteEdition[i].alternative == 'null'){
+                if(quoteEdition[i].stock == null || quoteEdition[i].stock == 'null'){
                     quoteEdition[i].stock = false;
+                } 
+                if(quoteEdition[i].isNSP == null || quoteEdition[i].isNSP == 'null'){
+                    quoteEdition[i].isNSP = false;
                 } 
             }
             this.quotelinesString = JSON.stringify(quoteEdition);

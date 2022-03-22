@@ -120,6 +120,9 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                 if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
                     secondList.listunitprice = 1;
                 }
+                if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
+                    secondList.isNSP = false;
+                }
                 this.quotesAdded.push(secondList);
             }
         }
@@ -133,6 +136,9 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                 if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
                     secondList.listunitprice = 1;
                 }
+                if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
+                    secondList.isNSP = false;
+                }
                 this.quotesAdded.push(secondList);
             }
         }
@@ -144,6 +150,9 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                 secondList.stock = false;
                 if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
                     secondList.listunitprice = 1;
+                }
+                if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
+                    secondList.isNSP = false;
                 }
                 this.quotesAdded.push(secondList);
             }
@@ -158,6 +167,9 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                 if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
                     secondList.listunitprice = 1;
                 }
+                if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
+                    secondList.isNSP = false;
+                }
                 this.quotesAdded.push(secondList);
             }
         }
@@ -170,6 +182,9 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                 //console.log('LUPL'+secondList.listunitprice);
                 if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
                     secondList.listunitprice = 1;
+                }
+                if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
+                    secondList.isNSP = false;
                 }
                 this.quotesAdded.push(secondList);
             }
@@ -185,11 +200,12 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             if((list.alternative == null) || (list.alternative == 'null')){
                 list.alternative = false;
             }
+            if ((list.isNSP == null) || (list.isNSP == 'null')){
+                list.isNSP = false;
+            }
             this.quotesAdded.push(list);
         }
 
-
-        
         let stringQuotesAdded = JSON.stringify(this.quotesAdded);
         console.log('Quote ID: '+this.recordId);
         console.log('Quotelines before process: '+stringQuotesAdded); 
@@ -327,6 +343,9 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                 if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
                     secondList.listunitprice = 1;
                 }
+                if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
+                    secondList.isNSP = false;
+                }
                 this.quotesAdded.push(secondList);
             }
         }
@@ -340,10 +359,14 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                 if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
                     secondList.listunitprice = 1;
                 }
+                if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
+                    secondList.isNSP = false;
+                }
                 this.quotesAdded.push(secondList);
             }
         }
-        for (let list of this.girdDataFocTabAdd){            
+        for (let list of this.girdDataFocTabAdd){ 
+                       
             for (let secondList of list.listOfProducts){
                 secondList.quantity = 1;
                 secondList.netunitprice = 1;
@@ -351,6 +374,9 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                 secondList.stock = false;
                 if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
                     secondList.listunitprice = 1;
+                }
+                if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
+                    secondList.isNSP = false;
                 }
                 this.quotesAdded.push(secondList);
             }
@@ -365,6 +391,9 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                 if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
                     secondList.listunitprice = 1;
                 }
+                if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
+                    secondList.isNSP = false;
+                }
                 this.quotesAdded.push(secondList);
             }
         }
@@ -377,6 +406,9 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                 //console.log('LUPL'+secondList.listunitprice);
                 if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
                     secondList.listunitprice = 1;
+                }
+                if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
+                    secondList.isNSP = false;
                 }
                 this.quotesAdded.push(secondList);
             }
@@ -391,6 +423,9 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             }
             if((list.alternative == null) || (list.alternative == 'null')){
                 list.alternative = false;
+            }
+            if ((list.isNSP == null) || (list.isNSP == 'null')){
+                list.isNSP = false;
             }
             this.quotesAdded.push(list);
         }

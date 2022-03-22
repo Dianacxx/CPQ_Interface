@@ -40,7 +40,13 @@
                     </header>
                     <div class="slds-modal__content">
                         <div class="slds-var-p-around_small slds-align_absolute-center">
-                            <p style="font-size:160%;">HERE GOES NSP PRODUCTS VALUES</p>
+                            <template if:false={nspShowMessage}>
+                                This quote line has not NSP values. 
+                            </template>
+                            <template if:true={nspShowMessage}>
+                                HERE GOES THE NSP VALUES
+                            </template>
+                            
                         </div>
                     </div>
                     <footer class="slds-modal__footer">

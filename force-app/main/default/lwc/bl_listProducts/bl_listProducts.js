@@ -612,7 +612,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         filteredProductPrinter({filterValues: JSON.stringify(filters), level1: tabSelectedValue, filteredGrouping: this.trackList.lookupCode})
         .then((data)=>{
             //console.log('Products Filtered');
-            console.log(data);
+            //console.log(data);
             
             this.recordsAmount = data.length; 
             this.filterResults = data; 
@@ -774,21 +774,36 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     @track nspDisplayOnly = [];
     @track gettingNspFields = false; 
     @track nspLoading = false;
+
+    stubbedPatchPanel = [];
+
     saveLookingNSP(){
         //console.log('Tab: '+this.tabSelected + 'LookupCode: ' +this.trackList.lookupCode)
+        this.stubbedPatchPanel = [];
+        if(this.trackList.lookupCode == 'Patch Panels'){
+            this.allReviews.forEach(products => {
+                if (products.Product_Type__c == 'Patch Panel - Stubbed') {
+                    this.stubbedPatchPanel.push(products); 
+                    console.log('YES PP Stubbed');
+                }
+            });
+        }
+        console.log('stubbedPatchPanel '+ JSON.stringify(this.stubbedPatchPanel)); 
+        
+        //Patch Panel – Stubbed HAS NSP VALUES
         if ( 
         ((this.tabSelected == 'ACA') && ((this.trackList.lookupCode != 'Copperclad'))) || 
         ((this.tabSelected == 'Fiber Optic Cable') && ( (this.trackList.lookupCode == 'Premise Cable') || 
         (this.trackList.lookupCode == 'Loose Tube Cable') || (this.trackList.lookupCode == 'ADSS Cable')) )||
         ((this.tabSelected == 'Connectivity') && ( (this.trackList.lookupCode == 'Cable Assemblies') || (this.trackList.lookupCode == 'Patch Panels') ))
         ){
-           
+            
             this.popupNSP = true;
             this.listNSP = JSON.parse(JSON.stringify(this.allReviews));
             //console.log('NSP Val 0')
-            console.log(this.listNSP[0]); 
+            //console.log(this.listNSP[0]); 
             let i = 1;
-            console.log('ID sent: '+this.listNSP[0].idTemporal)
+            //console.log('ID sent: '+this.listNSP[0].idTemporal);
             for (let nsp of this.listNSP){
                 nsp['tabNsp'] = i; 
                 i += 1;
@@ -894,6 +909,9 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         }
         this.listNSP[this.firstNSP-1][event.target.name] = event.target.value; 
 
+
+        //THIS CODE IS TO MAKE SURE THAT EVERY NSP FIELD IS FILLED FOR EACH PRODUCT ADDED. 
+        /*
         let indNSP = this.checkNSPFields.findIndex(element => element.field ==  event.target.name);
         if (indNSP != -1){
             this.checkNSPFields[indNSP]['fill'] = true; 
@@ -914,21 +932,33 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             console.log('ALL porperties done!');
             this.checkNSPFields = [];
         } 
+        */
         
     }
 
     saveAndExitNSPFilteredModeal(){
         let auxQuoteLines = JSON.parse(JSON.stringify(this.listNSP)); 
+        //console.log(Object.getOwnPropertyNames(this.listNSP[0]));
         let auxQuoteLinesLength  = auxQuoteLines.length; 
         for(let i=0; i<auxQuoteLines.length; i++){
             let auxId = auxQuoteLines[i].Id; 
             auxQuoteLines[i].Id = auxQuoteLines[i].idTemporal; 
             auxQuoteLines[i].idTemporal = auxId; 
             auxQuoteLines[i]['filtered_grouping__c'] = this.trackList.lookupCode; 
+            if(auxQuoteLines[i].Mix_Fiber_Count_1__c == 1){
+                console.log('MIX 1'); 
+                auxQuoteLines[i].Mix_Fiber_Count_1__c = '1';
+            }
+            if(auxQuoteLines[i].Mix_Fiber_Count_2__c == 1){
+                console.log('MIX 2'); 
+                auxQuoteLines[i].Mix_Fiber_Count_2__c = '1';
+            }
+            //auxQuoteLines[i].Mix_Fiber_Count_2__c
         }
+
         let trackListInternal = JSON.parse(JSON.stringify(this.trackList));
         let listToDisplayInternal = JSON.parse(JSON.stringify(this.listToDisplayAdd));
-        console.log('Before QL NSP¨: '+ JSON.stringify(auxQuoteLines));
+        console.log('Before QL NSP: '+ JSON.stringify(auxQuoteLines));
         
         //HERE THE NSP
     

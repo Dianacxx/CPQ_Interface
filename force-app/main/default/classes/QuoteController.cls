@@ -147,7 +147,7 @@ public with sharing class QuoteController {
         List<Id> tiersIDs = new List<Id>();
         Map<Id, WrappersClass.DiscountTierWrapperClass> tiersMap = new Map<Id, WrappersClass.DiscountTierWrapperClass>();
 
-        List<SBQQ__QuoteLine__c> quoteLines = [SELECT Id,Name, SBQQ__DiscountTier__c,SBQQ__Product__r.Name,SBQQ__Product__c,SBQQ__Quantity__c,SBQQ__Description__c,UOM__c,SBQQ__Discount__c,SBQQ__ListPrice__c,SBQQ__NetPrice__c,SBQQ__NetTotal__c,BL_Billing_Tolerance__c,BL_Source__c,BL_Destination__c,BL_Alternative_Indicator__c,BL_NSP_Offering_Details__c,ApprovalStatus__c,SBQQ__BillingType__c,SBQQ__ComponentTotal__c,SBQQ__EndDate__c,Length__c,SBQQ__OriginalPrice__c,Package_Type__c,SBQQ__VolumeDiscount__c FROM SBQQ__QuoteLine__c WHERE SBQQ__Quote__c =: quoteId AND SBQQ__ProductOption__c = null];
+        List<SBQQ__QuoteLine__c> quoteLines = [SELECT Id,Name,is_NSP__c, SBQQ__DiscountTier__c,SBQQ__Product__r.Name,SBQQ__Product__c,SBQQ__Quantity__c,SBQQ__Description__c,UOM__c,SBQQ__Discount__c,SBQQ__ListPrice__c,SBQQ__NetPrice__c,SBQQ__NetTotal__c,BL_Billing_Tolerance__c,BL_Source__c,BL_Destination__c,BL_Alternative_Indicator__c,BL_NSP_Offering_Details__c,ApprovalStatus__c,SBQQ__BillingType__c,SBQQ__ComponentTotal__c,SBQQ__EndDate__c,Length__c,SBQQ__OriginalPrice__c,Package_Type__c,SBQQ__VolumeDiscount__c FROM SBQQ__QuoteLine__c WHERE SBQQ__Quote__c =: quoteId AND SBQQ__ProductOption__c = null];
         for (SBQQ__QuoteLine__c line : quoteLines) {
             tiersIDs.add(line.SBQQ__DiscountTier__c);
         }
@@ -205,6 +205,7 @@ public with sharing class QuoteController {
             wrapper.originalPrice = line.SBQQ__OriginalPrice__c;
             wrapper.packageType = line.Package_Type__c;
             wrapper.volumeDiscount = line.SBQQ__VolumeDiscount__c;
+            wrapper.isNSP = line.is_NSP__c;
             if (relatedTier != null) {
                 wrapper.tiers = json.serialize(relatedTier);
             }
@@ -224,9 +225,9 @@ public with sharing class QuoteController {
     @AuraEnabled (cacheable = true)
     public static String printNotes (String quoteId){
         List<WrappersClass.NoteWrapperClass> noteWrapperList = new List<WrappersClass.NoteWrapperClass>();
-        // QuoteReader quoteReader = new QuoteReader();
-        // QuoteModel quote = quoteReader.read(quoteId);
-        // QuoteLineModel[] quoteLines = quote.getLineItems();
+        QuoteReader quoteReader = new QuoteReader();
+        QuoteModel quote = quoteReader.read(quoteId);
+        QuoteLineModel[] quoteLines = quote.getLineItems();
         Map<String,Product2> prodMap= new Map <String,Product2>();
         List<String> notesList = new List<String>();
 
@@ -234,14 +235,14 @@ public with sharing class QuoteController {
         Map<String, Schema.SObjectField> fieldMap = SBQQ__QuoteLine__c.sObjectType.getDescribe().fields.getMap();
         Set<String> setFieldNames = fieldMap.keySet();
         list<String> lstFieldNames = new List<String>(setFieldNames);
-        List<SBQQ__QuoteLine__c> quoteLines = Database.query('SELECT SBQQ__Product__c, SBQQ__Product__r.id ' + String.join(lstFieldNames, ',') + ' FROM SBQQ__QuoteLine__c WHERE SBQQ__Quote__c =: quoteId');
+        // List<SBQQ__QuoteLine__c> quoteLines = Database.query('SELECT SBQQ__Product__c, SBQQ__Product__r.id ' + String.join(lstFieldNames, ',') + ' FROM SBQQ__QuoteLine__c WHERE SBQQ__Quote__c =: quoteId');
 
-        for (SBQQ__QuoteLine__c line : quoteLines) {
-            prodMap.put(line.SBQQ__Product__r.id, line.SBQQ__Product__r);
-        }
-        // for (QuoteLineModel line : quoteLines) {
-        //     prodMap.put(line.record.SBQQ__Product__r.id, line.record.SBQQ__Product__r);
+        // for (SBQQ__QuoteLine__c line : quoteLines) {
+        //     prodMap.put(line.SBQQ__Product__r.id, line.SBQQ__Product__r);
         // }
+        for (QuoteLineModel line : quoteLines) {
+            prodMap.put(line.record.SBQQ__Product__r.id, line.record.SBQQ__Product__r);
+        }
 
         List<AFL_Note__c> noteList = [SELECT ID, Quote_Note_Type__c,BL_Product__c,BL_Product__r.Id, Note_Text__c FROM AFL_Note__c WHERE BL_Product__c IN : prodMap.values()];
         Map<Id,List<AFL_Note__c>> noteMap = new Map<Id,List<AFL_Note__c>>();
@@ -492,6 +493,7 @@ public with sharing class QuoteController {
 
             wrapper.productid = (Id)prodMap.get('Id');
             wrapper.product = (String)prodMap.get('Name');
+            wrapper.isNSP = true;
             System.debug('length value: ' + wrapper.length);
             linesToPrint.add(wrapper);
         }
@@ -725,6 +727,7 @@ public with sharing class QuoteController {
                     newQuoteLine.SBQQ__Discount__c = line.additionaldiscount;
                     newQuoteLine.AdditionalDiscountUnit__c = 'Percent';
                     newQuoteLine.SBQQ__NetPrice__c = line.netunitprice;
+                    newQuoteLine.is_NSP__c = line.isNSP;
                     newQuoteLine.SBQQ__ListPrice__c = line.listunitprice;
                     newQuoteLine.BL_Billing_Tolerance__c = line.billingtolerance;
                     newQuoteLine.BL_Source__c = line.source;
@@ -743,7 +746,7 @@ public with sharing class QuoteController {
                     newQuoteLine.Mix_Fiber_Type_2__c = line.fiberType2;
                     newQuoteLine.Region_Code__c = line.regionCode;
                     newQuoteLine.Length__c = line.length;
-                    newQuoteLine.Length_UOM__c = line.primaryUOM;
+                    newQuoteLine.Primary_UOM__c = line.primaryUOM;
                     newQuoteLine.Color__c = line.color;
                     newQuoteLine.Subunit_Color__c = line.subUnitColor; 
                     newQuoteLine.Jacket_Print__c = line.jacketPrint; 
@@ -757,6 +760,9 @@ public with sharing class QuoteController {
                     newQuoteLine.SBQQ__SpecialPrice__c = line.price;
                     newQuoteLine.SBQQ__PackageProductCode__c = line.partnumber;
                     newQuoteLine.Line_Note__c = line.linenote;
+                    newQuoteLine.SBQQ__UnitCost__c = line.unitcost;
+                    newQuoteLine.Max_Length_on_Steel__c = line.maxlengthonsteel;
+                    newQuoteLine.Max_Length_on_Wood__c = line.maxlengthonwood;
                     //PRICE? PART NUMBER?
                     
                     
@@ -1918,6 +1924,7 @@ public with sharing class QuoteController {
             wrapper.regionCode = relatedProd.regionCode;
             wrapper.primaryUOM = relatedProd.primaryUOM;
             wrapper.length = relatedProd.lenght;
+            wrapper.isNSP = true;
 
             linesToPrint.add(wrapper); 
 
@@ -1933,7 +1940,7 @@ public with sharing class QuoteController {
     }
 
      @AuraEnabled
-    //Creates quote lines from the NSP products
+    //displays the levels on the manual items screen depeneding on the previous value
     public static String displayLevelsOptions(String level,String selection){
         Schema.sObjectType sobject_type = SBQQ__QuoteLine__c.getSObjectType();
         Map<String, Schema.SObjectField> theQLFieldMap = sobject_type.getDescribe().fields.getMap(); //The fields map of the quote Line object
@@ -1960,10 +1967,8 @@ public with sharing class QuoteController {
         }else if (level == 'level 4'){
             List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(qLineFields.get('ProdLevel4'),selection);
             filtersMap.put('ProdLevel4',pickListValues);
-        }else if (level == 'UOM'){
-            List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(qLineFields.get('UOM'),selection);
-            filtersMap.put('UOM',pickListValues);
         }
+        
 
         for(String filter : filtersMap.keyset()){
             WrappersClass.FilteringWrappingClass wrapper = new WrappersClass.FilteringWrappingClass();
@@ -1985,61 +1990,5 @@ public with sharing class QuoteController {
         }
         String filtersToAdd = JSON.serialize(filtersWrapperToShow);
         return filtersToAdd;
-    }
-    
-    @AuraEnabled
-    // @Future
-    //Creates quote lines from the NSP products
-    public static void cloneConfigurationProds(String data){
-        ProductReader reader = new ProductReader();
-        List<ConfigurationModel> optionConfigInfo = new List<ConfigurationModel>();
-
-        // ProductModel product = reader.read('01t8A000007c76KQAQ','01sA0000000TiZnIAK','USD');
-        ProductModel product = reader.read('01t8A000007cATOQA2','01sA0000000TiZnIAK','USD');
-        QuoteReader reader1 = new QuoteReader();
-        List<SBQQ__QuoteLine__c> linesToUps = new List<SBQQ__QuoteLine__c>();
-        QuoteModel quote = reader1.read('a6T8A000000rbuLUAQ');
-        List<String> options = new List<String>{'a6I8A000000DHD0UAO','a6I8A000000DHD4UAO','a6I8A000000DHD6UAO','a6I8A000000DHD8UAO','a6I8A000000DHDBUA4','a6I8A000000DHDDUA4','a6I8A000000DHDVUA4', 'a6I8A000000DHDmUAO','a6I8A000000DHDtUAO','a6I8A000000DHE0UAO'};
-        // List<String> options = new List<String>{'a6I8A000000DGM3UAO','a6I8A000000DHYkUAO','a6I8A000000DHYZUA4','a6I8A000000DGM9UAO','a6I8A000000DGMBUA4','a6I8A000000DGMDUA4','a6I8A000000DGMUUA4','a6I8A000000DGMZUA4','a6I8A000000DGMrUAO'};
-        for(String option : options){
-            ConfigurationModel oTempConfgModel = new ConfigurationModel();
-            oTempConfgModel.configuredProductId = '01t8A000007cATOQA2';
-            // oTempConfgModel.configuredProductId = '01t8A000007c76KQAQ';
-            oTempConfgModel.optionId = option;
-            oTempConfgModel.configured = false;
-            oTempConfgModel.changedByProductActions = false;
-            oTempConfgModel.isDynamicOption = false;
-            oTempConfgModel.isUpgrade = false;
-            oTempConfgModel.priceEditable = false;
-            SBQQ__ProductOption__c tempOptionData = [Select Id, SBQQ__OptionalSKU__c, SBQQ__Selected__c, SBQQ__Quantity__c from SBQQ__ProductOption__c where Id =: option];
-            System.debug('ID: ' +option+ ' option data ' + tempOptionData);
-            tempOptionData.SBQQ__Selected__c = true; //set selected to true
-            tempOptionData.SBQQ__Quantity__c = 5.0; //optional to modify quantity
-            oTempConfgModel.optionData=tempOptionData;
-            oTempConfgModel.configurationData = new SBQQ__ProductOption__c();
-            oTempConfgModel.optionConfigurations = new List<ConfigurationModel>();
-            oTempConfgModel.validationMessages = new List<String>{};
-            optionConfigInfo.add(oTempConfgModel);
-
-        }
-        
-        product.configuration.optionConfigurations.addAll(optionConfigInfo);
-        product.configuration.configured = true; //IMPORTANT! This says that the bundle was manually configured
-        product.configuration.changedByProductActions = true;
-        List<ProductModel> productModels = new List<ProductModel>();
-        productModels.add(product);
-        ProductAdder adder = new ProductAdder();
-        QuoteModel quoteWithProducts = adder.add(quote, productModels, 0);
-        System.debug(quoteWithProducts);
-        quoteWithProducts.lineItems[0].record.SBQQ__Quantity__c = 1;
-        // QuoteCalculator calculator = new QuoteCalculator();
-        // calculator.calculate(quoteWithProducts, 'MyCallback');
-        for(QuoteLineModel line : quoteWithProducts.lineItems){
-            // line.record.SBQQ__Quote__c = 'a6T8A000000rbuLUAQ';
-            linesToUps.add(line.record);
-        }
-        upsert linesToUps;
-        System.debug('Final heap size: ' +  Limits.getHeapSize());
-	    System.debug('Final CPU time used: ' +  Limits.getCPUTime() + ' CPU time limit ' + Limits.getLimitCpuTime());
     }
 }

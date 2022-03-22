@@ -68,28 +68,30 @@ export default class Bl_dataTable extends LightningElement {
             for (let i=0; i<this.fieldSetLength;i++){
                 if (this.tabSelected == 'Home'){
                     if (this.fieldSet[i].key == 'HOME'){
-                        //console.log('field Set properties: '+ Object.getOwnPropertyNames(this.fieldSet[i]));
-                        //console.log('Label: '+this.fieldSet[i].label);
-                        //console.log('Property: '+ this.fieldSet[i].property)
-                        //console.log('Required '+this.fieldSet[i].required)
-                        //console.log('Editable: '+this.fieldSet[i].editable);
-                        //console.log('Api name: '+this.fieldSet[i].apiName);
+                        console.log('field Set properties: '+ Object.getOwnPropertyNames(this.fieldSet[i]));
+                        console.log('Label: '+this.fieldSet[i].label);
+                        console.log('Property: '+ this.fieldSet[i].property)
+                        console.log('Required '+this.fieldSet[i].required)
+                        console.log('Editable: '+this.fieldSet[i].editable);
+                        console.log('Api name: '+this.fieldSet[i].apiName);
                         let labelName;
                         this.fieldSet[i].required ? labelName = '*'+this.fieldSet[i].label: labelName = this.fieldSet[i].label;
                         this.fieldSet[i].property == 'additionaldisc.(%)' ? this.fieldSet[i].property = 'additionaldiscount' : this.fieldSet[i].property; 
                         //console.log('added: '+COLUMNS_HOME.length); 
-                        if (this.fieldSet[i].property == 'product'){
+                        if (this.fieldSet[i].property == 'quotelinename'){
                             COLUMNS_HOME.splice(indexDes, 0, { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, wrapText: false, },);
                             //console.log('Inserting before description');
                         }
                         else {
                             if(this.fieldSet[i].property == 'quantity' || this.fieldSet[i].property == 'additionaldiscount'){
-                                COLUMNS_HOME.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, type: 'number' },);
+                                COLUMNS_HOME.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, type: 'number',hideDefaultActions: true },);
                             } else {
-                                COLUMNS_HOME.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, },);
                                 if(this.fieldSet[i].property == 'description'){
                                     indexDes = i; 
+                                    COLUMNS_HOME.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true,},);
                                     //console.log('Index description '+indexDes);
+                                } else {
+                                    COLUMNS_HOME.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, hideDefaultActions: true},);
                                 }
                             }
                         }
@@ -398,14 +400,7 @@ export default class Bl_dataTable extends LightningElement {
     //Save when table is edited and clicked in save button.
     handleSaveEdition(event){
         this.quoteLinesEdit = event.detail.draftValues; 
-        /*
-        for (let j = 0; j<this.quoteLines.length;j++){
-            console.log('quoteLine id: '+ this.quoteLines[j].id + ' - name: ' + this.quoteLines[j].name);
-        }
-        for (let j = 0; j<this.quoteLinesEdit.length;j++){
-            console.log('quoteLinesEdit id: '+ this.quoteLinesEdit[j].id+ ' - name: ' + this.quoteLinesEdit[j].name);
-        }        
-        */
+        
         if (!(this.tabSelected == 'Notes') && !(this.tabSelected == 'Line')){
             for (let i =0; i< this.quoteLinesEdit.length; i++){
                 //console.log('Id editada: '+this.quoteLinesEdit[i].id);
@@ -492,18 +487,24 @@ export default class Bl_dataTable extends LightningElement {
         this.deleteClick = false;
     }
 
+    @track nspShowMessage = false; 
     //Delete Row, NSP and See Tiers/Contracts - when click row buttons
     handleRowAction(event){
+        this.dataRow = event.detail.row;
         switch (event.detail.action.name){
             case 'Delete':
                 this.deleteClick = true; 
-                this.dataRow = event.detail.row;
             break;
             case 'Tiers':
                 this.popUpTiers = true;
             break;
             case 'NSP':
                 this.nspProduct = true; 
+                if(this.dataRow.isNSP){
+                    this.nspShowMessage = true;
+                } else {
+                    this.nspShowMessage = false;
+                }
             break;
             default: 
                 alert('There is an error trying to complete this action');
