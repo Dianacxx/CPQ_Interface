@@ -1,11 +1,41 @@
 <template>
     <div class="slds-p-around_medium lgc-bg">
+        <!--
         <div class="slds-m-bottom_small">
             <lightning-button label="Collapse All" onclick={clickToCollapseAll} class="slds-m-right_small"></lightning-button>
             <lightning-button label="Expand All" onclick={clickToExpandAll}></lightning-button>
         </div>
+        
         <lightning-tree-grid class="slds-truncate" columns = {columns} data = {gridData} key-field = "Id"
             hide-checkbox-column = true  onrowaction={handleRowAction} >
         </lightning-tree-grid>
+        -->
+        
+            <table aria-multiselectable="true" class="slds-table slds-no-row-hover slds-table_bordered slds-table_fixed-layout slds-table_resizable-cols" role="grid" >
+                <thead>
+                  <tr class="slds-line-height_reset">
+                      <th>VAR 1</th>
+                      <th>VAR 2</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template for:each={gridData} for:item="qlorder">
+                    <tr key={qlorder.Name} onchange={Change} draggable="true" ondrop={Drop} ondragstart={DragStart} ondragover={DragOver}>
+                      <td role="gridcell">
+                        <div class="slds-cell-wrap">{qlorder.Name}</div>
+                      </td>
+                    <td role="gridcell">
+                        <lightning-button variant="base" label={qlorder.Name} title="See Table" onclick={handleClick} class="slds-m-left_x-small"></lightning-button>
+                    </td> 
+                    <td>
+                        <template if:true={qlorder.showTable}>
+                            <lightning-datatable key-field="Name" key={qlorder.Name} data={gridData} columns={columns} >
+                            </lightning-datatable>
+                        </template>
+                    </td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
     </div>
 </template>

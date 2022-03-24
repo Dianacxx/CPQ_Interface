@@ -2,11 +2,10 @@ import { LightningElement, api, track, wire} from 'lwc';
 import displayFieldSet from '@salesforce/apex/QuoteController.displayFieldSet'; 
 import addQuoteLine from '@salesforce/apex/QuoteController.addQuoteLine';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import NSPAdditionalFields from '@salesforce/apex/QuoteController.NSPAdditionalFields'; 
 
 import { subscribe, publish, MessageContext } from 'lightning/messageService';
 import UPDATE_INTERFACE_CHANNEL from '@salesforce/messageChannel/update_Interface__c';
-
-const DELAY = 100;
 
 export default class Bl_dataTable extends LightningElement {
     @api recordId;
@@ -68,12 +67,12 @@ export default class Bl_dataTable extends LightningElement {
             for (let i=0; i<this.fieldSetLength;i++){
                 if (this.tabSelected == 'Home'){
                     if (this.fieldSet[i].key == 'HOME'){
-                        console.log('field Set properties: '+ Object.getOwnPropertyNames(this.fieldSet[i]));
-                        console.log('Label: '+this.fieldSet[i].label);
-                        console.log('Property: '+ this.fieldSet[i].property)
-                        console.log('Required '+this.fieldSet[i].required)
-                        console.log('Editable: '+this.fieldSet[i].editable);
-                        console.log('Api name: '+this.fieldSet[i].apiName);
+                        //console.log('field Set properties: '+ Object.getOwnPropertyNames(this.fieldSet[i]));
+                        //console.log('Label: '+this.fieldSet[i].label);
+                        //console.log('Property: '+ this.fieldSet[i].property)
+                        //console.log('Required '+this.fieldSet[i].required)
+                        //console.log('Editable: '+this.fieldSet[i].editable);
+                        //console.log('Api name: '+this.fieldSet[i].apiName);
                         let labelName;
                         this.fieldSet[i].required ? labelName = '*'+this.fieldSet[i].label: labelName = this.fieldSet[i].label;
                         this.fieldSet[i].property == 'additionaldisc.(%)' ? this.fieldSet[i].property = 'additionaldiscount' : this.fieldSet[i].property; 
@@ -355,7 +354,7 @@ export default class Bl_dataTable extends LightningElement {
         .then((data) => {
             console.log('Add Product DATA: '+ data); 
             newQuotelines = JSON.parse(data); 
-            //console.log('New product object: '+ Object.getOwnPropertyNames(newQuoteline[0]));
+            console.log('New product object: '+ Object.getOwnPropertyNames(newQuotelines[0]));
             for (let i=0; i< newQuotelines.length; i++){
                 //To create auxiliar ID and Name
                 randomId = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 10);
@@ -365,6 +364,7 @@ export default class Bl_dataTable extends LightningElement {
                 newQuotelines[i].quantity = 1;
                 newQuotelines[i].netunitprice = 1;
                 newQuotelines[i].alternative = false;
+                newQuotelines[i].quotelinename = newQuotelines[i].product;
                 this.quoteLines = [...this.quoteLines, newQuotelines[i]];
             }
 
@@ -502,6 +502,7 @@ export default class Bl_dataTable extends LightningElement {
                 this.nspProduct = true; 
                 if(this.dataRow.isNSP){
                     this.nspShowMessage = true;
+                    this.showNSPValues();
                 } else {
                     this.nspShowMessage = false;
                 }
@@ -520,9 +521,68 @@ export default class Bl_dataTable extends LightningElement {
     }
 
     //NSP Products
+    @track nspValues = [];
+    @track nspOptions = []; 
+    @track nspInputs = [];
+    showNSPValues(){
+        NSPAdditionalFields({productId: this.dataRow.productid })
+        .then((data)=>{
+            console.log('NSP VALUES');
+            console.log(data);
+            let nspVal = JSON.parse(data); 
+            let values = [];
+            let labels = [];
+            let types = [];
+            let optionsP = [];
+            for(let nsp of nspVal){
+                //console.log('LABEL '+nsp.label); 
+                //console.log('LABEL BETTER '+(nsp.label.toLowerCase()).replaceAll(/\s/g,'')); 
+                values.push((nsp.label.toLowerCase()).replaceAll(/\s/g,''));
+                labels.push(nsp.label); 
+                types.push(nsp.type); 
+                optionsP.push(JSON.parse(nsp.options));
+            }
+            //console.log(values);
+            let prop = Object.getOwnPropertyNames(this.dataRow); 
+            let properties = []; 
+            for(let i=0; i<prop.length; i++){
+                if( (values.findIndex(z => z == prop[i].toLowerCase())) !== -1){
+                    properties.push({value: prop[i].toLowerCase(), property: prop[i]});
+                }   
+            }
+            //console.log(properties);
+            for(let i =0; i<properties.length; i++){
+                //console.log(JSON.stringify(this.dataRow));
+                //console.log('1 '+this.dataRow[properties[i].property]);
+                //console.log('2 '+properties[i].property);
+                this.nspValues.push(labels[i]+': '+this.dataRow[properties[i].property]);
+                console.log('Type: '+ types[i])
+                if(types[i] == 'PICKLIST'){
+                    this.nspOptions.push({label:labels[i], options: optionsP[i],
+                    }); 
+                } else {
+                    this.nspInputs.push({label: labels[i],}); 
+                }
+                
+                console.log('Showing: '+ this.nspValues[this.nspValues.length-1]);
+            }
+            
+            
+            
+        })
+        .catch((error)=>{
+            console.log('NSP VALUES ERROR');
+            console.log(error);
+        })
+    }
+
+
     @track nspProduct = false;
     closeNsp(){
         this.nspProduct = false; 
+        this.nspValues = [];
+        this.nspOptions = [];
+        this.nspInputs = [];
     }
 
     //Pagination

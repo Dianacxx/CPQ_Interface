@@ -41,13 +41,31 @@
                     <div class="slds-modal__content">
                         <div class="slds-var-p-around_small slds-align_absolute-center">
                             <template if:false={nspShowMessage}>
-                                This quote line has not NSP values. 
+                                <p style="font-size: 18px;">This quote line has not NSP values.</p>
                             </template>
                             <template if:true={nspShowMessage}>
-                                HERE GOES THE NSP VALUES
-                            </template>
+                                    <template for:each={nspValues} for:item="nspRead">
                             
+                                        <p key={nspRead} class="slds-var-m-right_medium">{nspRead}</p>
+
+                                    </template>
+                                <template if:true={nspOptions}>
+                                    <template for:each={nspOptions} for:item="nspChange">
+                                        <lightning-combobox key={nspChange.label} name={nspChange.label} label={nspChange.label}
+                                            options={nspChange.options} onchange={changingNSP}></lightning-combobox>
+                                        
+                                    </template>
+                                </template> 
+                                <template if:true={nspInputs}>
+                                    <template for:each={nspInputs} for:item="nspChangeInputs">
+                                        <lightning-input key={nspChangeInputs}  type="number" name={nspChangeInputs.label} label={nspChangeInputs.label}
+                                            onchange={changingNSP} ></lightning-input>
+                                    </template>
+                                </template>
+                            </template>
                         </div>
+                        <div class="slds-var-m-top-x_large slds-var-p-around_x-large lgc-bg slds-align_absolute-center" 
+                            style="background-color:rgb(255, 255, 255);"></div>
                     </div>
                     <footer class="slds-modal__footer">
                         <lightning-button variant="brand" label="Cancel" onclick={closeNsp} class="slds-p-around_x-small slds-m-right_small"></lightning-button>

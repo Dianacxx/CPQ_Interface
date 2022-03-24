@@ -12,8 +12,8 @@ export default class Bl_Examples extends LightningElement  {
         this.columns = [
             { type: 'text', fieldName: 'Name', label: 'Level 2' , initialWidth: 350, editable: true,},
             { type: 'text', fieldName: 'FirstName', label: 'Level 3', initialWidth: 200, editable: true,},
-            { type: 'text', fieldName: '_children.Level', label: 'Level 4', initialWidth: 200, editable: true,},
-            { type: 'action', typeAttributes: { rowActions: this.getRowActions }, initialWidth: 50, },
+            //{ type: 'text', fieldName: '_children.Level', label: 'Level 4', initialWidth: 200, editable: true,},
+            //{ type: 'action', typeAttributes: { rowActions: this.getRowActions }, initialWidth: 50, },
         ]
         fetchAccounts()
         .then((data) => {
@@ -22,7 +22,7 @@ export default class Bl_Examples extends LightningElement  {
                 for ( var i = 0; i < tempData.length; i++ ) {
                     tempData[ i ]._children = tempData[ i ][ 'Contacts' ];
                     console.log('Childrens: '+ Object.getOwnPropertyNames(tempData[ i ]._children));
-
+                    tempData[ i ].showTable = false; 
                     for(var j =0;j<tempData[ i ]._children.length; j++){
                         tempData[ i ]._children[j]._children = {"Level":"Level 4" };
                         console.log('Nietos: '+  tempData[ i ]._children[j]._children); 
@@ -65,6 +65,11 @@ export default class Bl_Examples extends LightningElement  {
           }
       }
 
+    handleClick(event){
+        console.log(event.target.label); 
+        let row = this.gridData.findIndex(x => x.Name == event.target.label); 
+        this.gridData[row].showTable ? this.gridData[row].showTable = false : this.gridData[row].showTable = true; 
+    } 
     //Tree View Collapse or Expand
     clickToExpandAll( e ) {
         const grid =  this.template.querySelector( 'lightning-tree-grid' );

@@ -43,7 +43,7 @@ public with sharing class QuoteController {
             wrapper.key = 'DETAIL';
             wrapper.editable = true;
             wrapper.label = fieldSetMember.getLabel();
-            wrapper.required = fieldSetMember.getRequired();
+            wrapper.required = fieldSetMember.getRequired(); 
             wrapper.property = labelWithoutSpaces.toLowerCase();
             wrapper.apiName = fieldSetMember.getFieldPath();
             
@@ -147,7 +147,11 @@ public with sharing class QuoteController {
         List<Id> tiersIDs = new List<Id>();
         Map<Id, WrappersClass.DiscountTierWrapperClass> tiersMap = new Map<Id, WrappersClass.DiscountTierWrapperClass>();
 
-        List<SBQQ__QuoteLine__c> quoteLines = [SELECT Id,Name,is_NSP__c, SBQQ__DiscountTier__c,SBQQ__Product__r.Name,SBQQ__Product__c,SBQQ__Quantity__c,SBQQ__Description__c,UOM__c,SBQQ__Discount__c,SBQQ__ListPrice__c,SBQQ__NetPrice__c,SBQQ__NetTotal__c,BL_Billing_Tolerance__c,BL_Source__c,BL_Destination__c,BL_Alternative_Indicator__c,BL_NSP_Offering_Details__c,ApprovalStatus__c,SBQQ__BillingType__c,SBQQ__ComponentTotal__c,SBQQ__EndDate__c,Length__c,SBQQ__OriginalPrice__c,Package_Type__c,SBQQ__VolumeDiscount__c FROM SBQQ__QuoteLine__c WHERE SBQQ__Quote__c =: quoteId AND SBQQ__ProductOption__c = null];
+        Map<String, Schema.SObjectField> fieldMap = SBQQ__QuoteLine__c.sObjectType.getDescribe().fields.getMap();
+        Set<String> setFieldNames = fieldMap.keySet();
+        list<String> lstFieldNames = new List<String>(setFieldNames);
+        // List<SBQQ__QuoteLine__c> quoteLines = [SELECT Id,Name,is_NSP__c,Quote_Line_Name__c, SBQQ__DiscountTier__c,SBQQ__Product__r.Name,SBQQ__Product__c,SBQQ__Quantity__c,SBQQ__Description__c,UOM__c,SBQQ__Discount__c,SBQQ__ListPrice__c,SBQQ__NetPrice__c,SBQQ__NetTotal__c,BL_Billing_Tolerance__c,BL_Source__c,BL_Destination__c,BL_Alternative_Indicator__c,BL_NSP_Offering_Details__c,ApprovalStatus__c,SBQQ__BillingType__c,SBQQ__ComponentTotal__c,SBQQ__EndDate__c,Length__c,SBQQ__OriginalPrice__c,Package_Type__c,SBQQ__VolumeDiscount__c FROM SBQQ__QuoteLine__c WHERE SBQQ__Quote__c =: quoteId AND SBQQ__ProductOption__c = null];
+        List<SBQQ__QuoteLine__c> quoteLines = Database.query('SELECT SBQQ__Product__r.Name, ' + String.join(lstFieldNames, ',') + ' FROM SBQQ__QuoteLine__c WHERE SBQQ__Quote__c =: quoteId AND SBQQ__ProductOption__c = null');
         for (SBQQ__QuoteLine__c line : quoteLines) {
             tiersIDs.add(line.SBQQ__DiscountTier__c);
         }
@@ -188,7 +192,9 @@ public with sharing class QuoteController {
                 wrapper.description = description.replaceAll('<[^>]*>','');
             }
             wrapper.uom = line.UOM__c;
-            wrapper.listUnitPrice = listPriceToRound.setScale(2); //Limit to digits.
+            if(listPriceToRound!=null){
+                wrapper.listUnitPrice = listPriceToRound.setScale(2); //Limit to digits.
+            }
             wrapper.additionalDiscount = line.SBQQ__Discount__c;
             wrapper.netUnitPrice = line.SBQQ__NetPrice__c;
             wrapper.netTotal = line.SBQQ__NetTotal__c;
@@ -205,7 +211,22 @@ public with sharing class QuoteController {
             wrapper.originalPrice = line.SBQQ__OriginalPrice__c;
             wrapper.packageType = line.Package_Type__c;
             wrapper.volumeDiscount = line.SBQQ__VolumeDiscount__c;
+            wrapper.productType = line.Product_Type__c;
+            if(line.is_NSP__c == true){
+                wrapper.color = line.Color__c;
+                wrapper.subUnitColor = line.Subunit_Color__c;
+                wrapper.jacketPrint = line.Jacket_Print__c;
+                wrapper.packagetype = line.Package_Type__c;
+                wrapper.packageCover = line.Package_Cover__c;
+                wrapper.fiberCount1 = line.Mix_Fiber_Count_1__c;
+                wrapper.fiberCount2 = line.Mix_Fiber_Count_2__c;
+                wrapper.fiberType1 = line.Mix_Fiber_Type_1__c;
+                wrapper.fiberType2 = line.Mix_Fiber_Type_2__c;
+                wrapper.regionCode = line.Region_Code__c;
+
+            }
             wrapper.isNSP = line.is_NSP__c;
+            wrapper.quotelinename = line.Quote_Line_Name__c;
             if (relatedTier != null) {
                 wrapper.tiers = json.serialize(relatedTier);
             }

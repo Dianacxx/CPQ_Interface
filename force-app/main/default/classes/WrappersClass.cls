@@ -68,6 +68,12 @@ public with sharing class WrappersClass {
         public Boolean stock {get;set;}
         public Decimal price {get;set;}
         public String linenote {get;set;}
+        public Integer maxlengthonsteel {get;set;}
+        public Integer maxlengthonwood {get;set;}
+        public Decimal unitcost {get;set;}
+        public Boolean isNSP {get;set;}
+        public String quotelinename {get;set;}
+        // public String primaryUOM {get;set;}
         
     }
 
