@@ -395,23 +395,34 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 console.log('editAndDeleteQuotes ERROR');
                 console.log(error);
                 let errorMessage;
-                if(error.hasOwnProperty("body")){
-                    if (error.body.hasOwnProperty("pageErrors")){
-                        if(error.body.pageErrors[0].hasOwnProperty('message')){
-                            errorMessage = error.body.pageErrors[0].message; 
-                        } else if (error.body.pageErrors[0].hasOwnProperty("statusCode")){
-                            errorMessage = error.body.pageErrors[0].statusCode; 
-                        } else {
-                            if (error.body.hasOwnProperty("fieldErrors")){
-                                errorMessage = 'Developer: Open console to see error message'
-                                console.log(error); 
+                if(error != undefined){
+                    if(error.body != undefined){
+                        if (error.body.pageErrors[0]!= undefined){
+                            if(error.body.pageErrors[0].message != undefined){
+                                errorMessage = error.body.pageErrors[0].message; 
+                                console.log(1);
+                            } else if (error.body.pageErrors[0].statusCode != undefined){
+                                console.log(2);
+                                errorMessage = error.body.pageErrors[0].statusCode; 
+                            } else {
+                                if (error.body.fieldErrors!= undefined){
+                                    console.log(3);
+                                    errorMessage = JSON.stringify(error.body.fieldErrors);
+                                    //console.log(error); 
+                                } else {
+                                    console.log(4);
+                                    errorMessage = 'Developer: Open console to see error message';
+                                }
                             }
+    
                         }
-
+                    } else {
+                        errorMessage = 'Developer: Open console to see error message'
                     }
                 } else {
-                    errorMessage = 'Developer: Open console to see error message'
+                    errorMessage = 'Undefined Error'; 
                 }
+                
                 //this.spinnerLoadingUI = false;
                 const evt = new ShowToastEvent({
                     title: 'Editing or Deleting ERROR',
@@ -461,21 +472,29 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 this.spinnerLoadingUI = false;
 
                 let errorMessage;
-                if(error.hasOwnProperty("body")){
-                    if (error.body.hasOwnProperty("pageErrors")){
-                        if(error.body.pageErrors[0].hasOwnProperty('message')){
-                            errorMessage = error.body.pageErrors[0].message; 
-                        } else if (error.body.pageErrors[0].hasOwnProperty("statusCode")){
-                            errorMessage = error.body.pageErrors[0].statusCode; 
-                        } else {
-                            if (error.body.hasOwnProperty("fieldErrors")){
-                                errorMessage = 'Developer: Open console to see error message'
-                                console.log(error); 
+                
+                if(error != undefined){
+                    if(error.body != undefined){
+                        if (error.body.pageErrors[0]!= undefined){
+                            if(error.body.pageErrors[0].message != undefined){
+                                errorMessage = error.body.pageErrors[0].message; 
+                            } else if (error.body.pageErrors[0].statusCode != undefined){
+                                errorMessage = error.body.pageErrors[0].statusCode; 
+                            } else {
+                                if (error.body.fieldErrors!= undefined){
+                                    errorMessage = JSON.stringify(error.body.fieldErrors);
+                                    //console.log(error); 
+                                } else {
+                                    errorMessage = 'Developer: Open console to see error message';
+                                }
                             }
+    
                         }
-                    } 
+                    } else {
+                        errorMessage = 'Developer: Open console to see error message'
+                    }
                 } else {
-                    errorMessage = 'Developer: Open console to see error message'
+                    errorMessage = 'Undefined Error'; 
                 }
 
 

@@ -35,40 +35,55 @@
             <section aria-modal="true" class="slds-modal slds-fade-in-open">
                 <div class="slds-modal__container ">
                     <header class="slds-modal__header">
-                        <h2 class="slds-text-heading_medium slds-hyphenate">NSP Product</h2>
+                        <h2 class="slds-text-heading_medium slds-hyphenate">NSP Product: {dataRow.quotelinename}</h2>
                         <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeNsp}></lightning-icon>
                     </header>
-                    <div class="slds-modal__content">
+                    <div class="slds-modal__content slds-p-around_medium">
                         <div class="slds-var-p-around_small slds-align_absolute-center">
                             <template if:false={nspShowMessage}>
-                                <p style="font-size: 18px;">This quote line has not NSP values.</p>
+                                <p style="font-size: 18px;" class="slds-align_absolute-center">This quote line has not NSP values.</p>
                             </template>
-                            <template if:true={nspShowMessage}>
-                                    <template for:each={nspValues} for:item="nspRead">
-                            
-                                        <p key={nspRead} class="slds-var-m-right_medium">{nspRead}</p>
-
-                                    </template>
-                                <template if:true={nspOptions}>
-                                    <template for:each={nspOptions} for:item="nspChange">
-                                        <lightning-combobox key={nspChange.label} name={nspChange.label} label={nspChange.label}
-                                            options={nspChange.options} onchange={changingNSP}></lightning-combobox>
-                                        
-                                    </template>
-                                </template> 
-                                <template if:true={nspInputs}>
-                                    <template for:each={nspInputs} for:item="nspChangeInputs">
-                                        <lightning-input key={nspChangeInputs}  type="number" name={nspChangeInputs.label} label={nspChangeInputs.label}
-                                            onchange={changingNSP} ></lightning-input>
-                                    </template>
-                                </template>
+                            <template if:false={showNSP}>
+                                <lightning-spinner alternative-text="Loading"></lightning-spinner>
+                            </template>
+                            <template if:true={nspShowMessage} class="slds-align_absolute-center">
+                                <div class="slds-grid slds-wrap slds-var-m-top_medium">
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <template for:each={nspValues} for:item="nspRead">
+                                            <lightning-layout key={nspRead.label} vertical-align="center" class="small">
+                                                <lightning-layout-item flexibility="auto" padding="around-small">
+                                                    <p class="slds-var-m-right_medium">{nspRead.label}: {nspRead.value}</p>
+                                                </lightning-layout-item>
+                                            </lightning-layout>
+                                        </template>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <template if:true={nspOptions}>
+                                            <template for:each={nspOptions} for:item="nspChange">
+                                                <lightning-combobox key={nspChange.label} name={nspChange.label} label={nspChange.label}
+                                                    options={nspChange.options} onchange={changingNSP}></lightning-combobox>
+                                            </template>
+                                        </template> 
+                                        <template if:true={nspInputs}>
+                                            <template for:each={nspInputs} for:item="nspChangeInputs">
+                                                <lightning-input key={nspChangeInputs}  type="number" name={nspChangeInputs.label} label={nspChangeInputs.label}
+                                                    onchange={changingNSP} ></lightning-input>
+                                            </template>
+                                        </template>
+                                    </div>
+                            </div>
                             </template>
                         </div>
-                        <div class="slds-var-m-top-x_large slds-var-p-around_x-large lgc-bg slds-align_absolute-center" 
-                            style="background-color:rgb(255, 255, 255);"></div>
+                        <template if:true={nspShowMessage}> <!--TO MAKE THE POP UP AJUST THE SIZE OF THE COMBOBOX LIST-->
+                            <template for:each={nspValues} for:item="nspDown">
+                                <div key={nspDown} class="slds-var-m-top-x_large slds-var-p-around_x-large lgc-bg slds-align_absolute-center" 
+                                style="background-color:rgb(255, 255, 255);"></div>
+                            </template> 
+                        </template>
+                        
                     </div>
                     <footer class="slds-modal__footer">
-                        <lightning-button variant="brand" label="Cancel" onclick={closeNsp} class="slds-p-around_x-small slds-m-right_small"></lightning-button>
+                        <lightning-button  variant="destructive-text" label="Cancel" onclick={closeNsp} class="slds-p-around_x-small slds-m-right_small"></lightning-button>
                     </footer>
                 </div>
             </section>

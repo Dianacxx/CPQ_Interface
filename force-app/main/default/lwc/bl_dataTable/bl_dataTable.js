@@ -524,11 +524,14 @@ export default class Bl_dataTable extends LightningElement {
     @track nspValues = [];
     @track nspOptions = []; 
     @track nspInputs = [];
+    @track showNSP = false;
+    properties = [];
     showNSPValues(){
+        this.showNSP = false;
         NSPAdditionalFields({productId: this.dataRow.productid })
-        .then((data)=>{
+        .then((data)=>{  
             console.log('NSP VALUES');
-            console.log(data);
+            //console.log(data);
             let nspVal = JSON.parse(data); 
             let values = [];
             let labels = [];
@@ -544,19 +547,20 @@ export default class Bl_dataTable extends LightningElement {
             }
             //console.log(values);
             let prop = Object.getOwnPropertyNames(this.dataRow); 
-            let properties = []; 
+            this.properties = []; 
             for(let i=0; i<prop.length; i++){
                 if( (values.findIndex(z => z == prop[i].toLowerCase())) !== -1){
-                    properties.push({value: prop[i].toLowerCase(), property: prop[i]});
+                    this.properties.push({value: prop[i].toLowerCase(), property: prop[i]});
                 }   
             }
             //console.log(properties);
-            for(let i =0; i<properties.length; i++){
+            for(let i =0; i<this.properties.length; i++){
                 //console.log(JSON.stringify(this.dataRow));
                 //console.log('1 '+this.dataRow[properties[i].property]);
                 //console.log('2 '+properties[i].property);
-                this.nspValues.push(labels[i]+': '+this.dataRow[properties[i].property]);
-                console.log('Type: '+ types[i])
+                this.nspValues.push({label: labels[i], value: this.dataRow[this.properties[i].property]});
+                //this.nspValues.push(labels[i]+': '+this.dataRow[properties[i].property]);
+                //console.log('Type: '+ types[i])
                 if(types[i] == 'PICKLIST'){
                     this.nspOptions.push({label:labels[i], options: optionsP[i],
                     }); 
@@ -564,11 +568,9 @@ export default class Bl_dataTable extends LightningElement {
                     this.nspInputs.push({label: labels[i],}); 
                 }
                 
-                console.log('Showing: '+ this.nspValues[this.nspValues.length-1]);
+                //console.log('Showing: '+ this.nspValues[this.nspValues.length-1]);
             }
-            
-            
-            
+            this.showNSP = true;
         })
         .catch((error)=>{
             console.log('NSP VALUES ERROR');
@@ -576,9 +578,45 @@ export default class Bl_dataTable extends LightningElement {
         })
     }
 
+    changingNSP(event){
+        //console.log(event.target.label); 
+        //console.log(event.target.value);
+        this.showNSP = false;
+        let prop = ((event.target.label).toLowerCase()).replaceAll(/\s/g,''); 
+        console.log('prop'+prop);
+        console.log(JSON.stringify(this.properties));
+        let indProp = this.properties.findIndex(x => x.value === prop);
+        console.log('indProp '+indProp);
+        let value = event.target.value;
+        //console.log(this.dataRow.id);
+        let index = this.quoteLines.findIndex(x => x.id === this.dataRow.id);
+        console.log('index'+index);
+        if(index != -1 && indProp != -1){
+            console.log('property: '+this.properties[indProp].property)
+            this.quoteLines[index][this.properties[indProp].property] = value; 
+            console.log(JSON.stringify(this.quoteLines));
+            setTimeout(()=>{ this.showNSP = true; }, 200);
+            this.nspValues[this.nspValues.findIndex(x => x.label === event.target.label)].value = value;
+        } else {
+            console.log('There is a problem finding the row selected.');
+            const evt = new ShowToastEvent({
+                title: 'Problem changing NSP values',
+                message: 'The changes cannot be saved',
+                variant: 'error',
+                mode: 'dismissable'
+            });
+            this.dispatchEvent(evt);
+        }
+        
+        
+    }
 
     @track nspProduct = false;
     closeNsp(){
+        if(JSON.stringify(this.quoteLines) != this.quotelinesString){
+            this.quotelinesString = JSON.stringify(this.quoteLines);
+            this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
+        }
         this.nspProduct = false; 
         this.nspValues = [];
         this.nspOptions = [];

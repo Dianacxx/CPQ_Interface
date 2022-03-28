@@ -208,6 +208,7 @@ public with sharing class QuoteController {
             wrapper.componentTotal = line.SBQQ__ComponentTotal__c;
             wrapper.endDate = line.SBQQ__EndDate__c;
             wrapper.length = line.Length__c;
+            wrapper.lengthUOM = line.Length_UOM__c;
             wrapper.originalPrice = line.SBQQ__OriginalPrice__c;
             wrapper.packageType = line.Package_Type__c;
             wrapper.volumeDiscount = line.SBQQ__VolumeDiscount__c;
@@ -246,9 +247,9 @@ public with sharing class QuoteController {
     @AuraEnabled (cacheable = true)
     public static String printNotes (String quoteId){
         List<WrappersClass.NoteWrapperClass> noteWrapperList = new List<WrappersClass.NoteWrapperClass>();
-        QuoteReader quoteReader = new QuoteReader();
-        QuoteModel quote = quoteReader.read(quoteId);
-        QuoteLineModel[] quoteLines = quote.getLineItems();
+        // QuoteReader quoteReader = new QuoteReader();
+        // QuoteModel quote = quoteReader.read(quoteId);
+        // QuoteLineModel[] quoteLines = quote.getLineItems();
         Map<String,Product2> prodMap= new Map <String,Product2>();
         List<String> notesList = new List<String>();
 
@@ -256,14 +257,14 @@ public with sharing class QuoteController {
         Map<String, Schema.SObjectField> fieldMap = SBQQ__QuoteLine__c.sObjectType.getDescribe().fields.getMap();
         Set<String> setFieldNames = fieldMap.keySet();
         list<String> lstFieldNames = new List<String>(setFieldNames);
-        // List<SBQQ__QuoteLine__c> quoteLines = Database.query('SELECT SBQQ__Product__c, SBQQ__Product__r.id ' + String.join(lstFieldNames, ',') + ' FROM SBQQ__QuoteLine__c WHERE SBQQ__Quote__c =: quoteId');
+        List<SBQQ__QuoteLine__c> quoteLines = Database.query('SELECT SBQQ__Product__r.id, SBQQ__Product__r.name, ' + String.join(lstFieldNames, ',') + ' FROM SBQQ__QuoteLine__c WHERE SBQQ__Quote__c =: quoteId');
 
-        // for (SBQQ__QuoteLine__c line : quoteLines) {
-        //     prodMap.put(line.SBQQ__Product__r.id, line.SBQQ__Product__r);
-        // }
-        for (QuoteLineModel line : quoteLines) {
-            prodMap.put(line.record.SBQQ__Product__r.id, line.record.SBQQ__Product__r);
+        for (SBQQ__QuoteLine__c line : quoteLines) {
+            prodMap.put(line.SBQQ__Product__r.id, line.SBQQ__Product__r);
         }
+        // for (QuoteLineModel line : quoteLines) {
+        //     prodMap.put(line.record.SBQQ__Product__r.id, line.record.SBQQ__Product__r);
+        // }
 
         List<AFL_Note__c> noteList = [SELECT ID, Quote_Note_Type__c,BL_Product__c,BL_Product__r.Id, Note_Text__c FROM AFL_Note__c WHERE BL_Product__c IN : prodMap.values()];
         Map<Id,List<AFL_Note__c>> noteMap = new Map<Id,List<AFL_Note__c>>();
@@ -343,6 +344,7 @@ public with sharing class QuoteController {
                 wrapper.description = description.replaceAll('<[^>]*>','');
             }
             wrapper.uom = newlyAddedLine.record.UOM__c;
+            wrapper.lengthUOM = newlyAddedLine.record.Length_UOM__c;
             wrapper.listunitprice = newlyAddedLine.record.SBQQ__ListPrice__c;
             wrapper.additionaldiscount = newlyAddedLine.record.SBQQ__Discount__c;
             wrapper.netunitprice = newlyAddedLine.record.SBQQ__NetPrice__c; 
@@ -372,7 +374,6 @@ public with sharing class QuoteController {
     public static String addSelectorQuoteLine(String quoteId, String products) {  //This method transforms a product added in the Product Selector into a Quote Line
         
         QuoteReader quoteReader = new QuoteReader();
-        // QuoteModel quote = quoteReader.read('a0q5f0000013pc3AAA');
         List<WrappersClass.QuoteLineWrapperClass> linesToPrint = new List<WrappersClass.QuoteLineWrapperClass>();
         Schema.sObjectType sobject_type = Product2.getSObjectType();
         Map<String, Schema.SObjectField> theProductFieldmap = sobject_type.getDescribe().fields.getMap(); //The fields map of the product oject
@@ -622,6 +623,8 @@ public with sharing class QuoteController {
                     newModel.setRecord(line);
                     
                     newModel.record.SBQQ__Quantity__c = relatedQuoteLine.quantity;
+                    newModel.record.Length__c = relatedQuoteLine.length;
+                    newModel.record.Length_UOM__c = relatedQuoteLine.lengthUOM;
                     newModel.record.UOM__c = relatedQuoteLine.uom;
                     newModel.record.SBQQ__Discount__c = relatedQuoteLine.additionaldiscount;
                     newModel.record.AdditionalDiscountUnit__c = 'Percent';
@@ -631,6 +634,19 @@ public with sharing class QuoteController {
                     newModel.record.BL_Destination__c = relatedQuoteLine.destination;
                     newModel.record.BL_Alternative_Indicator__c = relatedQuoteLine.alternativeindicator;
                     newModel.record.BL_NSP_Offering_Details__c = relatedQuoteLine.nspofferingdetails;
+                    if(relatedQuoteLine.isNSP == true){
+                        newModel.record.Color__c = relatedQuoteLine.color;
+                        newModel.record.Subunit_Color__c = relatedQuoteLine.subUnitColor;
+                        newModel.record.Jacket_Print__c = relatedQuoteLine.jacketPrint;
+                        newModel.record.Package_Type__c = relatedQuoteLine.packagetype;
+                        newModel.record.Package_Cover__c = relatedQuoteLine.packageCover;
+                        newModel.record.Mix_Fiber_Count_1__c = relatedQuoteLine.fiberCount1;
+                        newModel.record.Mix_Fiber_Count_2__c = relatedQuoteLine.fiberCount2;
+                        newModel.record.Mix_Fiber_Type_1__c = relatedQuoteLine.fiberType1;
+                        newModel.record.Mix_Fiber_Type_2__c = relatedQuoteLine.fiberType2;
+                        newModel.record.Mix_Fiber_Type_2__c = relatedQuoteLine.fiberType2;
+                        //this should not be here
+                    }
                     System.debug('incoming price : ' + relatedQuoteLine.netunitprice);
 
                     quoteLinesToInsert.add(newModel);
@@ -672,9 +688,9 @@ public with sharing class QuoteController {
     }
     @AuraEnabled
     public static void quoteLineCreator(String quoteId, String quoteLines){ //This method creates new quote lines in salesforce based on the values in the QLE
-        QuoteReader quoteReader = new QuoteReader();
-        // System.debug('quote id : ' + quoteId);
-        QuoteModel quote = quoteReader.read(quoteId);
+        // QuoteReader quoteReader = new QuoteReader();
+        // // System.debug('quote id : ' + quoteId);
+        // QuoteModel quote = quoteReader.read(quoteId);
         // System.debug('quote : ' + quote);
         
         //Get all the fields from the quote line object
@@ -721,7 +737,7 @@ public with sharing class QuoteController {
         //     System.debug('Key : ' +key+' options: ' + linesWithParentsMap.get(key));
         // }
         
-        List<QuoteLineModel> linesFromQuote = quote.getLineItems();
+        // List<QuoteLineModel> linesFromQuote = quote.getLineItems();
 
          //Add the existing quote line ids to a set
          for (SBQQ__QuoteLine__c line : existingQuoteLines) {
@@ -745,6 +761,7 @@ public with sharing class QuoteController {
                     newQuoteLine.SBQQ__Quantity__c = line.quantity;
                     newQuoteLine.SBQQ__Description__c = line.description;
                     newQuoteLine.UOM__c = line.uom;
+                    newQuoteLine.Length_UOM__c = line.lengthUOM;
                     newQuoteLine.SBQQ__Discount__c = line.additionaldiscount;
                     newQuoteLine.AdditionalDiscountUnit__c = 'Percent';
                     newQuoteLine.SBQQ__NetPrice__c = line.netunitprice;
