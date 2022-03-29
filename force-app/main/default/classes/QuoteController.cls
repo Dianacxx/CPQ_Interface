@@ -17,7 +17,7 @@ public with sharing class QuoteController {
             wrapper.property = labelWithoutSpaces.toLowerCase();
             wrapper.apiName = fieldSetMember.getFieldPath();
 
-            // wrapper.type =fieldSetMember.getType();
+            wrapper.type =fieldSetMember.getType();
 
             fieldsToPrint.add(wrapper);
         }
@@ -32,7 +32,7 @@ public with sharing class QuoteController {
             wrapper.property = labelWithoutSpaces.toLowerCase();
             wrapper.apiName = fieldSetMember.getFieldPath();
 
-            // wrapper.type =fieldSetMember.getType();
+            wrapper.type =fieldSetMember.getType();
 
             fieldsToPrint.add(wrapper);
         }
@@ -645,7 +645,7 @@ public with sharing class QuoteController {
                         newModel.record.Mix_Fiber_Type_1__c = relatedQuoteLine.fiberType1;
                         newModel.record.Mix_Fiber_Type_2__c = relatedQuoteLine.fiberType2;
                         newModel.record.Mix_Fiber_Type_2__c = relatedQuoteLine.fiberType2;
-                        //this should not be here
+                        newModel.record.Region_Code__c = relatedQuoteLine.regionCode;
                     }
                     System.debug('incoming price : ' + relatedQuoteLine.netunitprice);
 
@@ -1299,6 +1299,10 @@ public with sharing class QuoteController {
             }
             if(filterValuesMap.get('Packaging') != null){
                 queryAdditions += 'Packaging__c = ' + '\''+ filterValuesMap.get('Packaging') + '\' AND ';
+            }            
+            //ASK ABOUT THIS. BOX LENGTH
+            if(filterValuesMap.get('Length Picklist') != null){
+                queryAdditions += 'Length_Picklist__c = ' + '\''+ filterValuesMap.get('Length Picklist') + '\' AND ';
             }            
         }
 

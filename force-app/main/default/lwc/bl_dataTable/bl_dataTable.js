@@ -67,7 +67,8 @@ export default class Bl_dataTable extends LightningElement {
             for (let i=0; i<this.fieldSetLength;i++){
                 if (this.tabSelected == 'Home'){
                     if (this.fieldSet[i].key == 'HOME'){
-                        //console.log('field Set properties: '+ Object.getOwnPropertyNames(this.fieldSet[i]));
+                        console.log('field Set properties: '+ Object.getOwnPropertyNames(this.fieldSet[i]));
+                        console.log(JSON.stringify(this.fieldSet[i]));
                         //console.log('Label: '+this.fieldSet[i].label);
                         //console.log('Property: '+ this.fieldSet[i].property)
                         //console.log('Required '+this.fieldSet[i].required)

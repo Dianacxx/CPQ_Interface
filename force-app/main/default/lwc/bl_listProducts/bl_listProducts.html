@@ -29,7 +29,7 @@
                                     <template if:true={productTypeShow}>
                                         <lightning-layout multiple-rows="false">
                                             <template for:each={productType} for:item="productType1">
-                                                <lightning-combobox class="slds-var-m-right_xx-small" label={productType1.label} key={productType1.label} 
+                                                <lightning-combobox class={styleProductType} label={productType1.label} key={productType1.label} 
                                                 options={productType1.options} onchange={handleProductTypeChange}></lightning-combobox>
                                             </template>
                                         </lightning-layout>
@@ -42,7 +42,7 @@
                                     <template if:true={filtersLoading}>
                                         <lightning-layout multiple-rows="false">
                                             <template for:each={listFilters} for:item="comboboxFilters">
-                                                <lightning-combobox class="slds-var-m-right_x-small" key={comboboxFilters.label} label={comboboxFilters.label} value={comboboxFilters.value}
+                                                <lightning-combobox style="width:25vw;" class="slds-var-m-right_x-small" key={comboboxFilters.label} label={comboboxFilters.label} value={comboboxFilters.value}
                                                 options={comboboxFilters.options} onchange={handleInputChange}></lightning-combobox>
                                             </template>
                                             <template for:each={listTextFilters} for:item="textFilters">

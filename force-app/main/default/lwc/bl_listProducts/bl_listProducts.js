@@ -310,7 +310,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         } else {
             let apiPropertyIndex = this.columnsReview.find(element => element.label == this.reviewSelectedLabel);
             let filteredByField= this.reviewDisplay.filter(x => x[apiPropertyIndex.fieldName] == this.reviewSelectedValue);
-            console.log(); 
+            //console.log('Label: '+this.reviewSelectedLabel+'Value: '+this.reviewSelectedValue); 
             this.reviewDisplay = filteredByField; 
         }
         //console.log('review data: '+ JSON.stringify(this.reviewDisplay)); 
@@ -357,6 +357,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     @track columnsReview = [{label: 'Product Name', fieldName: 'Name', editable: false, },]; 
     @track columnsRequired = []; 
 
+    @track styleProductType; //To handle size of the combobox bar
     //Calling the first product (Required one)
     callFiltersInPopUp(filterGroup){
         this.productType = [];
@@ -382,9 +383,44 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                     if (JSON.stringify(filters[i].options) == '[]'){
                         this.listTextFilters.push({label: filters[i].label, name: filters[i].label});
                     } else {
+                        let sizeOptions = 0; 
                         for (let optionvalue of filters[i].options){
                             optionvalue.value = optionvalue.label;
+                            optionvalue.value.length > sizeOptions ? sizeOptions = optionvalue.value.length : sizeOptions = sizeOptions; 
                         }
+                        console.log('Size option:'+ sizeOptions); 
+                        if (0 <= sizeOptions && sizeOptions< 10){
+                            this.styleProductType = 'size1';
+                        } else if (10 <= sizeOptions && sizeOptions< 25){
+                            this.styleProductType = 'size2';
+                        } else if (25 <= sizeOptions && sizeOptions< 35){
+                            this.styleProductType = 'size3';
+                        } else if (35 <= sizeOptions && sizeOptions< 50){
+                            this.styleProductType = 'size4';
+                        } else if (50 <= sizeOptions && sizeOptions< 80){
+                            this.styleProductType = 'size5';
+                        } else if (80 <= sizeOptions && sizeOptions< 100){
+                            this.styleProductType = 'size6';
+                        } else {
+                            this.styleProductType = 'size7';
+                        }
+                        /*
+                        if (0 <= sizeOptions && sizeOptions< 10){
+                            this.styleProductType = 'width:150px;';
+                        } else if (10 <= sizeOptions && sizeOptions< 25){
+                            this.styleProductType = 'width:200px;';
+                        } else if (25 <= sizeOptions && sizeOptions< 35){
+                            this.styleProductType = 'width:250px;';
+                        } else if (35 <= sizeOptions && sizeOptions< 50){
+                            this.styleProductType = 'width:300px;';
+                        } else if (50 <= sizeOptions && sizeOptions< 80){
+                            this.styleProductType = 'width:450px;';
+                        } else if (80 <= sizeOptions && sizeOptions< 100){
+                            this.styleProductType = 'width:450px;';
+                        } else {
+                            this.styleProductType = 'width:50vw;';
+                        }*/
+                        filters[i].options.sort((a, b) => (a.label > b.label) ? 1 : -1);
                         this.productType.push(filters[i]); 
                         this.columnsRequired.push(this.productType[i]); 
                     }
@@ -410,9 +446,48 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                 for (let i =0; i < this.productType.length; i++){
                     this.productType[i].options = JSON.parse(this.productType[i].options); 
                     //console.log(this.productType[i].options);
+                    let sizeOptions = 0; 
                     for (let optionvalue of this.productType[i].options){
                         optionvalue.value = optionvalue.label;
+                        optionvalue.value.length > sizeOptions ? sizeOptions = optionvalue.value.length : sizeOptions = sizeOptions; 
                     }
+                    console.log('Size option:'+ sizeOptions);
+                    if (0 <= sizeOptions && sizeOptions< 10){
+                        this.styleProductType = 'size1';
+                        console.log('Here 1');
+                    } else if (10 <= sizeOptions && sizeOptions< 20){
+                        this.styleProductType = 'size2';
+                        console.log('Here 2');
+                    } else if (20 <= sizeOptions && sizeOptions< 35){
+                        this.styleProductType = 'size3';
+                    } else if (35 <= sizeOptions && sizeOptions< 50){
+                        this.styleProductType = 'size4';
+                    } else if (50 <= sizeOptions && sizeOptions< 80){
+                        this.styleProductType = 'size5';
+                    } else if (80 <= sizeOptions && sizeOptions< 100){
+                        this.styleProductType = 'size6';
+                        console.log('Here 6');
+                    } else {
+                        this.styleProductType = 'size7';
+                        console.log('Here 7');
+                    }
+                    /*
+                    if (0 <= sizeOptions && sizeOptions< 10){
+                        this.styleProductType = 'width:150px;';
+                    } else if (10 <= sizeOptions && sizeOptions< 25){
+                        this.styleProductType = 'width:200px;';
+                    } else if (25 <= sizeOptions && sizeOptions< 35){
+                        this.styleProductType = 'width:250px;';
+                    } else if (35 <= sizeOptions && sizeOptions< 50){
+                        this.styleProductType = 'width:300px;';
+                    } else if (50 <= sizeOptions && sizeOptions< 80){
+                        this.styleProductType = 'width:400px;';
+                    } else if (80 <= sizeOptions && sizeOptions< 100){
+                        this.styleProductType = 'width:450px;';
+                    } else {
+                        this.styleProductType = 'width:50vw;';
+                    }*/
+                    this.productType[i].options.sort((a, b) => (a.label > b.label) ? 1 : -1);
                     this.columnsRequired.push(this.productType[i]); 
                 }
                 
@@ -608,7 +683,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         let tabSelectedValue;
         this.tabSelected == 'Connectivity' ? tabSelectedValue = 'OCA' : tabSelectedValue = this.tabSelected; 
         //--------FOR OCA / CONNECTIVITY VALUE IN SANDBOX ----------------
-        //console.log(JSON.stringify(filters)); 
+        console.log(JSON.stringify(filters)); 
         filteredProductPrinter({filterValues: JSON.stringify(filters), level1: tabSelectedValue, filteredGrouping: this.trackList.lookupCode})
         .then((data)=>{
             //console.log('Products Filtered');

@@ -36,6 +36,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                 this.girdDataAcaTab[i].isAdd = isAddVector; 
                 this.girdDataAcaTab[i]['isNew'] = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(2, 10); 
             }
+            this.girdDataAcaTab.sort((a, b) => (a.lookupCode > b.lookupCode) ? 1 : -1);
         })
         .catch((error)=>{
             console.log('ERROR ACA');
@@ -50,6 +51,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                 this.girdDataConnTab[i].isAdd = isAddVector; 
                 this.girdDataConnTab[i]['isNew'] = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(2, 10); 
             }
+            this.girdDataConnTab.sort((a, b) => (a.lookupCode > b.lookupCode) ? 1 : -1);
         })
         .catch((error)=>{
             console.log('ERROR Connectivity');
@@ -64,6 +66,8 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                 this.girdDataFocTab[i].isAdd = isAddVector; 
                 this.girdDataFocTab[i]['isNew'] = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(2, 10); 
             }
+            this.girdDataFocTab.sort((a, b) => (a.lookupCode > b.lookupCode) ? 1 : -1);
+
             //console.log('Fiber Optic Cable Data: ' + JSON.stringify(this.girdDataFocTab));
 
         })
@@ -79,8 +83,9 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             for(let i=0; i<this.girdDataCableTab.length; i++){
                 this.girdDataCableTab[i].isAdd = isAddVector; 
                 this.girdDataCableTab[i]['isNew'] = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(2, 10);
-
             }
+            this.girdDataCableTab.sort((a, b) => (a.lookupCode > b.lookupCode) ? 1 : -1);
+
         })
         .catch((error)=>{
             console.log('ERROR Cable');
@@ -94,8 +99,8 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             for(let i=0; i<this.girdDataTandITab.length; i++){
                 this.girdDataTandITab[i].isAdd = isAddVector; 
                 this.girdDataTandITab[i]['isNew'] = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(2, 10);
-
             }
+            this.girdDataTandITab.sort((a, b) => (a.lookupCode > b.lookupCode) ? 1 : -1);
         })
         .catch((error)=>{
             console.log('ERROR Test & Inspection');
