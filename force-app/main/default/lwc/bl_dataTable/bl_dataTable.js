@@ -1,9 +1,21 @@
 import { LightningElement, api, track, wire} from 'lwc';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+
 import displayFieldSet from '@salesforce/apex/QuoteController.displayFieldSet'; 
 import addQuoteLine from '@salesforce/apex/QuoteController.addQuoteLine';
-import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import NSPAdditionalFields from '@salesforce/apex/QuoteController.NSPAdditionalFields'; 
 
+//TO SHOW POSSIBLE VALUES IN LWC TABLE PICKLIST FIELDS WOITH OUT GETTING ERROR FROM APEX
+//ADD NAME PICKLIST FIELD WHEN A NEW FIELD IN TABLE IS ADD. 
+import QUOTELINE_OBJECT from '@salesforce/schema/SBQQ__QuoteLine__c';
+import { getObjectInfo } from 'lightning/uiObjectInfoApi';
+import { getPicklistValues } from 'lightning/uiObjectInfoApi';
+import LENGTH_UOM_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.Length_UOM__c';
+import UOM_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.UOM__c';
+
+
+
+//CHANNEL SERVICE TO COMMUNICATE COMPONENTS 
 import { subscribe, publish, MessageContext } from 'lightning/messageService';
 import UPDATE_INTERFACE_CHANNEL from '@salesforce/messageChannel/update_Interface__c';
 
@@ -138,6 +150,18 @@ export default class Bl_dataTable extends LightningElement {
         
 
     }
+
+
+    @wire(getObjectInfo, { objectApiName: QUOTELINE_OBJECT })
+    objectInfo;
+
+    @wire(getPicklistValues, { recordTypeId: '$objectInfo.data.defaultRecordTypeId', fieldApiName: LENGTH_UOM_FIELD})
+    lengthUom;
+
+    @wire(getPicklistValues, { recordTypeId: '$objectInfo.data.defaultRecordTypeId', fieldApiName: UOM_FIELD})
+    uom;
+
+    
     
     @wire(MessageContext)
     messageContext;
@@ -398,10 +422,14 @@ export default class Bl_dataTable extends LightningElement {
     }
 
     @track quoteLinesEdit;
+    uomMessageError = ''; 
+    lengthUomMessageError = ''; 
     //Save when table is edited and clicked in save button.
     handleSaveEdition(event){
         this.quoteLinesEdit = event.detail.draftValues; 
-        
+        this.uomMessageError = '';
+        this.lengthUomMessageError = '';
+
         if (!(this.tabSelected == 'Notes') && !(this.tabSelected == 'Line')){
             for (let i =0; i< this.quoteLinesEdit.length; i++){
                 //console.log('Id editada: '+this.quoteLinesEdit[i].id);
@@ -420,6 +448,72 @@ export default class Bl_dataTable extends LightningElement {
                     if(prop[j]=='quantity'){
                         console.log(Number.isInteger(inputsItems[i].fields[prop[j]]));
                     }
+                    if(prop[j]=='lengthuom'){
+                        console.log(this.quoteLines[index].qlevariableprice);
+                        console.log(this.quoteLines[index].isNSP);
+                        if (this.quoteLines[index].qlevariableprice == 'Cable Length' && 
+                        (this.quoteLines[index].isNSP == false || this.quoteLines[index].isNSP == null)){
+                            console.log('length');
+                            if(this.lengthUom.data.values){
+                                let values = [];
+                                //console.log(this.lengthUom.data.values);
+                                for (let picklist of this.lengthUom.data.values){
+                                    values.push(picklist.value);
+                                }
+                                values = values.map(element => { return element.toLowerCase(); });
+                                let indexL = values.findIndex(x => x == inputsItems[i].fields[prop[j]].toLowerCase()); 
+                                if (indexL == -1){
+                                    let list = this.lengthUom.data.values[0].value;
+                                    for(let i=1; i< this.lengthUom.data.values.length; i++){
+                                        if(i == this.lengthUom.data.values.length-1){
+                                            list = list + ' and '+this.lengthUom.data.values[i].value;
+                                        } else {
+                                            list = list + ', '+this.lengthUom.data.values[i].value;
+                                        }
+                                    }
+                                    this.lengthUomMessageError = 'For Length UOM, available values are: '+list; 
+                                    console.log(this.lengthUomMessageError); 
+                                    inputsItems[i].fields[prop[j]] = null;
+                                } else if (values[indexL].toLowerCase() == inputsItems[i].fields[prop[j]]){
+                                    inputsItems[i].fields[prop[j]] = inputsItems[i].fields[prop[j]].charAt(0).toUpperCase() + inputsItems[i].fields[prop[j]].slice(1);
+                                    //console.log('Value: '+ values[indexL]);
+                                    //console.log('Input: '+inputsItems[i].fields[prop[j]] );
+                                }
+                            }
+                        } else {
+                            inputsItems[i].fields[prop[j]] = 'NA'; 
+                            this.quoteLines[index].length = 0; 
+                        }
+                    }
+                    if(prop[j]=='uom'){
+                        
+                        if(this.uom.data.values){
+                            let values = [];
+                            //console.log(this.uom.data.values);
+                            for (let picklist of this.uom.data.values){
+                                values.push(picklist.value);
+                            }
+                            values = values.map(element => { return element.toLowerCase(); });
+                            let indexU = values.findIndex(x => x == inputsItems[i].fields[prop[j]].toLowerCase()); 
+                            if (indexU == -1){
+                                let list = this.uom.data.values[0].value;
+                                for(let i=1; i< this.uom.data.values.length; i++){ 
+                                    if(i == this.uom.data.values.length -1){
+                                        list = list + ' and '+this.uom.data.values[i].value;
+                                    } else {
+                                        list = list + ', '+this.uom.data.values[i].value;
+                                    }
+                                }
+                                this.uomMessageError = 'For UOM, available values are: '+list; 
+                                console.log(this.uomMessageError); 
+                                inputsItems[i].fields[prop[j]] = null;
+                            } else if (values[indexU].toLowerCase() == inputsItems[i].fields[prop[j]]){
+                                inputsItems[i].fields[prop[j]] = inputsItems[i].fields[prop[j]].charAt(0).toUpperCase() + inputsItems[i].fields[prop[j]].slice(1);
+                                //console.log('Value: '+ values[indexU]);
+                                //console.log('Input: '+inputsItems[i].fields[prop[j]] );
+                            }
+                        }
+                    }
                     this.quoteLines[index][prop[j]] = inputsItems[i].fields[prop[j]];
                 }               
                 if(this.quoteLines[index].quantity.length == 0){
@@ -429,6 +523,17 @@ export default class Bl_dataTable extends LightningElement {
                     this.quoteLines[index].netunitprice = 1;
                 }
             }
+            if(this.uomMessageError){
+                const evt1 = new ShowToastEvent({ title: 'Warning Fields', message: this.uomMessageError,
+                variant: 'warning', mode: 'sticky' });
+                this.dispatchEvent(evt1);
+            }
+            if(this.lengthUomMessageError){
+                const evt1 = new ShowToastEvent({ title: 'Warning Fields', message: this.lengthUomMessageError,
+                variant: 'warning', mode: 'sticky' });
+                this.dispatchEvent(evt1);
+            }
+
             this.quotelinesString = JSON.stringify(this.quoteLines); 
             this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
             
@@ -563,16 +668,18 @@ export default class Bl_dataTable extends LightningElement {
                 //console.log('3 '+this.properties[i].value);
                 
                 this.nspValues.push({label: this.properties[i].label, value: this.dataRow[this.properties[i].property]});
-
+                this.nspValues.sort((a, b) => (a.label > b.label) ? 1 : -1);
                 //this.nspValues.push(labels[i]+': '+this.dataRow[properties[i].property]);
                 //console.log('Type: '+ types[i])
                 if(types[i] == 'PICKLIST'){
                     this.nspOptions.push({label:labels[i], options: optionsP[i],}); 
+                    this.nspOptions.sort((a, b) => (a.label > b.label) ? 1 : -1);
                 } else {
                     this.nspInputs.push({label: labels[i],}); 
+                    this.nspInputs.sort((a, b) => (a.label > b.label) ? 1 : -1);
                 }
                 
-                console.log('Showing: '+ JSON.stringify(this.nspValues[this.nspValues.length-1]));
+                //console.log('Showing: '+ JSON.stringify(this.nspValues[this.nspValues.length-1]));
             }
             this.showNSP = true;
         })
@@ -587,18 +694,18 @@ export default class Bl_dataTable extends LightningElement {
         //console.log(event.target.value);
         this.showNSP = false;
         let prop = ((event.target.label).toLowerCase()).replaceAll(/\s/g,''); 
-        console.log('prop'+prop);
-        console.log(JSON.stringify(this.properties));
+        //console.log('prop'+prop);
+        //console.log(JSON.stringify(this.properties));
         let indProp = this.properties.findIndex(x => x.value === prop);
-        console.log('indProp '+indProp);
+        //console.log('indProp '+indProp);
         let value = event.target.value;
         //console.log(this.dataRow.id);
         let index = this.quoteLines.findIndex(x => x.id === this.dataRow.id);
-        console.log('index'+index);
+       // console.log('index'+index);
         if(index != -1 && indProp != -1){
-            console.log('property: '+this.properties[indProp].property)
+            //console.log('property: '+this.properties[indProp].property)
             this.quoteLines[index][this.properties[indProp].property] = value; 
-            console.log(JSON.stringify(this.quoteLines));
+            //console.log(JSON.stringify(this.quoteLines));
             setTimeout(()=>{ this.showNSP = true; }, 200);
             this.nspValues[this.nspValues.findIndex(x => x.label === event.target.label)].value = value;
         } else {

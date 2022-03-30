@@ -9,7 +9,7 @@ public with sharing class WrappersClass {
         public Boolean required {get;set;}
         public String property {get;set;}
         public Boolean editable {get;set;}
-        // public Schema.DisplayType type {get;set;}
+        public Schema.DisplayType type {get;set;}
          
     }
     public class QuoteLineWrapperClass{
@@ -39,6 +39,7 @@ public with sharing class WrappersClass {
         public Decimal componenttotal {get;set;}
         public Date enddate{get;set;}
         public Decimal length {get;set;}
+        public String lengthuom {get;set;}
         public Decimal originalprice {get;set;}
         public String packagetype {get;set;}
         public Decimal volumediscount{get;set;}
@@ -55,7 +56,7 @@ public with sharing class WrappersClass {
         public String jacketPrint{get;set;}
         public String subUnitColor{get;set;}
         public String primaryUOM{get;set;}
-        public String packageCover{get;set;}
+        public String packagecover{get;set;}
         public String regionCode{get;set;}
         //Manual items fields
         public String prodLevel1 {get;set;}
@@ -73,6 +74,7 @@ public with sharing class WrappersClass {
         public Decimal unitcost {get;set;}
         public Boolean isNSP {get;set;}
         public String quotelinename {get;set;}
+        public String QLEVariablePrice {get;set;}
         // public String primaryUOM {get;set;}
         
     }

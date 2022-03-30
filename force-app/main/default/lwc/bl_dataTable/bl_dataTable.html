@@ -74,13 +74,15 @@
                             </div>
                             </template>
                         </div>
-                        <template if:true={nspShowMessage}> <!--TO MAKE THE POP UP AJUST THE SIZE OF THE COMBOBOX LIST-->
+                        <!--TO MAKE THE POP UP AJUST THE SIZE OF THE COMBOBOX LIST - NOT WORKING AS EXPECTED-->
+                        <!--
+                        <template if:true={nspShowMessage}> 
                             <template for:each={nspValues} for:item="nspDown">
                                 <div key={nspDown} class="slds-var-m-top-x_large slds-var-p-around_x-large lgc-bg slds-align_absolute-center" 
                                 style="background-color:rgb(255, 255, 255);"></div>
                             </template> 
                         </template>
-                        
+                        -->
                     </div>
                     <footer class="slds-modal__footer">
                         <lightning-button  variant="destructive-text" label="Cancel" onclick={closeNsp} class="slds-p-around_x-small slds-m-right_small"></lightning-button>
