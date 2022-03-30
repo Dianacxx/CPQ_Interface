@@ -339,12 +339,9 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         //this.labelButtonSave =  event.target.label;
         //console.log('Label '+ label);
         this.spinnerLoadingUI = true;
-        //console.log('quoteLines: '+this.quotelinesString);
-        
-        let startTime = performance.now();
+        console.log('quoteLines: '+this.quotelinesString);
         this.callEditAnDeleteMethod().then(this.callCreateMethod());
         //this.spinnerLoadingUI = false;
-        let endTime = performance.now();
         //console.log(`Saving method took ${endTime - startTime} milliseconds`);
         this.desactiveCloneButton();
     }

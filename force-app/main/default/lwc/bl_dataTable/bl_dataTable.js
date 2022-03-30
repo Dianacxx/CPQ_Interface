@@ -67,8 +67,8 @@ export default class Bl_dataTable extends LightningElement {
             for (let i=0; i<this.fieldSetLength;i++){
                 if (this.tabSelected == 'Home'){
                     if (this.fieldSet[i].key == 'HOME'){
-                        console.log('field Set properties: '+ Object.getOwnPropertyNames(this.fieldSet[i]));
-                        console.log(JSON.stringify(this.fieldSet[i]));
+                        //console.log('field Set properties: '+ Object.getOwnPropertyNames(this.fieldSet[i]));
+                        //console.log(JSON.stringify(this.fieldSet[i]));
                         //console.log('Label: '+this.fieldSet[i].label);
                         //console.log('Property: '+ this.fieldSet[i].property)
                         //console.log('Required '+this.fieldSet[i].required)
@@ -83,7 +83,7 @@ export default class Bl_dataTable extends LightningElement {
                             //console.log('Inserting before description');
                         }
                         else {
-                            if(this.fieldSet[i].property == 'quantity' || this.fieldSet[i].property == 'additionaldiscount'){
+                            if (this.fieldSet[i].type == 'CURRENCY' || this.fieldSet[i].type == 'PERCENT' || this.fieldSet[i].type == 'DOUBLE'){
                                 COLUMNS_HOME.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, type: 'number',hideDefaultActions: true },);
                             } else {
                                 if(this.fieldSet[i].property == 'description'){
@@ -541,7 +541,7 @@ export default class Bl_dataTable extends LightningElement {
             for(let nsp of nspVal){
                 //console.log('LABEL '+nsp.label); 
                 //console.log('LABEL BETTER '+(nsp.label.toLowerCase()).replaceAll(/\s/g,'')); 
-                values.push((nsp.label.toLowerCase()).replaceAll(/\s/g,''));
+                values.push({value: (nsp.label.toLowerCase()).replaceAll(/\s/g,''), label: nsp.label});
                 labels.push(nsp.label); 
                 types.push(nsp.type); 
                 optionsP.push(JSON.parse(nsp.options));
@@ -550,26 +550,29 @@ export default class Bl_dataTable extends LightningElement {
             let prop = Object.getOwnPropertyNames(this.dataRow); 
             this.properties = []; 
             for(let i=0; i<prop.length; i++){
-                if( (values.findIndex(z => z == prop[i].toLowerCase())) !== -1){
-                    this.properties.push({value: prop[i].toLowerCase(), property: prop[i]});
+                let ind = (values.findIndex(z => z.value == prop[i].toLowerCase()));
+                if(ind !== -1 ){
+                    this.properties.push({value: prop[i].toLowerCase(), property: prop[i], label: values[ind].label});
                 }   
             }
             //console.log(properties);
             for(let i =0; i<this.properties.length; i++){
                 //console.log(JSON.stringify(this.dataRow));
-                //console.log('1 '+this.dataRow[properties[i].property]);
-                //console.log('2 '+properties[i].property);
-                this.nspValues.push({label: labels[i], value: this.dataRow[this.properties[i].property]});
+                //console.log('1 '+this.dataRow[this.properties[i].property]);
+                //console.log('2 '+this.properties[i].property);
+                //console.log('3 '+this.properties[i].value);
+                
+                this.nspValues.push({label: this.properties[i].label, value: this.dataRow[this.properties[i].property]});
+
                 //this.nspValues.push(labels[i]+': '+this.dataRow[properties[i].property]);
                 //console.log('Type: '+ types[i])
                 if(types[i] == 'PICKLIST'){
-                    this.nspOptions.push({label:labels[i], options: optionsP[i],
-                    }); 
+                    this.nspOptions.push({label:labels[i], options: optionsP[i],}); 
                 } else {
                     this.nspInputs.push({label: labels[i],}); 
                 }
                 
-                //console.log('Showing: '+ this.nspValues[this.nspValues.length-1]);
+                console.log('Showing: '+ JSON.stringify(this.nspValues[this.nspValues.length-1]));
             }
             this.showNSP = true;
         })

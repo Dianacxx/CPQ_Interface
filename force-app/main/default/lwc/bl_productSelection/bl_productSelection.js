@@ -115,100 +115,119 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
     saveBeforeConfigured(event){
         console.log('Saving in before anything else');
         this.savePSValues = true;
-        for (let list of this.girdDataAcaTabAdd){
-            for (let secondList of list.listOfProducts){
-                secondList.quantity = 1;
-                secondList.netunitprice = 1;
-                secondList.alternative = false;
-                secondList.stock = false;
-                //console.log('LUPL'+secondList.listunitprice);
-                if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
-                    secondList.listunitprice = 1;
+        if(this.girdDataAcaTabAdd.length > 0){
+            console.log('ACA LIST');
+            for (let list of this.girdDataAcaTabAdd){
+                for (let secondList of list.listOfProducts){
+                    secondList.quantity = 1;
+                    secondList.netunitprice = 1;
+                    secondList.alternative = false;
+                    secondList.stock = false;
+                    //console.log('LUPL'+secondList.listunitprice);
+                    if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
+                        secondList.listunitprice = 1;
+                    }
+                    if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
+                        secondList.isNSP = false;
+                    }
+                    this.quotesAdded.push(secondList);
                 }
-                if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
-                    secondList.isNSP = false;
-                }
-                this.quotesAdded.push(secondList);
             }
         }
-        for (let list of this.girdDataConnTabAdd){
-            for (let secondList of list.listOfProducts){
-                secondList.quantity = 1;
-                secondList.netunitprice = 1;
-                secondList.alternative = false;
-                secondList.stock = false;
-                //console.log('LUPL'+secondList.listunitprice);
-                if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
-                    secondList.listunitprice = 1;
+        if(this.girdDataConnTabAdd.length > 0){
+            console.log('CONNECT LIST');
+            for (let list of this.girdDataConnTabAdd){
+                for (let secondList of list.listOfProducts){
+                    secondList.quantity = 1;
+                    secondList.netunitprice = 1;
+                    secondList.alternative = false;
+                    secondList.stock = false;
+                    //console.log('LUPL'+secondList.listunitprice);
+                    if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
+                        secondList.listunitprice = 1;
+                    }
+                    if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
+                        secondList.isNSP = false;
+                    }
+                    this.quotesAdded.push(secondList);
                 }
-                if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
-                    secondList.isNSP = false;
-                }
-                this.quotesAdded.push(secondList);
             }
         }
-        for (let list of this.girdDataFocTabAdd){            
-            for (let secondList of list.listOfProducts){
-                secondList.quantity = 1;
-                secondList.netunitprice = 1;
-                secondList.alternative = false;
-                secondList.stock = false;
-                if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
-                    secondList.listunitprice = 1;
+        if(this.girdDataFocTabAdd.length > 0){
+            console.log('FOC LIST');
+            for (let list of this.girdDataFocTabAdd){ 
+                        
+                for (let secondList of list.listOfProducts){
+                    secondList.quantity = 1;
+                    secondList.netunitprice = 1;
+                    secondList.alternative = false;
+                    secondList.stock = false;
+                    if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
+                        secondList.listunitprice = 1;
+                    }
+                    if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
+                        secondList.isNSP = false;
+                    }
+                    this.quotesAdded.push(secondList);
                 }
-                if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
-                    secondList.isNSP = false;
-                }
-                this.quotesAdded.push(secondList);
             }
         }
-        for (let list of this.girdDataCableTabAdd){
-            for (let secondList of list.listOfProducts){
-                secondList.quantity = 1;
-                secondList.netunitprice = 1;
-                secondList.alternative = false;
-                secondList.stock = false;
-                //console.log('LUPL'+secondList.listunitprice);
-                if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
-                    secondList.listunitprice = 1;
+        if(this.girdDataCableTabAdd.length > 0){
+            console.log('CABLE LIST');
+            for (let list of this.girdDataCableTabAdd){
+                for (let secondList of list.listOfProducts){
+                    secondList.quantity = 1;
+                    secondList.netunitprice = 1;
+                    secondList.alternative = false;
+                    secondList.stock = false;
+                    //console.log('LUPL'+secondList.listunitprice);
+                    if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
+                        secondList.listunitprice = 1;
+                    }
+                    if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
+                        secondList.isNSP = false;
+                    }
+                    this.quotesAdded.push(secondList);
                 }
-                if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
-                    secondList.isNSP = false;
-                }
-                this.quotesAdded.push(secondList);
             }
         }
-        for (let list of this.girdDataTandITabAdd){
-            for (let secondList of list.listOfProducts){
-                secondList.quantity = 1;
-                secondList.netunitprice = 1;
-                secondList.alternative = false;
-                secondList.stock = false;
-                //console.log('LUPL'+secondList.listunitprice);
-                if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
-                    secondList.listunitprice = 1;
+        if(this.girdDataTandITabAdd.length > 0){
+            console.log('TAI LIST');
+            for (let list of this.girdDataTandITabAdd){
+                for (let secondList of list.listOfProducts){
+                    secondList.quantity = 1;
+                    secondList.netunitprice = 1;
+                    secondList.alternative = false;
+                    secondList.stock = false;
+                    //console.log('LUPL'+secondList.listunitprice);
+                    if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
+                        secondList.listunitprice = 1;
+                    }
+                    if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
+                        secondList.isNSP = false;
+                    }
+                    this.quotesAdded.push(secondList);
                 }
-                if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
-                    secondList.isNSP = false;
-                }
-                this.quotesAdded.push(secondList);
             }
         }
-        for (let list of this.girdDataManualItemTabAdd){
-            list.netunitprice = 1;
-            if ((list.listunitprice == null) || (list.listunitprice == 'null')){
-                list.listunitprice = 1;
+        if(this.girdDataManualItemTabAdd.length > 0){
+            console.log('MANUAL LIST');
+            for (let list of this.girdDataManualItemTabAdd){
+                list.netunitprice = 1;
+                if ((list.listunitprice == null) || (list.listunitprice == 'null')){
+                    list.listunitprice = 1;
+                }
+                if((list.stock == null) || (list.stock == 'null')){
+                    list.stock = false;
+                }
+                if((list.alternative == null) || (list.alternative == 'null')){
+                    list.alternative = false;
+                }
+                if ((list.isNSP == null) || (list.isNSP == 'null')){
+                    list.isNSP = false;
+                }
+                this.quotesAdded.push(list);
             }
-            if((list.stock == null) || (list.stock == 'null')){
-                list.stock = false;
-            }
-            if((list.alternative == null) || (list.alternative == 'null')){
-                list.alternative = false;
-            }
-            if ((list.isNSP == null) || (list.isNSP == 'null')){
-                list.isNSP = false;
-            }
-            this.quotesAdded.push(list);
         }
 
         let stringQuotesAdded = JSON.stringify(this.quotesAdded);
@@ -338,105 +357,123 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
     //When click Save and Exit button in Product Selection UI
     handleSaveAndExit(){
         this.savePSValues = true;
-        for (let list of this.girdDataAcaTabAdd){
-            for (let secondList of list.listOfProducts){
-                secondList.quantity = 1;
-                secondList.netunitprice = 1;
-                secondList.alternative = false;
-                secondList.stock = false;
-                //console.log('LUPL'+secondList.listunitprice);
-                if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
-                    secondList.listunitprice = 1;
+        if(this.girdDataAcaTabAdd.length > 0){
+            console.log('ACA LIST');
+            for (let list of this.girdDataAcaTabAdd){
+                for (let secondList of list.listOfProducts){
+                    secondList.quantity = 1;
+                    secondList.netunitprice = 1;
+                    secondList.alternative = false;
+                    secondList.stock = false;
+                    //console.log('LUPL'+secondList.listunitprice);
+                    if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
+                        secondList.listunitprice = 1;
+                    }
+                    if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
+                        secondList.isNSP = false;
+                    }
+                    this.quotesAdded.push(secondList);
                 }
-                if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
-                    secondList.isNSP = false;
-                }
-                this.quotesAdded.push(secondList);
             }
         }
-        for (let list of this.girdDataConnTabAdd){
-            for (let secondList of list.listOfProducts){
-                secondList.quantity = 1;
-                secondList.netunitprice = 1;
-                secondList.alternative = false;
-                secondList.stock = false;
-                //console.log('LUPL'+secondList.listunitprice);
-                if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
-                    secondList.listunitprice = 1;
+        if(this.girdDataConnTabAdd.length > 0){
+            console.log('CONNECT LIST');
+            for (let list of this.girdDataConnTabAdd){
+                for (let secondList of list.listOfProducts){
+                    secondList.quantity = 1;
+                    secondList.netunitprice = 1;
+                    secondList.alternative = false;
+                    secondList.stock = false;
+                    //console.log('LUPL'+secondList.listunitprice);
+                    if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
+                        secondList.listunitprice = 1;
+                    }
+                    if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
+                        secondList.isNSP = false;
+                    }
+                    this.quotesAdded.push(secondList);
                 }
-                if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
-                    secondList.isNSP = false;
-                }
-                this.quotesAdded.push(secondList);
             }
         }
-        for (let list of this.girdDataFocTabAdd){ 
-                       
-            for (let secondList of list.listOfProducts){
-                secondList.quantity = 1;
-                secondList.netunitprice = 1;
-                secondList.alternative = false;
-                secondList.stock = false;
-                if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
-                    secondList.listunitprice = 1;
+        if(this.girdDataFocTabAdd.length > 0){
+            console.log('FOC LIST');
+            for (let list of this.girdDataFocTabAdd){ 
+                        
+                for (let secondList of list.listOfProducts){
+                    secondList.quantity = 1;
+                    secondList.netunitprice = 1;
+                    secondList.alternative = false;
+                    secondList.stock = false;
+                    if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
+                        secondList.listunitprice = 1;
+                    }
+                    if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
+                        secondList.isNSP = false;
+                    }
+                    this.quotesAdded.push(secondList);
                 }
-                if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
-                    secondList.isNSP = false;
-                }
-                this.quotesAdded.push(secondList);
             }
         }
-        for (let list of this.girdDataCableTabAdd){
-            for (let secondList of list.listOfProducts){
-                secondList.quantity = 1;
-                secondList.netunitprice = 1;
-                secondList.alternative = false;
-                secondList.stock = false;
-                //console.log('LUPL'+secondList.listunitprice);
-                if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
-                    secondList.listunitprice = 1;
+        if(this.girdDataCableTabAdd.length > 0){
+            console.log('CABLE LIST');
+            for (let list of this.girdDataCableTabAdd){
+                for (let secondList of list.listOfProducts){
+                    secondList.quantity = 1;
+                    secondList.netunitprice = 1;
+                    secondList.alternative = false;
+                    secondList.stock = false;
+                    //console.log('LUPL'+secondList.listunitprice);
+                    if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
+                        secondList.listunitprice = 1;
+                    }
+                    if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
+                        secondList.isNSP = false;
+                    }
+                    this.quotesAdded.push(secondList);
                 }
-                if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
-                    secondList.isNSP = false;
-                }
-                this.quotesAdded.push(secondList);
             }
         }
-        for (let list of this.girdDataTandITabAdd){
-            for (let secondList of list.listOfProducts){
-                secondList.quantity = 1;
-                secondList.netunitprice = 1;
-                secondList.alternative = false;
-                secondList.stock = false;
-                //console.log('LUPL'+secondList.listunitprice);
-                if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
-                    secondList.listunitprice = 1;
+        if(this.girdDataTandITabAdd.length > 0){
+            console.log('TAI LIST');
+            for (let list of this.girdDataTandITabAdd){
+                for (let secondList of list.listOfProducts){
+                    secondList.quantity = 1;
+                    secondList.netunitprice = 1;
+                    secondList.alternative = false;
+                    secondList.stock = false;
+                    //console.log('LUPL'+secondList.listunitprice);
+                    if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
+                        secondList.listunitprice = 1;
+                    }
+                    if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
+                        secondList.isNSP = false;
+                    }
+                    this.quotesAdded.push(secondList);
                 }
-                if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
-                    secondList.isNSP = false;
-                }
-                this.quotesAdded.push(secondList);
             }
         }
-        for (let list of this.girdDataManualItemTabAdd){
-            list.netunitprice = 1;
-            if ((list.listunitprice == null) || (list.listunitprice == 'null')){
-                list.listunitprice = 1;
+        if(this.girdDataManualItemTabAdd.length > 0){
+            console.log('MANUAL LIST');
+            for (let list of this.girdDataManualItemTabAdd){
+                list.netunitprice = 1;
+                if ((list.listunitprice == null) || (list.listunitprice == 'null')){
+                    list.listunitprice = 1;
+                }
+                if((list.stock == null) || (list.stock == 'null')){
+                    list.stock = false;
+                }
+                if((list.alternative == null) || (list.alternative == 'null')){
+                    list.alternative = false;
+                }
+                if ((list.isNSP == null) || (list.isNSP == 'null')){
+                    list.isNSP = false;
+                }
+                this.quotesAdded.push(list);
             }
-            if((list.stock == null) || (list.stock == 'null')){
-                list.stock = false;
-            }
-            if((list.alternative == null) || (list.alternative == 'null')){
-                list.alternative = false;
-            }
-            if ((list.isNSP == null) || (list.isNSP == 'null')){
-                list.isNSP = false;
-            }
-            this.quotesAdded.push(list);
         }
         let stringQuotesAdded = JSON.stringify(this.quotesAdded);
         console.log('Quote ID: '+this.recordId);
-        console.log('Quotelines before process');
+        //console.log('Quotelines before process');
         console.log('Quotelines before process: '+stringQuotesAdded); 
         if(stringQuotesAdded == '[]'){
             console.log('No quotes to save, going to QLE'); 
