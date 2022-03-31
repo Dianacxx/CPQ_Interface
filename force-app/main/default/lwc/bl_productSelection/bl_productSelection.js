@@ -1,5 +1,6 @@
 import { LightningElement, api , track} from 'lwc';
 import { NavigationMixin } from 'lightning/navigation';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 import getProductLevels  from '@salesforce/apex/QuoteController.getProductLevels'; 
 import quoteLineCreator from '@salesforce/apex/QuoteController.quoteLineCreator'; 
@@ -380,7 +381,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             console.log('CONNECT LIST');
             for (let list of this.girdDataConnTabAdd){
                 for (let secondList of list.listOfProducts){
-                    secondList.quantity = 1;
+                    secondList['quantity'] = 1;
                     secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
@@ -398,9 +399,8 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         if(this.girdDataFocTabAdd.length > 0){
             console.log('FOC LIST');
             for (let list of this.girdDataFocTabAdd){ 
-                        
                 for (let secondList of list.listOfProducts){
-                    secondList.quantity = 1;
+                    secondList['quantity'] = 1;
                     secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
@@ -488,6 +488,14 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
               }, 500);
             })
             .catch((error)=>{
+                const evt = new ShowToastEvent({
+                    title: 'Error creating quote lines',
+                    message: 'The server has problems creating quote lines, please do again the process',
+                    variant: 'error',
+                    mode: 'dismissable'
+                });
+                this.dispatchEvent(evt);
+                this.savePSValues = false;
                 console.log('Error saving from PS'); 
                 console.log(error); 
             })

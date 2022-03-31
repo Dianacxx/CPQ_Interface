@@ -449,11 +449,11 @@ export default class Bl_dataTable extends LightningElement {
                         console.log(Number.isInteger(inputsItems[i].fields[prop[j]]));
                     }
                     if(prop[j]=='lengthuom'){
-                        console.log(this.quoteLines[index].qlevariableprice);
-                        console.log(this.quoteLines[index].isNSP);
+                        //console.log(this.quoteLines[index].qlevariableprice);
+                        //console.log(this.quoteLines[index].isNSP);
                         if (this.quoteLines[index].qlevariableprice == 'Cable Length' && 
                         (this.quoteLines[index].isNSP == false || this.quoteLines[index].isNSP == null)){
-                            console.log('length');
+                            //console.log('length');
                             if(this.lengthUom.data.values){
                                 let values = [];
                                 //console.log(this.lengthUom.data.values);
@@ -482,7 +482,7 @@ export default class Bl_dataTable extends LightningElement {
                             }
                         } else {
                             inputsItems[i].fields[prop[j]] = 'NA'; 
-                            this.quoteLines[index].length = 0; 
+                            //this.quoteLines[index].length = 0;  //Not sure if length has to be empty if is NA
                         }
                     }
                     if(prop[j]=='uom'){
@@ -559,6 +559,7 @@ export default class Bl_dataTable extends LightningElement {
     }
 
     updateTable(){
+        this.page = 1;
         this.quotelinesLength = this.quoteLines.length;
         this.totalRecountCount = this.quotelinesLength;  
         this.totalPage = Math.ceil(this.totalRecountCount / this.pageSize); 
@@ -610,6 +611,7 @@ export default class Bl_dataTable extends LightningElement {
                     this.nspShowMessage = true;
                     this.showNSPValues();
                 } else {
+                    this.showNSP = true;
                     this.nspShowMessage = false;
                 }
             break;

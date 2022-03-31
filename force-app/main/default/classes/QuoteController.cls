@@ -809,13 +809,14 @@ public with sharing class QuoteController {
                     newQuoteLine.SBQQ__UnitCost__c = line.unitcost;
                     newQuoteLine.Max_Length_on_Steel__c = line.maxlengthonsteel;
                     newQuoteLine.Max_Length_on_Wood__c = line.maxlengthonwood;
+                    if(prodMap.get(line.productid) != null){
                     if(lengthCodes.contains(prodMap.get(line.productid).Filtered_Grouping__c) && prodMap.get(line.productid).Filtered_Grouping__c=='Patch Panels') {
                         if(prodMap.get(line.productid).Product_Type__c=='Patch Panel - Stubbed'){
                             newQuoteLine.QLE_Variable_Price__c ='Cable Length';
                         }
                     }else if(lengthCodes.contains(prodMap.get(line.productid).Filtered_Grouping__c) && prodMap.get(line.productid).Filtered_Grouping__c!='Patch Panels'){
                         newQuoteLine.QLE_Variable_Price__c ='Cable Length';
-                    }
+                    }}
                     
                     
                     quoteLinerecordsToInsert.add(newQuoteLine);

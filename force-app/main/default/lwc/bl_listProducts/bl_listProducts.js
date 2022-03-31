@@ -404,22 +404,6 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                         } else {
                             this.styleProductType = 'size7';
                         }
-                        /*
-                        if (0 <= sizeOptions && sizeOptions< 10){
-                            this.styleProductType = 'width:150px;';
-                        } else if (10 <= sizeOptions && sizeOptions< 25){
-                            this.styleProductType = 'width:200px;';
-                        } else if (25 <= sizeOptions && sizeOptions< 35){
-                            this.styleProductType = 'width:250px;';
-                        } else if (35 <= sizeOptions && sizeOptions< 50){
-                            this.styleProductType = 'width:300px;';
-                        } else if (50 <= sizeOptions && sizeOptions< 80){
-                            this.styleProductType = 'width:450px;';
-                        } else if (80 <= sizeOptions && sizeOptions< 100){
-                            this.styleProductType = 'width:450px;';
-                        } else {
-                            this.styleProductType = 'width:50vw;';
-                        }*/
                         filters[i].options.sort((a, b) => (a.label > b.label) ? 1 : -1);
                         this.productType.push(filters[i]); 
                         this.columnsRequired.push(this.productType[i]); 
@@ -471,22 +455,6 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                         this.styleProductType = 'size7';
                         console.log('Here 7');
                     }
-                    /*
-                    if (0 <= sizeOptions && sizeOptions< 10){
-                        this.styleProductType = 'width:150px;';
-                    } else if (10 <= sizeOptions && sizeOptions< 25){
-                        this.styleProductType = 'width:200px;';
-                    } else if (25 <= sizeOptions && sizeOptions< 35){
-                        this.styleProductType = 'width:250px;';
-                    } else if (35 <= sizeOptions && sizeOptions< 50){
-                        this.styleProductType = 'width:300px;';
-                    } else if (50 <= sizeOptions && sizeOptions< 80){
-                        this.styleProductType = 'width:400px;';
-                    } else if (80 <= sizeOptions && sizeOptions< 100){
-                        this.styleProductType = 'width:450px;';
-                    } else {
-                        this.styleProductType = 'width:50vw;';
-                    }*/
                     this.productType[i].options.sort((a, b) => (a.label > b.label) ? 1 : -1);
                     this.columnsRequired.push(this.productType[i]); 
                 }
@@ -851,27 +819,9 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     @track gettingNspFields = false; 
     @track nspLoading = false;
 
-    stubbedPatchPanel = [];
-    othersPatchPanel = [];
-    isPatchPanel = false; 
     saveLookingNSP(){
         //console.log('Tab: '+this.tabSelected + 'LookupCode: ' +this.trackList.lookupCode)
-        this.stubbedPatchPanel = [];
-        this.othersPatchPanel = [];
-        this.isPatchPanel = false;
-        //SPECIAL CASE: PATCH PANELS - STUBBED HAS A BEHAVIOR FOR NSP AND NON NSP. 
-        if(this.trackList.lookupCode == 'Patch Panels'){
-            this.isPatchPanel = true;
-            this.allReviews.forEach(products => {
-                if (products.Product_Type__c == 'Patch Panel - Stubbed') {
-                    this.stubbedPatchPanel.push(products); 
-                } else {
-                    this.othersPatchPanel.push(products); 
-                }
-            });
-            this.configuringPatchPanelFilterModal(); 
-        }
-        else if ( 
+        if ( 
         ((this.tabSelected == 'ACA') && ((this.trackList.lookupCode != 'Copperclad'))) || 
         ((this.tabSelected == 'Fiber Optic Cable') && ( (this.trackList.lookupCode == 'Premise Cable') || 
         (this.trackList.lookupCode == 'Loose Tube Cable') || (this.trackList.lookupCode == 'ADSS Cable')) ) //||
@@ -884,7 +834,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             let i = 1;
             //console.log('ID sent: '+this.listNSP[0].idTemporal);
             //THIS LOOP IS TO IDENTIFY EACH PRODUCT TAB WITH THE NSP PRODUCTS USED IN LWC VIEW
-            for (let nsp of this.listNSP){
+            for (let nsp of this.listNSP){ 
                 nsp['tabNsp'] = i; 
                 i += 1;
             }
@@ -966,10 +916,24 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     }
 
     closeNSP(){
-        this.showLookupList = false;
-        this.popupNSP = false;
-        this.saveAndExitNSPFilteredModeal();
-        this.closeFilterAndSelected();   
+        //console.log(this.firstNSP);
+        //console.log(this.listNSP.length);
+        if(this.firstNSP == this.listNSP.length){ 
+            console.log('Close here NSP window');
+            this.showLookupList = false;
+            this.popupNSP = false;
+            this.saveAndExitNSPFilteredModeal();
+            this.closeFilterAndSelected();   
+        } else {
+            const evt = new ShowToastEvent({
+                title: 'You have not select NSP values for all products',
+                message: 'Select each tab to assign NSP values in products.',
+                variant: 'warning',
+                mode: 'dismissable'
+            });
+            this.dispatchEvent(evt);
+        }
+        
     }
 
     @track listNspValuesToDisplay = [];
@@ -990,7 +954,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
 
         //THIS CODE IS TO MAKE SURE THAT EVERY NSP FIELD IS FILLED FOR EACH PRODUCT ADDED BUT IS NOT USED
         //SINCE THE LOGIC RIGHT NOW IS DEFAULT VALUES IF THEY DO NOT FILL THEM. 
-        /*
+        
         let indNSP = this.checkNSPFields.findIndex(element => element.field ==  event.target.name);
         if (indNSP != -1){
             this.checkNSPFields[indNSP]['fill'] = true; 
@@ -1008,79 +972,13 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         }
         if(this.listNSP[this.firstNSP-1]['checked']){
             //this.listNSP[this.firstNSP-1]['iconName'] = "utility:check"; 
-            console.log('ALL porperties done!');
+            console.log('ALL porperties done!'); 
             this.checkNSPFields = [];
         } 
-        */
+        
         
     }
 
-    configuringPatchPanelFilterModal(){
-        let auxQuoteLines = JSON.parse(JSON.stringify(this.othersPatchPanel)); 
-        let auxQuoteLinesLength; 
-        //console.log('THIS '+ JSON.stringify(this.allReviews));
-        if (this.stubbedPatchPanel.length > 0){
-            if(auxQuoteLines.length > 0){
-                for(let i=0; i<auxQuoteLines.length; i++){
-                    let auxId = auxQuoteLines[i].Id; 
-                    auxQuoteLines[i].Id = auxQuoteLines[i].idTemporal; 
-                    auxQuoteLines[i].idTemporal = auxId; 
-                }
-                addSelectorQuoteLine({quoteId: this.recordId, products: JSON.stringify(auxQuoteLines)})
-                .then((data)=>{
-                    //console.log('Data after addSelectorQuoteLine'+ data);
-                    auxQuoteLines = JSON.parse(data); 
-                    auxQuoteLinesLength = auxQuoteLines.length; 
-                    //console.log('Length of products: '+ auxQuoteLinesLength);
-                    for (let putId of auxQuoteLines){
-                        let randomId = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(2, 10);
-                        let randomName = Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 6); 
-                        putId.id =  'new'+randomId;
-                        putId.name = 'New QL-'+randomName;
-                    }
-                    this.othersPatchPanel = auxQuoteLines; 
-                    console.log('NON NSP'+ JSON.stringify(this.othersPatchPanel)); 
-                    if(this.stubbedPatchPanel.length > 0){
-                        this.popupNSP = true;
-                        this.listNSP = JSON.parse(JSON.stringify(this.stubbedPatchPanel));
-                        let i = 1;
-                        //console.log('ID sent: '+this.listNSP[0].idTemporal);
-                        //THIS LOOP IS TO IDENTIFY EACH PRODUCT TAB WITH THE NSP PRODUCTS USED IN LWC VIEW
-                        for (let nsp of this.listNSP){
-                            nsp['tabNsp'] = i; 
-                            i += 1;
-                        }
-                        this.firstNSP = 1;
-                    } 
-                })
-                .catch((error)=>{
-                    console.log('Error from addSelectorQuoteLine');
-                    console.log(error)
-                    this.closeFilterAndSelected(); 
-                    this.showLookupList = true;
-                })
-            } else {
-                this.popupNSP = true;
-                        this.listNSP = JSON.parse(JSON.stringify(this.stubbedPatchPanel));
-                        let i = 1;
-                        //console.log('ID sent: '+this.listNSP[0].idTemporal);
-                        //THIS LOOP IS TO IDENTIFY EACH PRODUCT TAB WITH THE NSP PRODUCTS USED IN LWC VIEW
-                        for (let nsp of this.listNSP){
-                            nsp['tabNsp'] = i; 
-                            i += 1;
-                        }
-                        this.firstNSP = 1;
-            }   
-        } else if(auxQuoteLines.length > 0){
-            this.saveAndExitFilterModal();
-        } else {
-            this.closeFilterAndSelected(); 
-            //this.saveAndExitFilterModal();
-        }
-        
-        
-        
-    }
 
     saveAndExitNSPFilteredModeal(){
         let auxQuoteLines = JSON.parse(JSON.stringify(this.listNSP)); 
@@ -1124,11 +1022,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                 lines.id =  'new'+randomId;
                 lines.name = 'New QL-'+randomName;
             }
-            if(this.isPatchPanel){
-                for(let lines of this.othersPatchPanel){
-                    nsqQuotelines.push(lines);
-                }  
-            }
+
             console.log('after QL NSP '+ JSON.stringify(nsqQuotelines));
             let auxQuoteLinesLength = nsqQuotelines.length; 
             trackListInternal['listOfProducts'] = nsqQuotelines; 

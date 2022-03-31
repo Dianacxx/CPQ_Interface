@@ -388,30 +388,38 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 console.log('1. Quote lines updated, now proceed with new quote lines');
             })
             .catch((error)=>{
+                if(this.toPS){
+                    this.showPSTab = false; 
+                    this.activeTab = 'UI';
+                    this.toPS = false;
+                }
                 this.notGoodToGoBundle[0] = true; 
                 console.log('editAndDeleteQuotes ERROR');
                 console.log(error);
                 let errorMessage;
+                this.spinnerLoadingUI = false;
                 if(error != undefined){
                     if(error.body != undefined){
+                        console.log('-1');
                         if (error.body.pageErrors[0]!= undefined){
+                            console.log('0');
                             if(error.body.pageErrors[0].message != undefined){
                                 errorMessage = error.body.pageErrors[0].message; 
-                                console.log(1);
+                                console.log('1');
                             } else if (error.body.pageErrors[0].statusCode != undefined){
-                                console.log(2);
+                                console.log('2');
                                 errorMessage = error.body.pageErrors[0].statusCode; 
-                            } else {
-                                if (error.body.fieldErrors!= undefined){
-                                    console.log(3);
-                                    errorMessage = JSON.stringify(error.body.fieldErrors);
-                                    //console.log(error); 
-                                } else {
-                                    console.log(4);
-                                    errorMessage = 'Developer: Open console to see error message';
-                                }
                             }
-    
+                        }
+                        else if (error.body.fieldErrors!= undefined){
+                            console.log('3');
+                            let prop = Object.getOwnPropertyNames(error.body.fieldErrors);
+                            //console.log(error.body.fieldErrors[prop[0]][0].message)
+                            errorMessage = error.body.fieldErrors[prop[0]][0].message;
+                            //console.log(error); 
+                        } else {
+                            console.log('4');
+                            errorMessage = 'Developer: Open console to see error message';
                         }
                     } else {
                         errorMessage = 'Developer: Open console to see error message'
@@ -449,11 +457,12 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload);   
                 setTimeout(() => {
                     console.log('TOTAL SUCCESS');
+                    //HERE TO AVOID CALLING THE METHOD TO UPDATE TABLE TO SEE ERRORS!
                     this.callData();
                     //this.spinnerLoadingUI = false;
                     this.notGoodToGoBundle[1] = false;
                     const evt = new ShowToastEvent({
-                        title: 'Success saving the quote lines',
+                        title: 'Success saving the new quote lines',
                         message: 'All the process have been saved on Salesforce',
                         variant: 'success',
                         mode: 'dismissable'
@@ -463,6 +472,11 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 
             })
             .catch((error)=>{
+                if(this.toPS){
+                    this.showPSTab = false; 
+                    this.activeTab = 'UI';
+                    this.toPS = false;
+                }
                 console.log('quoteLineCreator ERROR');
                 console.log(error);
                 this.notGoodToGoBundle[1] = true;
@@ -472,20 +486,26 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 
                 if(error != undefined){
                     if(error.body != undefined){
+                        console.log('-1');
                         if (error.body.pageErrors[0]!= undefined){
+                            console.log('0');
                             if(error.body.pageErrors[0].message != undefined){
                                 errorMessage = error.body.pageErrors[0].message; 
+                                console.log('1');
                             } else if (error.body.pageErrors[0].statusCode != undefined){
+                                console.log('2');
                                 errorMessage = error.body.pageErrors[0].statusCode; 
-                            } else {
-                                if (error.body.fieldErrors!= undefined){
-                                    errorMessage = JSON.stringify(error.body.fieldErrors);
-                                    //console.log(error); 
-                                } else {
-                                    errorMessage = 'Developer: Open console to see error message';
-                                }
                             }
-    
+                        }
+                        else if (error.body.fieldErrors!= undefined){
+                            console.log('3');
+                            let prop = Object.getOwnPropertyNames(error.body.fieldErrors);
+                            console.log(error.body.fieldErrors[prop[0]][0].message)
+                            errorMessage = JSON.stringify(error.body.fieldErrors[prop[0]]);
+                            //console.log(error); 
+                        } else {
+                            console.log('4');
+                            errorMessage = 'Developer: Open console to see error message';
                         }
                     } else {
                         errorMessage = 'Developer: Open console to see error message'
@@ -565,8 +585,10 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
 
     }
 
-    //NAVIGATE TO PRODUCT SELECTION PAGE (MISSING SENDING INFO)
+    //NAVIGATE TO PRODUCT SELECTION PAGE 
+    @track toPS = false; 
     async navitageToProductSelection(){
+        this.toPS = true;
         if (!(this.originalquotelinesString == this.quotelinesString)){
             await this.handleSaveAndCalculate();
             if ((this.notGoodToGoBundle[0]==true) || (this.notGoodToGoBundle[1]==true)){
