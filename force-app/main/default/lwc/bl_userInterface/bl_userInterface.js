@@ -160,96 +160,104 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
 
     //CALL DATA ONCE AGAIN FROM SF WHEN SAVE BUTTON CLICKED
     callData(){
-        var startTime = performance.now();
-        this.spinnerLoadingUI = true;
-        this.totalValueLoading = true;
-        setTimeout(()=>{
-            printQuoteLines({ quoteId: this.recordId})
-            .then(data =>{
-                if (data){
-                    this.quotelinesString = data;
-                    this.originalquotelinesString = this.quotelinesString;
-                    this.error = undefined;
-                    this.isLoading = true; 
-                    //console.log('quoteLines String SUCCESS: '+ this.quotelinesString);
-                    const payload = { 
-                        dataString: this.quotelinesString,
-                        auxiliar: 'newtable'
-                      };
-                    publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
-                }
-                
-                setTimeout(()=>{
-                    getQuoteTotal({quoteId: this.recordId})
-                    .then((data)=>{
-                        console.log('NEW QUOTE TOTAL data');
-                        console.log(data);
-                        this.totalValue = data;
-                        this.totalValueLoading = false;
-                        var endTime = performance.now();
-                        //console.log(`Call to refresh data took ${endTime - startTime} milliseconds`)
-                        setTimeout(()=>{this.spinnerLoadingUI = false;}, 1000);
-                    })
-                    .catch((error)=>{
-                        console.log('NEW QUOTE TOTAL error');
-                        console.log(error);
-                        this.spinnerLoadingUI = false;
-                    }); 
-                }, 8000);
-            })
-            .catch(error =>{
-                if (error){
-                    this.quotelinesString = undefined; 
-                    console.log('quoteLines String ERROR:');
-                    console.log(this.error);
-                    let messageError; 
-                    if (error.hasOwnProperty('body')){
-                        if(error.body.hasOwnProperty('pageErrors')){
-                            if(error.body.pageErrors[0].hasOwnProperty('message')){
-                                messageError = error.body.pageErrors[0].message; 
-                            }
-                        }
-                        
-                    } else {
-                        messageError = 'Unexpected error using UI - QUOTELINES'; 
+        if (this.notGoodToGoBundle[0] || this.notGoodToGoBundle[1]){
+            const evt = new ShowToastEvent({
+                title: 'Data from Salesforce is not going to load.',
+                message: 'Some error were made in the table, please check.',
+                variant: 'error',
+                mode: 'sticky'
+            });
+            this.dispatchEvent(evt);
+        } else {
+            this.spinnerLoadingUI = true;
+            this.totalValueLoading = true;
+            setTimeout(()=>{
+                printQuoteLines({ quoteId: this.recordId})
+                .then(data =>{
+                    if (data){
+                        this.quotelinesString = data;
+                        this.originalquotelinesString = this.quotelinesString;
+                        this.error = undefined;
+                        this.isLoading = true; 
+                        //console.log('quoteLines String SUCCESS: '+ this.quotelinesString);
+                        const payload = { 
+                            dataString: this.quotelinesString,
+                            auxiliar: 'newtable'
+                        };
+                        publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
                     }
-                    const evt = new ShowToastEvent({
-                        title: 'UI QUOTELINES Error',
-                        message: messageError,
-                        variant: 'error',
-                        mode: 'sticky'
-                    });
-                    this.dispatchEvent(evt);
                     
-                }
-            })
-                
-            printNotes({ quoteId: this.recordId })
-            .then(data =>{
-                if (data){
-                    this.quoteNotesString = data; 
-                    this.error = undefined;
-                    //console.log('notes string SUCCESS: '+ this.quoteNotesString);
-                }    
-            })
-            .catch(error =>{
-                 if (error){
-                    this.quoteNotesString = undefined; 
-                    this.error = error;
-                    this.disableButton = true;
-                    this.quoteNotesString = '[name: \"none\"]';
-                    console.log('notes string ERROR: ');
-                    console.log(this.error);
-                    const evt = new ShowToastEvent({
-                        title: 'UI NOTES Error',
-                        message: 'Unexpected error using UI - NOTES',
-                        variant: 'error',
-                        mode: 'sticky'
-                    });
-                    this.dispatchEvent(evt);
-                }
-            })    
-        }, 20000);     //This value has to change depending on the size of quotelines
+                    setTimeout(()=>{
+                        getQuoteTotal({quoteId: this.recordId})
+                        .then((data)=>{
+                            console.log('NEW QUOTE TOTAL data');
+                            console.log(data);
+                            this.totalValue = data;
+                            this.totalValueLoading = false;
+                            var endTime = performance.now();
+                            //console.log(`Call to refresh data took ${endTime - startTime} milliseconds`)
+                            setTimeout(()=>{this.spinnerLoadingUI = false;}, 1000);
+                        })
+                        .catch((error)=>{
+                            console.log('NEW QUOTE TOTAL error');
+                            console.log(error);
+                            this.spinnerLoadingUI = false;
+                        }); 
+                    }, 8000);
+                })
+                .catch(error =>{
+                    if (error){
+                        this.quotelinesString = undefined; 
+                        console.log('quoteLines String ERROR:');
+                        console.log(this.error);
+                        let messageError; 
+                        if (error.hasOwnProperty('body')){
+                            if(error.body.hasOwnProperty('pageErrors')){
+                                if(error.body.pageErrors[0].hasOwnProperty('message')){
+                                    messageError = error.body.pageErrors[0].message; 
+                                }
+                            }
+                            
+                        } else {
+                            messageError = 'Unexpected error using UI - QUOTELINES'; 
+                        }
+                        const evt = new ShowToastEvent({
+                            title: 'UI QUOTELINES Error',
+                            message: messageError,
+                            variant: 'error',
+                            mode: 'sticky'
+                        });
+                        this.dispatchEvent(evt);
+                    }
+                })
+                    
+                printNotes({ quoteId: this.recordId })
+                .then(data =>{
+                    if (data){
+                        this.quoteNotesString = data; 
+                        this.error = undefined;
+                        //console.log('notes string SUCCESS: '+ this.quoteNotesString);
+                    }    
+                })
+                .catch(error =>{
+                    if (error){
+                        this.quoteNotesString = undefined; 
+                        this.error = error;
+                        this.disableButton = true;
+                        this.quoteNotesString = '[name: \"none\"]';
+                        console.log('notes string ERROR: ');
+                        console.log(this.error);
+                        const evt = new ShowToastEvent({
+                            title: 'UI NOTES Error',
+                            message: 'Unexpected error using UI - NOTES',
+                            variant: 'error',
+                            mode: 'sticky'
+                        });
+                        this.dispatchEvent(evt);
+                    }
+                })    
+            }, 20000);     //This value has to change depending on the size of quotelines
+        }
     }
 
     //Connect channel
@@ -333,17 +341,45 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     }
 
     @api labelButtonSave;
+    @track notSaveYet = false; 
     //WHEN CLICK SAVE AND CALCULATE
     async handleSaveAndCalculate(event){
         //CALL APEX METHOD TO SAVE QUOTELINES AND NOTES
         //this.labelButtonSave =  event.target.label;
         //console.log('Label '+ label);
         this.spinnerLoadingUI = true;
-        console.log('quoteLines: '+this.quotelinesString);
-        this.callEditAnDeleteMethod().then(this.callCreateMethod());
-        //this.spinnerLoadingUI = false;
-        //console.log(`Saving method took ${endTime - startTime} milliseconds`);
-        this.desactiveCloneButton();
+        this.notSaveYet = false; 
+        let quoteEdition = JSON.parse(this.quotelinesString);
+
+        let quotesToFill = []; 
+        for(let i = 0; i< quoteEdition.length; i++){
+            if (quoteEdition[i].qlevariableprice == 'Cable Length' && 
+                (quoteEdition[i].isNSP == false || quoteEdition[i].isNSP == false)){
+                    if(quoteEdition[i].length<0 || (quoteEdition[i].lengthuom != 'Meters' && quoteEdition[i].lengthuom != 'Feet')){
+                        this.notSaveYet = true;
+                        quotesToFill.push(i+1);
+                    }
+            } else {
+                if(quoteEdition[i].lengthuom != 'NA'){
+                    quoteEdition[i].lengthuom = 'NA';
+                }
+            }
+        }
+        if(this.notSaveYet){
+            const evt = new ShowToastEvent({
+                title: 'Required Fields before saving',
+                message: 'You have not put the required values of length and length UOM in rows: '+quotesToFill.join(),
+                variant: 'error', mode: 'sticky' });
+            this.dispatchEvent(evt);
+            this.spinnerLoadingUI = false;
+        } else {
+            console.log('quoteLines: '+this.quotelinesString);
+            this.callEditAnDeleteMethod().then(this.callCreateMethod());
+            //this.spinnerLoadingUI = false;
+            //console.log(`Saving method took ${endTime - startTime} milliseconds`);
+            this.desactiveCloneButton();
+        }
+        
     }
 
     @api notGoodToGoBundle = [false, false]; 
@@ -373,6 +409,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 if(quoteEdition[i].isNSP == null || quoteEdition[i].isNSP == 'null'){
                     quoteEdition[i].isNSP = false;
                 } 
+                
             }
             this.quotelinesString = JSON.stringify(quoteEdition);
             console.log('Before Editing but with quantity and nup: '+this.quotelinesString);
@@ -459,15 +496,19 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                     console.log('TOTAL SUCCESS');
                     //HERE TO AVOID CALLING THE METHOD TO UPDATE TABLE TO SEE ERRORS!
                     this.callData();
-                    //this.spinnerLoadingUI = false;
                     this.notGoodToGoBundle[1] = false;
-                    const evt = new ShowToastEvent({
-                        title: 'Success saving the new quote lines',
-                        message: 'All the process have been saved on Salesforce',
-                        variant: 'success',
-                        mode: 'dismissable'
-                    });
-                    this.dispatchEvent(evt);
+                    //this.spinnerLoadingUI = false;
+                    if(!this.notGoodToGoBundle[0] && !this.notGoodToGoBundle[1]){
+                        const evt = new ShowToastEvent({
+                            title: 'Success saving the new quote lines',
+                            message: 'All the process have been saved on Salesforce',
+                            variant: 'success',
+                            mode: 'dismissable'
+                        });
+                        this.dispatchEvent(evt);
+                    }
+                    
+                    
                 }, 5000);
                 
             })
@@ -550,18 +591,39 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
   
     }
     async navigateToQuoteRecordPage() {
-        let startTime = performance.now();
-        if (!(this.originalquotelinesString == this.quotelinesString)){
-            await this.callEditAnDeleteMethod();
-            await this.callCreateMethod();
-            //this.spinnerLoadingUI = false;
-            await this.exitToRecordPage();
-        } else {
-            await this.exitToRecordPage();
+        let quoteEdition = JSON.parse(this.quotelinesString);
+        let quotesToFill = []; 
+        for(let i = 0; i< quoteEdition.length; i++){
+            if (quoteEdition[i].qlevariableprice == 'Cable Length' && 
+                (quoteEdition[i].isNSP == false || quoteEdition[i].isNSP == false)){
+                    if(quoteEdition[i].length<0 || (quoteEdition[i].lengthuom != 'Meters' && quoteEdition[i].lengthuom != 'Feet')){
+                        this.notSaveYet = true;
+                        quotesToFill.push(i+1);
+                    }
+            } else {
+                if(quoteEdition[i].lengthuom != 'NA'){
+                    quoteEdition[i].lengthuom = 'NA';
+                }
+            }
         }
-        let endTime = performance.now();
-        console.log(`Saving and Exit method took ${endTime - startTime} milliseconds`);
-    }
+        if(this.notSaveYet){
+            const evt = new ShowToastEvent({
+                title: 'Required Fields before saving',
+                message: 'You have not put the required values of length and length UOM in rows: '+quotesToFill.join(),
+                variant: 'error', mode: 'sticky' });
+            this.dispatchEvent(evt);
+            this.spinnerLoadingUI = false;
+        } else {
+            if (!(this.originalquotelinesString == this.quotelinesString)){
+                await this.callEditAnDeleteMethod();
+                await this.callCreateMethod();
+                //this.spinnerLoadingUI = false;
+                await this.exitToRecordPage();
+            } else {
+                    await this.exitToRecordPage();
+            }
+            }
+        }
 
     //NAVIGATE BACK TO UI FROM PRODUCT SELECTION TAB WHEN CANCEL
     returnToUiCancel(){
@@ -581,7 +643,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             this.callData();
             this.showPSTab = false; 
             this.activeTab = 'UI';
-        }, 2000);
+        }, 250);
 
     }
 
