@@ -35,10 +35,11 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     //Initialize UI
     connectedCallback(){
         this.disableButton = true; 
-        var startTime = performance.now();
         this.spinnerLoadingUI = true;
         console.log('Record Id: '+this.recordId);
-        //These 3 can be replaced by callData funtion but not sure to meke this cahnge right now
+        this.desactiveCloneButton();
+
+        //Not replace with callData() because there we can make more changes when update data
         printQuoteLines({ quoteId: this.recordId})
         .then(data =>{
             if (data){
@@ -48,6 +49,16 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 this.isLoading = true; 
                 console.log('quoteLines String SUCCESS ');
                 console.log('quoteLines String SUCCESS: '+ this.quotelinesString);
+                if (this.quoteLinesString == '[]'){
+                    this.quoteLinesString = '[id: \"none\"]';
+                    //console.log(this.quoteLinesString);
+                    console.log('No quotelines yet');
+                    const payload = { 
+                        dataString: this.quotelinesString,
+                        auxiliar: 'newtable'
+                      };
+                    publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
+                }
                 const payload = { 
                     dataString: this.quotelinesString,
                     auxiliar: 'newtable'
@@ -103,6 +114,11 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 this.quoteNotesString = data; 
                 console.log('notes string SUCCESS');
                 //console.log('notes string SUCCESS: '+ this.quoteNotesString);
+                if (this.quoteNotesString == '[]'){
+                    this.quoteNotesString = '[name: \"none\"]';
+                    //console.log(this.quoteNotesString);
+                    console.log('No quotes Notes yet');
+                }
             }    
         })
         .catch(error =>{
@@ -134,28 +150,6 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 this.dispatchEvent(evt);
             }
         })
-
-        
-        
-        var endTime = performance.now();
-        //console.log(`Starting process took ${endTime - startTime} milliseconds`);
-
-        if (this.quoteLinesString == '[]'){
-            this.quoteLinesString = '[id: \"none\"]';
-            //console.log(this.quoteLinesString);
-            console.log('No quotelines yet');
-            const payload = { 
-                dataString: this.quotelinesString,
-                auxiliar: 'newtable'
-              };
-            publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
-        }
-        if (this.quoteNotesString == '[]'){
-            this.quoteNotesString = '[name: \"none\"]';
-            //console.log(this.quoteNotesString);
-            console.log('No quotes Notes yet');
-        }
-        this.desactiveCloneButton();
     }
 
     //CALL DATA ONCE AGAIN FROM SF WHEN SAVE BUTTON CLICKED
@@ -353,18 +347,21 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
 
         let quotesToFill = []; 
         for(let i = 0; i< quoteEdition.length; i++){
-            if (quoteEdition[i].qlevariableprice == 'Cable Length' && 
-                (quoteEdition[i].isNSP == false || quoteEdition[i].isNSP == false)){
-                    if(quoteEdition[i].length<0 || (quoteEdition[i].lengthuom != 'Meters' && quoteEdition[i].lengthuom != 'Feet')){
-                        this.notSaveYet = true;
-                        quotesToFill.push(i+1);
-                    }
+            console.log('quoteline '+i); 
+            if (quoteEdition[i].qlevariableprice == 'Cable Length' && quoteEdition[i].isNSP == false){
+                if(quoteEdition[i].length<0 || (quoteEdition[i].lengthuom != 'Meters' && quoteEdition[i].lengthuom != 'Feet')){
+                    this.notSaveYet = true;
+                    quotesToFill.push(i+1);
+                }
             } else {
-                if(quoteEdition[i].lengthuom != 'NA'){
+                if(!quoteEdition[i].lengthuom){
+                    console.log('Is NA product');
                     quoteEdition[i].lengthuom = 'NA';
+                    quoteEdition[i].length = 'NA';
                 }
             }
         }
+        this.quotelinesString = JSON.stringify(quoteEdition);
         if(this.notSaveYet){
             const evt = new ShowToastEvent({
                 title: 'Required Fields before saving',
@@ -373,7 +370,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             this.dispatchEvent(evt);
             this.spinnerLoadingUI = false;
         } else {
-            console.log('quoteLines: '+this.quotelinesString);
+            console.log('S&C quoteLines: '+this.quotelinesString);
             this.callEditAnDeleteMethod().then(this.callCreateMethod());
             //this.spinnerLoadingUI = false;
             //console.log(`Saving method took ${endTime - startTime} milliseconds`);
@@ -388,6 +385,12 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         this.handleSaveAndCalculate();
         this.desactiveCloneButton();
     }
+
+    //CHECK ERROR IF LENGTH FIELD IS NOT NUMBER OR 'NA'
+    isNumeric(valueText) {
+        return !isNaN(valueText - parseFloat(valueText));
+    }
+
     //Method that save the changes and deletions
     async callEditAnDeleteMethod(){
         return new Promise((resolve) => {
@@ -409,7 +412,11 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 if(quoteEdition[i].isNSP == null || quoteEdition[i].isNSP == 'null'){
                     quoteEdition[i].isNSP = false;
                 } 
-                
+                if (!this.isNumeric(quoteEdition[i].length)){
+                    if(quoteEdition[i].length !== 'NA'){
+                        quoteEdition[i].length = 'NA';
+                    }
+                }               
             }
             this.quotelinesString = JSON.stringify(quoteEdition);
             console.log('Before Editing but with quantity and nup: '+this.quotelinesString);
@@ -590,6 +597,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         }, 2000);
   
     }
+    //SAVING BEFORE QUOTE RECORD PAGE
     async navigateToQuoteRecordPage() {
         let quoteEdition = JSON.parse(this.quotelinesString);
         let quotesToFill = []; 
@@ -667,8 +675,32 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 this.activeTab = 'PS';
             } 
         } else {
-            this.showPSTab = true; 
-            this.activeTab = 'PS';
+            let quotesToFill = []; 
+            this.notSaveYet = false; 
+            let quoteEdition = JSON.parse(this.quotelinesString); 
+
+            for(let i = 0; i< quoteEdition.length; i++){
+                //console.log('quoteline '+i); 
+                if (quoteEdition[i].qlevariableprice == 'Cable Length' && quoteEdition[i].isNSP == false){
+                    if(quoteEdition[i].length<0 || (quoteEdition[i].lengthuom != 'Meters' && quoteEdition[i].lengthuom != 'Feet')){
+                        this.notSaveYet = true;
+                        quotesToFill.push(i+1);
+                    }
+                } 
+            }
+            if(this.notSaveYet){
+                this.showPSTab = false; 
+                this.activeTab = 'UI';
+                const evt = new ShowToastEvent({
+                    title: 'Required Fields before saving',
+                    message: 'You have not put the required values of length and length UOM in rows: '+quotesToFill.join(),
+                    variant: 'error', mode: 'sticky' });
+                this.dispatchEvent(evt);
+                this.spinnerLoadingUI = false;
+            } else {
+                this.showPSTab = true; 
+                this.activeTab = 'PS';
+            }
         }
         
     }

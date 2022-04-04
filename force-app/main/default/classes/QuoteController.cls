@@ -214,6 +214,7 @@ public with sharing class QuoteController {
             wrapper.volumeDiscount = line.SBQQ__VolumeDiscount__c;
             wrapper.productType = line.Product_Type__c;
             wrapper.qlevariableprice = line.QLE_Variable_Price__c;
+            wrapper.prodLevel2 = line.ProdLevel2__c;
             if(line.is_NSP__c == true){
                 wrapper.color = line.Color__c;
                 wrapper.subUnitColor = line.Subunit_Color__c;
@@ -344,7 +345,7 @@ public with sharing class QuoteController {
             if(description!= null){
                 wrapper.description = description.replaceAll('<[^>]*>','');
             }
-            wrapper.uom = newlyAddedLine.record.UOM__c;
+            
             wrapper.lengthUOM = newlyAddedLine.record.Length_UOM__c;
             wrapper.listunitprice = newlyAddedLine.record.SBQQ__ListPrice__c;
             wrapper.additionaldiscount = newlyAddedLine.record.SBQQ__Discount__c;
@@ -363,6 +364,23 @@ public with sharing class QuoteController {
             wrapper.originalprice = newlyAddedLine.record.SBQQ__OriginalPrice__c;
             wrapper.packagetype = newlyAddedLine.record.Package_Type__c;
             wrapper.volumediscount = newlyAddedLine.record.SBQQ__VolumeDiscount__c;
+
+            //Fields that come from the product
+            if(newlyAddedLine.record.SBQQ__Product__r.Primary_UOM__c != null){
+                wrapper.uom = newlyAddedLine.record.SBQQ__Product__r.Primary_UOM__c;
+            }
+            if(newlyAddedLine.record.SBQQ__Product__r.ProdLevel1__c != null){
+                wrapper.prodLevel1 = newlyAddedLine.record.SBQQ__Product__r.ProdLevel1__c;
+            }
+            if(newlyAddedLine.record.SBQQ__Product__r.ProdLevel2__c != null){
+                wrapper.prodLevel2 = newlyAddedLine.record.SBQQ__Product__r.ProdLevel2__c;
+            }
+            if(newlyAddedLine.record.SBQQ__Product__r.ProdLevel3__c != null){
+                wrapper.prodLevel3 = newlyAddedLine.record.SBQQ__Product__r.ProdLevel3__c;
+            }
+            if(newlyAddedLine.record.SBQQ__Product__r.ProdLevel4__c != null){
+                wrapper.prodLevel4 = newlyAddedLine.record.SBQQ__Product__r.ProdLevel4__c;
+            }
 
             linesToPrint.add(wrapper); 
         }
@@ -438,7 +456,13 @@ public with sharing class QuoteController {
             // wrapper.productobj = newlyAddedLine.record.SBQQ__Product__r;
             wrapper.name = newlyAddedLine.record.Name;
             wrapper.description = newlyAddedLine.record.SBQQ__Description__c;
-            wrapper.uom = newlyAddedLine.record.UOM__c;
+            // wrapper.uom = newlyAddedLine.record.UOM__c;
+            if(newlyAddedLine.record.SBQQ__Product__r.Primary_UOM__c != null){
+                wrapper.uom = newlyAddedLine.record.SBQQ__Product__r.Primary_UOM__c;
+            }
+            if(newlyAddedLine.record.SBQQ__Product__r.ProdLevel2__c != null){
+                wrapper.prodLevel2 = newlyAddedLine.record.SBQQ__Product__r.ProdLevel2__c;
+            }
             wrapper.listunitprice = newlyAddedLine.record.SBQQ__ListPrice__c;
             wrapper.additionaldiscount = newlyAddedLine.record.SBQQ__Discount__c;
             wrapper.netunitprice = newlyAddedLine.record.SBQQ__NetPrice__c; 
@@ -509,14 +533,20 @@ public with sharing class QuoteController {
             } else if((String)prodMap.get('filtered_grouping__c') == 'Bus Conductor -Rectangular Bar' || (String)prodMap.get('filtered_grouping__c') == 'Bus Conductor -Seamless Bus Pipe' || (String)prodMap.get('filtered_grouping__c') == 'Bus Conductor -Universal Angle' ){
                 wrapper.regionCode = (String)prodMap.get('Region_Code__c');
             } else if((String)prodMap.get('filtered_grouping__c') == 'Cable Assemblies'){
-                wrapper.length = Decimal.valueOf((String)prodMap.get('Length__c'));
+                wrapper.length = (String)prodMap.get('Length__c');
+                // wrapper.length = Decimal.valueOf((String)prodMap.get('Length__c'));
                 wrapper.primaryUOM = (String)prodMap.get('Length_UOM__c');
             } else if((String)prodMap.get('filtered_grouping__c') == 'Patch Panels'){
-                wrapper.length = Decimal.valueOf((String)prodMap.get('Length__c'));
+                // wrapper.length = Decimal.valueOf((String)prodMap.get('Length__c'));
+                wrapper.length = (String)prodMap.get('Length__c');
             }
 
             wrapper.productid = (Id)prodMap.get('Id');
             wrapper.product = (String)prodMap.get('Name');
+            wrapper.uom = (String)prodMap.get('Primary_UOM__c');
+            wrapper.prodLevel2 = (String)prodMap.get('ProdLevel2__c');
+            
+
             wrapper.isNSP = true;
             System.debug('length value: ' + wrapper.length);
             linesToPrint.add(wrapper);
@@ -591,6 +621,7 @@ public with sharing class QuoteController {
         SBQQ__Quote__c getQuote = [SELECT ID FROM SBQQ__Quote__c WHERE Id =: quoteId];
         //Checks the quote lines that already exist on salesforce
         List<SBQQ__QuoteLine__c> existingQuoteLines = [SELECT ID,SBQQ__Product__r.QLE_Search_Method__c,SBQQ__Quote__c,Adapter_Quantity__c,SBQQ__AdditionalDiscount__c,SBQQ__Discount__c,SBQQ__AdditionalDiscountAmount__c,SBQQ__AdditionalQuantity__c,AdditionalDiscountUnit__c,SBQQ__AllowAssetRefund__c,BL_Alternative_Indicator__c,Approval_Reasons__c,ApprovalStatus__c,SBQQ__BatchQuantity__c,SBQQ__BillingFrequency__c,BL_Billing_Tolerance__c,SBQQ__BillingType__c,SBQQ__BlockPrice__c,SBQQ__Bundled__c,SBQQ__CarryoverLine__c,SBQQ__ChargeType__c,SBQQ__ComponentCost__c,SBQQ__ComponentDiscountedByPackage__c,SBQQ__ComponentListTotal__c,SBQQ__ComponentTotal__c,SBQQ__ComponentSubscriptionScope__c,SBQQ__ComponentUpliftedByPackage__c,SBQQ__ComponentVisibility__c,SBQQ__CompoundDiscountRate__c,Configuration__c,SBQQ__ConfigurationRequired__c	,SBQQ__ContractedPrice__c, Copperclad_Pricing_Review__c,SBQQ__Cost__c,SBQQ__CostEditable__c,CreatedById,CurrencyIsoCode,Customer_Tier_Additional_Discount__c,SBQQ__CustomerTotal__c,SBQQ__CustomerPrice__c,SBQQ__DefaultSubscriptionTerm__c,SBQQ__Description__c,BL_Destination__c,SBQQ__DiscountSchedule__c,SBQQ__DiscountScheduleType__c,SBQQ__DiscountTier__c,Display_Price__c,SBQQ__DistributorDiscount__c,SBQQ__DynamicOptionId__c,SBQQ__EarliestValidAmendmentStartDate__c,SBQQ__EffectiveEndDate__c ,SBQQ__EffectiveQuantity__c,SBQQ__EffectiveStartDate__c,SBQQ__EffectiveSubscriptionTerm__c,SBQQ__EndDate__c,SBQQ__Existing__c,SBQQ__Favorite__c,Feature_Name__c,Fiber_Count__c,Fiber_Type__c,Final_Item__c,SBQQ__GenerateContractedPrice__c,SBQQ__GrossProfit__c,SBQQ__Group__c,SBQQ__Guidance__c,SBQQ__HasConsumptionSchedule__c,SBQQ__Hidden__c,HiTemp_Pricing_Review__c,SBQQ__Incomplete__c,Jacket_Color__c,Jacket_Configuration__c,Jacket_Print__c,Jacket_Type__c,LastModifiedById,Length__c,Length_UOM__c,Name,Line_Quantity_gt_50k__c,SBQQ__ListTotal__c,SBQQ__ListPrice__c,Margin__c,SBQQ__Markup__c,SBQQ__MarkupRate__c,SBQQ__MarkupAmount__c,SBQQ__MaximumPrice__c,SBQQ__MinimumPrice__c,SBQQ__NetTotal__c,SBQQ__NetPrice__c,SBQQ__NonDiscountable__c,SBQQ__NonPartnerDiscountable__c,BL_NSP_Offering_Details__c,SBQQ__Number__c,SBQQ__OptionDiscount__c,SBQQ__OptionDiscountAmount__c,SBQQ__OptionLevel__c,SBQQ__OptionType__c,SBQQ__Optional__c,SBQQ__OriginalPrice__c,SBQQ__BundledQuantity__c,SBQQ__OriginalQuoteLineId__c,SBQQ__OriginalUnitCost__c,OTDR_Base_Model__c,SBQQ__Bundle__c,SBQQ__PackageCost__c,Package_Cover__c,SBQQ__PackageListTotal__c,SBQQ__PackageProductCode__c,SBQQ__PackageProductDescription__c,SBQQ__PackageTotal__c,Package_Type__c,SBQQ__PartnerDiscount__c,SBQQ__PartnerTotal__c,SBQQ__PartnerPrice__c,SBQQ__SubscriptionPercent__c,SBQQ__SubscriptionBase__c,SBQQ__SubscriptionCategory__c,SBQQ__SubscriptionScope__c,SBQQ__SubscriptionTargetPrice__c,Pigtail_Quantity__c,SBQQ__PreviousSegmentPrice__c,SBQQ__PreviousSegmentUplift__c,SBQQ__Dimension__c,SBQQ__PriceEditable__c,Price_Multiplier__c,Price_Rule_Debug__c,SBQQ__PricebookEntryId__c,SBQQ__PricingMethod__c,SBQQ__PricingMethodEditable__c,Primary_UOM__c,SBQQ__PriorQuantity__c,ProdLevel1__c,ProdLevel2__c,ProdLevel3__c,ProdLevel4__c,SBQQ__Product__c,SBQQ__ProductCode__c,SBQQ__ProductFamily__c,SBQQ__ProductName__c,SBQQ__ProductOption__c,SBQQ__ProductSubscriptionType__c,Product_Type__c,SBQQ__ProrateMultiplier__c,SBQQ__ProratedListPrice__c,SBQQ__ProratedPrice__c,SBQQ__Quantity__c,Rail_gt_150_pc__c,Reason_for_Deviation__c,SBQQ__RegularTotal__c,SBQQ__RegularPrice__c,SBQQ__Renewal__c,SBQQ__RenewedAsset__c,SBQQ__RenewedSubscription__c,SBQQ__RequiredBy__c,Rollup_Component_Prices__c,SBQQ__SegmentIndex__c,SBQQ__SegmentKey__c,SBQQ__SegmentLabel__c,Selected__c,BL_Source__c,SBQQ__Source__c,SBQQ__SpecialPrice__c,SBQQ__SpecialPriceDescription__c,SBQQ__SpecialPriceType__c,SBQQ__StartDate__c,SBQQ__SubscribedAssetIds__c,SBQQ__SubscriptionPricing__c,SBQQ__SubscriptionTerm__c,SBQQ__SubscriptionType__c,Subunit_Color__c,SBQQ__TaxCode__c,SBQQ__Taxable__c,SBQQ__TermDiscount__c,SBQQ__TermDiscountSchedule__c,SBQQ__TermDiscountTier__c,Test_Formula__c,Tier__c,SBQQ__TotalDiscountRate__c,SBQQ__TotalDiscountAmount__c,SBQQ__UnitCost__c,SBQQ__UnproratedNetPrice__c,UOM__c,SBQQ__UpgradedAsset__c,SBQQ__UpgradedQuantity__c,SBQQ__UpgradedSubscription__c,SBQQ__Uplift__c,SBQQ__UpliftAmount__c,SBQQ__VolumeDiscount__c FROM SBQQ__QuoteLine__c WHERE SBQQ__Quote__c =: quoteId];
+        // List<SBQQ__QuoteLine__c> existingQuoteLines = [SELECT ID,SBQQ__Product__r.QLE_Search_Method__c,SBQQ__Quote__c,Adapter_Quantity__c,SBQQ__AdditionalDiscount__c,SBQQ__Discount__c,SBQQ__AdditionalDiscountAmount__c,SBQQ__AdditionalQuantity__c,AdditionalDiscountUnit__c,SBQQ__AllowAssetRefund__c,BL_Alternative_Indicator__c,Approval_Reasons__c,ApprovalStatus__c,SBQQ__BatchQuantity__c,SBQQ__BillingFrequency__c,BL_Billing_Tolerance__c,SBQQ__BillingType__c,SBQQ__BlockPrice__c,SBQQ__Bundled__c,SBQQ__CarryoverLine__c,SBQQ__ChargeType__c,SBQQ__ComponentCost__c,SBQQ__ComponentDiscountedByPackage__c,SBQQ__ComponentListTotal__c,SBQQ__ComponentTotal__c,SBQQ__ComponentSubscriptionScope__c,SBQQ__ComponentUpliftedByPackage__c,SBQQ__ComponentVisibility__c,SBQQ__CompoundDiscountRate__c,Configuration__c,SBQQ__ConfigurationRequired__c	,SBQQ__ContractedPrice__c, Copperclad_Pricing_Review__c,SBQQ__Cost__c,SBQQ__CostEditable__c,CreatedById,CurrencyIsoCode,Customer_Tier_Additional_Discount__c,SBQQ__CustomerTotal__c,SBQQ__CustomerPrice__c,SBQQ__DefaultSubscriptionTerm__c,SBQQ__Description__c,BL_Destination__c,SBQQ__DiscountSchedule__c,SBQQ__DiscountScheduleType__c,SBQQ__DiscountTier__c,Display_Price__c,SBQQ__DistributorDiscount__c,SBQQ__DynamicOptionId__c,SBQQ__EarliestValidAmendmentStartDate__c,SBQQ__EffectiveEndDate__c ,SBQQ__EffectiveQuantity__c,SBQQ__EffectiveStartDate__c,SBQQ__EffectiveSubscriptionTerm__c,SBQQ__EndDate__c,SBQQ__Existing__c,SBQQ__Favorite__c,Feature_Name__c,Fiber_Count__c,Fiber_Type__c,Final_Item__c,SBQQ__GenerateContractedPrice__c,SBQQ__GrossProfit__c,SBQQ__Group__c,SBQQ__Guidance__c,SBQQ__HasConsumptionSchedule__c,SBQQ__Hidden__c,HiTemp_Pricing_Review__c,SBQQ__Incomplete__c,Jacket_Color__c,Jacket_Configuration__c,Jacket_Print__c,Jacket_Type__c,LastModifiedById,Length_UOM__c,Name,Line_Quantity_gt_50k__c,SBQQ__ListTotal__c,SBQQ__ListPrice__c,Margin__c,SBQQ__Markup__c,SBQQ__MarkupRate__c,SBQQ__MarkupAmount__c,SBQQ__MaximumPrice__c,SBQQ__MinimumPrice__c,SBQQ__NetTotal__c,SBQQ__NetPrice__c,SBQQ__NonDiscountable__c,SBQQ__NonPartnerDiscountable__c,BL_NSP_Offering_Details__c,SBQQ__Number__c,SBQQ__OptionDiscount__c,SBQQ__OptionDiscountAmount__c,SBQQ__OptionLevel__c,SBQQ__OptionType__c,SBQQ__Optional__c,SBQQ__OriginalPrice__c,SBQQ__BundledQuantity__c,SBQQ__OriginalQuoteLineId__c,SBQQ__OriginalUnitCost__c,OTDR_Base_Model__c,SBQQ__Bundle__c,SBQQ__PackageCost__c,Package_Cover__c,SBQQ__PackageListTotal__c,SBQQ__PackageProductCode__c,SBQQ__PackageProductDescription__c,SBQQ__PackageTotal__c,Package_Type__c,SBQQ__PartnerDiscount__c,SBQQ__PartnerTotal__c,SBQQ__PartnerPrice__c,SBQQ__SubscriptionPercent__c,SBQQ__SubscriptionBase__c,SBQQ__SubscriptionCategory__c,SBQQ__SubscriptionScope__c,SBQQ__SubscriptionTargetPrice__c,Pigtail_Quantity__c,SBQQ__PreviousSegmentPrice__c,SBQQ__PreviousSegmentUplift__c,SBQQ__Dimension__c,SBQQ__PriceEditable__c,Price_Multiplier__c,Price_Rule_Debug__c,SBQQ__PricebookEntryId__c,SBQQ__PricingMethod__c,SBQQ__PricingMethodEditable__c,Primary_UOM__c,SBQQ__PriorQuantity__c,ProdLevel1__c,ProdLevel2__c,ProdLevel3__c,ProdLevel4__c,SBQQ__Product__c,SBQQ__ProductCode__c,SBQQ__ProductFamily__c,SBQQ__ProductName__c,SBQQ__ProductOption__c,SBQQ__ProductSubscriptionType__c,Product_Type__c,SBQQ__ProrateMultiplier__c,SBQQ__ProratedListPrice__c,SBQQ__ProratedPrice__c,SBQQ__Quantity__c,Rail_gt_150_pc__c,Reason_for_Deviation__c,SBQQ__RegularTotal__c,SBQQ__RegularPrice__c,SBQQ__Renewal__c,SBQQ__RenewedAsset__c,SBQQ__RenewedSubscription__c,SBQQ__RequiredBy__c,Rollup_Component_Prices__c,SBQQ__SegmentIndex__c,SBQQ__SegmentKey__c,SBQQ__SegmentLabel__c,Selected__c,BL_Source__c,SBQQ__Source__c,SBQQ__SpecialPrice__c,SBQQ__SpecialPriceDescription__c,SBQQ__SpecialPriceType__c,SBQQ__StartDate__c,SBQQ__SubscribedAssetIds__c,SBQQ__SubscriptionPricing__c,SBQQ__SubscriptionTerm__c,SBQQ__SubscriptionType__c,Subunit_Color__c,SBQQ__TaxCode__c,SBQQ__Taxable__c,SBQQ__TermDiscount__c,SBQQ__TermDiscountSchedule__c,SBQQ__TermDiscountTier__c,Test_Formula__c,Tier__c,SBQQ__TotalDiscountRate__c,SBQQ__TotalDiscountAmount__c,SBQQ__UnitCost__c,SBQQ__UnproratedNetPrice__c,UOM__c,SBQQ__UpgradedAsset__c,SBQQ__UpgradedQuantity__c,SBQQ__UpgradedSubscription__c,SBQQ__Uplift__c,SBQQ__UpliftAmount__c,SBQQ__VolumeDiscount__c FROM SBQQ__QuoteLine__c WHERE SBQQ__Quote__c =: quoteId];
         //Gets the quote lines and deserialize it into a quote line wrapper class
         List<WrappersClass.QuoteLineWrapperClass> untypedQuoteLines = (List<WrappersClass.QuoteLineWrapperClass>) JSON.deserialize(quoteLines, List<WrappersClass.QuoteLineWrapperClass>.class);
         Map<String,WrappersClass.QuoteLineWrapperClass> receivedLinesMap = new Map<String,WrappersClass.QuoteLineWrapperClass>();
@@ -690,10 +721,6 @@ public with sharing class QuoteController {
     }
     @AuraEnabled
     public static void quoteLineCreator(String quoteId, String quoteLines){ //This method creates new quote lines in salesforce based on the values in the QLE
-        // QuoteReader quoteReader = new QuoteReader();
-        // // System.debug('quote id : ' + quoteId);
-        // QuoteModel quote = quoteReader.read(quoteId);
-        // System.debug('quote : ' + quote);
         
         //Get all the fields from the quote line object
         Map<String, Schema.SObjectField> fieldMap = SBQQ__QuoteLine__c.sObjectType.getDescribe().fields.getMap();
@@ -741,11 +768,6 @@ public with sharing class QuoteController {
                 linesWithParentsMap.put(line.SBQQ__RequiredBy__r.Name,new List<SBQQ__QuoteLine__c>{line});
             }
         }
-        // for(String key:linesWithParentsMap.keySet()){
-        //     System.debug('Key : ' +key+' options: ' + linesWithParentsMap.get(key));
-        // }
-        
-        // List<QuoteLineModel> linesFromQuote = quote.getLineItems();
 
          //Add the existing quote line ids to a set
          for (SBQQ__QuoteLine__c line : existingQuoteLines) {
@@ -810,13 +832,17 @@ public with sharing class QuoteController {
                     newQuoteLine.Max_Length_on_Steel__c = line.maxlengthonsteel;
                     newQuoteLine.Max_Length_on_Wood__c = line.maxlengthonwood;
                     if(prodMap.get(line.productid) != null){
-                    if(lengthCodes.contains(prodMap.get(line.productid).Filtered_Grouping__c) && prodMap.get(line.productid).Filtered_Grouping__c=='Patch Panels') {
-                        if(prodMap.get(line.productid).Product_Type__c=='Patch Panel - Stubbed'){
+                        if(lengthCodes.contains(prodMap.get(line.productid).Filtered_Grouping__c) && prodMap.get(line.productid).Filtered_Grouping__c=='Patch Panels') {
+                            if(prodMap.get(line.productid).Product_Type__c=='Patch Panel - Stubbed'){
+                                newQuoteLine.QLE_Variable_Price__c ='Cable Length';
+                            }
+                        }else if(lengthCodes.contains(prodMap.get(line.productid).Filtered_Grouping__c) && prodMap.get(line.productid).Filtered_Grouping__c!='Patch Panels'){
                             newQuoteLine.QLE_Variable_Price__c ='Cable Length';
+                        }else {
+                            newQuoteLine.Length__c = 'NA';
+                            newQuoteLine.Length_UOM__c = 'NA';
                         }
-                    }else if(lengthCodes.contains(prodMap.get(line.productid).Filtered_Grouping__c) && prodMap.get(line.productid).Filtered_Grouping__c!='Patch Panels'){
-                        newQuoteLine.QLE_Variable_Price__c ='Cable Length';
-                    }}
+                    }
                     
                     
                     quoteLinerecordsToInsert.add(newQuoteLine);
@@ -1965,7 +1991,7 @@ public with sharing class QuoteController {
             wrapper.billingtype = newlyAddedLine.record.SBQQ__BillingType__c;
             wrapper.componenttotal = newlyAddedLine.record.SBQQ__ComponentTotal__c;
             wrapper.enddate = newlyAddedLine.record.SBQQ__EndDate__c;
-            wrapper.length = newlyAddedLine.record.Length__c;
+            wrapper.length = String.valueOf(newlyAddedLine.record.Length__c);
             wrapper.originalprice = newlyAddedLine.record.SBQQ__OriginalPrice__c;
             wrapper.packagetype = newlyAddedLine.record.Package_Type__c;
             wrapper.packageCover = newlyAddedLine.record.Package_Cover__c;
@@ -1979,7 +2005,7 @@ public with sharing class QuoteController {
             wrapper.fiberType2 = relatedProd.fiberType2;
             wrapper.regionCode = relatedProd.regionCode;
             wrapper.primaryUOM = relatedProd.primaryUOM;
-            wrapper.length = relatedProd.lenght;
+            // wrapper.length = relatedProd.lenght;
             wrapper.isNSP = true;
 
             linesToPrint.add(wrapper); 

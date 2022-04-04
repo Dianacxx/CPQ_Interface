@@ -5,7 +5,7 @@ import displayFieldSet from '@salesforce/apex/QuoteController.displayFieldSet';
 import addQuoteLine from '@salesforce/apex/QuoteController.addQuoteLine';
 import NSPAdditionalFields from '@salesforce/apex/QuoteController.NSPAdditionalFields'; 
 
-//TO SHOW POSSIBLE VALUES IN LWC TABLE PICKLIST FIELDS WOITH OUT GETTING ERROR FROM APEX
+//TO SHOW POSSIBLE VALUES IN LWC TABLE PICKLIST FIELDS WITHOUT GETTING ERROR FROM APEX
 //ADD NAME PICKLIST FIELD WHEN A NEW FIELD IN TABLE IS ADD. 
 import QUOTELINE_OBJECT from '@salesforce/schema/SBQQ__QuoteLine__c';
 import { getObjectInfo } from 'lightning/uiObjectInfoApi';
@@ -379,7 +379,7 @@ export default class Bl_dataTable extends LightningElement {
         .then((data) => {
             console.log('Add Product DATA: '+ data); 
             newQuotelines = JSON.parse(data); 
-            console.log('New product object: '+ Object.getOwnPropertyNames(newQuotelines[0]));
+            //console.log('New product object: '+ Object.getOwnPropertyNames(newQuotelines[0]));
             for (let i=0; i< newQuotelines.length; i++){
                 //To create auxiliar ID and Name
                 randomId = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 10);
@@ -390,6 +390,8 @@ export default class Bl_dataTable extends LightningElement {
                 newQuotelines[i].netunitprice = 1;
                 newQuotelines[i].alternative = false;
                 newQuotelines[i].quotelinename = newQuotelines[i].product;
+                newQuotelines[i].length = 'NA';
+                newQuotelines[i].lengthuom = 'NA';
                 this.quoteLines = [...this.quoteLines, newQuotelines[i]];
             }
 
@@ -427,10 +429,10 @@ export default class Bl_dataTable extends LightningElement {
     //Save when table is edited and clicked in save button.
     handleSaveEdition(event){
         this.quoteLinesEdit = event.detail.draftValues; 
-        this.uomMessageError = '';
-        this.lengthUomMessageError = '';
-
-        if (!(this.tabSelected == 'Notes') && !(this.tabSelected == 'Line')){
+        if(this.quoteLinesEdit){
+            this.uomMessageError = '';
+            this.lengthUomMessageError = '';
+            console.log('UOM VALUES')
             for (let i =0; i< this.quoteLinesEdit.length; i++){
                 //console.log('Id editada: '+this.quoteLinesEdit[i].id);
                 let index = this.quoteLines.findIndex(x => x.id === this.quoteLinesEdit[i].id);
@@ -482,11 +484,10 @@ export default class Bl_dataTable extends LightningElement {
                             }
                         } else {
                             inputsItems[i].fields[prop[j]] = 'NA'; 
-                            //this.quoteLines[index].length = 0;  //Not sure if length has to be empty if is NA
+                            this.quoteLines[index].length = 'NA';  //The length is NA
                         }
                     }
                     if(prop[j]=='uom'){
-                        
                         if(this.uom.data.values){
                             let values = [];
                             //console.log(this.uom.data.values);
@@ -534,6 +535,7 @@ export default class Bl_dataTable extends LightningElement {
                 this.dispatchEvent(evt1);
             }
 
+
             this.quotelinesString = JSON.stringify(this.quoteLines); 
             this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
             
@@ -545,17 +547,18 @@ export default class Bl_dataTable extends LightningElement {
             });
             this.dispatchEvent(evt);
             this.quoteLinesEdit = [];
+            
+            this.template.querySelector("lightning-datatable").draftValues = [];
+            this.firstHandler();
+            this.updateTable();
+            //MISSING WHEN UPDATE FIELDS IN NOTES
+            /*
+            *
+            *
+            * 
+            * 
+            */ 
         }
-        this.template.querySelector("lightning-datatable").draftValues = [];
-        this.firstHandler();
-        this.updateTable();
-        //MISSING WHEN UPDATE FIELDS IN NOTES
-        /*
-        *
-        *
-        * 
-        * 
-        */ 
     }
 
     updateTable(){

@@ -5,13 +5,15 @@ import { NavigationMixin } from 'lightning/navigation';
 import filteredProductPrinter from '@salesforce/apex/QuoteController.filteredProductPrinter';
 import getFirstFilter from '@salesforce/apex/QuoteController.getFirstFilter'; 
 import getProductFilteringv2 from '@salesforce/apex/QuoteController.getProductFilteringv2';
-import addSelectorQuoteLine from '@salesforce/apex/QuoteController.addSelectorQuoteLine'; //addQuoteLine
-import addQuoteLine from '@salesforce/apex/QuoteController.addQuoteLine'; //addQuoteLine
 import getAdditionalFiltering from '@salesforce/apex/QuoteController.getAdditionalFiltering';
 import NSPAdditionalFields from '@salesforce/apex/QuoteController.NSPAdditionalFields'; 
 
+//THIS ONE HAS A PROBLEM RIGHT NOW FOR MULTIPLE PRODUCTS IN ONE CONVERTION
+import addSelectorQuoteLine from '@salesforce/apex/QuoteController.addSelectorQuoteLine'; //FOR THE NON NSP PRODUCTS
 import addNSPProducts from '@salesforce/apex/QuoteController.addNSPProducts';
-import addNSPQuoteLine from '@salesforce/apex/QuoteController.addNSPQuoteLine'; 
+//import addQuoteLine from '@salesforce/apex/QuoteController.addQuoteLine'; //NOT USED BECAUSE OF NSP FIELDS
+
+//import addNSPQuoteLine from '@salesforce/apex/QuoteController.addNSPQuoteLine'; //NOT SURE WHY THERE ARE TWO OF THEM
 
 export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     @api recordId; 
@@ -213,12 +215,10 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             //console.log('row '+JSON.stringify(this.rowsSelected));
         } 
         this.activeFilterTab = 'Review';
-            this.tabOption = true;
-            this.updateReviewTable();
-            this.rowsSelected = [];
-            this.template.querySelectorAll('lightning-datatable').forEach(each => {
-                each.selectedRows = [];
-        });
+        this.tabOption = true;
+        this.updateReviewTable();
+        this.rowsSelected = [];
+        this.template.querySelectorAll('lightning-datatable').forEach(each => { each.selectedRows = []; });
         this.filtersLoading = true; 
         this.productTypeShow = true; 
         this.fillReviewFilters();
@@ -692,20 +692,12 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         this.filtersForApex = [];
         this.recordsAmount = 0;
         this.filterResults = []; 
-        this.template.querySelectorAll('lightning-combobox').forEach(each => {
-           each.value = undefined;
-        });
-        this.template.querySelectorAll('lightning-input').forEach(each => {
-            each.value = undefined;
-        });
-        this.template.querySelectorAll('lightning-datatable').forEach(each => {
-            each.selectedRows = [];
-        });
+        this.template.querySelectorAll('lightning-combobox').forEach(each => { each.value = undefined; });
+        this.template.querySelectorAll('lightning-input').forEach(each => { each.value = undefined; });
+        this.template.querySelectorAll('lightning-datatable').forEach(each => { each.selectedRows = []; });
         this.dataPages = [];
         this.reviewDisplay = this.allReviews; 
-        if (this.rowsSelected) {
-            this.updateReviewTable();
-        }
+        if (this.rowsSelected) { this.updateReviewTable(); }
         this.updateFilterTable();
         //console.log('review data save '+ JSON.stringify(this.reviewDisplay));
 
@@ -724,7 +716,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         this.totalRecountCount = this.filterResults.length;  
         this.totalPage = Math.ceil(this.totalRecountCount / this.pageSize); 
         this.dataPages = this.filterResults.slice(0,this.pageSize); 
-        //onsole.log('From table: '+Object.getOwnPropertyNames(this.dataPages[0]));
+        //console.log('From table: '+Object.getOwnPropertyNames(this.dataPages[0]));
         this.endingRecord = this.pageSize;
     }
     previousHandler() {

@@ -65,30 +65,34 @@ export default class Bl_customLookup extends LightningElement {
             //console.log('Seacrh option: '+this.productSelected);
             this.error = undefined;
             this.records = data;
+            if (this.records.length == 0){
+                this.records = [{"Id":"norecords","Name":"NO RECORDS","IsActive":true}];
+            } else {
             //console.log('Lookup DATA Ok');
             //console.log('Lookup DATA: ' + this.records);
             //let customer;
             //let competitor; 
             //console.log('Values of this.records ' + Object.getOwnPropertyNames(this.records[0]));
-            if (!(this.productSelected == 'name' )) { 
-                for (let k = 0; k< this.records.length; k++){
-                    //console.log('Values of this.records ' + Object.getOwnPropertyNames(this.records[k]));
-                    //console.log('Customer_Part_Cross_References__r '+ this.records[k].Customer_Part_Cross_References__r)
-                    if(this.records[k].hasOwnProperty('Customer_Part_Cross_References__r')){
-                        this.customerDisplay = true; 
-                        this.competitorDisplay = false;
-                        //console.log('Customer Ob: '+ Object.getOwnPropertyNames(this.records[k].Customer_Part_Cross_References__r[0].Account__r.Name)); 
-                        //customer = this.records[k].Customer_Part_Cross_References__r;
-                        //console.log('Customer = '+ customer[k].Customer_Item_Number__c);
-                    }
-                    else if(this.records[k].hasOwnProperty('Competitor_Cross_References__r')){
-                        this.competitorDisplay = true; 
-                        this.customerDisplay = false; 
-                        //console.log('Customer Ob: '+ Object.getOwnPropertyNames(this.records[k].Competitor_Cross_References__r[0].Competitor__r.Name)); 
-                        //competitor = this.records[k].Competitor_Cross_References__r;
-                        //console.log('competitor = '+ JSON.stringify(competitor[k]));
+                if (!(this.productSelected == 'name' )) { 
+                    for (let k = 0; k< this.records.length; k++){
+                        //console.log('Values of this.records ' + Object.getOwnPropertyNames(this.records[k]));
+                        //console.log('Customer_Part_Cross_References__r '+ this.records[k].Customer_Part_Cross_References__r)
+                        if(this.records[k].hasOwnProperty('Customer_Part_Cross_References__r')){
+                            this.customerDisplay = true; 
+                            this.competitorDisplay = false;
+                            //console.log('Customer Ob: '+ Object.getOwnPropertyNames(this.records[k].Customer_Part_Cross_References__r[0].Account__r.Name)); 
+                            //customer = this.records[k].Customer_Part_Cross_References__r;
+                            //console.log('Customer = '+ customer[k].Customer_Item_Number__c);
+                        }
+                        else if(this.records[k].hasOwnProperty('Competitor_Cross_References__r')){
+                            this.competitorDisplay = true; 
+                            this.customerDisplay = false; 
+                            //console.log('Customer Ob: '+ Object.getOwnPropertyNames(this.records[k].Competitor_Cross_References__r[0].Competitor__r.Name)); 
+                            //competitor = this.records[k].Competitor_Cross_References__r;
+                            //console.log('competitor = '+ JSON.stringify(competitor[k]));
+                        } 
                     } 
-                } 
+                }
             }
         } else if (error) {
             this.error = error;
@@ -117,14 +121,17 @@ export default class Bl_customLookup extends LightningElement {
     onSelect(event) {
         let selectedId = event.currentTarget.dataset.id;
         let selectedName = event.currentTarget.dataset.name;
-        const valueSelectedEvent = new CustomEvent('lookupselected', {detail:  selectedId });
-        this.dispatchEvent(valueSelectedEvent);
-        this.isValueSelected = true;
-        this.selectedName = selectedName;
-        if(this.blurTimeout) {
-            clearTimeout(this.blurTimeout);
+        if(!(selectedId == 'norecords')){
+            const valueSelectedEvent = new CustomEvent('lookupselected', {detail:  selectedId });
+            this.dispatchEvent(valueSelectedEvent);
+            this.isValueSelected = true;
+            this.selectedName = selectedName;
+            if(this.blurTimeout) {
+                clearTimeout(this.blurTimeout);
+            }
+            this.boxClass = 'slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click slds-has-focus';
         }
-        this.boxClass = 'slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click slds-has-focus';
+        
     }
 
     handleRemovePill() {
@@ -134,6 +141,43 @@ export default class Bl_customLookup extends LightningElement {
     onChange(event) {
         this.searchTerm = event.target.value;
         //console.log('search Term : '+ this.searchTerm);
+        //console.log('quoteId : '+ this.recordId);
+        //console.log('option : '+ this.productSelected);
+        search({searchTerm : this.searchTerm, quoteId: this.recordId, option: this.productSelected})
+        .then((data)=>{
+                console.log('Seacrh data: '+JSON.stringify(data));
+                this.error = undefined;
+                this.records = data;
+                if (this.records.length == 0){
+                    this.records = [{"Id":"norecords","Name":"NO RECORDS","IsActive":true}];
+                } else {
+                if (!(this.productSelected == 'name' )) { 
+                    for (let k = 0; k< this.records.length; k++){
+                        if(this.records[k].hasOwnProperty('Customer_Part_Cross_References__r')){
+                            this.customerDisplay = true; 
+                            this.competitorDisplay = false;
+                        }
+                        else if(this.records[k].hasOwnProperty('Competitor_Cross_References__r')){
+                            this.competitorDisplay = true; 
+                            this.customerDisplay = false; 
+                        }
+                    } 
+                }
+            }
+        })
+        .catch((error)=>{
+                this.error = error;
+                this.records = undefined;
+                console.log('Lookup ERROR: '); 
+                console.log(this.error);
+                const evt = new ShowToastEvent({
+                    title: 'No products found',
+                    message: 'This quote has no associated products',
+                    variant: 'warning',
+                    mode: 'dismissable'
+                });
+                this.dispatchEvent(evt);
+        });
     }
 
 }

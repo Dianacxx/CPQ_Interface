@@ -8,7 +8,9 @@
     <!--LOOK UP FIELD START-->
     <template if:true={isQuoteLinesTab}>
         <div class="slds-var-m-left_small slds-var-m-right_small slds-var-m-top_small slds-var-m-bottom_small">
-            <c-bl_custom-lookup record-id={recordId} option-is-customer-part={isCustomerPart} search-placeholder="Search Product" icon-name="standard:products" onlookupselected={handleProductSelection}> </c-bl_custom-lookup>
+            <c-bl_custom-lookup record-id={recordId} option-is-customer-part={isCustomerPart} 
+                search-placeholder="Search Product" icon-name="standard:products" onlookupselected={handleProductSelection}>
+            </c-bl_custom-lookup>
         </div>
     </template>
     <!--LOOK UP FIELD END-->
@@ -32,13 +34,13 @@
     </div>
         <!--POP UP NSP PRODUCTS START-->
         <template if:true={nspProduct}>
-            <section aria-modal="true" class="slds-modal slds-fade-in-open">
-                <div class="slds-modal__container ">
-                    <header class="slds-modal__header">
+            <section aria-modal="true" class="slds-modal slds-fade-in-open slds-align_absolute-center">
+                <div class="slds-modal__container slds-var-m-left_small  slds-var-m-right_small">
+                    <header class="slds-modal__header slds-var-m-left_small  slds-var-m-right_small">
                         <h2 class="slds-text-heading_medium slds-hyphenate">NSP Product: {dataRow.quotelinename}</h2>
                         <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeNsp}></lightning-icon>
                     </header>
-                    <div class="slds-modal__content slds-p-around_medium">
+                    <div class="slds-modal__content slds-var-m-left_small  slds-var-m-right_small">
                         <div class="slds-var-p-around_small slds-align_absolute-center">
                             <template if:false={nspShowMessage}>
                                 <p style="font-size: 18px;" class="slds-align_absolute-center">This quote line has not NSP values.</p>
@@ -84,7 +86,7 @@
                         </template>
                         -->
                     </div>
-                    <footer class="slds-modal__footer">
+                    <footer class="slds-modal__footer slds-var-m-left_small  slds-var-m-right_small">
                         <lightning-button  variant="destructive-text" label="Cancel" onclick={closeNsp} class="slds-p-around_x-small slds-m-right_small"></lightning-button>
                     </footer>
                 </div>
@@ -94,18 +96,18 @@
         <!--POP UP NSP PRODUCTS END-->
         <!--POP UP WARNING DELETE START-->
         <template if:true={deleteClick}>
-            <section aria-modal="true" class="slds-modal slds-fade-in-open">
-                <div class="slds-modal__container ">
-                    <header class="slds-modal__header">
+            <section aria-modal="true" class="slds-modal slds-fade-in-open slds-align_absolute-center">
+                <div class="slds-modal__container slds-var-m-left_small  slds-var-m-right_small">
+                    <header class="slds-modal__header slds-var-m-left_small  slds-var-m-right_small">
                         <h2 class="slds-text-heading_medium slds-hyphenate">WARNING</h2>
                         <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeModal}></lightning-icon>
                     </header>
-                    <div class="slds-modal__content">
+                    <div class="slds-modal__content slds-var-m-left_small  slds-var-m-right_small">
                         <div class="slds-var-p-around_small slds-align_absolute-center">
                             <p style="font-size:160%;">Are you sure you want to delete this?</p>
                         </div>
                     </div>
-                    <footer class="slds-modal__footer">
+                    <footer class="slds-modal__footer slds-var-m-left_small  slds-var-m-right_small">
                         <lightning-button variant="brand" label="Cancel" onclick={closeModal} class="slds-p-around_x-small slds-m-right_small"></lightning-button>
                         <lightning-button variant="brand" label="Confirm" onclick={deleteModal} class="slds-p-around_x-small"></lightning-button>
                     </footer>
@@ -116,18 +118,18 @@
         <!--POP UP WARNING DELETE END-->
         <!--POP UP TIERS AND CONTRACTS START-->
         <template if:true={popUpTiers}>
-            <section aria-modal="true" class="slds-modal slds-fade-in-open">
-                <div class="slds-modal__container ">
-                    <header class="slds-modal__header">
+            <section aria-modal="true" class="slds-modal slds-fade-in-open slds-align_absolute-center">
+                <div class="slds-modal__container slds-var-m-left_small  slds-var-m-right_small">
+                    <header class="slds-modal__header slds-var-m-left_small  slds-var-m-right_small">
                         <h2 class="slds-text-heading_medium slds-hyphenate">Available Discounts</h2>
                         <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeTiers}></lightning-icon>
                     </header>
-                    <div class="slds-modal__content">
+                    <div class="slds-modal__content slds-var-m-left_small  slds-var-m-right_small">
                         <div class="slds-var-p-around_small slds-align_absolute-center">
                             <p style="font-size:160%;">THIS VIEW/PROCESS IS NOT DONE YET</p>
                         </div>
                     </div>
-                    <footer class="slds-modal__footer">
+                    <footer class="slds-modal__footer slds-var-m-left_small  slds-var-m-right_small">
                         <lightning-button variant="brand" label="Close" onclick={closeTiers} class="slds-p-around_x-small slds-m-right_small"></lightning-button>
                     </footer>
                 </div>
@@ -138,10 +140,10 @@
         <!--POP UP REORDER LINES START-->
         <template if:true={popUpReorder}>
             <!-- Modal/Popup Box LWC starts here -->
-            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
-                <div class="slds-modal__container">
+            <section aria-modal="true" class="slds-modal slds-fade-in-open slds-align_absolute-center">
+                <div class="slds-modal__container slds-var-m-left_small  slds-var-m-right_small">
                     <!-- Modal/Popup Box LWC header here -->
-                    <header class="slds-modal__header">
+                    <header class="slds-modal__header slds-var-m-left_small  slds-var-m-right_small">
                         <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={closeReorder}>
                             <lightning-icon icon-name="utility:close" label="Close" alternative-text="close" variant="inverse" size="small" ></lightning-icon>
                             <span class="slds-assistive-text">Close</span>
@@ -149,7 +151,7 @@
                         <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Reorder Lines of products</h2>
                     </header>
                     <!-- Modal/Popup Box LWC body starts here -->
-                    <div class="slds-modal__content slds-var-p-around_medium" id="modal-content-id-1">
+                    <div class="slds-modal__content slds-var-m-left_small  slds-var-m-right_small" id="modal-content-id-1">
                         <!--START TABLE TO REORDER -->
                         <p class="slds-align_absolute-center slds-var-m-bottom_x-small" style="color: blue;">Number of Quote Lines: {quotelinesLength}</p>
                         <div class="slds-grid slds-grid_vertical">
@@ -185,7 +187,7 @@
                         <!--END TABLE TO REORDER-->
                     </div>
                     <!-- Modal/Popup Box LWC footer starts here -->
-                    <footer class="slds-modal__footer">
+                    <footer class="slds-modal__footer slds-var-m-left_small  slds-var-m-right_small">
                         <button class="slds-button slds-button_neutral" onclick={closeReorder} label="Cancel" title="Cancel">Cancel</button>
                         <button class="slds-button slds-button_brand" onclick={submitReorder} label="Save" title="OK">Save</button>
                     </footer>
