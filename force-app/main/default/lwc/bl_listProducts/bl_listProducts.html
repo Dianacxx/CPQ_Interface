@@ -49,6 +49,10 @@
                                                 <lightning-input class="slds-var-m-right_x-small" key={textFilters.label} name={textFilters.label} type="text" label={textFilters.label} 
                                                 onchange={handleInputChange}></lightning-input>
                                             </template>
+                                            <template if:true={checkFeetToMeters}>
+                                                <lightning-input class="slds-var-m-top_large" type="checkbox" label="In Feet" name="feet" onchange={checkForFeet}></lightning-input>
+                                                <lightning-helptext class="slds-var-m-top_large" content="If the box is not checked, the value of each Max Span is in meters."></lightning-helptext>
+                                            </template>
                                         </lightning-layout>
                                     </template>
                                 </div>

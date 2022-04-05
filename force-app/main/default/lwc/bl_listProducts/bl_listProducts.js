@@ -480,6 +480,9 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         
     }
 
+    @track checkFeetToMeters = false; //To show the checkbox to convert from feet to meters. 
+    @track feetToMeters = false; //To check if it is in meters (false) or feet (true)
+
     //PRODUCT TYPE CALL FILTERS DEPENDENCIES
     handleProductTypeChange(event){
         this.filtersLoading = false;
@@ -498,9 +501,13 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         this.columnsReview = [{label: 'Product Name', fieldName: 'Name', editable: false, },]; 
         getProductFilteringv2({filteredGrouping: this.trackList.lookupCode, typeSelection: this.requiredApex })
         .then((data)=>{
-            //console.log('SECOND PRODUCT TYPE');
-            //console.log(data);
+            console.log('SECOND PRODUCT TYPE');
+            console.log(data);
             let temporalList = JSON.parse(data);
+
+            //This line is to check if it is ADSS Cable to allow convertion in feet
+            this.trackList.lookupCode == 'ADSS Cable' ? this.checkFeetToMeters = true : this.checkFeetToMeters = false;
+            
             //console.log('temporalList PROPERTY: ' + Object.getOwnPropertyNames(temporalList));
             for(let i = 0; i< temporalList.length; i++){
                 if (temporalList[i].options == '[]'){
@@ -553,6 +560,11 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     @track recordsAmount = 0; 
     @track loadingFilteData = false; 
 
+    //To check if the user wants meters or feet in ADSS Cable filtered. 
+    checkForFeet(event){
+        //console.log('FEET BOX '+ event.detail.checked);
+        this.feetToMeters = event.detail.checked; 
+    }
     //Handle the changes in picklist to show products in FILTER TAB
     handleInputChange(event){
         //console.log(JSON.stringify(this.listFilters));
@@ -568,11 +580,26 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         let indexFilter = this.filtersForApex.findIndex(x => x.label == event.target.label); 
         //console.log('Index in filterSelected: '+indexFilter);
         //console.log('Options of filters: '+JSON.stringify(event.detail));
-        if( indexFilter > -1){
-            this.filtersForApex[indexFilter].value = event.detail.value; 
+    
+        //The convertion from feet to meters. 
+        if (this.feetToMeters && (event.target.label == 'Max Span at Light' || 
+        event.target.label == 'Max Span at Medium' ||  event.target.label == 'Max Span at Heavy' )){
+            //console.log('Convertion from feet to meters'); 
+            let inFeet = event.detail.value / 3.281; 
+            inFeet = inFeet.toFixed(2);
+            if( indexFilter > -1){
+                this.filtersForApex[indexFilter].value = inFeet; 
+            } else {
+                this.filtersForApex.push({label: event.target.label, value: inFeet}); 
+            }
         } else {
-            this.filtersForApex.push({label: event.target.label, value:event.detail.value}); 
+            if( indexFilter > -1){
+                this.filtersForApex[indexFilter].value = event.detail.value; 
+            } else {
+                this.filtersForApex.push({label: event.target.label, value:event.detail.value}); 
+            }
         }
+
 
         //Extra Filters Dependencies.
         //ONLY FOR CAMBLE ASSEMBLIES + CUSTOMER REQUIRED FILTER
@@ -685,6 +712,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     //FILTERS RESET
     clearFilters(){
         //Clearing filters with button in Filter Tab
+        this.checkFeetToMeters = false; 
         this.listFilters = [];
         this.listTextFilters = [];
         this.reviewSelectedLabel = [];
@@ -692,8 +720,9 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         this.filtersForApex = [];
         this.recordsAmount = 0;
         this.filterResults = []; 
+        
         this.template.querySelectorAll('lightning-combobox').forEach(each => { each.value = undefined; });
-        this.template.querySelectorAll('lightning-input').forEach(each => { each.value = undefined; });
+        this.template.querySelectorAll('lightning-input').forEach(each => { each.value = undefined; each.checked = false; });
         this.template.querySelectorAll('lightning-datatable').forEach(each => { each.selectedRows = []; });
         this.dataPages = [];
         this.reviewDisplay = this.allReviews; 

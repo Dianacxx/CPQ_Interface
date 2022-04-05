@@ -214,6 +214,7 @@ public with sharing class QuoteController {
             wrapper.volumeDiscount = line.SBQQ__VolumeDiscount__c;
             wrapper.productType = line.Product_Type__c;
             wrapper.qlevariableprice = line.QLE_Variable_Price__c;
+            wrapper.prodLevel1 = line.ProdLevel1__c;
             wrapper.prodLevel2 = line.ProdLevel2__c;
             if(line.is_NSP__c == true){
                 wrapper.color = line.Color__c;
@@ -230,6 +231,34 @@ public with sharing class QuoteController {
             }
             wrapper.isNSP = line.is_NSP__c;
             wrapper.quotelinename = line.Quote_Line_Name__c;
+
+            //Twinned fields
+            wrapper.basedesigncode = line.Base_Design_Code__c;
+            wrapper.cablecostpermeter = line.CableCostPerMeter__c;
+            wrapper.customer = line.Customer__c;
+            wrapper.filteredgrouping = line.Filtered_Grouping__c;
+            wrapper.fixedcost = line.Fixed_Cost__c;
+            wrapper.primaryUOM = line.Primary_UOM__c;
+            wrapper.quoteitemdescriptiona = line.Quote_Item_Description_Part_A__c;
+            wrapper.quoteitemdescriptionb = line.Quote_Item_Description_Part_B__c;
+            wrapper.unitcost = line.Unit_Cost__c;
+            wrapper.variableprice1 = line.Variable_Price_1__c;
+            wrapper.busmarginhighvalue = line.Bus_Margin_High_Value__c;
+            wrapper.busmarginlowvalue = line.Bus_Margin_Low_Value__c;
+            wrapper.conncostA = line.ConnCost_A__c;
+            wrapper.conncostB = line.ConnCost_B__c;
+            wrapper.countfactor = line.Count_Factor__c;
+            wrapper.marginchangevalue = line.Margin_Change_Value__c;
+            wrapper.numadapter = line.NumAdapter__c;
+            wrapper.numcables = line.NumCables__c;
+            wrapper.numconnector = line.NumConnector__c;
+            wrapper.pricingcost = line.Pricing_Cost__c;
+            wrapper.regionaddercentral = line.Region_Adder_Central__c;
+            wrapper.regionaddereast = line.Region_Adder_East__c;
+            wrapper.regionadderwest = line.Region_Adder_West__c;
+            wrapper.regionaddernorthwest = line.Region_Adder_Northwest__c;
+            wrapper.resourcecosta = line.ResourceCost_A__c;
+            wrapper.productType = line.Product_Type__c;
             if (relatedTier != null) {
                 wrapper.tiers = json.serialize(relatedTier);
             }
@@ -381,6 +410,32 @@ public with sharing class QuoteController {
             if(newlyAddedLine.record.SBQQ__Product__r.ProdLevel4__c != null){
                 wrapper.prodLevel4 = newlyAddedLine.record.SBQQ__Product__r.ProdLevel4__c;
             }
+            wrapper.basedesigncode = newlyAddedLine.record.SBQQ__Product__r.Base_Design_Code__c;
+            wrapper.cablecostpermeter = newlyAddedLine.record.SBQQ__Product__r.CableCostPerMeter__c;
+            wrapper.customer = newlyAddedLine.record.SBQQ__Product__r.Customer__c;
+            wrapper.filteredgrouping = newlyAddedLine.record.SBQQ__Product__r.Filtered_Grouping__c;
+            wrapper.fixedcost = newlyAddedLine.record.SBQQ__Product__r.Fixed_Cost__c;
+            wrapper.primaryUOM = newlyAddedLine.record.SBQQ__Product__r.Primary_UOM__c;
+            wrapper.quoteitemdescriptiona = newlyAddedLine.record.SBQQ__Product__r.Quote_Item_Description_Part_A__c;
+            wrapper.quoteitemdescriptionb = newlyAddedLine.record.SBQQ__Product__r.Quote_Item_Description_Part_B__c;
+            wrapper.unitcost = newlyAddedLine.record.SBQQ__Product__r.Unit_Cost__c;
+            wrapper.variableprice1 = newlyAddedLine.record.SBQQ__Product__r.Variable_Price_1__c;
+            wrapper.busmarginhighvalue = newlyAddedLine.record.SBQQ__Product__r.Bus_Margin_High_Value__c;
+            wrapper.busmarginlowvalue = newlyAddedLine.record.SBQQ__Product__r.Bus_Margin_Low_Value__c;
+            wrapper.conncostA = newlyAddedLine.record.SBQQ__Product__r.ConnCost_A__c;
+            wrapper.conncostB = newlyAddedLine.record.SBQQ__Product__r.ConnCost_B__c;
+            wrapper.countfactor = newlyAddedLine.record.SBQQ__Product__r.Count_Factor__c;
+            wrapper.marginchangevalue = newlyAddedLine.record.SBQQ__Product__r.Margin_Change_Value__c;
+            wrapper.numadapter = newlyAddedLine.record.SBQQ__Product__r.NumAdapter__c;
+            wrapper.numcables = newlyAddedLine.record.SBQQ__Product__r.NumCables__c;
+            wrapper.numconnector = newlyAddedLine.record.SBQQ__Product__r.NumConnector__c;
+            wrapper.pricingcost = newlyAddedLine.record.SBQQ__Product__r.Pricing_Cost__c;
+            wrapper.regionaddercentral = newlyAddedLine.record.SBQQ__Product__r.Region_Adder_Central__c;
+            wrapper.regionaddereast = newlyAddedLine.record.SBQQ__Product__r.Region_Adder_East__c;
+            wrapper.regionadderwest = newlyAddedLine.record.SBQQ__Product__r.Region_Adder_West__c;
+            wrapper.regionaddernorthwest = newlyAddedLine.record.SBQQ__Product__r.Region_Adder_Northwest__c;
+            wrapper.resourcecosta = newlyAddedLine.record.SBQQ__Product__r.ResourceCost_A__c;
+            wrapper.productType = newlyAddedLine.record.SBQQ__Product__r.Product_Type__c;
 
             linesToPrint.add(wrapper); 
         }
@@ -460,8 +515,17 @@ public with sharing class QuoteController {
             if(newlyAddedLine.record.SBQQ__Product__r.Primary_UOM__c != null){
                 wrapper.uom = newlyAddedLine.record.SBQQ__Product__r.Primary_UOM__c;
             }
+            if(newlyAddedLine.record.SBQQ__Product__r.ProdLevel1__c != null){
+                wrapper.prodLevel1 = newlyAddedLine.record.SBQQ__Product__r.ProdLevel1__c;
+            }
             if(newlyAddedLine.record.SBQQ__Product__r.ProdLevel2__c != null){
                 wrapper.prodLevel2 = newlyAddedLine.record.SBQQ__Product__r.ProdLevel2__c;
+            }
+            if(newlyAddedLine.record.SBQQ__Product__r.ProdLevel3__c != null){
+                wrapper.prodLeveL3 = newlyAddedLine.record.SBQQ__Product__r.ProdLevel3__c;
+            }
+            if(newlyAddedLine.record.SBQQ__Product__r.ProdLevel4__c != null){
+                wrapper.prodLevel4 = newlyAddedLine.record.SBQQ__Product__r.ProdLevel4__c;
             }
             wrapper.listunitprice = newlyAddedLine.record.SBQQ__ListPrice__c;
             wrapper.additionaldiscount = newlyAddedLine.record.SBQQ__Discount__c;
@@ -484,6 +548,34 @@ public with sharing class QuoteController {
             wrapper.volumediscount = newlyAddedLine.record.SBQQ__VolumeDiscount__c;
             wrapper.color = newlyAddedLine.record.Color__c;
             wrapper.productType = newlyAddedLine.record.Product_Type__c;
+
+            //Twinned
+            wrapper.basedesigncode = newlyAddedLine.record.SBQQ__Product__r.Base_Design_Code__c;
+            wrapper.cablecostpermeter = newlyAddedLine.record.SBQQ__Product__r.CableCostPerMeter__c;
+            wrapper.customer = newlyAddedLine.record.SBQQ__Product__r.Customer__c;
+            wrapper.filteredgrouping = newlyAddedLine.record.SBQQ__Product__r.Filtered_Grouping__c;
+            wrapper.fixedcost = newlyAddedLine.record.SBQQ__Product__r.Fixed_Cost__c;
+            wrapper.primaryUOM = newlyAddedLine.record.SBQQ__Product__r.Primary_UOM__c;
+            wrapper.quoteitemdescriptiona = newlyAddedLine.record.SBQQ__Product__r.Quote_Item_Description_Part_A__c;
+            wrapper.quoteitemdescriptionb = newlyAddedLine.record.SBQQ__Product__r.Quote_Item_Description_Part_B__c;
+            wrapper.unitcost = newlyAddedLine.record.SBQQ__Product__r.Unit_Cost__c;
+            wrapper.variableprice1 = newlyAddedLine.record.SBQQ__Product__r.Variable_Price_1__c;
+            wrapper.busmarginhighvalue = newlyAddedLine.record.SBQQ__Product__r.Bus_Margin_High_Value__c;
+            wrapper.busmarginlowvalue = newlyAddedLine.record.SBQQ__Product__r.Bus_Margin_Low_Value__c;
+            wrapper.conncostA = newlyAddedLine.record.SBQQ__Product__r.ConnCost_A__c;
+            wrapper.conncostB = newlyAddedLine.record.SBQQ__Product__r.ConnCost_B__c;
+            wrapper.countfactor = newlyAddedLine.record.SBQQ__Product__r.Count_Factor__c;
+            wrapper.marginchangevalue = newlyAddedLine.record.SBQQ__Product__r.Margin_Change_Value__c;
+            wrapper.numadapter = newlyAddedLine.record.SBQQ__Product__r.NumAdapter__c;
+            wrapper.numcables = newlyAddedLine.record.SBQQ__Product__r.NumCables__c;
+            wrapper.numconnector = newlyAddedLine.record.SBQQ__Product__r.NumConnector__c;
+            wrapper.pricingcost = newlyAddedLine.record.SBQQ__Product__r.Pricing_Cost__c;
+            wrapper.regionaddercentral = newlyAddedLine.record.SBQQ__Product__r.Region_Adder_Central__c;
+            wrapper.regionaddereast = newlyAddedLine.record.SBQQ__Product__r.Region_Adder_East__c;
+            wrapper.regionadderwest = newlyAddedLine.record.SBQQ__Product__r.Region_Adder_West__c;
+            wrapper.regionaddernorthwest = newlyAddedLine.record.SBQQ__Product__r.Region_Adder_Northwest__c;
+            wrapper.resourcecosta = newlyAddedLine.record.SBQQ__Product__r.ResourceCost_A__c;
+            wrapper.productType = newlyAddedLine.record.SBQQ__Product__r.Product_Type__c;
 
             System.debug('is the wrapper working -- ' + wrapper.fiberType1);
             linesToPrint.add(wrapper); 
@@ -543,8 +635,12 @@ public with sharing class QuoteController {
 
             wrapper.productid = (Id)prodMap.get('Id');
             wrapper.product = (String)prodMap.get('Name');
+            //IS THIS NEEDED? 
             wrapper.uom = (String)prodMap.get('Primary_UOM__c');
+            wrapper.prodLevel1 = (String)prodMap.get('ProdLevel1__c');
             wrapper.prodLevel2 = (String)prodMap.get('ProdLevel2__c');
+            wrapper.prodLevel3 = (String)prodMap.get('ProdLevel3__c');
+            wrapper.prodLevel4 = (String)prodMap.get('ProdLevel4__c');
             
 
             wrapper.isNSP = true;
@@ -1061,7 +1157,7 @@ public with sharing class QuoteController {
             //Get the dependernt picklist values for the second attribute, depending on the first attribute value.
             
             if(customFilters.Attribute_2__c!= null){
-                if(customFilters.Attribute_2__c == 'AW_Industry Name' || customFilters.Attribute_2__c == 'NumTray'){
+                if(customFilters.Attribute_2__c == 'Industry Name' || customFilters.Attribute_2__c == 'NumTray'){
                     List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(picklistFields.get(customFilters.Attribute_2__c),filteredGrouping);
                     filtersMap.put(customFilters.Attribute_2__c,pickListValues);
                 }else{
@@ -1329,13 +1425,13 @@ public with sharing class QuoteController {
                 queryAdditions += 'TightBuff_Type__c = ' + '\''+ filterValuesMap.get('TightBuff Type') + '\' AND ';
             }
             if(filterValuesMap.get('Max Span at Light') != null){
-                queryAdditions += 'Max_Span_at_Light__c = ' + filterValuesMap.get('Max Span at Light') + ' AND ';
+                queryAdditions += 'Max_Span_at_Light__c >= ' + filterValuesMap.get('Max Span at Light') + ' AND ';
             }
             if(filterValuesMap.get('Max Span at Medium') != null){
-                queryAdditions += 'Max_Span_at_Medium__c = ' + filterValuesMap.get('Max Span at Medium') + ' AND ';
+                queryAdditions += 'Max_Span_at_Medium__c >= ' + filterValuesMap.get('Max Span at Medium') + ' AND ';
             }
             if(filterValuesMap.get('Max Span at Heavy') != null){
-                queryAdditions += 'Max_Span_at_Heavy__c = ' + filterValuesMap.get('Max Span at Heavy') + ' AND ';
+                queryAdditions += 'Max_Span_at_Heavy__c >= ' + filterValuesMap.get('Max Span at Heavy') + ' AND ';
             }
             if(filterValuesMap.get('Packaging') != null){
                 queryAdditions += 'Packaging__c = ' + '\''+ filterValuesMap.get('Packaging') + '\' AND ';
@@ -1370,14 +1466,14 @@ public with sharing class QuoteController {
             if(filterValuesMap.get('Packaging') != null){
                 queryAdditions += 'Packaging__c = ' + '\''+ filterValuesMap.get('Packaging') + '\' AND ';
             }
-            if(filterValuesMap.get('AW_Industry Name') != null){
-                queryAdditions += 'AW_Industry_Name__c = ' + '\''+ filterValuesMap.get('AW_Industry Name') + '\' AND ';
+            if(filterValuesMap.get('Industry Name') != null){
+                queryAdditions += 'AW_Industry_Name__c = ' + '\''+ filterValuesMap.get('Industry Name') + '\' AND ';
             }
-            if(filterValuesMap.get('AW_Number of Strands') != null){
-                queryAdditions += 'AW_Number_of_Strands__c = ' + '\''+ filterValuesMap.get('AW_Number of Strands') + '\' AND ';
+            if(filterValuesMap.get('Number of Strands') != null){
+                queryAdditions += 'AW_Number_of_Strands__c = ' + '\''+ filterValuesMap.get('Number of Strands') + '\' AND ';
             }
-            if(filterValuesMap.get('AW_Wire Size') != null){
-                queryAdditions += 'AW_Wire_Size__c = ' + filterValuesMap.get('AW_Wire Size') + ' AND ';
+            if(filterValuesMap.get('Wire Size') != null){
+                queryAdditions += 'AW_Wire_Size__c = ' + '\''+filterValuesMap.get('Wire Size') + '\' AND ';
             }
             if(filterValuesMap.get('Model') != null){
                 queryAdditions += 'Model__c = ' + filterValuesMap.get('Model') + ' AND ';
@@ -1420,11 +1516,11 @@ public with sharing class QuoteController {
             if(filterValuesMap.get('Breaking Strength') != null){
                 queryAdditions += 'Breaking_Strength__c = ' + '\'' +filterValuesMap.get('Breaking Strength') + '\' AND ';
             }            
-            if(filterValuesMap.get('AW_Number of Strands') != null){
-                queryAdditions += 'AW_Number_of_Strands__c = ' + '\''+ filterValuesMap.get('AW_Number of Strands') + '\' AND ';
+            if(filterValuesMap.get('Number of Strands') != null){
+                queryAdditions += 'AW_Number_of_Strands__c = ' + '\''+ filterValuesMap.get('Number of Strands') + '\' AND ';
             }
-            if(filterValuesMap.get('AW_Wire Size') != null){
-                queryAdditions += 'AW_Wire_Size__c = ' + filterValuesMap.get('AW_Wire Size') + ' AND ';
+            if(filterValuesMap.get('Wire Size') != null){
+                queryAdditions += 'AW_Wire_Size__c = ' +  '\'' +filterValuesMap.get('Wire Size') + '\' AND ';
             }
             if(filterValuesMap.get('Lay Direction') != null){
                 queryAdditions += 'Lay_Direction__c = ' + '\'' +filterValuesMap.get('Lay Direction')+ '\' AND ';
@@ -1539,17 +1635,17 @@ public with sharing class QuoteController {
             if(filterValuesMap.get('Inner Basket') != null){
                 queryAdditions += 'Inner_Basket__c = ' + '\''+ filterValuesMap.get('Inner Basket') + '\' AND ';
             }
-            if(filterValuesMap.get('Ru') != null){
-                queryAdditions += 'Ru__c = ' + '\''+ filterValuesMap.get('Ru') + '\' AND ';
+            if(filterValuesMap.get('RU') != null){
+                queryAdditions += 'RU__c = ' + '\''+ filterValuesMap.get('RU') + '\' AND ';
             }
         }
 
         // myQuery = 'SELECT Id, Name, Stock__c FROM Product2'+
         //     queryAdditions+'QLE_Search_Method__c = \'FILTERED\' AND ProdLevel1__c = \''+level1+'\' AND Filtered_Grouping__c = \''+filteredGrouping+'\'';
         myQuery = 'SELECT Id, Name, Product_Type__c,Fiber_Count__c,Fiber_Type__c,Jacket_Type__c,Jacket_Configuration__c,Jacket_Print__c,Sub_Unit__c,Armor_Type__c,TightBuff_Type__c,Max_Span_at_Light__c,Max_Span_at_Medium__c,'+
-            'Max_Span_at_Heavy__c,Packaging__c,Primary_UOM__c,Length__c,Bus_Size_or_Width__c,Bus_Schedule__c,Bus_Alloy__c,Bus_Temper__c,Bus_Thickness__c,AW_Industry_Name__c,AW_Number_of_Strands__c,AW_Wire_Size__c,'+
+            'Max_Span_at_Heavy__c,Packaging__c,Primary_UOM__c,Length__c,Bus_Size_or_Width__c,Bus_Schedule__c,Bus_Alloy__c,Bus_Temper__c,Bus_Thickness__c,AW_Industry_Name__c,AW_Number_of_Strands__c,'+
             'Model__c,Sub_Configuration__c, Length_Picklist__c,Connector_A__c,Connector_B__c,Breaking_Strength__c,Lay_Direction__c,Diameter_Tolerance__c,Core_Annealing__c,Wire_Shape__c,Plate_Capacity_Style__c,Color__c,' +
-            'LGX_Foot_Print__c,Sleeve_Material__c,Adapter_Orientation__c,Cable_Design__c,Furcation_A__c,Furcation_B__c,Accessories__c,Customer__c,Base_Design_Code__c,NumConnector__c,FiberArrangement__c,Kit_Type__c,'+ 
+            'LGX_Foot_Print__c,Sleeve_Material__c,AW_Wire_Size__c,Adapter_Orientation__c,Cable_Design__c,Furcation_A__c,Furcation_B__c,Accessories__c,Customer__c,Base_Design_Code__c,NumConnector__c,FiberArrangement__c,Kit_Type__c,'+ 
             'Connector_Source_Type__c,Stock__c,Apex_Closure__c,Closure_Size__c,Basket_Type__c,Tray_Type__c,NumTray__c,NumReliefKits__c,NumLugs__c,Inner_Basket__c,Ru__c FROM Product2'+
             queryAdditions+'QLE_Search_Method__c = \'FILTERED\' AND ProdLevel1__c = \''+level1+'\' AND Filtered_Grouping__c = \''+filteredGrouping+'\'';
         
