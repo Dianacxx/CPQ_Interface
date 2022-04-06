@@ -162,6 +162,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 mode: 'sticky'
             });
             this.dispatchEvent(evt);
+            this.spinnerLoadingUI = false;
         } else {
             this.spinnerLoadingUI = true;
             this.totalValueLoading = true;
@@ -250,7 +251,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                         this.dispatchEvent(evt);
                     }
                 })    
-            }, 20000);     //This value has to change depending on the size of quotelines
+            }, 15000);     //This value has to change depending on the size of quotelines
         }
     }
 
@@ -445,6 +446,9 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 if(error != undefined){
                     if(error.body != undefined){
                         console.log('-1');
+                        if(error.body.exceptionType != undefined){
+                            errorMessage = error.body.exceptionType.message;
+                        } else 
                         if (error.body.pageErrors[0]!= undefined){
                             console.log('0');
                             if(error.body.pageErrors[0].message != undefined){

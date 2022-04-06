@@ -450,6 +450,14 @@ export default class Bl_dataTable extends LightningElement {
                     if(prop[j]=='quantity'){
                         console.log(Number.isInteger(inputsItems[i].fields[prop[j]]));
                     }
+                    if(prop[j]=='length'){
+                        console.log('length');
+                        if (!(this.quoteLines[index].qlevariableprice == 'Cable Length' && 
+                        (this.quoteLines[index].isNSP == false || this.quoteLines[index].isNSP == null)))
+                        {   
+                            inputsItems[i].fields[prop[j]] = 'NA';
+                        } 
+                    }
                     if(prop[j]=='lengthuom'){
                         //console.log(this.quoteLines[index].qlevariableprice);
                         //console.log(this.quoteLines[index].isNSP);

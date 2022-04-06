@@ -641,6 +641,32 @@ public with sharing class QuoteController {
             wrapper.prodLevel2 = (String)prodMap.get('ProdLevel2__c');
             wrapper.prodLevel3 = (String)prodMap.get('ProdLevel3__c');
             wrapper.prodLevel4 = (String)prodMap.get('ProdLevel4__c');
+            wrapper.basedesigncode = (String)prodMap.get('Base_Design_Code__c');
+            wrapper.cablecostpermeter = (Decimal)prodMap.get('CableCostPerMeter__c');
+            wrapper.customer = (String)prodMap.get('Customer__c');
+            wrapper.filteredgrouping = (String)prodMap.get('Filtered_Grouping__c');
+            wrapper.fixedcost = (Decimal)prodMap.get('Fixed_Cost__c');
+            wrapper.primaryUOM = (String)prodMap.get('Primary_UOM__c');
+            wrapper.quoteitemdescriptiona = (String)prodMap.get('Quote_Item_Description_Part_A__c');
+            wrapper.quoteitemdescriptionb = (String)prodMap.get('Quote_Item_Description_Part_B__c');
+            wrapper.unitcost = (Decimal)prodMap.get('Unit_Cost__c');
+            wrapper.variableprice1 = (Decimal)prodMap.get('Variable_Price_1__c');
+            wrapper.busmarginhighvalue = (Decimal)prodMap.get('Bus_Margin_High_Value__c');
+            wrapper.busmarginlowvalue = (Decimal)prodMap.get('Bus_Margin_Low_Value__c');
+            wrapper.conncostA = (Decimal)prodMap.get('ConnCost_A__c');
+            wrapper.conncostB = (Decimal)prodMap.get('ConnCost_B__c');
+            wrapper.countfactor = (Decimal)prodMap.get('Count_Factor__c');
+            wrapper.marginchangevalue = (Decimal)prodMap.get('Margin_Change_Value__c');
+            wrapper.numadapter = (String)prodMap.get('NumAdapter__c');
+            wrapper.numcables = (String)prodMap.get('NumCables__c');
+            wrapper.numconnector = (String)prodMap.get('NumConnector__c');
+            wrapper.pricingcost = (Decimal)prodMap.get('Pricing_Cost__c');
+            wrapper.regionaddercentral = (Decimal)prodMap.get('Region_Adder_Central__c');
+            wrapper.regionaddereast = (Decimal)prodMap.get('Region_Adder_East__c');
+            wrapper.regionadderwest = (Decimal)prodMap.get('Region_Adder_West__c');
+            wrapper.regionaddernorthwest = (Decimal)prodMap.get('Region_Adder_Northwest__c');
+            wrapper.resourcecosta = (Decimal)prodMap.get('ResourceCost_A__c');
+            wrapper.productType = (String)prodMap.get('Product_Type__c');
             
 
             wrapper.isNSP = true;
@@ -939,6 +965,32 @@ public with sharing class QuoteController {
                             newQuoteLine.Length_UOM__c = 'NA';
                         }
                     }
+                    newQuoteLine.Base_Design_Code__c = line.basedesigncode;
+                    newQuoteLine.CableCostPerMeter__c = line.cablecostpermeter;
+                    newQuoteLine.Customer__c = line.customer;
+                    newQuoteLine.Filtered_Grouping__c = line.filteredgrouping;
+                    newQuoteLine.Fixed_Cost__c = line.fixedcost;
+                    newQuoteLine.Primary_UOM__c = line.primaryUOM;
+                    newQuoteLine.Quote_Item_Description_Part_A__c = line.quoteitemdescriptiona;
+                    newQuoteLine.Quote_Item_Description_Part_B__c = line.quoteitemdescriptionb;
+                    newQuoteLine.Unit_Cost__c = line.unitcost;
+                    newQuoteLine.Variable_Price_1__c = line.variableprice1;
+                    newQuoteLine.Bus_Margin_High_Value__c = line.busmarginhighvalue;
+                    newQuoteLine.Bus_Margin_Low_Value__c = line.busmarginlowvalue;
+                    newQuoteLine.ConnCost_A__c = line.conncostA;
+                    newQuoteLine.ConnCost_B__c = line.conncostB;
+                    newQuoteLine.Count_Factor__c = line.countfactor;
+                    newQuoteLine.Margin_Change_Value__c = line.marginchangevalue;
+                    newQuoteLine.NumAdapter__c = line.numadapter;
+                    newQuoteLine.NumCables__c = line.numcables;
+                    newQuoteLine.NumConnector__c = line.numconnector;
+                    newQuoteLine.Pricing_Cost__c = line.pricingcost;
+                    newQuoteLine.Region_Adder_Central__c = line.regionaddercentral;
+                    newQuoteLine.Region_Adder_East__c = line.regionaddereast;
+                    newQuoteLine.Region_Adder_West__c = line.regionadderwest;
+                    newQuoteLine.Region_Adder_Northwest__c = line.regionaddernorthwest;
+                    newQuoteLine.ResourceCost_A__c = line.resourcecosta;
+                    newQuoteLine.Product_Type__c = line.productType;
                     
                     
                     quoteLinerecordsToInsert.add(newQuoteLine);
