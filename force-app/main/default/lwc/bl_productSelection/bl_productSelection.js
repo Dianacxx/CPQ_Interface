@@ -116,9 +116,11 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
     saveBeforeConfigured(event){
         console.log('Saving in before anything else');
         this.savePSValues = true;
+        this.quotesAdded = []; 
         if(this.girdDataAcaTabAdd.length > 0){
             console.log('ACA LIST');
-            for (let list of this.girdDataAcaTabAdd){
+            let list1 = JSON.parse(JSON.stringify(this.girdDataAcaTabAdd)); 
+            for (let list of list1){
                 for (let secondList of list.listOfProducts){
                     secondList.quantity = 1;
                     secondList.netunitprice = 1;
@@ -137,7 +139,8 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         }
         if(this.girdDataConnTabAdd.length > 0){
             console.log('CONNECT LIST');
-            for (let list of this.girdDataConnTabAdd){
+            let list2 = JSON.parse(JSON.stringify(this.girdDataConnTabAdd)); 
+            for (let list of list2){
                 for (let secondList of list.listOfProducts){
                     secondList.quantity = 1;
                     secondList.netunitprice = 1;
@@ -156,8 +159,8 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         }
         if(this.girdDataFocTabAdd.length > 0){
             console.log('FOC LIST');
-            for (let list of this.girdDataFocTabAdd){ 
-                        
+            let list3 = JSON.parse(JSON.stringify(this.girdDataFocTabAdd)); 
+            for (let list of list3){ 
                 for (let secondList of list.listOfProducts){
                     secondList.quantity = 1;
                     secondList.netunitprice = 1;
@@ -175,7 +178,8 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         }
         if(this.girdDataCableTabAdd.length > 0){
             console.log('CABLE LIST');
-            for (let list of this.girdDataCableTabAdd){
+            let list4 = JSON.parse(JSON.stringify(this.girdDataCableTabAdd)); 
+            for (let list of list4){
                 for (let secondList of list.listOfProducts){
                     secondList.quantity = 1;
                     secondList.netunitprice = 1;
@@ -194,7 +198,8 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         }
         if(this.girdDataTandITabAdd.length > 0){
             console.log('TAI LIST');
-            for (let list of this.girdDataTandITabAdd){
+            let list5 = JSON.parse(JSON.stringify(this.girdDataTandITabAdd)); 
+            for (let list of list5){
                 for (let secondList of list.listOfProducts){
                     secondList.quantity = 1;
                     secondList.netunitprice = 1;
@@ -213,7 +218,8 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         }
         if(this.girdDataManualItemTabAdd.length > 0){
             console.log('MANUAL LIST');
-            for (let list of this.girdDataManualItemTabAdd){
+            let list6 = JSON.parse(JSON.stringify(this.girdDataManualItemTabAdd)); 
+            for (let list of list6){
                 list.netunitprice = 1;
                 if ((list.listunitprice == null) || (list.listunitprice == 'null')){
                     list.listunitprice = 1;
@@ -256,20 +262,28 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                 console.log('Error saving from PS'); 
                 console.log(error); 
                 let errorMessage;
-                if (error.body.hasOwnProperty("pageErrors")){
-                    if(this.error.body.pageErrors[0].hasOwnProperty('message')){
-                        errorMessage = this.error.body.pageErrors[0].message; 
-                    } else if (error.body.pageErrors[0].hasOwnProperty("statusCode")){
-                        errorMessage = error.body.pageErrors[0].statusCode; 
-                    } else {
-                        if (error.body.hasOwnProperty("fieldErrors")){
-                            errorMessage = 'Developer: Open console to see error message (F12)'
-                            console.log(error); 
+                /*
+                if(error.body != undefined){
+                    if (error.body.pageErrors != undefined){
+                        console.log('pageErr');
+                        console.log(error.body.pageErrors);
+                        if(error.body.pageErrors[0].message != undefined){
+                            errorMessage = error.body.pageErrors[0].message; 
+                        } else if (error.body.pageErrors[0].statusCode != undefined){
+                            errorMessage = error.body.pageErrors[0].statusCode; 
+                        } else {
+                            if (error.body.fieldErrors != undefined){
+                                errorMessage = 'Developer: Open console to see error message (F12)'
+                                console.log(error); 
+                            }
                         }
+                    } else if (error.body.fieldErrors != undefined){
+                        errorMessage = JSON.stringify(Object.getOwnPropertyNames(error.body.fieldErrors));
+                        console.log(error); 
+                    } else {
+                        errorMessage = 'Developer: Open console to see error message (F12)'
                     }
-                } else {
-                    errorMessage = 'Developer: Open console to see error message (F12)'
-                }
+                }*/
                 const evt = new ShowToastEvent({
                     title: 'Creating Quote lines ERROR',
                     message: errorMessage,
@@ -316,8 +330,6 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
     }
 
 
-
-
     //When click cancel button in Product Selection UI
     handleCancel(){
         this.dispatchEvent(new CustomEvent('cancelps'));
@@ -334,7 +346,9 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                 this.girdDataAcaTabAdd = event.detail.list;
             break; 
             case 'Connectivity':
+                //console.log('Before '+ JSON.stringify(this.girdDataConnTabAdd));
                 this.girdDataConnTabAdd = event.detail.list;
+                //console.log('After '+ JSON.stringify(this.girdDataConnTabAdd));
             break; 
             case 'Fiber Optic Cable':
                 //console.log('Before '+ JSON.stringify(this.girdDataFocTab));
@@ -358,9 +372,11 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
     //When click Save and Exit button in Product Selection UI
     handleSaveAndExit(){
         this.savePSValues = true;
+        this.quotesAdded = []; 
         if(this.girdDataAcaTabAdd.length > 0){
             console.log('ACA LIST');
-            for (let list of this.girdDataAcaTabAdd){
+            let list1 = JSON.parse(JSON.stringify(this.girdDataAcaTabAdd)); 
+            for (let list of list1){
                 for (let secondList of list.listOfProducts){
                     secondList.quantity = 1;
                     secondList.netunitprice = 1;
@@ -379,9 +395,10 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         }
         if(this.girdDataConnTabAdd.length > 0){
             console.log('CONNECT LIST');
-            for (let list of this.girdDataConnTabAdd){
+            let list2 = JSON.parse(JSON.stringify(this.girdDataConnTabAdd)); 
+            for (let list of list2){
                 for (let secondList of list.listOfProducts){
-                    secondList['quantity'] = 1;
+                    secondList.quantity = 1;
                     secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
@@ -398,9 +415,10 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         }
         if(this.girdDataFocTabAdd.length > 0){
             console.log('FOC LIST');
-            for (let list of this.girdDataFocTabAdd){ 
+            let list3 = JSON.parse(JSON.stringify(this.girdDataFocTabAdd)); 
+            for (let list of list3){ 
                 for (let secondList of list.listOfProducts){
-                    secondList['quantity'] = 1;
+                    secondList.quantity = 1;
                     secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
@@ -416,7 +434,8 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         }
         if(this.girdDataCableTabAdd.length > 0){
             console.log('CABLE LIST');
-            for (let list of this.girdDataCableTabAdd){
+            let list4 = JSON.parse(JSON.stringify(this.girdDataCableTabAdd)); 
+            for (let list of list4){
                 for (let secondList of list.listOfProducts){
                     secondList.quantity = 1;
                     secondList.netunitprice = 1;
@@ -435,7 +454,8 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         }
         if(this.girdDataTandITabAdd.length > 0){
             console.log('TAI LIST');
-            for (let list of this.girdDataTandITabAdd){
+            let list5 = JSON.parse(JSON.stringify(this.girdDataTandITabAdd)); 
+            for (let list of list5){
                 for (let secondList of list.listOfProducts){
                     secondList.quantity = 1;
                     secondList.netunitprice = 1;
@@ -454,7 +474,8 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         }
         if(this.girdDataManualItemTabAdd.length > 0){
             console.log('MANUAL LIST');
-            for (let list of this.girdDataManualItemTabAdd){
+            let list6 = JSON.parse(JSON.stringify(this.girdDataManualItemTabAdd)); 
+            for (let list of list6){
                 list.netunitprice = 1;
                 if ((list.listunitprice == null) || (list.listunitprice == 'null')){
                     list.listunitprice = 1;
@@ -488,6 +509,28 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
               }, 500);
             })
             .catch((error)=>{
+                /*
+                if(error.body != undefined){
+                    if (error.body.pageErrors != undefined){
+                        console.log('pageErr');
+                        console.log(error.body.pageErrors);
+                        if(error.body.pageErrors[0].message != undefined){
+                            errorMessage = error.body.pageErrors[0].message; 
+                        } else if (error.body.pageErrors[0].statusCode != undefined){
+                            errorMessage = error.body.pageErrors[0].statusCode; 
+                        } else {
+                            if (error.body.fieldErrors != undefined){
+                                errorMessage = 'Developer: Open console to see error message (F12)'
+                                console.log(error); 
+                            }
+                        }
+                    } else if (error.body.fieldErrors != undefined){
+                        errorMessage = JSON.stringify(Object.getOwnPropertyNames(error.body.fieldErrors));
+                        console.log(error); 
+                    } else {
+                        errorMessage = 'Developer: Open console to see error message (F12)'
+                    }
+                }*/
                 const evt = new ShowToastEvent({
                     title: 'Error creating quote lines',
                     message: 'The server has problems creating quote lines, please do again the process',

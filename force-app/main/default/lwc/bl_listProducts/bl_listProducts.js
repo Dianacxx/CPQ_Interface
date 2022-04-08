@@ -126,6 +126,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                 this.showLookupList = false;
                 let deleteLookupcodeList = this.listToDisplayAdd.findIndex(x => x.isNew == row.isNew);
                 this.listToDisplayAdd.splice(deleteLookupcodeList,1);
+                console.log(this.listToDisplayAdd); 
                 this.dispatchEvent(new CustomEvent('listtodisplayadd', { detail: {list: this.listToDisplayAdd, tab: this.tabSelected} }));
                 setTimeout(()=>{
                     this.showLookupList = true;
@@ -435,13 +436,13 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                         optionvalue.value = optionvalue.label;
                         optionvalue.value.length > sizeOptions ? sizeOptions = optionvalue.value.length : sizeOptions = sizeOptions; 
                     }
-                    console.log('Size option:'+ sizeOptions);
+                    //console.log('Size option:'+ sizeOptions);
                     if (0 <= sizeOptions && sizeOptions< 10){
                         this.styleProductType = 'size1';
-                        console.log('Here 1');
+                        //console.log('Here 1');
                     } else if (10 <= sizeOptions && sizeOptions< 20){
                         this.styleProductType = 'size2';
-                        console.log('Here 2');
+                        //console.log('Here 2');
                     } else if (20 <= sizeOptions && sizeOptions< 35){
                         this.styleProductType = 'size3';
                     } else if (35 <= sizeOptions && sizeOptions< 50){
@@ -450,10 +451,10 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                         this.styleProductType = 'size5';
                     } else if (80 <= sizeOptions && sizeOptions< 100){
                         this.styleProductType = 'size6';
-                        console.log('Here 6');
+                        //console.log('Here 6');
                     } else {
                         this.styleProductType = 'size7';
-                        console.log('Here 7');
+                        //console.log('Here 7');
                     }
                     this.productType[i].options.sort((a, b) => (a.label > b.label) ? 1 : -1);
                     this.columnsRequired.push(this.productType[i]); 
@@ -501,8 +502,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         this.columnsReview = [{label: 'Product Name', fieldName: 'Name', editable: false, },]; 
         getProductFilteringv2({filteredGrouping: this.trackList.lookupCode, typeSelection: this.requiredApex })
         .then((data)=>{
-            console.log('SECOND PRODUCT TYPE');
-            console.log(data);
+            //console.log('SECOND PRODUCT TYPE');
+            //console.log(data);
             let temporalList = JSON.parse(data);
 
             //This line is to check if it is ADSS Cable to allow convertion in feet
@@ -681,8 +682,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         console.log(JSON.stringify(filters)); 
         filteredProductPrinter({filterValues: JSON.stringify(filters), level1: tabSelectedValue, filteredGrouping: this.trackList.lookupCode})
         .then((data)=>{
-            //console.log('Products Filtered');
-            //console.log(data);
+            console.log('Products Filtered');
+            console.log(data);
             
             this.recordsAmount = data.length; 
             this.filterResults = data; 

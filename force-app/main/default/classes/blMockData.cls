@@ -1,5 +1,7 @@
 public with sharing class blMockData {
     //Methods to 'access SF configured window'
+
+    //Saving record Id that opens the UI
     @AuraEnabled (cacheable=false)
     public static void savingRecordId(string quoteId) {
         Id actualUser = UserInfo.getUserId(); 
@@ -22,6 +24,7 @@ public with sharing class blMockData {
         }
     }
 
+    //Getting record Id to navigate to UI 
     @AuraEnabled (cacheable=false)
     public static string gettingRecordId(){
         Id actualUser = UserInfo.getUserId(); 
@@ -35,12 +38,14 @@ public with sharing class blMockData {
         return blAction.quoteId__c; 
     }
 
+    //Getting name of record to show in alert of returning from configured product to UI
     @AuraEnabled (cacheable=false)
     public static string gettingQuoteName(String quoteId){
         SBQQ__Quote__c quoteName = [SELECT Id, Name FROM SBQQ__Quote__c WHERE Id = :quoteId LIMIT 1];
         return quoteName.Name; 
     }
 
+    //Deleting UI record
     @AuraEnabled (cacheable=false)
     public static void deletingRecordId(string quoteId) {
         Id actualUser = UserInfo.getUserId(); 
@@ -49,6 +54,7 @@ public with sharing class blMockData {
         delete oldRecords;
     }
 
+    //Get Custom Action that redirects to configured product ID
     @AuraEnabled (cacheable=true)
     public static string customActionId(){
         SBQQ__CustomAction__c ReturnUI = [SELECT Id, Name FROM SBQQ__CustomAction__c WHERE Name = 'Add Products' LIMIT 1];
@@ -60,5 +66,30 @@ public with sharing class blMockData {
     public static string getMockProduct() {
         Product2 mockProduct = [SELECT Id, Name FROM Product2 WHERE Name = 'Product2' LIMIT 1];
         return mockProduct.Id;
+    }
+
+    //Handle Error of picklist UOM value 
+    @AuraEnabled
+    public static String uomDependencyLevel2(String productLevel2){
+        Schema.sObjectType sobject_type = SBQQ__QuoteLine__c.getSObjectType();
+        Map<String, Schema.SObjectField> theFieldmap = sobject_type.getDescribe().fields.getMap();
+        System.debug(theFieldmap.get('UOM__c'));
+        List<Schema.PicklistEntry> pickListValues = QuoteController.getDependentPicklistValues(theFieldmap.get('UOM__c'),productLevel2);
+        System.debug('PICKLIST ' + pickListValues);
+        return JSON.serialize(pickListValues);
+    }
+    //Handle Error of picklist UOM value LIST
+    @AuraEnabled
+    public static String uomDependencyLevel2List(List<String> productLevel2){
+        Schema.sObjectType sobject_type = SBQQ__QuoteLine__c.getSObjectType();
+        Map<String, Schema.SObjectField> theFieldmap = sobject_type.getDescribe().fields.getMap();
+        System.debug(theFieldmap.get('UOM__c'));
+        Map<String, List<Schema.PicklistEntry>> mapOfPick2toUOM= new Map<String, List<Schema.PicklistEntry>>(); 
+        for(integer i=0; i< productLevel2.size(); i++){
+            List<Schema.PicklistEntry> pickListValues = QuoteController.getDependentPicklistValues(theFieldmap.get('UOM__c'),productLevel2[i]);
+            mapOfPick2toUOM.put(productLevel2[i], pickListValues); 
+        }
+        //System.debug('PICKLIST ' + pickListValues);
+        return JSON.serialize(mapOfPick2toUOM);
     }
 }

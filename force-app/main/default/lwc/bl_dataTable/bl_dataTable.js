@@ -12,7 +12,9 @@ import { getObjectInfo } from 'lightning/uiObjectInfoApi';
 import { getPicklistValues } from 'lightning/uiObjectInfoApi';
 import LENGTH_UOM_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.Length_UOM__c';
 import UOM_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.UOM__c';
-
+//TO SHOW DEPENDENCIES VALUES FOR UOM FIELD IF PRODUCT 2 
+import uomDependencyLevel2 from '@salesforce/apex/blMockData.uomDependencyLevel2'; 
+import uomDependencyLevel2List from '@salesforce/apex/blMockData.uomDependencyLevel2List'; 
 
 
 //CHANNEL SERVICE TO COMMUNICATE COMPONENTS 
@@ -160,6 +162,9 @@ export default class Bl_dataTable extends LightningElement {
 
     @wire(getPicklistValues, { recordTypeId: '$objectInfo.data.defaultRecordTypeId', fieldApiName: UOM_FIELD})
     uom;
+
+    /* put here uomDependencyLevel2List with all the picklist value 2 to get the list depending on product 2 and 
+    then in the edition compare with the list to make sure there are no erros. */
 
     
     
@@ -379,7 +384,6 @@ export default class Bl_dataTable extends LightningElement {
         .then((data) => {
             console.log('Add Product DATA: '+ data); 
             newQuotelines = JSON.parse(data); 
-            //console.log('New product object: '+ Object.getOwnPropertyNames(newQuotelines[0]));
             for (let i=0; i< newQuotelines.length; i++){
                 //To create auxiliar ID and Name
                 randomId = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 10);
@@ -392,6 +396,12 @@ export default class Bl_dataTable extends LightningElement {
                 newQuotelines[i].quotelinename = newQuotelines[i].product;
                 newQuotelines[i].length = 'NA';
                 newQuotelines[i].lengthuom = 'NA';
+                if (newQuotelines[i].prodLevel1 == null){
+                    newQuotelines[i].prodLevel2 = null;
+                }
+                if (newQuotelines[i].prodLevel2 == null){
+                    newQuotelines[i].uom = null;
+                }
                 this.quoteLines = [...this.quoteLines, newQuotelines[i]];
             }
 
@@ -426,13 +436,19 @@ export default class Bl_dataTable extends LightningElement {
     @track quoteLinesEdit;
     uomMessageError = ''; 
     lengthUomMessageError = ''; 
+    //valuesUOMString = []; 
+    rowUOMErrors = [];
+    nonProductLevel2 = [];
     //Save when table is edited and clicked in save button.
     handleSaveEdition(event){
+        //this.valuesUOMString = []; 
+        this.rowUOMErrors = [];
+        this.nonProductLevel2 = [];
         this.quoteLinesEdit = event.detail.draftValues; 
         if(this.quoteLinesEdit){
             this.uomMessageError = '';
             this.lengthUomMessageError = '';
-            console.log('UOM VALUES')
+            //console.log('UOM VALUES')
             for (let i =0; i< this.quoteLinesEdit.length; i++){
                 //console.log('Id editada: '+this.quoteLinesEdit[i].id);
                 let index = this.quoteLines.findIndex(x => x.id === this.quoteLinesEdit[i].id);
@@ -496,6 +512,44 @@ export default class Bl_dataTable extends LightningElement {
                         }
                     }
                     if(prop[j]=='uom'){
+                        //WORKING HEREEEEEEEEEEEEEEEEE
+                        //|
+                        //|
+                        //|
+                        //|
+                        //|
+                        //|
+                        let prodLevel2 = this.quoteLines[index].prodLevel2; 
+                        if(prodLevel2 == null){
+                            this.nonProductLevel2.push(index+1); 
+                            inputsItems[i].fields[prop[j]] = null; 
+                        } else {
+                        uomDependencyLevel2({productLevel2: prodLevel2})
+                        .then((data)=>{
+                            console.log('GETTING DEPENDENCIES');
+                            //console.log(data);
+                            let valuesUOMString = [];
+                            let valuesAvailable = JSON.parse(data);
+                            for(let value of valuesAvailable){
+                                valuesUOMString.push(value.label);                                 
+                            }
+                            let indexU = valuesUOMString.findIndex(x => x.toLowerCase() == inputsItems[i].fields[prop[j]].toLowerCase()); 
+                            
+                            if (indexU == -1){
+                                console.log('BAD'+ JSON.stringify(valuesAvailable));
+                                this.rowUOMErrors.push('Values Available for row'+(index+1).toString+' :'+valuesUOMString.join());
+                                inputsItems[i].fields[prop[j]] = null; 
+                            } else {
+                                console.log('GOOD '+indexU);
+                            }
+                        })
+                        .catch((error)=>{
+                            console.log('ERROR GETTING DEPENDENCIES');
+                            console.log(error);
+                        })
+                        }
+
+/*
                         if(this.uom.data.values){
                             let values = [];
                             //console.log(this.uom.data.values);
@@ -521,7 +575,8 @@ export default class Bl_dataTable extends LightningElement {
                                 //console.log('Value: '+ values[indexU]);
                                 //console.log('Input: '+inputsItems[i].fields[prop[j]] );
                             }
-                        }
+                            
+                        }*/
                     }
                     this.quoteLines[index][prop[j]] = inputsItems[i].fields[prop[j]];
                 }               
@@ -532,33 +587,53 @@ export default class Bl_dataTable extends LightningElement {
                     this.quoteLines[index].netunitprice = 1;
                 }
             }
-            if(this.uomMessageError){
-                const evt1 = new ShowToastEvent({ title: 'Warning Fields', message: this.uomMessageError,
-                variant: 'warning', mode: 'sticky' });
-                this.dispatchEvent(evt1);
-            }
-            if(this.lengthUomMessageError){
-                const evt1 = new ShowToastEvent({ title: 'Warning Fields', message: this.lengthUomMessageError,
-                variant: 'warning', mode: 'sticky' });
-                this.dispatchEvent(evt1);
-            }
 
 
-            this.quotelinesString = JSON.stringify(this.quoteLines); 
-            this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
+            //MAYBE DELETE THE SETTIMEOUT
+            setTimeout(()=>{
+                if(this.rowUOMErrors.length >0){
+                    this.rowUOMErrors = this.rowUOMErrors.join();
+                    const evt01 = new ShowToastEvent({ title: 'Warning Fields', message: this.rowUOMErrors,
+                    variant: 'warning', mode: 'sticky' });
+                    this.dispatchEvent(evt01);
+                }
+                if(this.nonProductLevel2.length > 0){
+                    this.nonProductLevel2 = 'The row(s) '+this.nonProductLevel2.join()+' has/have not UOM value(s) assign.';
+                    const evt0 = new ShowToastEvent({ title: 'Warning Fields', message: this.nonProductLevel2,
+                    variant: 'warning', mode: 'sticky' });
+                    this.dispatchEvent(evt0);
+                }
+                if(this.uomMessageError){
+                    const evt1 = new ShowToastEvent({ title: 'Warning Fields', message: this.uomMessageError,
+                    variant: 'warning', mode: 'sticky' });
+                    this.dispatchEvent(evt1);
+                }
+                if(this.lengthUomMessageError){
+                    const evt1 = new ShowToastEvent({ title: 'Warning Fields', message: this.lengthUomMessageError,
+                    variant: 'warning', mode: 'sticky' });
+                    this.dispatchEvent(evt1);
+                }
+                this.quotelinesString = JSON.stringify(this.quoteLines); 
+                //console.log(this.quoteLinesString);
+                this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
+                
+                const evt = new ShowToastEvent({
+                    title: 'Edits in Table saved',
+                    message: 'Changes are sucessfully saved',
+                    variant: 'success',
+                    mode: 'dismissable'
+                });
+                this.dispatchEvent(evt);
+                this.quoteLinesEdit = [];
+                
+                this.template.querySelector("lightning-datatable").draftValues = [];
+                this.firstHandler();
+                this.updateTable();
+            }, this.quoteLinesEdit.length*10);
             
-            const evt = new ShowToastEvent({
-                title: 'Edits in Table saved',
-                message: 'Changes are sucessfully saved',
-                variant: 'success',
-                mode: 'dismissable'
-            });
-            this.dispatchEvent(evt);
-            this.quoteLinesEdit = [];
+
+
             
-            this.template.querySelector("lightning-datatable").draftValues = [];
-            this.firstHandler();
-            this.updateTable();
             //MISSING WHEN UPDATE FIELDS IN NOTES
             /*
             *

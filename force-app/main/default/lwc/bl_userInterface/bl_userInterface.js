@@ -348,7 +348,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
 
         let quotesToFill = []; 
         for(let i = 0; i< quoteEdition.length; i++){
-            console.log('quoteline '+i); 
+            //console.log('quoteline '+i); 
             if (quoteEdition[i].qlevariableprice == 'Cable Length' && quoteEdition[i].isNSP == false){
                 if(quoteEdition[i].length<0 || (quoteEdition[i].lengthuom != 'Meters' && quoteEdition[i].lengthuom != 'Feet')){
                     this.notSaveYet = true;
@@ -356,7 +356,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 }
             } else {
                 if(!quoteEdition[i].lengthuom){
-                    console.log('Is NA product');
+                    //console.log('Is NA product');
                     quoteEdition[i].lengthuom = 'NA';
                     quoteEdition[i].length = 'NA';
                 }
