@@ -155,6 +155,7 @@ public with sharing class QuoteController {
         for (SBQQ__QuoteLine__c line : quoteLines) {
             tiersIDs.add(line.SBQQ__DiscountTier__c);
         }
+        // The tiels will have to be Handled by a custom object called CustomerTiers, this logic will hace to be replaced by this custom object
         List<SBQQ__DiscountTier__c> tiersList = [SELECT Id, Name,SBQQ__LowerBound__c,SBQQ__UpperBound__c,SBQQ__Discount__c,SBQQ__DiscountAmount__c,SBQQ__Price__c FROM SBQQ__DiscountTier__c WHERE Id IN : tiersIDs];
         for (SBQQ__DiscountTier__c tier : tiersList) {
             WrappersClass.DiscountTierWrapperClass tierWrapper = new WrappersClass.DiscountTierWrapperClass();
@@ -167,7 +168,7 @@ public with sharing class QuoteController {
             tierWrapper.price = tier.SBQQ__Price__c;
             tiersMap.put(tierWrapper.id, tierWrapper);
         }
-        Set<Id> linesWithNotes = new Set<Id>();
+        // Set<Id> linesWithNotes = new Set<Id>();
         Set<Id> quoteLineIDs = new Set<Id>();
         for (SBQQ__QuoteLine__c line : quoteLines) {
             quoteLineIDs.add(line.Id);
@@ -308,6 +309,7 @@ public with sharing class QuoteController {
                 }            
             }
         }
+        //For each product it returns a lost of the notes that are related to it and concatenates it into a single string
         for (Id prod : noteMap.keySet()) {
             Product2 relatedProd = prodMap.get(prod);
             WrappersClass.NoteWrapperClass wrapper = new WrappersClass.NoteWrapperClass();
@@ -764,6 +766,8 @@ public with sharing class QuoteController {
     public static void editAndDeleteQuotes(String quoteId, String quoteLines){//This method changes the values in the edited quote lines in salesforce, with the changes made in the QLE
         QuoteReader quoteReader = new QuoteReader();
         QuoteModel quote = quoteReader.read(quoteId);
+        ProductReader productReader = new ProductReader();
+        ProductModel product = new ProductModel();
         
         SBQQ__Quote__c getQuote = [SELECT ID FROM SBQQ__Quote__c WHERE Id =: quoteId];
         //Checks the quote lines that already exist on salesforce
@@ -796,12 +800,14 @@ public with sharing class QuoteController {
             for (SBQQ__QuoteLine__c line : existingQuoteLines) {
                 if (receivedIDs.contains(line.id)) {
                     WrappersClass.QuoteLineWrapperClass relatedQuoteLine = receivedLinesMap.get(line.id);
-                    System.debug('Entered first');
+                    // System.debug('parent prod '+);
                     System.debug('related line: ' + relatedQuoteLine.name + ' quantity: ' + relatedQuoteLine.quantity);
                     QuoteLineModel newModel = new QuoteLineModel();
+                    
 
                     newModel.setRecord(line);
                     
+                    product = productReader.read(newModel.record.SBQQ__Product__c,'01sA0000000TiZnIAK','USD');
                     newModel.record.SBQQ__Quantity__c = relatedQuoteLine.quantity;
                     newModel.record.Length__c = relatedQuoteLine.length;
                     newModel.record.Length_UOM__c = relatedQuoteLine.lengthUOM;
@@ -827,7 +833,16 @@ public with sharing class QuoteController {
                         newModel.record.Mix_Fiber_Type_2__c = relatedQuoteLine.fiberType2;
                         newModel.record.Region_Code__c = relatedQuoteLine.regionCode;
                     }
-                    System.debug('incoming price : ' + relatedQuoteLine.netunitprice);
+
+                    ConfigValidator validator = new ConfigValidator();
+                    LoadRuleRunner runner = new LoadRuleRunner();
+
+                    ProductModel prod = runner.load( newModel.record.SBQQ__Product__c, quote, null, null, product.configuration, null);
+                    // ConfigurationModel config = validator.load(newModel.record.SBQQ__Product__c, quote, product.configuration, 'Edit', null);
+                    // ConfigLoader loader = new ConfigLoader();
+                    // ProductModel prod = loader.load(newModel.record.SBQQ__Product__c, quote, null);
+
+                    System.debug('RUNNER : ' + prod);
 
                     quoteLinesToInsert.add(newModel);
                 } 
@@ -853,20 +868,23 @@ public with sharing class QuoteController {
             for(SBQQ__QuoteLine__c q : quoteLineRecordsToUpdate){
                 system.debug('new price : ' +  q.SBQQ__NetPrice__c);
             }
+
+            
+
             SBQQ.TriggerControl.disable();
             update quoteLineRecordsToUpdate;
-            SBQQ.TriggerControl.enable();
             // quoteLineCreator(quoteId, quoteLines);
-            quote.record.SBQQ__Primary__c = true;
-            update quote.record;
+            
             //Deletes the quote lines from salesforce that are not in the UI
             String deletion = deleteQuoteLines(existingQuoteLines,untypedQuoteLines);
-            
+            SBQQ.TriggerControl.enable();
+            quote.record.SBQQ__Primary__c = true;
+            update quote.record;
 
         // }catch (Exception e) {
         //     throw new AuraHandledException('Something went wrong: ' + e.getMessage() + 'cause: ' + e.getCause());
         // }
-       
+            
     }
     @AuraEnabled
     public static void quoteLineCreator(String quoteId, String quoteLines){ //This method creates new quote lines in salesforce based on the values in the QLE
@@ -2225,11 +2243,10 @@ public with sharing class QuoteController {
         for(String field: theQLFieldMap.keyset()){ //for each field in the Quote Line object
             String label = theQLFieldMap.get(field).getDescribe().getLabel(); // Get the label of each field in the quote line object
             Schema.DisplayType theResult = theQLFieldMap.get(field).getDescribe().GetType(); //get field type
-            // prodFieldsNameMap.put(label,theQLFieldMap.get(field).getDescribe().getName()); //Stores the API name of each field object
             qLineFields.put(label,theQLFieldMap.get(field)); //put all of the product fields in a map, with the label as the key            
         }
         
-        //Gets the picklist values that depend on the value of the level 1
+        //Gets the picklist values that depend on the value given by the UI 
         if(level == 'level 2'){
             List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(qLineFields.get('ProdLevel2'),selection);
             filtersMap.put('ProdLevel2',pickListValues);
@@ -2239,6 +2256,9 @@ public with sharing class QuoteController {
         }else if (level == 'level 4'){
             List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(qLineFields.get('ProdLevel4'),selection);
             filtersMap.put('ProdLevel4',pickListValues);
+        }else if (level == 'UOM'){
+            List<Schema.PicklistEntry> pickListValues = getDependentPicklistValues(qLineFields.get('UOM'),selection);
+            filtersMap.put('UOM',pickListValues);
         }
         
 
@@ -2247,17 +2267,6 @@ public with sharing class QuoteController {
             wrapper.label = filter;
             wrapper.options = JSON.serialize(filtersMap.get(filter));
             wrapper.action = 'INPUT';
-            // if(prodFieldsNameMap.get(filter) != null){
-            //     wrapper.apiName = prodFieldsNameMap.get(filter);
-            // }else{
-            //     wrapper.apiName = lineFieldsNameMap.get(filter);
-            // }
-            // if(prodFieldsTypeMap.get(filter) != null){
-            //     wrapper.type = prodFieldsTypeMap.get(filter);
-            // }else{
-            //     wrapper.type = lineFieldsTypeMap.get(filter);
-            // }
-            
             filtersWrapperToShow.add(wrapper);
         }
         String filtersToAdd = JSON.serialize(filtersWrapperToShow);

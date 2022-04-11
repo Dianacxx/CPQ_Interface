@@ -43,10 +43,10 @@
                 <!--<lightning-button label="Insert Description" onclick={handleDescriptionClick}> </lightning-button>-->
                 <!--QUANTITY NUMBER-->
                 <lightning-input required type="number" label="Quantity" onchange={handleChange} value={Quantity}></lightning-input>
-                <!--PRIMARY UOM PICKLIST-->
-                <template if:true={primaryUomPicklist.data}>
+                <!--PRIMARY UOM PICKLIST Dependent on Product Level 2-->
+                <template if:true={uomList}>
                     <lightning-combobox required name="UOM" label="Primary UOM" value={value}
-                        options={primaryUomPicklist.data.values} onchange={handleChange}>
+                        options={uom} onchange={handleChange}>
                     </lightning-combobox>
                 </template>
                 <!--PRICE NUMBER-->

@@ -26,9 +26,11 @@ export default class Bl_manualItems extends LightningElement {
     @wire(getPicklistValues,{ recordTypeId: '$quotelineMetadata.data.defaultRecordTypeId', 
             fieldApiName: PRODUCT_LEVEL_1_FIELD})
     productLevel1Picklist;
+    /*
     @wire(getPicklistValues,{ recordTypeId: '$quotelineMetadata.data.defaultRecordTypeId', 
             fieldApiName: PRIMARY_UOM_FIELD})
     primaryUomPicklist;
+    */
     @track loadingProcess = false;
     loadingSaving(){
         this.loadingProcess = true;
@@ -48,6 +50,9 @@ export default class Bl_manualItems extends LightningElement {
     @track level2 = [];
     @track productLevel3Picklist = false; 
     @track level3 = [];
+    @track uomList = false; 
+    @track uom = [];
+
     handleChange(event){
         //console.log('Product Selected: '+event.detail.value);
         //console.log('Check Selected: '+event.detail.checked);
@@ -77,8 +82,15 @@ export default class Bl_manualItems extends LightningElement {
                 this.productLevel3Picklist = true;
             })
             .catch((error)=>{console.log('Error in Third Level'); console.log(error);})
-        }
 
+            displayLevelsOptions({level: 'UOM', selection: value})
+            .then((data)=>{ 
+                let aux = JSON.parse(data);
+                this.uom = JSON.parse(aux[0].options);
+                this.uomList = true;
+            })
+            .catch((error)=>{console.log('Error in Third Level'); console.log(error);})
+        }
         if (label == 'Product Level 3'){
             label = 'prodLevel3';
         }
@@ -110,6 +122,7 @@ export default class Bl_manualItems extends LightningElement {
             {label: 'Price',  property: 'price', value: '', required: true,}, ]; 
             this.productLevel2Picklist = false;
             this.productLevel3Picklist = false;
+            this.uomList = false;
     }
 
     errorCreating = 0; 
@@ -145,6 +158,7 @@ export default class Bl_manualItems extends LightningElement {
                     let manualQuoteline = JSON.parse(data);
                     this.numberRowsAdded += 1; 
                     manualQuoteline[0].id = 'new-manual'+Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 10);
+                    
                     //manualQuoteline[0].name = 'Custom Product '+(this.numberRowsAdded).toString(); 
                     for(let i=0; i< this.listOfCaracteristics.length; i++){
                         if(this.listOfCaracteristics[i].property == 'description' || this.listOfCaracteristics[i].property == 'linenote'){
@@ -155,13 +169,14 @@ export default class Bl_manualItems extends LightningElement {
 
                         manualQuoteline[0][this.listOfCaracteristics[i].property] = this.listOfCaracteristics[i].value; 
                     }
+                    manualQuoteline[0].uom = manualQuoteline[0].primaryUOM;
+                    manualQuoteline[0].isNSP = false;
                     this.loadingProcess = false;
                     this.newManualList.push(manualQuoteline[0]); 
                     console.log('List: ')
                     console.log(this.newManualList); 
                     //console.log('Manual: '+data);
                     this.showManualTable = false;
-                    //console.log(Object.getOwnPropertyNames(manualQuoteline[0]));
                     this.dispatchEvent(new CustomEvent('listtodisplayadd', { detail: {list: this.newManualList, tab: 'Manual Items'} }));
                     this.restarManualForm();
                 })
@@ -183,7 +198,6 @@ export default class Bl_manualItems extends LightningElement {
                 console.log(error);
             })
             
-            //HERE CREATE THE QUOTELINE, ADD IN THE LIST, ETC ETC
         }
     }
 
@@ -192,7 +206,7 @@ export default class Bl_manualItems extends LightningElement {
     @track PL1_FOC = false;
     @track PL1_ACA = false;
     showProductLevel(event){
-        console.log(event.target.value);
+        //console.log(event.target.value);
         let productLevel = event.target.value;
         if (productLevel == 'Fiber Optic Cable'){
             this.PL1_FOC = true;
@@ -216,7 +230,7 @@ export default class Bl_manualItems extends LightningElement {
         switch (event.detail.action.name){
             case 'delete':
                 this.showManualTable = true; 
-                console.log('Delete');
+                //console.log('Delete');
                 this.newManualList.splice(index,1); 
                 setTimeout(()=>{ this.showManualTable = false; 
                     this.dispatchEvent(new CustomEvent('listtodisplayadd', { detail: {list: this.newManualList, tab: 'Manual Items'} }));
@@ -225,7 +239,7 @@ export default class Bl_manualItems extends LightningElement {
             break;
             case 'clone':
                 this.showManualTable = true; 
-                console.log('Clone');
+                //console.log('Clone');
                 let cloneDataRow = JSON.parse(JSON.stringify(dataRow));
                 cloneDataRow.id = 'new-manual'+Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 10);
                 this.newManualList.push(cloneDataRow); 
@@ -235,6 +249,7 @@ export default class Bl_manualItems extends LightningElement {
             break;
             default: 
                 alert('There is an error trying to complete this action');
+            break;
         }
 
     }

@@ -133,6 +133,20 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                     if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
                         secondList.isNSP = false;
                     }
+                    if(secondList.prodLevel1 == null || secondList.prodLevel1 == undefined){
+                        secondList.prodLevel2 = null; 
+                        secondList.prodLevel3 =	null;
+                        secondList.prodLevel4 =	null;
+                        secondList.uom = null;
+                    }
+                    if(secondList.prodLevel2 == null || secondList.prodLevel2 == undefined){
+                        secondList.uom = null;
+                        secondList.prodLevel3 =	null;
+                        secondList.prodLevel4 =	null;
+                    }
+                    if(secondList.prodLevel3 == null || secondList.prodLevel3 == undefined){
+                        secondList.prodLevel4 =	null;
+                    }
                     this.quotesAdded.push(secondList);
                 }
             }
@@ -153,6 +167,20 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                     if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
                         secondList.isNSP = false;
                     }
+                    if(secondList.prodLevel1 == null || secondList.prodLevel1 == undefined){
+                        secondList.prodLevel2 = null; 
+                        secondList.prodLevel3 =	null;
+                        secondList.prodLevel4 =	null;
+                        secondList.uom = null;
+                    }
+                    if(secondList.prodLevel2 == null || secondList.prodLevel2 == undefined){
+                        secondList.uom = null;
+                        secondList.prodLevel3 =	null;
+                        secondList.prodLevel4 =	null;
+                    }
+                    if(secondList.prodLevel3 == null || secondList.prodLevel3 == undefined){
+                        secondList.prodLevel4 =	null;
+                    }
                     this.quotesAdded.push(secondList);
                 }
             }
@@ -171,6 +199,20 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                     }
                     if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
                         secondList.isNSP = false;
+                    }
+                    if(secondList.prodLevel1 == null || secondList.prodLevel1 == undefined){
+                        secondList.prodLevel2 = null; 
+                        secondList.prodLevel3 =	null;
+                        secondList.prodLevel4 =	null;
+                        secondList.uom = null;
+                    }
+                    if(secondList.prodLevel2 == null || secondList.prodLevel2 == undefined){
+                        secondList.uom = null;
+                        secondList.prodLevel3 =	null;
+                        secondList.prodLevel4 =	null;
+                    }
+                    if(secondList.prodLevel3 == null || secondList.prodLevel3 == undefined){
+                        secondList.prodLevel4 =	null;
                     }
                     this.quotesAdded.push(secondList);
                 }
@@ -192,6 +234,20 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                     if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
                         secondList.isNSP = false;
                     }
+                    if(secondList.prodLevel1 == null || secondList.prodLevel1 == undefined){
+                        secondList.prodLevel2 = null; 
+                        secondList.prodLevel3 =	null;
+                        secondList.prodLevel4 =	null;
+                        secondList.uom = null;
+                    }
+                    if(secondList.prodLevel2 == null || secondList.prodLevel2 == undefined){
+                        secondList.uom = null;
+                        secondList.prodLevel3 =	null;
+                        secondList.prodLevel4 =	null;
+                    }
+                    if(secondList.prodLevel3 == null || secondList.prodLevel3 == undefined){
+                        secondList.prodLevel4 =	null;
+                    }
                     this.quotesAdded.push(secondList);
                 }
             }
@@ -211,6 +267,20 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                     }
                     if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
                         secondList.isNSP = false;
+                    }
+                    if(secondList.prodLevel1 == null || secondList.prodLevel1 == undefined){
+                        secondList.prodLevel2 = null; 
+                        secondList.prodLevel3 =	null;
+                        secondList.prodLevel4 =	null;
+                        secondList.uom = null;
+                    }
+                    if(secondList.prodLevel2 == null || secondList.prodLevel2 == undefined){
+                        secondList.uom = null;
+                        secondList.prodLevel3 =	null;
+                        secondList.prodLevel4 =	null;
+                    }
+                    if(secondList.prodLevel3 == null || secondList.prodLevel3 == undefined){
+                        secondList.prodLevel4 =	null;
                     }
                     this.quotesAdded.push(secondList);
                 }
@@ -363,7 +433,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             break; 
             case 'Manual Items':
                 this.girdDataManualItemTabAdd = event.detail.list;
-                console.log('---------- MANUAL ITEMS IN PARENT, MISSING SAVING ---------');
+                //console.log('---------- MANUAL ITEMS IN PARENT, MISSING SAVING ---------');
             break; 
             default:
             break; 
@@ -389,6 +459,20 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                     if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
                         secondList.isNSP = false;
                     }
+                    if(secondList.prodLevel1 == null || secondList.prodLevel1 == undefined){
+                        secondList.prodLevel2 = null; 
+                        secondList.prodLevel3 =	null;
+                        secondList.prodLevel4 =	null;
+                        secondList.uom = null;
+                    }
+                    if(secondList.prodLevel2 == null || secondList.prodLevel2 == undefined){
+                        secondList.uom = null;
+                        secondList.prodLevel3 =	null;
+                        secondList.prodLevel4 =	null;
+                    }
+                    if(secondList.prodLevel3 == null || secondList.prodLevel3 == undefined){
+                        secondList.prodLevel4 =	null;
+                    }
                     this.quotesAdded.push(secondList);
                 }
             }
@@ -409,6 +493,20 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                     if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
                         secondList.isNSP = false;
                     }
+                    if(secondList.prodLevel1 == null || secondList.prodLevel1 == undefined){
+                        secondList.prodLevel2 = null; 
+                        secondList.prodLevel3 =	null;
+                        secondList.prodLevel4 =	null;
+                        secondList.uom = null;
+                    }
+                    if(secondList.prodLevel2 == null || secondList.prodLevel2 == undefined){
+                        secondList.uom = null;
+                        secondList.prodLevel3 =	null;
+                        secondList.prodLevel4 =	null;
+                    }
+                    if(secondList.prodLevel3 == null || secondList.prodLevel3 == undefined){
+                        secondList.prodLevel4 =	null;
+                    }
                     this.quotesAdded.push(secondList);
                 }
             }
@@ -427,6 +525,20 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                     }
                     if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
                         secondList.isNSP = false;
+                    }
+                    if(secondList.prodLevel1 == null || secondList.prodLevel1 == undefined){
+                        secondList.prodLevel2 = null; 
+                        secondList.prodLevel3 =	null;
+                        secondList.prodLevel4 =	null;
+                        secondList.uom = null;
+                    }
+                    if(secondList.prodLevel2 == null || secondList.prodLevel2 == undefined){
+                        secondList.uom = null;
+                        secondList.prodLevel3 =	null;
+                        secondList.prodLevel4 =	null;
+                    }
+                    if(secondList.prodLevel3 == null || secondList.prodLevel3 == undefined){
+                        secondList.prodLevel4 =	null;
                     }
                     this.quotesAdded.push(secondList);
                 }
@@ -448,6 +560,20 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                     if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
                         secondList.isNSP = false;
                     }
+                    if(secondList.prodLevel1 == null || secondList.prodLevel1 == undefined){
+                        secondList.prodLevel2 = null; 
+                        secondList.prodLevel3 =	null;
+                        secondList.prodLevel4 =	null;
+                        secondList.uom = null;
+                    }
+                    if(secondList.prodLevel2 == null || secondList.prodLevel2 == undefined){
+                        secondList.uom = null;
+                        secondList.prodLevel3 =	null;
+                        secondList.prodLevel4 =	null;
+                    }
+                    if(secondList.prodLevel3 == null || secondList.prodLevel3 == undefined){
+                        secondList.prodLevel4 =	null;
+                    }
                     this.quotesAdded.push(secondList);
                 }
             }
@@ -467,6 +593,20 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                     }
                     if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
                         secondList.isNSP = false;
+                    }
+                    if(secondList.prodLevel1 == null || secondList.prodLevel1 == undefined){
+                        secondList.prodLevel2 = null; 
+                        secondList.prodLevel3 =	null;
+                        secondList.prodLevel4 =	null;
+                        secondList.uom = null;
+                    }
+                    if(secondList.prodLevel2 == null || secondList.prodLevel2 == undefined){
+                        secondList.uom = null;
+                        secondList.prodLevel3 =	null;
+                        secondList.prodLevel4 =	null;
+                    }
+                    if(secondList.prodLevel3 == null || secondList.prodLevel3 == undefined){
+                        secondList.prodLevel4 =	null;
                     }
                     this.quotesAdded.push(secondList);
                 }
