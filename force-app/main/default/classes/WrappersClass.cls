@@ -38,13 +38,38 @@ public with sharing class WrappersClass {
         public String billingtype {get;set;}
         public Decimal componenttotal {get;set;}
         public Date enddate{get;set;}
-        // public Decimal length {get;set;}
         public String length {get;set;}
+        public String boxlength {get;set;}
         public String lengthuom {get;set;}
         public Decimal originalprice {get;set;}
         public String packagetype {get;set;}
         public Decimal volumediscount{get;set;}
         public String notes{get;set;}
+        //twinned fields
+        public String basedesigncode{get;set;}
+        public Decimal cablecostpermeter{get;set;}
+        public String customer{get;set;} 
+        public String filteredgrouping{get;set;} 
+        public Decimal fixedcost{get;set;} 
+        public Decimal conncostA{get;set;} 
+        public Decimal conncostB{get;set;} 
+        public Decimal countfactor{get;set;} 
+        public Decimal marginchangevalue{get;set;} 
+        public String quoteitemdescriptiona{get;set;} 
+        public String quoteitemdescriptionb{get;set;} 
+        public Decimal variableprice1{get;set;} 
+        public Decimal busmarginhighvalue{get;set;} 
+        public Decimal busmarginlowvalue{get;set;} 
+        public String numadapter{get;set;} 
+        public String numcables{get;set;} 
+        public String numconnector{get;set;} 
+        public Decimal pricingcost{get;set;} 
+        public Decimal regionaddercentral{get;set;} 
+        public Decimal regionaddereast{get;set;} 
+        public Decimal regionadderwest{get;set;} 
+        public Decimal regionaddernorthwest{get;set;} 
+        public Decimal resourcecosta{get;set;} 
+        
         //Product Selector filter values
         public String color{get;set;}
         public String productType{get;set;}
@@ -130,6 +155,24 @@ public with sharing class WrappersClass {
         public String numLungs{get;set;}
         public String innerBasket{get;set;}
         public String ru{get;set;}
+        public String basedesigncode{get;set;}
+        public Decimal cablecostpermeter{get;set;}
+        public String customer{get;set;} 
+        public Decimal fixedcost{get;set;} 
+        public String quoteitemdescriptiona{get;set;} 
+        public String quoteitemdescriptionb{get;set;} 
+        public Decimal variableprice1{get;set;} 
+        public Decimal busmarginhighvalue{get;set;} 
+        public Decimal busmarginlowvalue{get;set;} 
+        public String numadapter{get;set;} 
+        public String numcables{get;set;} 
+        public String numconnector{get;set;} 
+        public Decimal pricingcost{get;set;} 
+        public String regionaddercentral{get;set;} 
+        public String regionaddereast{get;set;} 
+        public String regionadderwest{get;set;} 
+        public String regionaddernorthwest{get;set;} 
+        public String resourcecosta{get;set;} 
 
         public Decimal fiberCount1{get;set;}
         public Decimal fiberCount2{get;set;}
