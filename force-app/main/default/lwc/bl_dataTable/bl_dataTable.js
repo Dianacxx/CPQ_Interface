@@ -707,6 +707,9 @@ export default class Bl_dataTable extends LightningElement {
 
     @track nspShowMessage = false; 
     //Delete Row, NSP and See Tiers/Contracts - when click row buttons
+
+    lineNoteValue; //To show in pop up lineNoteValue
+
     handleRowAction(event){
         this.dataRow = event.detail.row;
         switch (event.detail.action.name){
@@ -728,6 +731,17 @@ export default class Bl_dataTable extends LightningElement {
             break;
             case 'Linenote':
                 this.lineNotePopUp = true;
+                //TO SHOW NEW LINES IF THERE IS ONE ALREADY IN THE LINE NOTE
+                if (this.dataRow.linenote != null){
+                    let text =  String(this.dataRow.linenote);
+                    console.log(text)
+                    text = '<p>'+text;
+                    text = text.replace(/\r\n|\n/g, '</p><p>');
+                    text = text+'</p>';
+                    this.lineNoteValue = text; 
+                } else {
+                    this.lineNoteValue = '';
+                }
             break;
             default: 
                 alert('There is an error trying to complete this action');
@@ -917,17 +931,24 @@ export default class Bl_dataTable extends LightningElement {
         this.newLineNote = '';
     }
 
-    newLineNote; 
+    @track newLineNote; 
     changingLineNote(event){
-        //console.log(event.detail.value); 
+        console.log(event.detail.value); 
         this.newLineNote = event.detail.value;
     }
     saveLineNote(){
         let index = this.quoteLines.findIndex(x => x.id === this.dataRow.id);
+        let text = this.newLineNote;
+        text = text.replace(/<\/p\>/g, "\n");
+        this.newLineNote = text.replace(/<p>/gi, "");
         this.quoteLines[index].linenote = this.newLineNote;
         this.quotelinesString = JSON.stringify(this.quoteLines); 
         this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
-        this.closeLineNotes();
+        setTimeout(()=>{
+            this.dispatchEvent(new CustomEvent('newlinenote'));
+            this.closeLineNotes();
+        }, 500);
+        
     }
 
 }

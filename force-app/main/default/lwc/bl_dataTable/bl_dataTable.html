@@ -206,7 +206,9 @@
                     </header>
                     <div class="slds-modal__content slds-var-m-left_small  slds-var-m-right_small">
                         <div class="slds-var-p-around_small slds-align_absolute-center">
-                            <lightning-input-rich-text value={dataRow.linenote} onchange={changingLineNote}> </lightning-input-rich-text>
+                            <lightning-input-rich-text style="width:90vw" disabled-categories="FORMAT_FONT,FORMAT_TEXT,FORMAT_BODY,ALIGN_TEXT,INSERT_CONTENT,REMOVE_FORMATTING"
+                            script value={lineNoteValue} onchange={changingLineNote}> </lightning-input-rich-text>
+
                         </div>
                     </div>
                     <footer class="slds-modal__footer slds-var-m-left_small  slds-var-m-right_small">

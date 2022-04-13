@@ -68,7 +68,7 @@
                                     <lightning-tab label="Quote Home" value="Home" onactive={handleActive}>
                                         <c-bl_data-table record-id={recordId} tab-selected="Home" quotelines-string={quotelinesString} 
                                         ondeletedvalues={updateTableData} oneditedtable={updateTableData} onclone={activeCloneButton} 
-                                        onnotselected={desactiveCloneButton} ondiscount={handleDiscount}></c-bl_data-table>
+                                        onnotselected={desactiveCloneButton} ondiscount={handleDiscount} onnewlinenote={newLineNote}></c-bl_data-table>
                                     </lightning-tab>
                                     <lightning-tab label="Detail View" value="Detail" onactive={handleActive}>
                                         <c-bl_data-table record-id={recordId} tab-selected="Detail" quotelines-string={quotelinesString} 
@@ -78,9 +78,12 @@
                                     <lightning-tab label="Product Notes" value="Notes" onactive={handleActive}>
                                         <c-bl_product-notes-table record-id={recordId} quote-notes-string={quoteNotesString}></c-bl_product-notes-table>
                                     </lightning-tab>
-                                    <lightning-tab label="Line Notes" value="Line" onactive={handleActive}>
-                                        <c-bl_line-notes quotelines-string={quotelinesString} ></c-bl_line-notes>
-                                    </lightning-tab>
+                                    <template if:true={updateLineNoteTab}>
+                                        <lightning-tab label="Line Notes" value="Line" onactive={handleActive}>
+                                            <c-bl_line-notes quotelines-string={quotelinesString} ></c-bl_line-notes>
+                                        </lightning-tab>
+                                    </template>
+                                    
                                 
                                 </lightning-tabset>
                             </div>

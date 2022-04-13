@@ -736,4 +736,15 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
        
     }
 
+
+    //UPDATE LINE NOTES TAB WHEN EDITED
+    updateLineNoteTab = true; 
+    newLineNote(){
+        this.updateLineNoteTab = false;
+        setTimeout(()=>{
+            this.updateLineNoteTab = true;
+        }, 500);
+
+    }
+
 }

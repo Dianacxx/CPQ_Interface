@@ -9,6 +9,41 @@
         </lightning-button-group>
     </div>
     <div class="slds-var-m-top_small"> 
-        <lightning-datatable style="width:100%;" key-field="id" hide-checkbox-column data={lineNotes} columns={columns}></lightning-datatable>
+        <table class='slds-table'>
+            <thead>
+                <tr>     
+                    <th>
+                        <a data-id="name" onclick={sort}>
+                            <div>Quote Line Name</div>
+                        </a>
+                    </th>
+                    <th>
+                        <a data-id="description" onclick={sort}>
+                            <div>Description</div>
+                        </a>
+                    </th>         
+                    <th>
+                        <a data-id="notes" onclick={sort}>
+                            <div>Line Note</div>
+                        </a>
+                    </th>  
+                </tr>
+            </thead>
+            <tbody>
+                <template for:each={lineNotes} for:item="linenotes">
+                    <tr key={linenotes.quotelinename}>                
+                        <td  width ="20%" class="slds-cell-wrap">                                
+                            {linenotes.quotelinename}
+                        </td>
+                        <td width ="40%" class="slds-cell-wrap">                                
+                            {linenotes.description}
+                        </td>          
+                        <td width ="40%" class="slds-cell-wrap">                                
+                            {linenotes.linenote}
+                        </td>           
+                    </tr>                                                                     
+                </template>
+            </tbody>
+        </table>
     </div>
 </template>

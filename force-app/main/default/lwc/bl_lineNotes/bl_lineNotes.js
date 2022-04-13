@@ -1,5 +1,7 @@
 import { LightningElement, api, track  } from 'lwc';
-import displayFieldSet from '@salesforce/apex/QuoteController.displayFieldSet'; 
+
+//NOT USE BECAUSE IT MAKES THE TABLE LINE NOTES LOOK IN ONE LINE. 
+//import displayFieldSet from '@salesforce/apex/QuoteController.displayFieldSet'; 
 
 export default class Bl_lineNotes extends LightningElement {
     @api quotelinesString; 
@@ -16,9 +18,10 @@ export default class Bl_lineNotes extends LightningElement {
             }});
             this.quotelinesLength = this.quotelines.length; 
             this.updateLineNotes();
-        }      
+        }   
+        /*   
         let COLUMNS_LINE_NOTES = []; 
-
+        
         displayFieldSet()
         .then((data) => {
             this.fieldSet = JSON.parse(data); 
@@ -46,7 +49,7 @@ export default class Bl_lineNotes extends LightningElement {
                 variant: 'error', mode: 'dismissable' });
             this.dispatchEvent(evt);
         })
-        
+        */
     }
 
     //Pagination
@@ -94,4 +97,22 @@ export default class Bl_lineNotes extends LightningElement {
         //console.log('Slice quoteNotes here');
         this.startingRecord = this.startingRecord + 1;
     }    
+
+
+    //Sort columns in table
+    @api sortedDirection = 'asc';
+    @api sortedColumn = 'name';
+    sort(event) {
+        if(this.sortedColumn === event.currentTarget.dataset.id){
+            this.sortedDirection = this.sortedDirection === 'asc' ? 'desc' : 'asc';
+        }else{
+            this.sortedDirection = 'asc';
+        } 
+        //console.log('sortedColumn: '+this.sortedColumn); 
+        var reverse = this.sortedDirection === 'asc' ? 1 : -1;
+        let table = JSON.parse(JSON.stringify(this.lineNotes));
+        table.sort((a,b) => {return a[event.currentTarget.dataset.id] > b[event.currentTarget.dataset.id] ? 1 * reverse : -1 * reverse});
+        this.sortedColumn = event.currentTarget.dataset.id;        
+        this.lineNotes = table;
+    } 
 }
