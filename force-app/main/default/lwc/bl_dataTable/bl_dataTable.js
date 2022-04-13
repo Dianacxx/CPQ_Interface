@@ -70,7 +70,7 @@ export default class Bl_dataTable extends LightningElement {
             this.isQuoteLinesTab = false; 
         }
         //console.log(Object.getOwnPropertyNames(this.quoteLines[0])); 
-        displayFieldSet({tabName: this.tabSelected})
+        displayFieldSet() //({tabName: this.tabSelected})
         .then((data) => {
             this.error = undefined;
             this.fieldSet = JSON.parse(data); 
@@ -130,9 +130,10 @@ export default class Bl_dataTable extends LightningElement {
                 } 
             }
             this.columns.push(
-                { label: 'NSP', type: 'button-icon',initialWidth: 35,typeAttributes:{iconName: 'action:new_note', name: 'NSP', variant:'brand', size:'xx-small'}},
-                { label: 'Tiers', type: 'button-icon',initialWidth: 35,typeAttributes:{iconName: 'action:description', name: 'Tiers', variant:'brand', size:'xx-small'}},
-                { label: '', type: 'button-icon',initialWidth: 35,typeAttributes:{iconName: 'action:delete', name: 'Delete', variant:'border-filled', size:'xx-small'}}
+                { label: 'NSP', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:google_news', name: 'NSP', variant:'brand', size:'xxx-small'}},
+                { label: 'Tiers', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:adjust_value', name: 'Tiers', variant:'brand', size:'xxx-small'}},
+                { label: 'Line Notes', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:new_note', name: 'Linenote', variant:'brand', size:'xxx-small'}},
+                { label: '', type: 'button-icon',initialWidth: 20,typeAttributes:{iconName: 'action:delete', name: 'Delete', variant:'border-filled', size:'xxx-small'}}
             );
             this.spinnerLoading = false; 
             //console.log('No rows selected');
@@ -665,17 +666,6 @@ export default class Bl_dataTable extends LightningElement {
                 this.firstHandler();
                 this.updateTable();
            
-            
-
-
-            
-            //MISSING WHEN UPDATE FIELDS IN NOTES
-            /*
-            *
-            *
-            * 
-            * 
-            */ 
         }
     }
 
@@ -735,6 +725,9 @@ export default class Bl_dataTable extends LightningElement {
                     this.showNSP = true;
                     this.nspShowMessage = false;
                 }
+            break;
+            case 'Linenote':
+                this.lineNotePopUp = true;
             break;
             default: 
                 alert('There is an error trying to complete this action');
@@ -915,4 +908,26 @@ export default class Bl_dataTable extends LightningElement {
         });
         this.dataPages = parseData;
     }
+
+    //Line Notes Pop-Up
+    @track lineNotePopUp = false; 
+
+    closeLineNotes(){
+        this.lineNotePopUp = false;
+        this.newLineNote = '';
+    }
+
+    newLineNote; 
+    changingLineNote(event){
+        //console.log(event.detail.value); 
+        this.newLineNote = event.detail.value;
+    }
+    saveLineNote(){
+        let index = this.quoteLines.findIndex(x => x.id === this.dataRow.id);
+        this.quoteLines[index].linenote = this.newLineNote;
+        this.quotelinesString = JSON.stringify(this.quoteLines); 
+        this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
+        this.closeLineNotes();
+    }
+
 }

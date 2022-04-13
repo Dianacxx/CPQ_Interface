@@ -1,10 +1,13 @@
 public with sharing class QuoteController {
+
+    // ---------------------------------------------------------------- FIELD SET HANDLER -----------------------------------------------------------------------------------
     @AuraEnabled (cacheable = true)
     public static String displayFieldSet(){
      
         List<Schema.FieldSetMember> homeFieldSetMemberListEditable =  FieldSetHandler.getQuote('BL_Quote_Home','SBQQ__QuoteLine__c');
         List<Schema.FieldSetMember> homeFieldSetMemberListNonEditable =  FieldSetHandler.getQuote('BL_Quote_Home_Non_Edit','SBQQ__QuoteLine__c');
         List<Schema.FieldSetMember> detailViewFieldSetMemberList =  FieldSetHandler.getQuote('BL_Detail_View','SBQQ__QuoteLine__c');
+        List<Schema.FieldSetMember> lineNoteFieldSetMemberList =  FieldSetHandler.getQuote('BL_Line_Note_Set','SBQQ__QuoteLine__c');
         List<WrappersClass.FieldSetWrapperClass> fieldsToPrint = new List<WrappersClass.FieldSetWrapperClass>();
         
         for (Schema.FieldSetMember fieldSetMember : homeFieldSetMemberListEditable) {
@@ -42,6 +45,21 @@ public with sharing class QuoteController {
 
             wrapper.key = 'DETAIL';
             wrapper.editable = true;
+            wrapper.label = fieldSetMember.getLabel();
+            wrapper.required = fieldSetMember.getRequired(); 
+            wrapper.property = labelWithoutSpaces.toLowerCase();
+            wrapper.apiName = fieldSetMember.getFieldPath();
+            
+            // wrapper.type =fieldSetMember.getType();
+
+            fieldsToPrint.add(wrapper);
+        }
+        for (Schema.FieldSetMember fieldSetMember : lineNoteFieldSetMemberList) {
+            WrappersClass.FieldSetWrapperClass wrapper = new WrappersClass.FieldSetWrapperClass();
+            String labelWithoutSpaces = fieldSetMember.getLabel().replaceAll( '\\s+', '');
+
+            wrapper.key = 'NOTE';
+            wrapper.editable = false;
             wrapper.label = fieldSetMember.getLabel();
             wrapper.required = fieldSetMember.getRequired(); 
             wrapper.property = labelWithoutSpaces.toLowerCase();
@@ -139,6 +157,9 @@ public with sharing class QuoteController {
     //     System.debug(displayQuoteLine.size());
     //     return JSON.serialize(displayQuoteLine);
     // }
+    
+    // -------------------------------------------------------------------------------- PRINTERS ---------------------------------------------------------------------
+
     @AuraEnabled
     public static String printQuoteLinesv2(String quoteId){
         
@@ -150,29 +171,47 @@ public with sharing class QuoteController {
         Map<String, Schema.SObjectField> fieldMap = SBQQ__QuoteLine__c.sObjectType.getDescribe().fields.getMap();
         Set<String> setFieldNames = fieldMap.keySet();
         list<String> lstFieldNames = new List<String>(setFieldNames);
-        // List<SBQQ__QuoteLine__c> quoteLines = [SELECT Id,Name,is_NSP__c,Quote_Line_Name__c, SBQQ__DiscountTier__c,SBQQ__Product__r.Name,SBQQ__Product__c,SBQQ__Quantity__c,SBQQ__Description__c,UOM__c,SBQQ__Discount__c,SBQQ__ListPrice__c,SBQQ__NetPrice__c,SBQQ__NetTotal__c,BL_Billing_Tolerance__c,BL_Source__c,BL_Destination__c,BL_Alternative_Indicator__c,BL_NSP_Offering_Details__c,ApprovalStatus__c,SBQQ__BillingType__c,SBQQ__ComponentTotal__c,SBQQ__EndDate__c,Length__c,SBQQ__OriginalPrice__c,Package_Type__c,SBQQ__VolumeDiscount__c FROM SBQQ__QuoteLine__c WHERE SBQQ__Quote__c =: quoteId AND SBQQ__ProductOption__c = null];
         List<SBQQ__QuoteLine__c> quoteLines = Database.query('SELECT SBQQ__Product__r.Name, ' + String.join(lstFieldNames, ',') + ' FROM SBQQ__QuoteLine__c WHERE SBQQ__Quote__c =: quoteId AND SBQQ__ProductOption__c = null');
-        for (SBQQ__QuoteLine__c line : quoteLines) {
-            tiersIDs.add(line.SBQQ__DiscountTier__c);
-        }
-        // The tiels will have to be Handled by a custom object called CustomerTiers, this logic will hace to be replaced by this custom object
-        List<SBQQ__DiscountTier__c> tiersList = [SELECT Id, Name,SBQQ__LowerBound__c,SBQQ__UpperBound__c,SBQQ__Discount__c,SBQQ__DiscountAmount__c,SBQQ__Price__c FROM SBQQ__DiscountTier__c WHERE Id IN : tiersIDs];
-        for (SBQQ__DiscountTier__c tier : tiersList) {
-            WrappersClass.DiscountTierWrapperClass tierWrapper = new WrappersClass.DiscountTierWrapperClass();
-            tierWrapper.id = tier.Id;
-            tierWrapper.name = tier.Name;
-            tierWrapper.lowerBound = tier.SBQQ__LowerBound__c;
-            tierWrapper.upperBound = tier.SBQQ__UpperBound__c;
-            tierWrapper.discount = tier.SBQQ__Discount__c;
-            tierWrapper.discountAmount = tier.SBQQ__DiscountAmount__c;
-            tierWrapper.price = tier.SBQQ__Price__c;
-            tiersMap.put(tierWrapper.id, tierWrapper);
-        }
+        Map<String,Product2> prodMap= new Map <String,Product2>();
+        Set<String> prodLevelSet = new Set<String>();
+        // for (SBQQ__QuoteLine__c line : quoteLines) {
+        //     tiersIDs.add(line.SBQQ__DiscountTier__c);
+        // }
+        // // The tiers will have to be Handled by a custom object called CustomerTiers, this logic will hace to be replaced by this custom object
+        // List<SBQQ__DiscountTier__c> tiersList = [SELECT Id, Name,SBQQ__LowerBound__c,SBQQ__UpperBound__c,SBQQ__Discount__c,SBQQ__DiscountAmount__c,SBQQ__Price__c FROM SBQQ__DiscountTier__c WHERE Id IN : tiersIDs];
+        // for (SBQQ__DiscountTier__c tier : tiersList) {
+        //     WrappersClass.DiscountTierWrapperClass tierWrapper = new WrappersClass.DiscountTierWrapperClass();
+        //     tierWrapper.id = tier.Id;
+        //     tierWrapper.name = tier.Name;
+        //     tierWrapper.lowerBound = tier.SBQQ__LowerBound__c;
+        //     tierWrapper.upperBound = tier.SBQQ__UpperBound__c;
+        //     tierWrapper.discount = tier.SBQQ__Discount__c;
+        //     tierWrapper.discountAmount = tier.SBQQ__DiscountAmount__c;
+        //     tierWrapper.price = tier.SBQQ__Price__c;
+        //     tiersMap.put(tierWrapper.id, tierWrapper);
+        // }
         // Set<Id> linesWithNotes = new Set<Id>();
+
         Set<Id> quoteLineIDs = new Set<Id>();
         for (SBQQ__QuoteLine__c line : quoteLines) {
             quoteLineIDs.add(line.Id);
+            prodMap.put(line.SBQQ__Product__r.id, line.SBQQ__Product__r);
+            // prodLevelSet.ADD(line.SBQQ__Product__r.ProdLevel1__c);
         }
+        //Get the tiers and put them in a map in order to get a list of the tiers per product level 1
+        // List<CustomerTier__c> costTierList = [SELECT ID, Prod_Level_1__c FROM CustomerTier__c WHERE Prod_Level_1__c IN : prodLevelSet];
+        // Map<String,List<CustomerTier__c>> custTierMap = new Map<String,List<CustomerTier__c>>();
+        // if(costTierList.size() >0){
+        //     for (CustomerTier__c tier : costTierList) {
+        //         if (custTierMap.containsKey(tier.Prod_Level_1__c)) {
+        //             custTierMap.get(tier.Prod_Level_1__c).add(tier);
+        //         }else {
+        //             custTierMap.put(tier.Prod_Level_1__c, new List<CustomerTier__c>{tier});
+        //         }            
+        //     }
+        // }
+
+
         List<WrappersClass.QuoteLineWrapperClass> displayQuoteLine = new List<WrappersClass.QuoteLineWrapperClass> ();
         
         for (SBQQ__QuoteLine__c line : quoteLines) {
@@ -217,6 +256,7 @@ public with sharing class QuoteController {
             wrapper.qlevariableprice = line.QLE_Variable_Price__c;
             wrapper.prodLevel1 = line.ProdLevel1__c;
             wrapper.prodLevel2 = line.ProdLevel2__c;
+            wrapper.linenote = line.Line_Note__c;
             if(line.is_NSP__c == true){
                 wrapper.color = line.Color__c;
                 wrapper.subUnitColor = line.Subunit_Color__c;
@@ -331,6 +371,7 @@ public with sharing class QuoteController {
 
         return JSON.serialize(noteWrapperList);
     }
+    //---------------------------------------------------------- PRODUCT ADDERS -------------------------------------------------------------------------------------------
     @AuraEnabled(cacheable=true)
     public static String addQuoteLine(String quoteId, String productId) { //This method transforms a product added in the QLE into a Quote Line
         QuoteReader quoteReader = new QuoteReader();
@@ -702,7 +743,8 @@ public with sharing class QuoteController {
         }
         return JSON.serialize(linesToPrint);
     }
-    
+
+    //---------------------------------------------------------------------- SAVING METHODS -----------------------------------------------------------------------
     @AuraEnabled
     public static String deleteQuoteLines(List<SBQQ__QuoteLine__c> existingQuoteLines, List<WrappersClass.QuoteLineWrapperClass> receivedQuoteLines){ //This method is called whenever we want to delete a quote line in salesforce
         List<SBQQ__QuoteLine__c> linesToDelete = new List <SBQQ__QuoteLine__c>();
@@ -813,6 +855,7 @@ public with sharing class QuoteController {
                     newModel.record.Length_UOM__c = relatedQuoteLine.lengthUOM;
                     newModel.record.UOM__c = relatedQuoteLine.uom;
                     newModel.record.SBQQ__Discount__c = relatedQuoteLine.additionaldiscount;
+                    newModel.record.Line_Note__c = relatedQuoteLine.linenote;
                     newModel.record.AdditionalDiscountUnit__c = 'Percent';
                     newModel.record.SBQQ__NetPrice__c = relatedQuoteLine.netunitprice;
                     newModel.record.BL_Billing_Tolerance__c = relatedQuoteLine.billingtolerance;
@@ -1154,7 +1197,7 @@ public with sharing class QuoteController {
         SBQQ__Quote__c quote = [SELECT ID, SBQQ__NetAmount__c FROM SBQQ__Quote__c WHERE Id =: quoteId];
         return JSON.serialize(quote.SBQQ__NetAmount__c);
     }
-   
+   //-------------------------------------------------------- FILTERING HANDLERS ----------------------------------------------------------------------------------------
     @AuraEnabled
     public static String getProductLevels(String level1){
         List<AFL_Lookups__c> lookupList = [SELECT Id,Name,BL_Selection_Type__c,Lookup_Code__c,Product_Class_1__c,BL_Configured_Product__c FROM AFL_Lookups__c WHERE Lookup_Type__c = 'BL Attribute Groupings' AND Product_Class_1__c =:level1];

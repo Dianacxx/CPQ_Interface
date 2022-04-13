@@ -113,7 +113,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             if (data){
                 this.quoteNotesString = data; 
                 console.log('notes string SUCCESS');
-                //console.log('notes string SUCCESS: '+ this.quoteNotesString);
+                console.log('notes string SUCCESS: '+ this.quoteNotesString);
                 if (this.quoteNotesString == '[]'){
                     this.quoteNotesString = '[name: \"none\"]';
                     //console.log(this.quoteNotesString);
@@ -292,7 +292,8 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             this.disableButton = true;
         }
         else if (event.target.value=='Line'){
-            console.log('Line');
+            //console.log('Line');
+            this.quotelinesString = this.quotelinesString; 
             this.disableReorder = true;
             this.disableButton = true;
         }
