@@ -118,7 +118,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         this.savePSValues = true;
         this.quotesAdded = []; 
         if(this.girdDataAcaTabAdd.length > 0){
-            console.log('ACA LIST');
+            //console.log('ACA LIST');
             let list1 = JSON.parse(JSON.stringify(this.girdDataAcaTabAdd)); 
             for (let list of list1){
                 for (let secondList of list.listOfProducts){
@@ -152,7 +152,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             }
         }
         if(this.girdDataConnTabAdd.length > 0){
-            console.log('CONNECT LIST');
+            //console.log('CONNECT LIST');
             let list2 = JSON.parse(JSON.stringify(this.girdDataConnTabAdd)); 
             for (let list of list2){
                 for (let secondList of list.listOfProducts){
@@ -181,12 +181,17 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                     if(secondList.prodLevel3 == null || secondList.prodLevel3 == undefined){
                         secondList.prodLevel4 =	null;
                     }
+                    //SPECIAL BEHAVIOR TO AVOID ACTIVATE THE VALIDATION RULE IN PRODUCT
+                    //SELECTION PAGE, SINCE THE QUANTITY HERE IS NOT EDITABLE.
+                    if(secondList.productType == 'Patch Panel - Stubbed' ){
+                        secondList.length = 5;
+                    }
                     this.quotesAdded.push(secondList);
                 }
             }
         }
         if(this.girdDataFocTabAdd.length > 0){
-            console.log('FOC LIST');
+            //console.log('FOC LIST');
             let list3 = JSON.parse(JSON.stringify(this.girdDataFocTabAdd)); 
             for (let list of list3){ 
                 for (let secondList of list.listOfProducts){
@@ -219,7 +224,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             }
         }
         if(this.girdDataCableTabAdd.length > 0){
-            console.log('CABLE LIST');
+            //console.log('CABLE LIST');
             let list4 = JSON.parse(JSON.stringify(this.girdDataCableTabAdd)); 
             for (let list of list4){
                 for (let secondList of list.listOfProducts){
@@ -253,7 +258,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             }
         }
         if(this.girdDataTandITabAdd.length > 0){
-            console.log('TAI LIST');
+            //console.log('TAI LIST');
             let list5 = JSON.parse(JSON.stringify(this.girdDataTandITabAdd)); 
             for (let list of list5){
                 for (let secondList of list.listOfProducts){
@@ -287,7 +292,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             }
         }
         if(this.girdDataManualItemTabAdd.length > 0){
-            console.log('MANUAL LIST');
+            //console.log('MANUAL LIST');
             let list6 = JSON.parse(JSON.stringify(this.girdDataManualItemTabAdd)); 
             for (let list of list6){
                 list.netunitprice = 1;
@@ -506,6 +511,9 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                     }
                     if(secondList.prodLevel3 == null || secondList.prodLevel3 == undefined){
                         secondList.prodLevel4 =	null;
+                    }
+                    if(secondList.productType == 'Patch Panel - Stubbed' ){
+                        secondList.length = 5;
                     }
                     this.quotesAdded.push(secondList);
                 }
