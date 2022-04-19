@@ -1,4 +1,14 @@
 public with sharing class blMockData {
+    //Pricebook Rule in quote - If it does not have a pricebook, the UI is not going to open. 
+    @AuraEnabled
+    public static string checkPricebookInQuote(String quoteId) {
+        SBQQ__Quote__c Quote = [SELECT Id, Name, SBQQ__PriceBook__c, SBQQ__PricebookId__c FROM SBQQ__Quote__c WHERE ID =: quoteId];
+        if(Quote.SBQQ__PriceBook__c == null || Quote.SBQQ__PricebookId__c == null){
+            return 'NOT';
+        } else {
+            return 'YES';
+        }
+    }
     //Methods to 'access SF configured window'
 
     //Saving record Id that opens the UI
@@ -62,13 +72,16 @@ public with sharing class blMockData {
     }
 
     //MANUAL ITEMS
+    //Get product Id of mMock Product Called 'Product2'
     @AuraEnabled
     public static string getMockProduct() {
         Product2 mockProduct = [SELECT Id, Name FROM Product2 WHERE Name = 'Product2' LIMIT 1];
         return mockProduct.Id;
     }
 
+    /*
     //Handle Error of picklist UOM value 
+    //Getting the dependencies of UOM values in quote lines object by product level 2
     @AuraEnabled
     public static String uomDependencyLevel2(String productLevel2){
         Schema.sObjectType sobject_type = SBQQ__QuoteLine__c.getSObjectType();
@@ -77,8 +90,11 @@ public with sharing class blMockData {
         List<Schema.PicklistEntry> pickListValues = QuoteController.getDependentPicklistValues(theFieldmap.get('UOM__c'),productLevel2);
         System.debug('PICKLIST ' + pickListValues);
         return JSON.serialize(pickListValues);
-    }
+    }*/
+
+    
     //Handle Error of picklist UOM value LIST
+    //Getting the dependencies of UOM values in quote lines object by product level 2
     @AuraEnabled
     public static String uomDependencyLevel2List(List<String> productLevel2){
         Schema.sObjectType sobject_type = SBQQ__QuoteLine__c.getSObjectType();

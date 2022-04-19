@@ -442,7 +442,7 @@ export default class Bl_dataTable extends LightningElement {
                 randomName = Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 10);//Math.random().toFixed(36).substring(0, 7)); 
                 newQuotelines[i].id = 'new'+randomId; 
                 newQuotelines[i].name = 'New QL-'+randomName; 
-                newQuotelines[i].quantity = 1;
+                newQuotelines[i].minimumorderqty == null ? newQuotelines[i].quantity = 1 : newQuotelines[i].quantity = newQuotelines[i].minimumorderqty;
                 newQuotelines[i].netunitprice = 1;
                 newQuotelines[i].alternative = false;
                 newQuotelines[i].quotelinename = newQuotelines[i].product;
@@ -617,7 +617,7 @@ export default class Bl_dataTable extends LightningElement {
                     this.quoteLines[index].prodLevel4 =	null;
                 }
                 if(this.quoteLines[index].quantity.length == 0){
-                    this.quoteLines[index].quantity = 1;
+                    this.quoteLines[index].minimumorderqty == null ?  this.quoteLines[index].quantity = 1 :  this.quoteLines[index].quantity =  this.quoteLines[index].minimumorderqty;
                 }
                 if(this.quoteLines[index].netunitprice.length == 0){
                     this.quoteLines[index].netunitprice = 1;

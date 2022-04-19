@@ -4,7 +4,7 @@ import { ShowToastEvent } from 'lightning/platformShowToastEvent'; //To show mes
 
 //SAVING RECORD ID IN CUSTOM ACTION TO QLE
 import savingRecordId from '@salesforce/apex/blMockData.savingRecordId'; 
-//ID a5e2h0000002ZlxAAE
+import checkPricebookInQuote from '@salesforce/apex/blMockData.checkPricebookInQuote'; 
 
 export default class ButtonOpenUi extends NavigationMixin(LightningElement) {
     @api recordId; //Quote Record Id opening the UI
@@ -16,9 +16,10 @@ export default class ButtonOpenUi extends NavigationMixin(LightningElement) {
     @api quoteLinesAuxiliar; 
     //NAVIGATION TO OPEN UI
     handleNavigateUi(){
-        
-
-        savingRecordId({quoteId: this.recordId})
+        checkPricebookInQuote({quoteId: this.recordId})
+        .then((data)=>{
+            if (data == 'YES'){
+                savingRecordId({quoteId: this.recordId})
                 .then(() => {
                     console.log('RECORD SAVE IN ACTION!');
                     var compDefinition = {
@@ -40,6 +41,28 @@ export default class ButtonOpenUi extends NavigationMixin(LightningElement) {
                     console.log('ERROR IN RECORD ACTION');
                     console.log(error);
                 });   
+            } else if (data == 'NOT'){
+                const evt = new ShowToastEvent({
+                    title: 'The Quote has not PriceBook assigned',
+                    message: 'Please, assign it a Price Book and a Pricebook ID to open the QLE',
+                    variant: 'error',
+                    mode: 'dismissable'
+                });
+                this.dispatchEvent(evt);
+            }
+        })
+        .catch((error)=>{
+            const evt = new ShowToastEvent({
+                title: 'There is a server error',
+                message: 'Please wait and try again later',
+                variant: 'error',
+                mode: 'dismissable'
+            });
+            this.dispatchEvent(evt);
+            console.log(error); 
+        })
+
+        
     }
     
 }

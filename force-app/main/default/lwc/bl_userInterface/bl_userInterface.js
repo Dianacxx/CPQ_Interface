@@ -113,7 +113,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             if (data){
                 this.quoteNotesString = data; 
                 console.log('notes string SUCCESS');
-                console.log('notes string SUCCESS: '+ this.quoteNotesString);
+                //console.log('notes string SUCCESS: '+ this.quoteNotesString);
                 if (this.quoteNotesString == '[]'){
                     this.quoteNotesString = '[name: \"none\"]';
                     //console.log(this.quoteNotesString);
@@ -400,7 +400,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             let quoteEdition = JSON.parse(this.quotelinesString);
             for(let i = 0; i< quoteEdition.length; i++){
                 if(quoteEdition[i].quantity == null || quoteEdition[i].quantity == 'null'){
-                    quoteEdition[i].quantity = 1;
+                    quoteEdition[i].minimumorderqty == null ? quoteEdition[i].quantity = 1 : quoteEdition[i].quantity = quoteEdition[i].minimumorderqty;
                 }
                 if(quoteEdition[i].netunitprice == null || quoteEdition[i].netunitprice == 'null'){
                     quoteEdition[i].netunitprice = 0;
@@ -446,28 +446,22 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 this.spinnerLoadingUI = false;
                 if(error != undefined){
                     if(error.body != undefined){
-                        console.log('-1');
                         if(error.body.exceptionType != undefined){
                             errorMessage = error.body.exceptionType.message;
                         } else 
                         if (error.body.pageErrors[0]!= undefined){
-                            console.log('0');
                             if(error.body.pageErrors[0].message != undefined){
                                 errorMessage = error.body.pageErrors[0].message; 
-                                console.log('1');
                             } else if (error.body.pageErrors[0].statusCode != undefined){
-                                console.log('2');
                                 errorMessage = error.body.pageErrors[0].statusCode; 
                             }
                         }
                         else if (error.body.fieldErrors!= undefined){
-                            console.log('3');
                             let prop = Object.getOwnPropertyNames(error.body.fieldErrors);
                             //console.log(error.body.fieldErrors[prop[0]][0].message)
                             errorMessage = error.body.fieldErrors[prop[0]][0].message;
                             //console.log(error); 
                         } else {
-                            console.log('4');
                             errorMessage = 'Developer: Open console to see error message';
                         }
                     } else {
@@ -539,25 +533,19 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 
                 if(error != undefined){
                     if(error.body != undefined){
-                        console.log('-1');
                         if (error.body.pageErrors[0]!= undefined){
-                            console.log('0');
                             if(error.body.pageErrors[0].message != undefined){
                                 errorMessage = error.body.pageErrors[0].message; 
-                                console.log('1');
                             } else if (error.body.pageErrors[0].statusCode != undefined){
-                                console.log('2');
                                 errorMessage = error.body.pageErrors[0].statusCode; 
                             }
                         }
                         else if (error.body.fieldErrors!= undefined){
-                            console.log('3');
                             let prop = Object.getOwnPropertyNames(error.body.fieldErrors);
                             console.log(error.body.fieldErrors[prop[0]][0].message)
                             errorMessage = JSON.stringify(error.body.fieldErrors[prop[0]]);
                             //console.log(error); 
                         } else {
-                            console.log('4');
                             errorMessage = 'Developer: Open console to see error message';
                         }
                     } else {

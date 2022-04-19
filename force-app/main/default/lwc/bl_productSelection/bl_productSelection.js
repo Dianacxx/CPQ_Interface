@@ -122,7 +122,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             let list1 = JSON.parse(JSON.stringify(this.girdDataAcaTabAdd)); 
             for (let list of list1){
                 for (let secondList of list.listOfProducts){
-                    secondList.quantity = 1;
+                    secondList.minimumorderqty == null ? secondList.quantity = 1 : secondList.quantity = secondList.minimumorderqty;
                     secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
@@ -156,7 +156,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             let list2 = JSON.parse(JSON.stringify(this.girdDataConnTabAdd)); 
             for (let list of list2){
                 for (let secondList of list.listOfProducts){
-                    secondList.quantity = 1;
+                    secondList.minimumorderqty == null ? secondList.quantity = 1 : secondList.quantity = secondList.minimumorderqty;
                     secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
@@ -195,7 +195,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             let list3 = JSON.parse(JSON.stringify(this.girdDataFocTabAdd)); 
             for (let list of list3){ 
                 for (let secondList of list.listOfProducts){
-                    secondList.quantity = 1;
+                    secondList.minimumorderqty == null ? secondList.quantity = 1 : secondList.quantity = secondList.minimumorderqty;
                     secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
@@ -228,7 +228,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             let list4 = JSON.parse(JSON.stringify(this.girdDataCableTabAdd)); 
             for (let list of list4){
                 for (let secondList of list.listOfProducts){
-                    secondList.quantity = 1;
+                    secondList.minimumorderqty == null ? secondList.quantity = 1 : secondList.quantity = secondList.minimumorderqty;
                     secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
@@ -262,7 +262,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             let list5 = JSON.parse(JSON.stringify(this.girdDataTandITabAdd)); 
             for (let list of list5){
                 for (let secondList of list.listOfProducts){
-                    secondList.quantity = 1;
+                    secondList.minimumorderqty == null ? secondList.quantity = 1 : secondList.quantity = secondList.minimumorderqty;
                     secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
@@ -337,28 +337,32 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                 console.log('Error saving from PS'); 
                 console.log(error); 
                 let errorMessage;
-                /*
-                if(error.body != undefined){
-                    if (error.body.pageErrors != undefined){
-                        console.log('pageErr');
-                        console.log(error.body.pageErrors);
-                        if(error.body.pageErrors[0].message != undefined){
-                            errorMessage = error.body.pageErrors[0].message; 
-                        } else if (error.body.pageErrors[0].statusCode != undefined){
-                            errorMessage = error.body.pageErrors[0].statusCode; 
-                        } else {
-                            if (error.body.fieldErrors != undefined){
-                                errorMessage = 'Developer: Open console to see error message (F12)'
-                                console.log(error); 
+                if(error != undefined){
+                    if(error.body != undefined){
+                        if(error.body.exceptionType != undefined){
+                            errorMessage = error.body.exceptionType.message;
+                        } else 
+                        if (error.body.pageErrors[0]!= undefined){
+                            if(error.body.pageErrors[0].message != undefined){
+                                errorMessage = error.body.pageErrors[0].message; 
+                            } else if (error.body.pageErrors[0].statusCode != undefined){
+                                errorMessage = error.body.pageErrors[0].statusCode; 
                             }
                         }
-                    } else if (error.body.fieldErrors != undefined){
-                        errorMessage = JSON.stringify(Object.getOwnPropertyNames(error.body.fieldErrors));
-                        console.log(error); 
+                        else if (error.body.fieldErrors!= undefined){
+                            let prop = Object.getOwnPropertyNames(error.body.fieldErrors);
+                            //console.log(error.body.fieldErrors[prop[0]][0].message)
+                            errorMessage = error.body.fieldErrors[prop[0]][0].message;
+                            //console.log(error); 
+                        } else {
+                            errorMessage = 'Developer: Open console to see error message';
+                        }
                     } else {
-                        errorMessage = 'Developer: Open console to see error message (F12)'
+                        errorMessage = 'Developer: Open console to see error message'
                     }
-                }*/
+                } else {
+                    errorMessage = 'Undefined Error'; 
+                }
                 const evt = new ShowToastEvent({
                     title: 'Creating Quote lines ERROR',
                     message: errorMessage,
@@ -453,7 +457,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             let list1 = JSON.parse(JSON.stringify(this.girdDataAcaTabAdd)); 
             for (let list of list1){
                 for (let secondList of list.listOfProducts){
-                    secondList.quantity = 1;
+                    secondList.minimumorderqty == null ? secondList.quantity = 1 : secondList.quantity = secondList.minimumorderqty;
                     secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
@@ -487,7 +491,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             let list2 = JSON.parse(JSON.stringify(this.girdDataConnTabAdd)); 
             for (let list of list2){
                 for (let secondList of list.listOfProducts){
-                    secondList.quantity = 1;
+                    secondList.minimumorderqty == null ? secondList.quantity = 1 : secondList.quantity = secondList.minimumorderqty;
                     secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
@@ -524,7 +528,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             let list3 = JSON.parse(JSON.stringify(this.girdDataFocTabAdd)); 
             for (let list of list3){ 
                 for (let secondList of list.listOfProducts){
-                    secondList.quantity = 1;
+                    secondList.minimumorderqty == null ? secondList.quantity = 1 : secondList.quantity = secondList.minimumorderqty;
                     secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
@@ -557,7 +561,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             let list4 = JSON.parse(JSON.stringify(this.girdDataCableTabAdd)); 
             for (let list of list4){
                 for (let secondList of list.listOfProducts){
-                    secondList.quantity = 1;
+                    secondList.minimumorderqty == null ? secondList.quantity = 1 : secondList.quantity = secondList.minimumorderqty;
                     secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
@@ -591,7 +595,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             let list5 = JSON.parse(JSON.stringify(this.girdDataTandITabAdd)); 
             for (let list of list5){
                 for (let secondList of list.listOfProducts){
-                    secondList.quantity = 1;
+                    secondList.minimumorderqty == null ? secondList.quantity = 1 : secondList.quantity = secondList.minimumorderqty;
                     secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
@@ -657,28 +661,32 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
               }, 500);
             })
             .catch((error)=>{
-                /*
-                if(error.body != undefined){
-                    if (error.body.pageErrors != undefined){
-                        console.log('pageErr');
-                        console.log(error.body.pageErrors);
-                        if(error.body.pageErrors[0].message != undefined){
-                            errorMessage = error.body.pageErrors[0].message; 
-                        } else if (error.body.pageErrors[0].statusCode != undefined){
-                            errorMessage = error.body.pageErrors[0].statusCode; 
-                        } else {
-                            if (error.body.fieldErrors != undefined){
-                                errorMessage = 'Developer: Open console to see error message (F12)'
-                                console.log(error); 
+                if(error != undefined){
+                    if(error.body != undefined){
+                        if(error.body.exceptionType != undefined){
+                            errorMessage = error.body.exceptionType.message;
+                        } else 
+                        if (error.body.pageErrors[0]!= undefined){
+                            if(error.body.pageErrors[0].message != undefined){
+                                errorMessage = error.body.pageErrors[0].message; 
+                            } else if (error.body.pageErrors[0].statusCode != undefined){
+                                errorMessage = error.body.pageErrors[0].statusCode; 
                             }
                         }
-                    } else if (error.body.fieldErrors != undefined){
-                        errorMessage = JSON.stringify(Object.getOwnPropertyNames(error.body.fieldErrors));
-                        console.log(error); 
+                        else if (error.body.fieldErrors!= undefined){
+                            let prop = Object.getOwnPropertyNames(error.body.fieldErrors);
+                            //console.log(error.body.fieldErrors[prop[0]][0].message)
+                            errorMessage = error.body.fieldErrors[prop[0]][0].message;
+                            //console.log(error); 
+                        } else {
+                            errorMessage = 'Developer: Open console to see error message';
+                        }
                     } else {
-                        errorMessage = 'Developer: Open console to see error message (F12)'
+                        errorMessage = 'Developer: Open console to see error message'
                     }
-                }*/
+                } else {
+                    errorMessage = 'Undefined Error'; 
+                }
                 const evt = new ShowToastEvent({
                     title: 'Error creating quote lines',
                     message: 'The server has problems creating quote lines, please do again the process',
