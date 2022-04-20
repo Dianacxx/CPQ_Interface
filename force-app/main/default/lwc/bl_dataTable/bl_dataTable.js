@@ -15,7 +15,7 @@ import LEVEL2_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.ProdLevel2__c';
 import UOM_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.UOM__c';
 
 //TO SHOW DEPENDENCIES VALUES FOR UOM FIELD IF PRODUCT 2 
-import uomDependencyLevel2 from '@salesforce/apex/blMockData.uomDependencyLevel2'; 
+//import uomDependencyLevel2 from '@salesforce/apex/blMockData.uomDependencyLevel2'; 
 import uomDependencyLevel2List from '@salesforce/apex/blMockData.uomDependencyLevel2List'; 
 
 
@@ -492,10 +492,12 @@ export default class Bl_dataTable extends LightningElement {
     //valuesUOMString = []; 
     rowUOMErrors = [];
     nonProductLevel2 = [];
+    minimumQuantityErrors = [];
     //Save when table is edited and clicked in save button.
     handleSaveEdition(event){
         //this.valuesUOMString = []; 
         this.rowUOMErrors = [];
+        this.minimumQuantityErrors = [];
         this.nonProductLevel2 = [];
         this.quoteLinesEdit = event.detail.draftValues; 
         if(this.quoteLinesEdit){
@@ -507,19 +509,15 @@ export default class Bl_dataTable extends LightningElement {
                 //console.log('Id editada: '+this.quoteLinesEdit[i].id);
                 let index = this.quoteLines.findIndex(x => x.id === this.quoteLinesEdit[i].id);
                 //console.log('Index en quoteLines '+index); 
+                //GETTING THE FIELDS EDITED IN THE TABLE
                 const inputsItems = this.quoteLinesEdit.slice().map(draft => {
                     const fields = Object.assign({}, draft);
                     return { fields };
                 });
-                //console.log('inputsItems '+ Object.getOwnPropertyNames(inputsItems[i].fields));
                 let prop = Object.getOwnPropertyNames(inputsItems[i].fields); 
-                //console.log('prop '+ Object.getOwnPropertyNames(prop)); 
+                //VALIDATION RULES TO AVOID ERRORS FROM THE USER BEFORE SAVING IN EACH EDITED QUOTE LINE
                 for(let j= 0; j<prop.length-1; j++){
-                    //console.log('Value before edition: '+this.quoteLines[index][prop[j]]);
-                    //console.log('Value after edition: ' +inputsItems[i].fields[prop[j]]);
-                    if(prop[j]=='quantity'){
-                        console.log(Number.isInteger(inputsItems[i].fields[prop[j]]));
-                    }
+                    
                     if(prop[j]=='length'){
                         console.log('length');
                         if (!(this.quoteLines[index].qlevariableprice == 'Cable Length' && 
@@ -600,8 +598,15 @@ export default class Bl_dataTable extends LightningElement {
                             }
                         }
                     }
+                    if(prop[j]=='quantity'){
+                        if (inputsItems[i].fields[prop[j]] < this.quoteLines[index].minimumorderqty){
+                            this.minimumQuantityErrors.push(index+1); 
+                            this.quoteLines[index].minimumorderqty == null ?  inputsItems[i].fields[prop[j]] = 1 :  inputsItems[i].fields[prop[j]] =  this.quoteLines[index].minimumorderqty;
+                        }
+                    }
                     this.quoteLines[index][prop[j]] = inputsItems[i].fields[prop[j]];
                 }               
+                //CHECKING DEPENDENCIES OF EMPTY PRODUCT LEVELS VALUES
                 if(this.quoteLines[index].prodLevel1 == null || this.quoteLines[index].prodLevel1 == undefined){
                     this.quoteLines[index].prodLevel2 = null; 
                     this.quoteLines[index].prodLevel3 =	null;
@@ -616,13 +621,12 @@ export default class Bl_dataTable extends LightningElement {
                 if(this.quoteLines[index].prodLevel3 == null || this.quoteLines[index].prodLevel3 == undefined){
                     this.quoteLines[index].prodLevel4 =	null;
                 }
-                if(this.quoteLines[index].quantity.length == 0){
-                    this.quoteLines[index].minimumorderqty == null ?  this.quoteLines[index].quantity = 1 :  this.quoteLines[index].quantity =  this.quoteLines[index].minimumorderqty;
-                }
                 if(this.quoteLines[index].netunitprice.length == 0){
                     this.quoteLines[index].netunitprice = 1;
                 }
-            }
+            }   
+
+                //SHOW ERROR MESSAGES
                 if(this.rowUOMErrors.length >0){
                     this.rowUOMErrors = this.rowUOMErrors.join();
                     const evt01 = new ShowToastEvent({ title: 'Warning Fields', message: this.rowUOMErrors,
@@ -645,7 +649,14 @@ export default class Bl_dataTable extends LightningElement {
                     variant: 'warning', mode: 'sticky' });
                     this.dispatchEvent(evt1);
                 }
-                if(this.rowUOMErrors.length == 0 && !this.showUOMValues && !this.lengthUomMessageError){
+                if(this.minimumQuantityErrors){
+                    const evt1 = new ShowToastEvent({ title: 'Warning Fields', 
+                    message: 'The minimum quantity required has not been reached for row(s): '+this.minimumQuantityErrors,
+                    variant: 'warning', mode: 'sticky' });
+                    this.dispatchEvent(evt1);
+                }
+                //SHOW SUCCESS MESSAGE!
+                if(this.rowUOMErrors.length == 0 && !this.showUOMValues && !this.lengthUomMessageError && !this.minimumQuantityErrors){
                     const evt = new ShowToastEvent({
                         title: 'Edits in Table saved',
                         message: 'Changes are sucessfully saved',
@@ -654,6 +665,7 @@ export default class Bl_dataTable extends LightningElement {
                     });
                     this.dispatchEvent(evt);
                 }
+               
 
                 this.quotelinesString = JSON.stringify(this.quoteLines); 
                 //console.log(this.quoteLinesString);

@@ -9,7 +9,7 @@ import { getPicklistValues } from 'lightning/uiObjectInfoApi';
 import { getObjectInfo } from 'lightning/uiObjectInfoApi';
 import QUOTE_LINE_OBJECT from '@salesforce/schema/SBQQ__QuoteLine__c';
 import PRODUCT_LEVEL_1_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.ProdLevel1__c';
-import PRIMARY_UOM_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.Primary_UOM__c';
+//import PRIMARY_UOM_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.Primary_UOM__c';
 
 const columns = [
     {label: 'Manual Item: Part Number', fieldName: 'partnumber'},
@@ -52,6 +52,7 @@ export default class Bl_manualItems extends LightningElement {
     @track level3 = [];
     @track uomList = false; 
     @track uom = [];
+    @track showBillableToleranceCopperclad = false;
 
     handleChange(event){
         //console.log('Product Selected: '+event.detail.value);
@@ -75,6 +76,9 @@ export default class Bl_manualItems extends LightningElement {
             .catch((error)=>{console.log('Error in Second Level'); console.log(error);})
         }
         if(label == 'Product Level 2'){
+            if(value == 'Copperclad'){
+                this.showBillableToleranceCopperclad = true;
+            }
             displayLevelsOptions({level: 'level 3', selection: value})
             .then((data)=>{ 
                 let aux = JSON.parse(data);
@@ -202,7 +206,7 @@ export default class Bl_manualItems extends LightningElement {
     }
 
     
-
+    //FOR THE DEPENDENCY FIELDS IN MANUAL ITEM FORM
     @track PL1_FOC = false;
     @track PL1_ACA = false;
     showProductLevel(event){
@@ -222,6 +226,9 @@ export default class Bl_manualItems extends LightningElement {
             this.PL1_ACA = false;
         }
         this.handleChange(event); 
+    }
+    showSpecialCopperclad(event){
+        this.listOfCaracteristics.value == 'Copperclad'
     }
 
     handleRowAction(event){
