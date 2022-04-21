@@ -122,7 +122,11 @@ export default class Bl_dataTable extends LightningElement {
                         //console.log('Required '+this.fieldSet[i].required)
                         let labelName;
                         this.fieldSet[i].required ? labelName = '*'+this.fieldSet[i].label: labelName = this.fieldSet[i].label;
-                        COLUMNS_DETAIL.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable, sortable: true, wrapText: false, },);
+                        if (this.fieldSet[i].type == 'CURRENCY' || this.fieldSet[i].type == 'PERCENT' || this.fieldSet[i].type == 'DOUBLE'){
+                            COLUMNS_DETAIL.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable, sortable: true, wrapText: false, type: 'number', },);
+                        } else {
+                            COLUMNS_DETAIL.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable, sortable: true, wrapText: false, },);
+                        }
                         //console.log('added: '+COLUMNS_DETAIL.length); 
                     }
                     this.columns = COLUMNS_DETAIL; 
@@ -296,8 +300,8 @@ export default class Bl_dataTable extends LightningElement {
                 this.spinnerLoading = false;
                 setTimeout(()=>{
                     const evt = new ShowToastEvent({
-                        title: 'Cloned Rows',
-                        message: 'Clone rows successfully done',
+                        title: 'Cloned Lines',
+                        message: 'Clone line successfully done',
                         variant: 'success',
                         mode: 'dismissable'
                     });
@@ -312,8 +316,8 @@ export default class Bl_dataTable extends LightningElement {
                 this.dispatchEvent(new CustomEvent('notselected'));
                 setTimeout(()=> {
                     const evt = new ShowToastEvent({
-                        title: 'You selected a Row from the other tab',
-                        message: 'The row selected to clone is in the other tab',
+                        title: 'You selected a Line from the other tab',
+                        message: 'The Line selected to clone is in the other tab',
                         variant: 'info',
                         mode: 'dismissable'
                     });
@@ -347,8 +351,8 @@ export default class Bl_dataTable extends LightningElement {
                 this.dispatchEvent(new CustomEvent('notselected'));
                 setTimeout(()=>{
                     const evt = new ShowToastEvent({
-                        title: 'No rows selected',
-                        message: 'Select in the actual tab the rows you want to modify',
+                        title: 'No Lines selected',
+                        message: 'Select in the actual tab the lines you want to modify',
                         variant: 'warning',
                         mode: 'dismissable'
                     });
@@ -487,17 +491,19 @@ export default class Bl_dataTable extends LightningElement {
 
     @track quoteLinesEdit;
     showUOMValues = false; 
-    uomMessageError = ''; 
-    lengthUomMessageError = ''; 
+    @track uomMessageError = ''; 
+    @track lengthUomMessageError = ''; 
     //valuesUOMString = []; 
-    rowUOMErrors = [];
-    nonProductLevel2 = [];
-    minimumQuantityErrors = [];
+    @track rowUOMErrors = [];
+    @track nonProductLevel2 = [];
+    @track minimumQuantityErrors = [];
+    @track minimumQuantityMultipleErrors = [];
     //Save when table is edited and clicked in save button.
     handleSaveEdition(event){
         //this.valuesUOMString = []; 
         this.rowUOMErrors = [];
         this.minimumQuantityErrors = [];
+        this.minimumQuantityMultipleErrors = []; 
         this.nonProductLevel2 = [];
         this.quoteLinesEdit = event.detail.draftValues; 
         if(this.quoteLinesEdit){
@@ -510,8 +516,8 @@ export default class Bl_dataTable extends LightningElement {
                 let index = this.quoteLines.findIndex(x => x.id === this.quoteLinesEdit[i].id);
                 //console.log('Index en quoteLines '+index); 
                 //GETTING THE FIELDS EDITED IN THE TABLE
-                const inputsItems = this.quoteLinesEdit.slice().map(draft => {
-                    const fields = Object.assign({}, draft);
+                let inputsItems = this.quoteLinesEdit.slice().map(draft => {
+                    let fields = Object.assign({}, draft);
                     return { fields };
                 });
                 let prop = Object.getOwnPropertyNames(inputsItems[i].fields); 
@@ -587,7 +593,7 @@ export default class Bl_dataTable extends LightningElement {
                                 if (isInRestrictedArray == undefined){
                                     this.showUOMValues = true;
                                     //console.log('It is not available for this product level 2');
-                                    this.rowUOMErrors.push(inputsItems[i].fields[prop[j]]+' is not available for row '+(index+1));
+                                    this.rowUOMErrors.push(inputsItems[i].fields[prop[j]]+' is not available for line '+(index+1));
                                     const str = this.level2Dependencies[restictedIndex].dependencies[0];
                                     inputsItems[i].fields[prop[j]] = str.charAt(0).toUpperCase() + str.slice(1);
                                 } else {
@@ -599,9 +605,23 @@ export default class Bl_dataTable extends LightningElement {
                         }
                     }
                     if(prop[j]=='quantity'){
-                        if (inputsItems[i].fields[prop[j]] < this.quoteLines[index].minimumorderqty){
+                        let minQuote = 1; 
+                        Number.isInteger(this.quoteLines[index].minimumorderqty) ? minQuote = this.quoteLines[index].minimumorderqty : minQuote = parseInt(this.quoteLines[index].minimumorderqty) ;
+                        /*if (inputsItems[i].fields[prop[j]].valueOf()  >= minQuote.valueOf() ){
+                            console.log('inputsItems[i].fields[prop[j]] ES MAYOR QUE this.quoteLines[index].minimumorderqty');
+                        } else*/ 
+                        //CONDITION OF MINIMUM QUANTITY
+                        if (inputsItems[i].fields[prop[j]].valueOf() < minQuote.valueOf() ){
                             this.minimumQuantityErrors.push(index+1); 
                             this.quoteLines[index].minimumorderqty == null ?  inputsItems[i].fields[prop[j]] = 1 :  inputsItems[i].fields[prop[j]] =  this.quoteLines[index].minimumorderqty;
+                        } 
+                        //CONDITION OF MULTIPLE QUANTITY IF THERE IS A VALUE THERE
+                        else if (this.quoteLines[index].minimumordermultiple != null || this.quoteLines[index].minimumordermultiple != 'null'){
+                            if (inputsItems[i].fields[prop[j]].valueOf() % parseInt(this.quoteLines[index].minimumordermultiple) != 0){
+                                this.minimumQuantityMultipleErrors.push('Line '+ (index+1) + ' multiple of '+ parseInt(this.quoteLines[index].minimumordermultiple));
+                                this.quoteLines[index].minimumorderqty == null ?  inputsItems[i].fields[prop[j]] = 1 :  inputsItems[i].fields[prop[j]] =  this.quoteLines[index].minimumorderqty;
+                            }
+                            
                         }
                     }
                     this.quoteLines[index][prop[j]] = inputsItems[i].fields[prop[j]];
@@ -649,14 +669,23 @@ export default class Bl_dataTable extends LightningElement {
                     variant: 'warning', mode: 'sticky' });
                     this.dispatchEvent(evt1);
                 }
-                if(this.minimumQuantityErrors){
+                if(this.minimumQuantityErrors.length > 0){
                     const evt1 = new ShowToastEvent({ title: 'Warning Fields', 
-                    message: 'The minimum quantity required has not been reached for row(s): '+this.minimumQuantityErrors,
+                    message: 'The minimum quantity required has not been reached for line(s): '+this.minimumQuantityErrors,
                     variant: 'warning', mode: 'sticky' });
                     this.dispatchEvent(evt1);
                 }
+                if(this.minimumQuantityMultipleErrors.length > 0){
+                    const evt1 = new ShowToastEvent({ title: 'Warning Fields', 
+                    message: 'The quantity must be for: '+this.minimumQuantityMultipleErrors,
+                    variant: 'warning', mode: 'sticky' });
+                    this.dispatchEvent(evt1);
+                }
+                
+
                 //SHOW SUCCESS MESSAGE!
-                if(this.rowUOMErrors.length == 0 && !this.showUOMValues && !this.lengthUomMessageError && !this.minimumQuantityErrors){
+                if(this.rowUOMErrors.length == 0 && !this.showUOMValues && !this.lengthUomMessageError 
+                    && this.minimumQuantityErrors.length == 0 && this.minimumQuantityMultipleErrors.length == 0){
                     const evt = new ShowToastEvent({
                         title: 'Edits in Table saved',
                         message: 'Changes are sucessfully saved',
@@ -851,7 +880,7 @@ export default class Bl_dataTable extends LightningElement {
             setTimeout(()=>{ this.showNSP = true; }, 200);
             this.nspValues[this.nspValues.findIndex(x => x.label === event.target.label)].value = value;
         } else {
-            console.log('There is a problem finding the row selected.');
+            console.log('There is a problem finding the line selected.');
             const evt = new ShowToastEvent({
                 title: 'Problem changing NSP values',
                 message: 'The changes cannot be saved',

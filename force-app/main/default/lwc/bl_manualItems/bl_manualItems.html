@@ -70,7 +70,7 @@
                         <lightning-input class="slds-var-m-bottom_small" type="number" label="Unit Cost" onchange={handleChange} value={UnitCost}></lightning-input>
                     </div>
                     <template if:true={showBillableToleranceCopperclad}>
-                        <lightning-input type="text" label="Billable Tolerance" onchange={handleChange} value={BillableTolerance}></lightning-input>
+                        <lightning-input type="number" label="Billing Tolerance" onchange={handleChange} value={BillableTolerance}></lightning-input>
                     </template>
                 </template>
                 <!--IF LEVEL 1 FIBER OPTIC CABLE MAX LENGTH STEEL/WOOD & Billable Tolerance-->
@@ -78,7 +78,7 @@
                     <div>
                         <lightning-input type="number" label="Max Length on Steel" onchange={handleChange} value={MaxLengthSteel}></lightning-input>
                         <lightning-input class="slds-var-m-bottom_small" type="number" label="Max Length on Wood" onchange={handleChange} value={MaxLengthWood}></lightning-input>
-                        <lightning-input type="text" label="Billable Tolerance" onchange={handleChange} value={BillableTolerance}></lightning-input>
+                        <lightning-input type="number" label="Billing Tolerance" onchange={handleChange} value={BillableTolerance}></lightning-input>
                     </div>
                 </template> 
 
