@@ -1036,17 +1036,15 @@ public with sharing class QuoteController {
                 System.debug('new quote discount - ' + q.SBQQ__Discount__c);
             }
 
-            
-
+            //Triggering the Quote Calculator API
+            // QuoteCalculator calculator = new QuoteCalculator();
+            // calculator.calculate(quote, 'MyCallback');
             
             update quoteLineRecordsToUpdate;
             // quoteLineCreator(quoteId, quoteLines);
             
             //Deletes the quote lines from salesforce that are not in the UI
             String deletion = deleteQuoteLines(existingQuoteLines,untypedQuoteLines);
-            
-            quote.record.SBQQ__Primary__c = true;
-            update quote.record;
 
         // }catch (Exception e) {
         //     throw new AuraHandledException('Something went wrong: ' + e.getMessage() + 'cause: ' + e.getCause());
@@ -1307,8 +1305,6 @@ public with sharing class QuoteController {
         //         }
         //     }
         // }
-        getQuote.SBQQ__Primary__c = true;
-        update getQuote;
     }
     @AuraEnabled
     public static QuoteModel quoteSaverMethod(QuoteModel quote){
