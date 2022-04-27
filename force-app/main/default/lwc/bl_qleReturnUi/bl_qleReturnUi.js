@@ -4,13 +4,16 @@ import gettingRecordId from '@salesforce/apex/blMockData.gettingRecordId';
 import gettingQuoteName from '@salesforce/apex/blMockData.gettingQuoteName';
 
 export default class Bl_qleReturnUi extends NavigationMixin(LightningElement) {
+    @api waiting = false; 
     @api recordId; 
     @api quoteName; 
     connectedCallback(){
+        this.waiting = false; 
         //console.log('IN THE INTERMEDIAL COMPONENT');
         gettingRecordId()
         .then((data)=>{
             this.recordId = data; 
+            this.waiting = true; 
             //console.log('Record ID'+this.recordId); 
             gettingQuoteName({quoteId: this.recordId})
             .then((data)=>{
@@ -32,14 +35,16 @@ export default class Bl_qleReturnUi extends NavigationMixin(LightningElement) {
                     });
                     
                    //console.log('WAITING TO PASS TO NEXT OBJECT');
-                }, 3000);
+                }, 2000);
             })
             .catch(()=>{
+                this.waiting = true; 
                 console.log('ERROR GETTING NAME OF QUOTE');
             })
             
         })
         .catch(()=>{
+            this.waiting = true; 
             console.log('ERROR PASSING TO UI FROM QLE');
         })
         

@@ -51,7 +51,6 @@ export default class Bl_dataTable extends LightningElement {
         this.spinnerLoading = true; 
         const COLUMNS_HOME = []; //[ { label: 'Quote Name', fieldName: 'name', sortable: true, },];
         const COLUMNS_DETAIL = []; //[ { label: 'Quote Name', fieldName: 'name', sortable: true, },];
-
         if (this.quotelinesString){
             this.quoteLines = JSON.parse(this.quotelinesString);
             for(let i=0;i<this.quoteLines.length;i++){
@@ -64,11 +63,7 @@ export default class Bl_dataTable extends LightningElement {
             this.updateTable();
         }
         //Make available the look up field
-        if (this.tabSelected == 'Home' || this.tabSelected == 'Detail'){
-            this.isQuoteLinesTab = true; 
-        } else {
-            this.isQuoteLinesTab = false; 
-        }
+        this.tabSelected == 'Home' ? this.isQuoteLinesTab = true : this.isQuoteLinesTab = false; 
         //console.log(Object.getOwnPropertyNames(this.quoteLines[0])); 
         displayFieldSet() //({tabName: this.tabSelected})
         .then((data) => {
@@ -76,7 +71,7 @@ export default class Bl_dataTable extends LightningElement {
             this.fieldSet = JSON.parse(data); 
             //console.log('fieldSet Prop '+ Object.getOwnPropertyNames(this.fieldSet[0])); 
             this.fieldSetLength = this.fieldSet.length;
-            console.log('Fieldset loaded: '+ this.fieldSetLength); 
+            //console.log('Fieldset loaded: '+ this.fieldSetLength); 
         })
         .then(() => {
             let indexDes; 
@@ -95,6 +90,7 @@ export default class Bl_dataTable extends LightningElement {
                         this.fieldSet[i].property == 'additionaldisc.(%)' ? this.fieldSet[i].property = 'additionaldiscount' : this.fieldSet[i].property; 
                         //console.log('added: '+COLUMNS_HOME.length); 
                         if (this.fieldSet[i].property == 'quotelinename'){
+                            labelName = 'Product'; //COLUMN NAME IN QLE QUOTE HOME TAB
                             COLUMNS_HOME.splice(indexDes, 0, { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, wrapText: false, },);
                             //console.log('Inserting before description');
                         }
@@ -265,12 +261,12 @@ export default class Bl_dataTable extends LightningElement {
         }
         else if (message.auxiliar =='letsclone'){
             //MISSING CLONE LINE NOTES FROM THE OTHER OBJECT
-            if (this.selectedRows){
+            if (this.selectedRows.length > 0){
                 let cloneRows = JSON.parse(JSON.stringify(this.selectedRows)); 
                 //console.log('cloneRows: '+ Object.getOwnPropertyNames(cloneRows[0]));
                 let randomId; 
                 let randomName; 
-                let last4Name;
+                let last4Name;s
                 this.spinnerLoading = true;
                 for(let i=0;i<this.selectedRows.length;i++){
                     //console.log('Selected rows: '+this.selectedRows[i].name);
@@ -281,10 +277,10 @@ export default class Bl_dataTable extends LightningElement {
                     cloneRows[i].name = 'Clone QL-'+last4Name+'-'+randomName; 
                     if(this.selectedRows[i].id.startsWith('new')){
                         cloneRows[i].clonedFrom = this.selectedRows[i].clonedFrom;
-                        console.log('Clone from new one');
+                        //console.log('Clone from new one');
                     } else {
                         cloneRows[i].clonedFrom = this.selectedRows[i].id;
-                        console.log('Clone from old one');
+                        //console.log('Clone from old one');
                     }
                      
                     //console.log('ID: '+cloneRows[i].id);
@@ -292,8 +288,8 @@ export default class Bl_dataTable extends LightningElement {
                     this.quoteLines = [...this.quoteLines, cloneRows[i]];
                 }
                 //console.log('SIZE: ' + this.quoteLines.length);
-                console.log('Clone here');
-                console.log(JSON.stringify(this.quoteLines));
+                //console.log('Clone here');
+                //console.log(JSON.stringify(this.quoteLines));
                 this.updateTable();
                 this.quotelinesString = JSON.stringify(this.quoteLines); 
                 this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
@@ -312,25 +308,25 @@ export default class Bl_dataTable extends LightningElement {
                 this.dispatchEvent(new CustomEvent('notselected'));
                 this.firstHandler();
             } else {
-                console.log('No rows selected');
+                //console.log('No rows selected');
                 this.dispatchEvent(new CustomEvent('notselected'));
                 setTimeout(()=> {
                     const evt = new ShowToastEvent({
-                        title: 'You selected a Line from the other tab',
-                        message: 'The Line selected to clone is in the other tab',
-                        variant: 'info',
+                        title: 'No Lines selected',
+                        message: 'Select in the actual tab the lines you want to modify',
+                        variant: 'warning',
                         mode: 'dismissable'
                     });
                     this.dispatchEvent(evt);
-                }, 1000);
+                }, 500);
                 this.firstHandler();
             }
         }
         else if (message.auxiliar == 'applydiscount'){
             //console.log('HERE PROPERTIES');
-            //console.log(Object.getOwnPropertyNames(this.quoteLines[0])); 
+            //console.log(Object.getOwnPropertyNames(this.selectedRows)); 
             this.discount = message.dataString;
-            if (this.selectedRows){
+            if (this.selectedRows != undefined && this.selectedRows !=  null && this.selectedRows.length > 0 ){
                 for(let j = 0; j< this.selectedRows.length; j++){
                     let index = this.quoteLines.findIndex(x => x.id === this.selectedRows[j].id);
                     //console.log('quotelines Name: '+this.quoteLines[index].name + ' selected Name: ' +this.selectedRows[j].name)
@@ -344,10 +340,8 @@ export default class Bl_dataTable extends LightningElement {
                     this.dispatchEvent(new CustomEvent('discount'));
                     this.spinnerLoading = false;
                 },500);
-                
-            }
-            else {
-                console.log('No rows selected');
+            } else {
+                //console.log('No rows selected');
                 this.dispatchEvent(new CustomEvent('notselected'));
                 setTimeout(()=>{
                     const evt = new ShowToastEvent({
@@ -378,7 +372,7 @@ export default class Bl_dataTable extends LightningElement {
             this.dispatchEvent(new CustomEvent('notselected'));
         } else {
             this.dispatchEvent(new CustomEvent('clone'));
-            console.log('Rows selected '+ event.detail.selectedRows.length);
+            //console.log('Rows selected '+ event.detail.selectedRows.length);
             this.selectedRows = event.detail.selectedRows;
         }   
     }
@@ -558,8 +552,10 @@ export default class Bl_dataTable extends LightningElement {
                                     this.lengthUomMessageError = 'For Length UOM, available values are: '+list; 
                                     //console.log(this.lengthUomMessageError); 
                                     inputsItems[i].fields[prop[j]] = null;
-                                } else if (values[indexL].toLowerCase() == inputsItems[i].fields[prop[j]]){
-                                    inputsItems[i].fields[prop[j]] = inputsItems[i].fields[prop[j]].charAt(0).toUpperCase() + inputsItems[i].fields[prop[j]].slice(1);
+                                } else if (values[indexL].toLowerCase() == inputsItems[i].fields[prop[j]].toLowerCase() ){
+                                    let str = inputsItems[i].fields[prop[j]];
+                                    str = str.toLowerCase();
+                                    inputsItems[i].fields[prop[j]] = str.charAt(0).toUpperCase() + str.slice(1);
                                     //console.log('Value: '+ values[indexL]);
                                     //console.log('Input: '+inputsItems[i].fields[prop[j]] );
                                 }
@@ -594,11 +590,13 @@ export default class Bl_dataTable extends LightningElement {
                                     this.showUOMValues = true;
                                     //console.log('It is not available for this product level 2');
                                     this.rowUOMErrors.push(inputsItems[i].fields[prop[j]]+' is not available for line '+(index+1));
-                                    const str = this.level2Dependencies[restictedIndex].dependencies[0];
+                                    let str = this.level2Dependencies[restictedIndex].dependencies[0];
+                                    str = str.toLowerCase();
                                     inputsItems[i].fields[prop[j]] = str.charAt(0).toUpperCase() + str.slice(1);
                                 } else {
                                     //console.log('It is available and it is save');
-                                    const str = inputsItems[i].fields[prop[j]];
+                                    let str = inputsItems[i].fields[prop[j]];
+                                    str = str.toLowerCase();
                                     inputsItems[i].fields[prop[j]] = str.charAt(0).toUpperCase() + str.slice(1);
                                 }
                             }

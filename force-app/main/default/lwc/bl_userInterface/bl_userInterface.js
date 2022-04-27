@@ -183,6 +183,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                     }
                     
                     setTimeout(()=>{
+                        this.newLineNote();
                         getQuoteTotal({quoteId: this.recordId})
                         .then((data)=>{
                             console.log('NEW QUOTE TOTAL data');
@@ -268,7 +269,8 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             dataString: this.quotelinesString,
             auxiliar: 'updatetable'
           };
-        publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload);    
+        publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload);
+        this.newLineNote();    
     }
 
     //WHEN NOTES DELETED
@@ -297,9 +299,14 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             this.disableReorder = true;
             this.disableButton = true;
         }
-        else {
+        else  if (event.target.value=='Detail'){
+            this.disableReorder = true;
+            this.disableButton = true;
+            this.desactiveCloneButton();
+        } else {
             //this.quotelinesString =  this.quotelinesString; 
-            console.log('Quotelines');
+            //console.log('Quotelines');
+            this.activeCloneButton();
             const payload = { 
                 dataString: null,
                 auxiliar: 'closereorder'

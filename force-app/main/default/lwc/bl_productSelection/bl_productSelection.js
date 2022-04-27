@@ -390,9 +390,24 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             .then((data)=>{
                 let customActionAddProducts = data; //Add Products Id
                 console.log('relatedProductId: '+this.configBundleId); 
-                let link = '/apex/sbqq__sb?id='+this.recordId+
-                '&tour=&isdtp=p1&ltn_app_id=06m8A0000004jM5QAI&clc=0#/product/pc?qId='+
+
+                const evt = new ShowToastEvent({
+                    title: 'THIS IS BEING EDITED, PLEASE WAIT',
+                    message: 'BL developer changing something here',
+                    variant: 'warning',
+                    mode: 'sticky'
+                });
+                this.dispatchEvent(evt);
+
+
+
+                //let link = '/apex/sbqq__sb?id='+this.recordId+
+                //'&tour=&isdtp=p1&ltn_app_id=06m8A0000004jM5QAI&clc=0#/product/pc?qId='+
+                //this.recordId+'&aId='+customActionAddProducts+'&pId='+this.configBundleId+'&redirectUrl=LineEditor&open=0';
+                let link = '/apex/sbqq__sb?id='+this.recordId+'&ltn_app_id=06m8A0000004jM5QAI&clc=0#/product/pc?qId='+
                 this.recordId+'&aId='+customActionAddProducts+'&pId='+this.configBundleId+'&redirectUrl=LineEditor&open=0';
+                
+                
                 this[NavigationMixin.Navigate]({
                     type: 'standard__webPage',
                     attributes: {

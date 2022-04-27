@@ -121,6 +121,7 @@ export default class Bl_customLookup extends LightningElement {
     onSelect(event) {
         let selectedId = event.currentTarget.dataset.id;
         let selectedName = event.currentTarget.dataset.name;
+        //console.log(Object.getOwnPropertyNames(event.currentTarget.dataset));
         if(!(selectedId == 'norecords')){
             const valueSelectedEvent = new CustomEvent('lookupselected', {detail:  selectedId });
             this.dispatchEvent(valueSelectedEvent);
