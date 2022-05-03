@@ -17,40 +17,7 @@ export default class Bl_productNotesTable extends LightningElement {
             this.quoteNotes = JSON.parse(this.quoteNotesString);
             this.quoteNotesLength = this.quoteNotes.length;
             this.updateNotes();
-        }        
-        /*
-        displayFieldSet({tabName: this.tabSelected})
-        .then((data) => {
-            this.error = undefined;
-            this.fieldSet = JSON.parse(data); 
-            console.log('fieldSet Prop '+ Object.getOwnPropertyNames(this.fieldSet[0])); 
-            this.fieldSetLength = this.fieldSet.length;
-            console.log('Length '+ this.fieldSetLength); 
-        })
-        .then(() => {
-            const COLUMNS_NOTES = [];
-            for (let i=0; i<this.fieldSetLength;i++){
-                if (this.fieldSet[i].key == 'NOTES'){ 
-                    console.log('Label: '+this.fieldSet[i].label);
-                    console.log('Property: '+ this.fieldSet[i].property)
-                    let labelName;
-                    this.fieldSet[i].required ? labelName = '*'+this.fieldSet[i].label: labelName = this.fieldSet[i].label;
-                    COLUMNS_NOTES.push( { label: labelName, fieldName: this.fieldSet[i].property, sortable: true, editable:  this.fieldSet[i].editable,},);
-                    //console.log('added: '+COLUMNS_NOTES.length); 
-                }
-                this.columns = COLUMNS_NOTES; 
-                this.auxiliar = 3;
-                
-            }
-            this.spinnerLoading = false; 
-            console.log('Columns notes: '+Object.getOwnPropertyNames(this.columns[0])); 
-        })
-        .catch((error) => {
-            this.error = error;
-            this.fieldSet = undefined; 
-            console.log('Error displaying field sets for NOTES');
-        })
-        */
+        } 
     }
 
     //Pagination

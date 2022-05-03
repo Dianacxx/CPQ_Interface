@@ -273,18 +273,20 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         this.newLineNote();    
     }
 
+    /*
     //WHEN NOTES DELETED
     updateTableDataNotes(event){
         console.log('Deleted Notes Values');
         this.quoteNotesString = event.detail;
     }
+    */
 
     @track disableReorder; //Only reorder quotelines
-    //WHEN CHANGE FROM TAB TO TAB - MAYBE TO DELETE
+    //WHEN CHANGE FROM TAB TO TAB 
     handleActive(event){
         if (event.target.value=='Notes'){
             //this.quoteNotesString = this.quoteNotesString; 
-            console.log('Notes');
+            //console.log('Notes');
             const payload = { 
                 dataString: null,
                 auxiliar: 'closereorder'
@@ -584,8 +586,9 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             console.log('ERROR: Quote Id Record for this user cannot be deleted');
             console.log(error); 
         })
-
+        this.spinnerLoadingUI = true;
         setTimeout(() => {
+            this.spinnerLoadingUI = false;
             this[NavigationMixin.Navigate]({
                 type: 'standard__recordPage',
                 attributes: {
@@ -742,4 +745,17 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
 
     }
 
+
+    //IMPORT LINES PROCESS
+    handleImportLines(){
+        let link = '/apex/SBQQ__ImportLines?id='+this.recordId; 
+        
+        this[NavigationMixin.Navigate]({
+            type: 'standard__webPage',
+            attributes: {
+                url: link,
+                recordId : this.recordId,
+            }
+        })
+    }
 }

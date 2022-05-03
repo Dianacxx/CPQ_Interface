@@ -68,11 +68,6 @@ export default class Bl_customLookup extends LightningElement {
             if (this.records.length == 0){
                 this.records = [{"Id":"norecords","Name":"NO RECORDS","IsActive":true}];
             } else {
-            //console.log('Lookup DATA Ok');
-            //console.log('Lookup DATA: ' + this.records);
-            //let customer;
-            //let competitor; 
-            //console.log('Values of this.records ' + Object.getOwnPropertyNames(this.records[0]));
                 if (!(this.productSelected == 'name' )) { 
                     for (let k = 0; k< this.records.length; k++){
                         //console.log('Values of this.records ' + Object.getOwnPropertyNames(this.records[k]));
@@ -80,14 +75,12 @@ export default class Bl_customLookup extends LightningElement {
                         if(this.records[k].hasOwnProperty('Customer_Part_Cross_References__r')){
                             this.customerDisplay = true; 
                             this.competitorDisplay = false;
-                            //console.log('Customer Ob: '+ Object.getOwnPropertyNames(this.records[k].Customer_Part_Cross_References__r[0].Account__r.Name)); 
                             //customer = this.records[k].Customer_Part_Cross_References__r;
                             //console.log('Customer = '+ customer[k].Customer_Item_Number__c);
                         }
                         else if(this.records[k].hasOwnProperty('Competitor_Cross_References__r')){
                             this.competitorDisplay = true; 
                             this.customerDisplay = false; 
-                            //console.log('Customer Ob: '+ Object.getOwnPropertyNames(this.records[k].Competitor_Cross_References__r[0].Competitor__r.Name)); 
                             //competitor = this.records[k].Competitor_Cross_References__r;
                             //console.log('competitor = '+ JSON.stringify(competitor[k]));
                         } 
@@ -121,7 +114,6 @@ export default class Bl_customLookup extends LightningElement {
     onSelect(event) {
         let selectedId = event.currentTarget.dataset.id;
         let selectedName = event.currentTarget.dataset.name;
-        //console.log(Object.getOwnPropertyNames(event.currentTarget.dataset));
         if(!(selectedId == 'norecords')){
             const valueSelectedEvent = new CustomEvent('lookupselected', {detail:  selectedId });
             this.dispatchEvent(valueSelectedEvent);

@@ -1,0 +1,119 @@
+<template>
+    <lightning-card>
+     
+        <div class="slds-grid slds-grid_align-center slds-m-bottom_large">
+          <div class="slds-col slds-size_1-of-3">
+          </div>
+          <div class="slds-col slds-size_1-of-3">
+            <span class="slds-page-header__title slds-truncate ">
+              <h1 class="slds-text-heading_large slds-m-left_large slds-p-left_large"  style="color:gray;"> AGREEMENT DETAILS</h1> </span>
+          </div><div class="slds-col slds-size_1-of-3">
+          </div>
+        </div>
+        <div class="slds-grid slds-grid_align-center slds-m-bottom_large">
+        <div class="slds-col slds-size_1-of-4">
+        </div>
+        <div class="slds-col slds-size_1-of-4">
+               
+        <lightning-button-icon icon-name="action:new"    variant="brand" alternative-text="Apply"  class="slds-m-left_xx-small" title="Apply"></lightning-button-icon>
+      </div>
+
+      <!-- Buttons -->
+      <div class="slds-col slds-size_1-of-4"> 
+      
+
+        <lightning-button-icon icon-name="action:upload"  label = "Upload"  variant="brand" alternative-text="Upload"  class="slds-m-left_large" title="Upload"></lightning-button-icon>
+        <br><br><br>
+        <div class="slds-col ">
+          <span><lightning-button class="stretchButton slds-m-right_small" variant="brand" label="Save & Next" onclick={createAgreement}></lightning-button></span>
+          <span><lightning-button class="stretchButton" variant="brand" label="Next"  onclick={handleNext}></lightning-button></span>  
+          <span><lightning-button class="stretchButton" variant="brand" label="Cancel"  onclick={handleCancel}></lightning-button></span>  
+        </div>
+      </div>
+        <div class="slds-col slds-size_1-of-4">  </div>
+      </div>
+                
+                            
+        <!-- fields -->
+          <div class="slds-grid slds-grid_align-center slds-m-bottom_large">
+            
+                <div class="slds-col slds-size_1-of-4">
+                <span><div class="slds-form-element">
+                  <label class="slds-form-element__label" for="text-input-id-47">
+                    <abbr class="slds-required" title="required"> </abbr> Agreement Name</label>
+                  <div class="slds-form-element__control">  
+                    <input type="text" style="width:80%"  placeholder="Enter a name..." onchange={nameChangeHandler}  class="slds-input" />
+                  </div>
+                </div></span>
+                </div>
+                <div class="slds-col slds-grow-none">
+                  <span></span>
+                </div>
+                <div class="slds-col slds-size_1-of-4">
+                <span>
+                  <template if:true={agreementTypePicklist.data}>
+                    <lightning-combobox style="width:80%"
+                  name="type"
+                  label="Agreement Type"
+                  value=""
+                  placeholder="Select a Type"
+                  options={agreementTypePicklist.data.values}
+                  onchange={typeChangeHandler}
+                  
+          ></lightning-combobox>
+        </template></span>
+                </div>
+               
+           </div>
+
+           <div class="slds-grid slds-grid_align-center slds-m-bottom_large">
+                    <div class="slds-col slds-size_1-of-4">
+                    <span>
+                      <template if:true={reviewSchedulePicklist.data}>
+                      <lightning-combobox style="width:80%"
+                      name="schedule"
+                      label="Review Schedule"
+                      value=""
+                      placeholder="Select an Option"
+                      options={reviewSchedulePicklist.data.values}
+                      onchange={ScheduleChangeHandler}
+                      
+              ></lightning-combobox>
+            </template> </span>
+                    </div>
+                    <div class="slds-col slds-grow-none">
+                      <span></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-4">
+                      <span>
+                        <lightning-input style="width:80%" 
+                          onchange={reviewerChangeHandler}
+                          value={userName}
+                          type="search" 
+                          name="enter-search" 
+                          label="Reviewer"
+                    ></lightning-input>
+                      </span>  
+                    </div>
+                    
+            </div>
+            <div class="slds-grid slds-grid_align-center slds-m-bottom_large">
+              <div class="slds-col slds-size_1-of-4">
+              <span><lightning-input style="width:80%" onchange={startDateChangeHandler} type="date" name="start date" label="Start Date" ></lightning-input></span>
+              </div>
+              <div class="slds-col slds-grow-none">
+                <span></span>
+              </div>
+              <div class="slds-col slds-size_1-of-4">
+              <span><lightning-input  style="width:80%" onchange={termChangeHandler} type="number" name="term" label="Agreement Term" ></lightning-input></span>  
+              </div>
+              
+      </div>
+           
+               <br><br><br>
+                    
+            
+    </lightning-card>
+                                          
+     
+</template>

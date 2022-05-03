@@ -26,11 +26,7 @@ export default class Bl_manualItems extends LightningElement {
     @wire(getPicklistValues,{ recordTypeId: '$quotelineMetadata.data.defaultRecordTypeId', 
             fieldApiName: PRODUCT_LEVEL_1_FIELD})
     productLevel1Picklist;
-    /*
-    @wire(getPicklistValues,{ recordTypeId: '$quotelineMetadata.data.defaultRecordTypeId', 
-            fieldApiName: PRIMARY_UOM_FIELD})
-    primaryUomPicklist;
-    */
+
     @track loadingProcess = false;
     loadingSaving(){
         this.loadingProcess = true;
@@ -158,7 +154,6 @@ export default class Bl_manualItems extends LightningElement {
                 productMockId = data; 
                 addQuoteLine({quoteId: this.recordId, productId: productMockId})
                 .then((data)=>{
-                    //console.log(data);
                     let manualQuoteline = JSON.parse(data);
                     this.numberRowsAdded += 1; 
                     manualQuoteline[0].id = 'new-manual'+Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 10);

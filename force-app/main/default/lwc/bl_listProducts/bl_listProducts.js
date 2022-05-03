@@ -11,9 +11,7 @@ import NSPAdditionalFields from '@salesforce/apex/QuoteController.NSPAdditionalF
 //THIS ONE HAS A PROBLEM RIGHT NOW FOR MULTIPLE PRODUCTS IN ONE CONVERTION
 import addSelectorQuoteLine from '@salesforce/apex/QuoteController.addSelectorQuoteLine'; //FOR THE NON NSP PRODUCTS
 import addNSPProducts from '@salesforce/apex/QuoteController.addNSPProducts';
-//import addQuoteLine from '@salesforce/apex/QuoteController.addQuoteLine'; //NOT USED BECAUSE OF NSP FIELDS
 
-//import addNSPQuoteLine from '@salesforce/apex/QuoteController.addNSPQuoteLine'; //NOT SURE WHY THERE ARE TWO OF THEM
 
 export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     @api recordId; 
@@ -115,7 +113,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             case 'edit':
                 this.editFiltered = true; 
                 this.editLookupCodeRow = row; 
-                console.log('QL Edit:' + JSON.stringify(row.listOfProducts)); 
+                //console.log('QL Edit:' + JSON.stringify(row.listOfProducts)); 
                 this.editQuoteLines = JSON.parse(JSON.stringify(row.listOfProducts)); 
                 this.columnsEdit = [{label: 'Product', fieldName: 'product'},{label: 'Description', fieldName: 'description', wrapText: true}, {type: "button-icon", initialWidth: 30, typeAttributes: {iconName: "utility:delete", name: "delete"}} ];
                 this.updateEditTable();
@@ -380,7 +378,6 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                 //console.log('Required filters: '+data); 
                 for (let i =0; i < filters.length; i++){
                     filters[i].options = JSON.parse(filters[i].options); 
-                    //console.log(filters[i].options)
                     if (JSON.stringify(filters[i].options) == '[]'){
                         this.listTextFilters.push({label: filters[i].label, name: filters[i].label});
                     } else {
@@ -389,7 +386,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                             optionvalue.value = optionvalue.label;
                             optionvalue.value.length > sizeOptions ? sizeOptions = optionvalue.value.length : sizeOptions = sizeOptions; 
                         }
-                        console.log('Size option:'+ sizeOptions); 
+                        //console.log('Size option:'+ sizeOptions); 
                         if (0 <= sizeOptions && sizeOptions< 10){
                             this.styleProductType = 'size1';
                         } else if (10 <= sizeOptions && sizeOptions< 25){
@@ -439,10 +436,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                     //console.log('Size option:'+ sizeOptions);
                     if (0 <= sizeOptions && sizeOptions< 10){
                         this.styleProductType = 'size1';
-                        //console.log('Here 1');
                     } else if (10 <= sizeOptions && sizeOptions< 20){
                         this.styleProductType = 'size2';
-                        //console.log('Here 2');
                     } else if (20 <= sizeOptions && sizeOptions< 35){
                         this.styleProductType = 'size3';
                     } else if (35 <= sizeOptions && sizeOptions< 50){
@@ -451,10 +446,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                         this.styleProductType = 'size5';
                     } else if (80 <= sizeOptions && sizeOptions< 100){
                         this.styleProductType = 'size6';
-                        //console.log('Here 6');
                     } else {
                         this.styleProductType = 'size7';
-                        //console.log('Here 7');
                     }
                     this.productType[i].options.sort((a, b) => (a.label > b.label) ? 1 : -1);
                     this.columnsRequired.push(this.productType[i]); 
@@ -520,21 +513,15 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                 } else {
                     //console.log('PICKLIST FILTER');
                     let optionsFilters = JSON.parse(temporalList[i].options); 
-                    //console.log(JSON.stringify(optionsFilters));
-                    //console.log(Object.getOwnPropertyNames(optionsFilters));
                     for (let j = 0; j < optionsFilters.length; j++){
                         optionsFilters[j] = {label: optionsFilters[j].label, value: optionsFilters[j].label}; 
-                        //console.log(optionsFilters[j]);
                     }
                     temporalList[i].options = optionsFilters; 
                     this.listFilters.push(temporalList[i]); 
                 }
                 this.columnsFilters.push({label: temporalList[i].label, fieldName: temporalList[i].apiName,hideDefaultActions: true}); 
                 this.columnsReview.push({label: temporalList[i].label, fieldName: temporalList[i].apiName, editable: false,hideDefaultActions: true});
-                            
-                //console.log('columnsFilters'); 
-                //console.log(Object.getOwnPropertyNames(this.columnsFilters)); 
-                //this.filterSelected.push(temporalList[i].label);
+
             }
             this.columnsFilters.push({label: 'Stock',hideDefaultActions: true, initialWidth: 35, fieldName: "",cellAttributes: {iconName: { fieldName: "Stock__c"}}}); 
             this.columnsReview.push(
@@ -568,8 +555,6 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     }
     //Handle the changes in picklist to show products in FILTER TAB
     handleInputChange(event){
-        //console.log(JSON.stringify(this.listFilters));
-        //console.log(JSON.stringify(this.listTextFilters));
         if (this.filtersForApex.length == 0){
             for (let i = 0; i < this.listFilters.length; i++){
                 this.filtersForApex.push({label: this.listFilters[i].label, value: ''}); 
@@ -579,9 +564,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             }
         }
         let indexFilter = this.filtersForApex.findIndex(x => x.label == event.target.label); 
-        //console.log('Index in filterSelected: '+indexFilter);
-        //console.log('Options of filters: '+JSON.stringify(event.detail));
-    
+
         //The convertion from feet to meters. 
         if (this.feetToMeters && (event.target.label == 'Max Span at Light' || 
         event.target.label == 'Max Span at Medium' ||  event.target.label == 'Max Span at Heavy' )){
@@ -636,11 +619,9 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                         }
                     } else {
                         if (temporalList[i].options == '[]'){
-                            //this.listTextFilters.push({label: temporalList[i].label, name: temporalList[i].label});
                             //console.log('TEXT FILTER');
                         } else if (temporalList[i].options == null || temporalList[i].options == "null") {
                             //console.log('WITH NO OPTIONS FILTER');
-                            //this.listFilters.push(temporalList[i]); 
                         } else {
                             //console.log('PICKLIST FILTER');
                             let optionsFilters = JSON.parse(temporalList[i].options);  
@@ -682,8 +663,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         console.log(JSON.stringify(filters)); 
         filteredProductPrinter({filterValues: JSON.stringify(filters), level1: tabSelectedValue, filteredGrouping: this.trackList.lookupCode})
         .then((data)=>{
-            console.log('Products Filtered');
-            console.log(data);
+            //console.log('Products Filtered');
+            //console.log(data);
             
             this.recordsAmount = data.length; 
             this.filterResults = data; 
@@ -1228,9 +1209,10 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
    
     //--------------------------------------------------------------------------------------
     //CONFIGURED POP UP FUNCTIONS
+    /*
     closeConfiguredAlert(){
         this.openConfiguredPopup = false; 
-    }
+    }*/
     continueConfiguredQLE(){
         this.bundleLoading = true; 
         const evt = new ShowToastEvent({
@@ -1242,7 +1224,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         this.dispatchEvent(evt);
         //DISPATCH THE EVENT TO SAVE THE VALUES FIRST
         setTimeout(()=>{
-            this.closeConfiguredAlert();
+            //this.closeConfiguredAlert();
             this.dispatchEvent(new CustomEvent('savebeforeconfigured', { detail: this.trackConfig }));
             console.log('Send to PS component');
         }, 250);

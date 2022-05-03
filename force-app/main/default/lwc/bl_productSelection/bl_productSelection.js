@@ -308,6 +308,10 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                 if ((list.isNSP == null) || (list.isNSP == 'null')){
                     list.isNSP = false;
                 }
+                if (!(list.productType == 'Patch Panel - Stubbed') && !(list.productType == 'Cable Assemblies')){
+                    list.length = 'NA';
+                    list.lengthuom = 'NA';
+                }
                 this.quotesAdded.push(list);
             }
         }
@@ -391,6 +395,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                 let customActionAddProducts = data; //Add Products Id
                 console.log('relatedProductId: '+this.configBundleId); 
 
+                /*
                 const evt = new ShowToastEvent({
                     title: 'THIS IS BEING EDITED, PLEASE WAIT',
                     message: 'BL developer changing something here',
@@ -398,13 +403,13 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                     mode: 'sticky'
                 });
                 this.dispatchEvent(evt);
+*/
 
 
-
-                //let link = '/apex/sbqq__sb?id='+this.recordId+
+                //let link = '/apex/sbqq__sb?id='+this.recordId+ &ltn_app_id=06m8A0000004jM5QAI
                 //'&tour=&isdtp=p1&ltn_app_id=06m8A0000004jM5QAI&clc=0#/product/pc?qId='+
                 //this.recordId+'&aId='+customActionAddProducts+'&pId='+this.configBundleId+'&redirectUrl=LineEditor&open=0';
-                let link = '/apex/sbqq__sb?id='+this.recordId+'&ltn_app_id=06m8A0000004jM5QAI&clc=0#/product/pc?qId='+
+                let link = '/apex/sbqq__sb?id='+this.recordId+'&clc=0#/product/pc?qId='+
                 this.recordId+'&aId='+customActionAddProducts+'&pId='+this.configBundleId+'&redirectUrl=LineEditor&open=0';
                 
                 
@@ -655,6 +660,10 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                 }
                 if ((list.isNSP == null) || (list.isNSP == 'null')){
                     list.isNSP = false;
+                }
+                if (!(list.productType == 'Patch Panel - Stubbed') && !(list.productType == 'Cable Assemblies')){
+                    list.length = 'NA';
+                    list.lengthuom = 'NA';
                 }
                 this.quotesAdded.push(list);
             }

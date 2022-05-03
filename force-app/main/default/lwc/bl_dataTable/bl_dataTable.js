@@ -266,7 +266,7 @@ export default class Bl_dataTable extends LightningElement {
                 //console.log('cloneRows: '+ Object.getOwnPropertyNames(cloneRows[0]));
                 let randomId; 
                 let randomName; 
-                let last4Name;s
+                let last4Name;
                 this.spinnerLoading = true;
                 for(let i=0;i<this.selectedRows.length;i++){
                     //console.log('Selected rows: '+this.selectedRows[i].name);
@@ -500,11 +500,10 @@ export default class Bl_dataTable extends LightningElement {
         this.minimumQuantityMultipleErrors = []; 
         this.nonProductLevel2 = [];
         this.quoteLinesEdit = event.detail.draftValues; 
-        if(this.quoteLinesEdit){
+        if(this.quoteLinesEdit.length != undefined){
             this.uomMessageError = '';
             this.showUOMValues = false;
             this.lengthUomMessageError = '';
-            //console.log('UOM VALUES')
             for (let i =0; i< this.quoteLinesEdit.length; i++){
                 //console.log('Id editada: '+this.quoteLinesEdit[i].id);
                 let index = this.quoteLines.findIndex(x => x.id === this.quoteLinesEdit[i].id);
@@ -515,11 +514,11 @@ export default class Bl_dataTable extends LightningElement {
                     return { fields };
                 });
                 let prop = Object.getOwnPropertyNames(inputsItems[i].fields); 
+                
+                console.log(this.quoteLinesEdit[0]);
                 //VALIDATION RULES TO AVOID ERRORS FROM THE USER BEFORE SAVING IN EACH EDITED QUOTE LINE
                 for(let j= 0; j<prop.length-1; j++){
-                    
                     if(prop[j]=='length'){
-                        console.log('length');
                         if (!(this.quoteLines[index].qlevariableprice == 'Cable Length' && 
                         (this.quoteLines[index].isNSP == false || this.quoteLines[index].isNSP == null)))
                         {   
@@ -531,10 +530,8 @@ export default class Bl_dataTable extends LightningElement {
                         //console.log(this.quoteLines[index].isNSP);
                         if (this.quoteLines[index].qlevariableprice == 'Cable Length' && 
                         (this.quoteLines[index].isNSP == false || this.quoteLines[index].isNSP == null)){
-                            //console.log('length');
                             if(this.lengthUom.data.values){
                                 let values = [];
-                                //console.log(this.lengthUom.data.values);
                                 for (let picklist of this.lengthUom.data.values){
                                     values.push(picklist.value);
                                 }
@@ -572,7 +569,6 @@ export default class Bl_dataTable extends LightningElement {
                             inputsItems[i].fields[prop[j]] = null; 
                             //console.log('It does not have product level 2');
                         } else {
-                            //console.log(this.level2Dependencies);
                             let level2 = prodLevel2.toLowerCase();
                             let restictedIndex = -1;
                             for(let k =0; k< this.level2Dependencies.length; k++){
@@ -605,9 +601,6 @@ export default class Bl_dataTable extends LightningElement {
                     if(prop[j]=='quantity'){
                         let minQuote = 1; 
                         Number.isInteger(this.quoteLines[index].minimumorderqty) ? minQuote = this.quoteLines[index].minimumorderqty : minQuote = parseInt(this.quoteLines[index].minimumorderqty) ;
-                        /*if (inputsItems[i].fields[prop[j]].valueOf()  >= minQuote.valueOf() ){
-                            console.log('inputsItems[i].fields[prop[j]] ES MAYOR QUE this.quoteLines[index].minimumorderqty');
-                        } else*/ 
                         //CONDITION OF MINIMUM QUANTITY
                         if (inputsItems[i].fields[prop[j]].valueOf() < minQuote.valueOf() ){
                             this.minimumQuantityErrors.push(index+1); 
@@ -639,12 +632,14 @@ export default class Bl_dataTable extends LightningElement {
                 if(this.quoteLines[index].prodLevel3 == null || this.quoteLines[index].prodLevel3 == undefined){
                     this.quoteLines[index].prodLevel4 =	null;
                 }
-                if(this.quoteLines[index].netunitprice.length == 0){
+                if(this.quoteLines[index].netunitprice == null || this.quoteLines[index].netunitprice == undefined){
+                    console.log('net price length')
                     this.quoteLines[index].netunitprice = 1;
                 }
             }   
 
                 //SHOW ERROR MESSAGES
+                
                 if(this.rowUOMErrors.length >0){
                     this.rowUOMErrors = this.rowUOMErrors.join();
                     const evt01 = new ShowToastEvent({ title: 'Warning Fields', message: this.rowUOMErrors,
@@ -662,7 +657,7 @@ export default class Bl_dataTable extends LightningElement {
                     this.dispatchEvent(evt1);
                     this.showUOMValues = false; 
                 }
-                if(this.lengthUomMessageError){
+                if(this.lengthUomMessageError.length > 0){
                     const evt1 = new ShowToastEvent({ title: 'Warning Fields', message: this.lengthUomMessageError,
                     variant: 'warning', mode: 'sticky' });
                     this.dispatchEvent(evt1);
@@ -682,7 +677,7 @@ export default class Bl_dataTable extends LightningElement {
                 
 
                 //SHOW SUCCESS MESSAGE!
-                if(this.rowUOMErrors.length == 0 && !this.showUOMValues && !this.lengthUomMessageError 
+                if(this.rowUOMErrors.length == 0 && !this.showUOMValues && this.lengthUomMessageError.length == 0 
                     && this.minimumQuantityErrors.length == 0 && this.minimumQuantityMultipleErrors.length == 0){
                     const evt = new ShowToastEvent({
                         title: 'Edits in Table saved',
@@ -702,14 +697,14 @@ export default class Bl_dataTable extends LightningElement {
                 this.quoteLinesEdit = [];
                 
                 this.template.querySelector("lightning-datatable").draftValues = [];
-                this.firstHandler();
+                //this.firstHandler();
                 this.updateTable();
            
         }
     }
 
     updateTable(){
-        this.page = 1;
+        //this.page = 1;
         this.quotelinesLength = this.quoteLines.length;
         this.totalRecountCount = this.quotelinesLength;  
         this.totalPage = Math.ceil(this.totalRecountCount / this.pageSize); 

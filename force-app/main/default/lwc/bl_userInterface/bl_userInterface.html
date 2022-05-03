@@ -51,7 +51,8 @@
                                         </div>
                                 <div class="slds-align_absolute-center slds-var-m-top_small">
                                         <lightning-button class="stretchButton slds-var-m-right_small" variant="brand-outline" label="Product Selection" onclick={navitageToProductSelection}></lightning-button>
-                                        <lightning-button class="stretchButton" variant="brand-outline" label="Clone Selected" disabled={disableButton} onclick={handleClone}></lightning-button>
+                                        <lightning-button class="stretchButton slds-var-m-right_small" variant="brand-outline" label="Clone Selected" disabled={disableButton} onclick={handleClone}></lightning-button>
+                                        <lightning-button class="stretchButton" variant="destructive-text" label="Import Lines" onclick={handleImportLines}></lightning-button>
                                 </div>
                                 <div class="slds-align_absolute-center slds-var-m-top_small">
                                     <h1 class="slds-text-heading_medium">Quote Total: <lightning-formatted-number value={totalValue} format-style="currency" currency-code="USD"></lightning-formatted-number></h1>
