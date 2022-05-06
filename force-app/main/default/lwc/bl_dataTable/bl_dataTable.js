@@ -53,6 +53,9 @@ export default class Bl_dataTable extends LightningElement {
         const COLUMNS_DETAIL = []; //[ { label: 'Quote Name', fieldName: 'name', sortable: true, },];
         if (this.quotelinesString){
             this.quoteLines = JSON.parse(this.quotelinesString);
+            console.log('Laura is here!');
+            console.log(JSON.stringify(this.quoteLines[0]));
+            console.log(this.quoteLines[0]); 
             for(let i=0;i<this.quoteLines.length;i++){
                 if(this.quoteLines[i].product.includes('"')){
                     this.quoteLines[i].product = this.quoteLines[i].product.replace(/['"]+/g, '');
@@ -65,7 +68,7 @@ export default class Bl_dataTable extends LightningElement {
         //Make available the look up field
         this.tabSelected == 'Home' ? this.isQuoteLinesTab = true : this.isQuoteLinesTab = false; 
         //console.log(Object.getOwnPropertyNames(this.quoteLines[0])); 
-        displayFieldSet() //({tabName: this.tabSelected})
+        displayFieldSet() 
         .then((data) => {
             this.error = undefined;
             this.fieldSet = JSON.parse(data); 
@@ -78,17 +81,9 @@ export default class Bl_dataTable extends LightningElement {
             for (let i=0; i<this.fieldSetLength;i++){
                 if (this.tabSelected == 'Home'){
                     if (this.fieldSet[i].key == 'HOME'){
-                        //console.log('field Set properties: '+ Object.getOwnPropertyNames(this.fieldSet[i]));
-                        //console.log(JSON.stringify(this.fieldSet[i]));
-                        //console.log('Label: '+this.fieldSet[i].label);
-                        //console.log('Property: '+ this.fieldSet[i].property)
-                        //console.log('Required '+this.fieldSet[i].required)
-                        //console.log('Editable: '+this.fieldSet[i].editable);
-                        //console.log('Api name: '+this.fieldSet[i].apiName);
                         let labelName;
                         this.fieldSet[i].required ? labelName = '*'+this.fieldSet[i].label: labelName = this.fieldSet[i].label;
                         this.fieldSet[i].property == 'additionaldisc.(%)' ? this.fieldSet[i].property = 'additionaldiscount' : this.fieldSet[i].property; 
-                        //console.log('added: '+COLUMNS_HOME.length); 
                         if (this.fieldSet[i].property == 'quotelinename'){
                             labelName = 'Product'; //COLUMN NAME IN QLE QUOTE HOME TAB
                             COLUMNS_HOME.splice(indexDes, 0, { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, wrapText: false, },);
@@ -112,10 +107,6 @@ export default class Bl_dataTable extends LightningElement {
                     this.auxiliar = 1;
                 } else if (this.tabSelected == 'Detail'){
                     if (this.fieldSet[i].key == 'DETAIL'){
-                        //console.log('Label: '+this.fieldSet[i].label);
-                        //console.log('Property: '+ this.fieldSet[i].property)
-                        //console.log('Editable: '+this.fieldSet[i].editable);
-                        //console.log('Required '+this.fieldSet[i].required)
                         let labelName;
                         this.fieldSet[i].required ? labelName = '*'+this.fieldSet[i].label: labelName = this.fieldSet[i].label;
                         if (this.fieldSet[i].type == 'CURRENCY' || this.fieldSet[i].type == 'PERCENT' || this.fieldSet[i].type == 'DOUBLE'){
@@ -123,7 +114,6 @@ export default class Bl_dataTable extends LightningElement {
                         } else {
                             COLUMNS_DETAIL.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable, sortable: true, wrapText: false, },);
                         }
-                        //console.log('added: '+COLUMNS_DETAIL.length); 
                     }
                     this.columns = COLUMNS_DETAIL; 
                     this.auxiliar = 2;
@@ -136,7 +126,6 @@ export default class Bl_dataTable extends LightningElement {
                 { label: '', type: 'button-icon',initialWidth: 20,typeAttributes:{iconName: 'action:delete', name: 'Delete', variant:'border-filled', size:'xxx-small'}}
             );
             this.spinnerLoading = false; 
-            //console.log('No rows selected');
             this.dispatchEvent(new CustomEvent('notselected'));
 
         })
@@ -150,7 +139,6 @@ export default class Bl_dataTable extends LightningElement {
                 mode: 'sticky'
             });
             this.dispatchEvent(evt);
-            //console.log('Error displaying field sets');
         });
         
 
@@ -172,13 +160,11 @@ export default class Bl_dataTable extends LightningElement {
             //console.log(JSON.stringify(data));
             let prodL2 = []; 
             data.values.forEach( element => { prodL2.push(element.label);}); 
-            //console.log(prodL2);
             uomDependencyLevel2List({productLevel2 : prodL2})
             .then((data)=>{
                 //console.log(data);
                 let dependency = JSON.parse(data); 
                 let levelsNames = Object.getOwnPropertyNames(dependency); 
-                //console.log(levelsNames);
                 for (let i=0; i< levelsNames.length; i++){
                     let prop = dependency[levelsNames[i]]; 
                     let values = [];
@@ -260,16 +246,13 @@ export default class Bl_dataTable extends LightningElement {
             this.popUpReorder = false;
         }
         else if (message.auxiliar =='letsclone'){
-            //MISSING CLONE LINE NOTES FROM THE OTHER OBJECT
             if (this.selectedRows.length > 0){
                 let cloneRows = JSON.parse(JSON.stringify(this.selectedRows)); 
-                //console.log('cloneRows: '+ Object.getOwnPropertyNames(cloneRows[0]));
                 let randomId; 
                 let randomName; 
                 let last4Name;
                 this.spinnerLoading = true;
                 for(let i=0;i<this.selectedRows.length;i++){
-                    //console.log('Selected rows: '+this.selectedRows[i].name);
                     randomId = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(2, 10);
                     randomName = Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 6); 
                     last4Name = cloneRows[i].name.substr(cloneRows[i].name.length - 4)
@@ -282,14 +265,8 @@ export default class Bl_dataTable extends LightningElement {
                         cloneRows[i].clonedFrom = this.selectedRows[i].id;
                         //console.log('Clone from old one');
                     }
-                     
-                    //console.log('ID: '+cloneRows[i].id);
-                    //console.log('NAME: '+cloneRows[i].name);
                     this.quoteLines = [...this.quoteLines, cloneRows[i]];
                 }
-                //console.log('SIZE: ' + this.quoteLines.length);
-                //console.log('Clone here');
-                //console.log(JSON.stringify(this.quoteLines));
                 this.updateTable();
                 this.quotelinesString = JSON.stringify(this.quoteLines); 
                 this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
@@ -308,7 +285,6 @@ export default class Bl_dataTable extends LightningElement {
                 this.dispatchEvent(new CustomEvent('notselected'));
                 this.firstHandler();
             } else {
-                //console.log('No rows selected');
                 this.dispatchEvent(new CustomEvent('notselected'));
                 setTimeout(()=> {
                     const evt = new ShowToastEvent({
@@ -323,8 +299,6 @@ export default class Bl_dataTable extends LightningElement {
             }
         }
         else if (message.auxiliar == 'applydiscount'){
-            //console.log('HERE PROPERTIES');
-            //console.log(Object.getOwnPropertyNames(this.selectedRows)); 
             this.discount = message.dataString;
             if (this.selectedRows != undefined && this.selectedRows !=  null && this.selectedRows.length > 0 ){
                 for(let j = 0; j< this.selectedRows.length; j++){
@@ -341,7 +315,6 @@ export default class Bl_dataTable extends LightningElement {
                     this.spinnerLoading = false;
                 },500);
             } else {
-                //console.log('No rows selected');
                 this.dispatchEvent(new CustomEvent('notselected'));
                 setTimeout(()=>{
                     const evt = new ShowToastEvent({
@@ -368,11 +341,9 @@ export default class Bl_dataTable extends LightningElement {
         //TO ALERT THAT A ROW HAS BEEN SELECTED
         if(event.detail.selectedRows.length == 0){
             this.selectedRows = [];
-            //console.log('No rows selected');
             this.dispatchEvent(new CustomEvent('notselected'));
         } else {
             this.dispatchEvent(new CustomEvent('clone'));
-            //console.log('Rows selected '+ event.detail.selectedRows.length);
             this.selectedRows = event.detail.selectedRows;
         }   
     }
@@ -432,7 +403,7 @@ export default class Bl_dataTable extends LightningElement {
         let randomName;   //Random Name for new quoteline
         addQuoteLine({quoteId: this.recordId, productId: productId})
         .then((data) => {
-            console.log('Add Product DATA: '+ data); 
+            //console.log('Add Product DATA: '+ data); 
             newQuotelines = JSON.parse(data); 
             for (let i=0; i< newQuotelines.length; i++){
                 //To create auxiliar ID and Name
@@ -515,7 +486,7 @@ export default class Bl_dataTable extends LightningElement {
                 });
                 let prop = Object.getOwnPropertyNames(inputsItems[i].fields); 
                 
-                console.log(this.quoteLinesEdit[0]);
+                //console.log(this.quoteLinesEdit[0]);
                 //VALIDATION RULES TO AVOID ERRORS FROM THE USER BEFORE SAVING IN EACH EDITED QUOTE LINE
                 for(let j= 0; j<prop.length-1; j++){
                     if(prop[j]=='length'){
@@ -602,12 +573,14 @@ export default class Bl_dataTable extends LightningElement {
                         let minQuote = 1; 
                         Number.isInteger(this.quoteLines[index].minimumorderqty) ? minQuote = this.quoteLines[index].minimumorderqty : minQuote = parseInt(this.quoteLines[index].minimumorderqty) ;
                         //CONDITION OF MINIMUM QUANTITY
-                        if (inputsItems[i].fields[prop[j]].valueOf() < minQuote.valueOf() ){
+                        let minQMult = 0;
+                        this.quoteLines[index].minimumordermultiple == null ? minQMult = 0 : minQMult = this.quoteLines[index].minimumordermultiple.valueOf(); 
+                                                if (inputsItems[i].fields[prop[j]].valueOf() < minQuote.valueOf() ){
                             this.minimumQuantityErrors.push(index+1); 
                             this.quoteLines[index].minimumorderqty == null ?  inputsItems[i].fields[prop[j]] = 1 :  inputsItems[i].fields[prop[j]] =  this.quoteLines[index].minimumorderqty;
                         } 
                         //CONDITION OF MULTIPLE QUANTITY IF THERE IS A VALUE THERE
-                        else if (this.quoteLines[index].minimumordermultiple != null || this.quoteLines[index].minimumordermultiple != 'null'){
+                        else if (parseInt(minQMult) != 0 && !isNaN(minQMult)){
                             if (inputsItems[i].fields[prop[j]].valueOf() % parseInt(this.quoteLines[index].minimumordermultiple) != 0){
                                 this.minimumQuantityMultipleErrors.push('Line '+ (index+1) + ' multiple of '+ parseInt(this.quoteLines[index].minimumordermultiple));
                                 this.quoteLines[index].minimumorderqty == null ?  inputsItems[i].fields[prop[j]] = 1 :  inputsItems[i].fields[prop[j]] =  this.quoteLines[index].minimumorderqty;
@@ -633,7 +606,6 @@ export default class Bl_dataTable extends LightningElement {
                     this.quoteLines[index].prodLevel4 =	null;
                 }
                 if(this.quoteLines[index].netunitprice == null || this.quoteLines[index].netunitprice == undefined){
-                    console.log('net price length')
                     this.quoteLines[index].netunitprice = 1;
                 }
             }   
@@ -768,7 +740,7 @@ export default class Bl_dataTable extends LightningElement {
                 //TO SHOW NEW LINES IF THERE IS ONE ALREADY IN THE LINE NOTE
                 if (this.dataRow.linenote != null){
                     let text =  String(this.dataRow.linenote);
-                    console.log(text)
+                    //console.log(text)
                     text = '<p>'+text;
                     text = text.replace(/\r\n|\n/g, '</p><p>');
                     text = text+'</p>';
@@ -800,7 +772,7 @@ export default class Bl_dataTable extends LightningElement {
         this.showNSP = false;
         NSPAdditionalFields({productId: this.dataRow.productid })
         .then((data)=>{  
-            console.log('NSP VALUES');
+            //console.log('NSP VALUES');
             //console.log(data);
             let nspVal = JSON.parse(data); 
             let values = [];
@@ -826,15 +798,8 @@ export default class Bl_dataTable extends LightningElement {
             }
             //console.log(properties);
             for(let i =0; i<this.properties.length; i++){
-                //console.log(JSON.stringify(this.dataRow));
-                //console.log('1 '+this.dataRow[this.properties[i].property]);
-                //console.log('2 '+this.properties[i].property);
-                //console.log('3 '+this.properties[i].value);
-                
                 this.nspValues.push({label: this.properties[i].label, value: this.dataRow[this.properties[i].property]});
                 this.nspValues.sort((a, b) => (a.label > b.label) ? 1 : -1);
-                //this.nspValues.push(labels[i]+': '+this.dataRow[properties[i].property]);
-                //console.log('Type: '+ types[i])
                 if(types[i] == 'PICKLIST'){
                     this.nspOptions.push({label:labels[i], options: optionsP[i],}); 
                     this.nspOptions.sort((a, b) => (a.label > b.label) ? 1 : -1);
@@ -854,26 +819,17 @@ export default class Bl_dataTable extends LightningElement {
     }
 
     changingNSP(event){
-        //console.log(event.target.label); 
-        //console.log(event.target.value);
         this.showNSP = false;
         let prop = ((event.target.label).toLowerCase()).replaceAll(/\s/g,''); 
-        //console.log('prop'+prop);
-        //console.log(JSON.stringify(this.properties));
         let indProp = this.properties.findIndex(x => x.value === prop);
-        //console.log('indProp '+indProp);
         let value = event.target.value;
-        //console.log(this.dataRow.id);
         let index = this.quoteLines.findIndex(x => x.id === this.dataRow.id);
-       // console.log('index'+index);
         if(index != -1 && indProp != -1){
-            //console.log('property: '+this.properties[indProp].property)
             this.quoteLines[index][this.properties[indProp].property] = value; 
-            //console.log(JSON.stringify(this.quoteLines));
             setTimeout(()=>{ this.showNSP = true; }, 200);
             this.nspValues[this.nspValues.findIndex(x => x.label === event.target.label)].value = value;
         } else {
-            console.log('There is a problem finding the line selected.');
+            //console.log('There is a problem finding the line selected.');
             const evt = new ShowToastEvent({
                 title: 'Problem changing NSP values',
                 message: 'The changes cannot be saved',
@@ -933,7 +889,6 @@ export default class Bl_dataTable extends LightningElement {
         this.endingRecord = (this.endingRecord > this.totalRecountCount) 
                             ? this.totalRecountCount : this.endingRecord; 
         this.dataPages = this.quoteLines.slice(this.startingRecord, this.endingRecord);
-        //console.log('Slice quoteLines here');
         this.startingRecord = this.startingRecord + 1;
     }    
 
@@ -967,7 +922,7 @@ export default class Bl_dataTable extends LightningElement {
 
     @track newLineNote; 
     changingLineNote(event){
-        console.log(event.detail.value); 
+        //console.log(event.detail.value); 
         this.newLineNote = event.detail.value;
     }
     saveLineNote(){

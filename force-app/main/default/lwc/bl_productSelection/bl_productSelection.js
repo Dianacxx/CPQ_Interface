@@ -40,7 +40,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             this.girdDataAcaTab.sort((a, b) => (a.lookupCode > b.lookupCode) ? 1 : -1);
         })
         .catch((error)=>{
-            console.log('ERROR ACA');
+            //console.log('ERROR ACA');
             console.log(error);
         });
 
@@ -55,7 +55,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             this.girdDataConnTab.sort((a, b) => (a.lookupCode > b.lookupCode) ? 1 : -1);
         })
         .catch((error)=>{
-            console.log('ERROR Connectivity');
+            //console.log('ERROR Connectivity');
             console.log(error);
         });
 
@@ -73,7 +73,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
 
         })
         .catch((error)=>{
-            console.log('ERROR Fiber Optic Cable');
+            //console.log('ERROR Fiber Optic Cable');
             console.log(error);
         });
 
@@ -89,7 +89,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
 
         })
         .catch((error)=>{
-            console.log('ERROR Cable');
+            //console.log('ERROR Cable');
             console.log(error);
         });
 
@@ -104,7 +104,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             this.girdDataTandITab.sort((a, b) => (a.lookupCode > b.lookupCode) ? 1 : -1);
         })
         .catch((error)=>{
-            console.log('ERROR Test & Inspection');
+            //console.log('ERROR Test & Inspection');
             console.log(error);
         })
         //this.savePSValues = true;
@@ -114,7 +114,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
     @api notGoodToGoBundle = false; 
     //Event meaning to move to Configured Bundle Page
     saveBeforeConfigured(event){
-        console.log('Saving in before anything else');
+        //console.log('Saving in before anything else');
         this.savePSValues = true;
         this.quotesAdded = []; 
         if(this.girdDataAcaTabAdd.length > 0){
@@ -317,28 +317,28 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         }
 
         let stringQuotesAdded = JSON.stringify(this.quotesAdded);
-        console.log('Quote ID: '+this.recordId);
+        //console.log('Quote ID: '+this.recordId);
         console.log('Quotelines before process: '+stringQuotesAdded); 
         this.configBundleId = event.detail; 
         if(stringQuotesAdded == '[]'){
             this.savePSValues = false;
-            console.log('No products, direct to: '+this.configBundleId);   
+            //console.log('No products, direct to: '+this.configBundleId);   
             this.notGoodToGoBundle = false;
             this.navigateToBundle();
         } else {
             quoteLineCreator({quoteId: this.recordId, quoteLines: stringQuotesAdded})
             .then(()=>{
-                console.log('Quotes Saved from PS'); 
+                //console.log('Quotes Saved from PS'); 
                 this.savePSValues = false;
                 setTimeout(()=>{
-                    console.log('Done saving products, direct to: '+this.configBundleId);   
+                    //console.log('Done saving products, direct to: '+this.configBundleId);   
                     this.notGoodToGoBundle = false;
                     this.navigateToBundle();
                 }, 500);
             })
             .catch((error)=>{
                 this.notGoodToGoBundle = true;
-                console.log('Error saving from PS'); 
+                //console.log('Error saving from PS'); 
                 console.log(error); 
                 let errorMessage;
                 if(error != undefined){
@@ -393,22 +393,8 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             customActionId()
             .then((data)=>{
                 let customActionAddProducts = data; //Add Products Id
-                console.log('relatedProductId: '+this.configBundleId); 
-
-                /*
-                const evt = new ShowToastEvent({
-                    title: 'THIS IS BEING EDITED, PLEASE WAIT',
-                    message: 'BL developer changing something here',
-                    variant: 'warning',
-                    mode: 'sticky'
-                });
-                this.dispatchEvent(evt);
-*/
-
-
-                //let link = '/apex/sbqq__sb?id='+this.recordId+ &ltn_app_id=06m8A0000004jM5QAI
-                //'&tour=&isdtp=p1&ltn_app_id=06m8A0000004jM5QAI&clc=0#/product/pc?qId='+
-                //this.recordId+'&aId='+customActionAddProducts+'&pId='+this.configBundleId+'&redirectUrl=LineEditor&open=0';
+                //console.log('relatedProductId: '+this.configBundleId); 
+                
                 let link = '/apex/sbqq__sb?id='+this.recordId+'&clc=0#/product/pc?qId='+
                 this.recordId+'&aId='+customActionAddProducts+'&pId='+this.configBundleId+'&redirectUrl=LineEditor&open=0';
                 
@@ -473,7 +459,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         this.savePSValues = true;
         this.quotesAdded = []; 
         if(this.girdDataAcaTabAdd.length > 0){
-            console.log('ACA LIST');
+            //console.log('ACA LIST');
             let list1 = JSON.parse(JSON.stringify(this.girdDataAcaTabAdd)); 
             for (let list of list1){
                 for (let secondList of list.listOfProducts){
@@ -507,7 +493,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             }
         }
         if(this.girdDataConnTabAdd.length > 0){
-            console.log('CONNECT LIST');
+            //console.log('CONNECT LIST');
             let list2 = JSON.parse(JSON.stringify(this.girdDataConnTabAdd)); 
             for (let list of list2){
                 for (let secondList of list.listOfProducts){
@@ -544,7 +530,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             }
         }
         if(this.girdDataFocTabAdd.length > 0){
-            console.log('FOC LIST');
+            //console.log('FOC LIST');
             let list3 = JSON.parse(JSON.stringify(this.girdDataFocTabAdd)); 
             for (let list of list3){ 
                 for (let secondList of list.listOfProducts){
@@ -577,7 +563,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             }
         }
         if(this.girdDataCableTabAdd.length > 0){
-            console.log('CABLE LIST');
+            //console.log('CABLE LIST');
             let list4 = JSON.parse(JSON.stringify(this.girdDataCableTabAdd)); 
             for (let list of list4){
                 for (let secondList of list.listOfProducts){
@@ -611,7 +597,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             }
         }
         if(this.girdDataTandITabAdd.length > 0){
-            console.log('TAI LIST');
+            //console.log('TAI LIST');
             let list5 = JSON.parse(JSON.stringify(this.girdDataTandITabAdd)); 
             for (let list of list5){
                 for (let secondList of list.listOfProducts){
@@ -645,7 +631,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             }
         }
         if(this.girdDataManualItemTabAdd.length > 0){
-            console.log('MANUAL LIST');
+            //console.log('MANUAL LIST');
             let list6 = JSON.parse(JSON.stringify(this.girdDataManualItemTabAdd)); 
             for (let list of list6){
                 list.netunitprice = 1;
@@ -669,16 +655,15 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             }
         }
         let stringQuotesAdded = JSON.stringify(this.quotesAdded);
-        console.log('Quote ID: '+this.recordId);
-        //console.log('Quotelines before process');
+        //console.log('Quote ID: '+this.recordId);
         console.log('Quotelines before process: '+stringQuotesAdded); 
         if(stringQuotesAdded == '[]'){
-            console.log('No quotes to save, going to QLE'); 
+            //console.log('No quotes to save, going to QLE'); 
             this.dispatchEvent(new CustomEvent('saveandexitps')); 
         } else {
             quoteLineCreator({quoteId: this.recordId, quoteLines: stringQuotesAdded})
             .then(()=>{
-                console.log('Quotes Saved from PS, going to QLE'); 
+                //console.log('Quotes Saved from PS, going to QLE'); 
                 this.savePSValues = false;
                 setTimeout(()=>{
                     this.dispatchEvent(new CustomEvent('saveandexitps')); 
@@ -719,7 +704,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                 });
                 this.dispatchEvent(evt);
                 this.savePSValues = false;
-                console.log('Error saving from PS'); 
+                //console.log('Error saving from PS'); 
                 console.log(error); 
             })
         }     

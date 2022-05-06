@@ -21,7 +21,7 @@ export default class ButtonOpenUi extends NavigationMixin(LightningElement) {
             if (data == 'YES'){
                 savingRecordId({quoteId: this.recordId})
                 .then(() => {
-                    console.log('RECORD SAVE IN ACTION!');
+                    //console.log('RECORD SAVE IN ACTION!');
                     var compDefinition = {
                         componentDef: "c:bl_userInterface",
                         attributes: {

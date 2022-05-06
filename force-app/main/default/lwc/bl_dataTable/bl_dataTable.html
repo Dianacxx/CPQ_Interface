@@ -160,7 +160,6 @@
                                 <table aria-multiselectable="true" class="slds-table slds-no-row-hover slds-table_bordered slds-table_fixed-layout slds-table_resizable-cols" role="grid" >
                                   <thead>
                                     <tr class="slds-line-height_reset">
-                                        <th>Quote Name</th>
                                         <th>Product</th>
                                         <th>Description</th>
                                     </tr>
@@ -169,10 +168,7 @@
                                     <template for:each={ElementList} for:item="qlorder" for:index="index">
                                       <tr key={qlorder.Id} onchange={Change} draggable="true" ondrop={Drop} ondragstart={DragStart} ondragover={DragOver} title={index}>
                                         <td role="gridcell">
-                                          <div class="slds-cell-wrap" title={index}>{qlorder.name}</div>
-                                        </td>
-                                        <td role="gridcell">
-                                            <div class="slds-cell-wrap" title="product">{qlorder.product}</div>
+                                            <div class="slds-cell-wrap" title="product">{qlorder.quotelinename}</div>
                                           </td>
                                         <td role="gridcell">
                                           <div class="slds-cell-wrap" title="description">{qlorder.description}</div>

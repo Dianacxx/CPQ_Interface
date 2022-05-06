@@ -172,8 +172,8 @@ export default class Bl_manualItems extends LightningElement {
                     manualQuoteline[0].isNSP = false;
                     this.loadingProcess = false;
                     this.newManualList.push(manualQuoteline[0]); 
-                    console.log('List: ')
-                    console.log(this.newManualList); 
+                    //console.log('List: ')
+                    //console.log(this.newManualList); 
                     //console.log('Manual: '+data);
                     this.showManualTable = false;
                     this.dispatchEvent(new CustomEvent('listtodisplayadd', { detail: {list: this.newManualList, tab: 'Manual Items'} }));

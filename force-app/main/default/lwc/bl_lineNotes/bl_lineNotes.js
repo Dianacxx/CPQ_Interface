@@ -9,7 +9,7 @@ export default class Bl_lineNotes extends LightningElement {
     @track columns = [];
     connectedCallback(){
         if(this.quoteNotesString=='[]'){
-            console.log('THERE IS NO LINE NOTES');
+            //console.log('THERE IS NO LINE NOTES');
         } else {
             this.quotelines = JSON.parse(this.quotelinesString); 
             this.quotelines.forEach((quoteline)=>{ 
@@ -18,38 +18,7 @@ export default class Bl_lineNotes extends LightningElement {
             }});
             this.quotelinesLength = this.quotelines.length; 
             this.updateLineNotes();
-        }   
-        /*   
-        let COLUMNS_LINE_NOTES = []; 
-        
-        displayFieldSet()
-        .then((data) => {
-            this.fieldSet = JSON.parse(data); 
-            //console.log(this.fieldSet);
-            this.fieldSetLength = this.fieldSet.length;
-            let wrapText = false;
-            let size = 0; 
-            this.fieldSet.forEach((column)=>{
-                column.property == 'linenote' ? wrapText = true : wrapText = false; 
-                column.property == 'quotelinename' ? size = 250 : size = 450; 
-                if(column.key == 'NOTE'){
-                    COLUMNS_LINE_NOTES.push({label: column.label, fieldName: column.property, wrapText: wrapText,initialWidth: size });
-                }
-                // { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, type: 'number',hideDefaultActions: true },);
-            })
-            this.columns = COLUMNS_LINE_NOTES; 
-            //console.log(this.columns);
-        })
-        .catch((error)=>{
-            console.log('Display fieldset for line notes error');
-            console.log(error);
-            const evt = new ShowToastEvent({
-                title: 'Error loading the field set',
-                message: 'There is aproblem loading the field set for the line notes.',
-                variant: 'error', mode: 'dismissable' });
-            this.dispatchEvent(evt);
-        })
-        */
+        }
     }
 
     //Pagination
@@ -94,7 +63,6 @@ export default class Bl_lineNotes extends LightningElement {
         this.endingRecord = (this.endingRecord > this.totalRecountCount) 
                             ? this.totalRecountCount : this.endingRecord; 
         this.lineNotes = this.quotelines.slice(this.startingRecord, this.endingRecord);
-        //console.log('Slice quoteNotes here');
         this.startingRecord = this.startingRecord + 1;
     }    
 

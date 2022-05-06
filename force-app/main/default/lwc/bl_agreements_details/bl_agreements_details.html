@@ -1,3 +1,4 @@
+<!-- sldsValidatorIgnore -->
 <template>
     <lightning-card>
      
@@ -15,7 +16,14 @@
         </div>
         <div class="slds-col slds-size_1-of-4">
                
-        <lightning-button-icon icon-name="action:new"    variant="brand" alternative-text="Apply"  class="slds-m-left_xx-small" title="Apply"></lightning-button-icon>
+        <!--<lightning-button-icon icon-name="action:new"    variant="brand" alternative-text="Apply"
+          class="slds-m-left_xx-small" title="Apply"></lightning-button-icon> -->
+          <lightning-spinner if:true={loadingSecondPage}  alternative-text="Loading" size="medium"></lightning-spinner>
+          <lightning-button-stateful class="slds-var-m-left_xx-small slds-var-m-right_x-small" variant="brand"
+          label-when-off="Apply" label-when-on="Applying" label-when-hover="Unapply"
+          icon-name-when-off="action:new" icon-name-when-on="action:check" icon-name-when-hover="action:close"
+          selected={applyToChild} onclick={handleApplyToChild}> </lightning-button-stateful>
+          Apply To All Child Accounts
       </div>
 
       <!-- Buttons -->
@@ -38,13 +46,17 @@
           <div class="slds-grid slds-grid_align-center slds-m-bottom_large">
             
                 <div class="slds-col slds-size_1-of-4">
+                  <lightning-input type="text" style="width:80%" label="Agreement Name" placeholder="Enter a name..." onchange={nameChangeHandler} required></lightning-input>
+                  <!--
                 <span><div class="slds-form-element">
                   <label class="slds-form-element__label" for="text-input-id-47">
                     <abbr class="slds-required" title="required"> </abbr> Agreement Name</label>
                   <div class="slds-form-element__control">  
-                    <input type="text" style="width:80%"  placeholder="Enter a name..." onchange={nameChangeHandler}  class="slds-input" />
+                    <input type="text" style="width:80%"  placeholder="Enter a name..." onchange={nameChangeHandler}  class="slds-input" required=""/>
+
                   </div>
                 </div></span>
+              -->
                 </div>
                 <div class="slds-col slds-grow-none">
                   <span></span>
@@ -59,7 +71,7 @@
                   placeholder="Select a Type"
                   options={agreementTypePicklist.data.values}
                   onchange={typeChangeHandler}
-                  
+                  required
           ></lightning-combobox>
         </template></span>
                 </div>
@@ -77,7 +89,7 @@
                       placeholder="Select an Option"
                       options={reviewSchedulePicklist.data.values}
                       onchange={ScheduleChangeHandler}
-                      
+                      required
               ></lightning-combobox>
             </template> </span>
                     </div>
@@ -92,6 +104,7 @@
                           type="search" 
                           name="enter-search" 
                           label="Reviewer"
+                          required
                     ></lightning-input>
                       </span>  
                     </div>
@@ -99,13 +112,13 @@
             </div>
             <div class="slds-grid slds-grid_align-center slds-m-bottom_large">
               <div class="slds-col slds-size_1-of-4">
-              <span><lightning-input style="width:80%" onchange={startDateChangeHandler} type="date" name="start date" label="Start Date" ></lightning-input></span>
+              <span><lightning-input style="width:80%" onchange={startDateChangeHandler} type="date" name="start date" label="Start Date" required></lightning-input></span>
               </div>
               <div class="slds-col slds-grow-none">
                 <span></span>
               </div>
               <div class="slds-col slds-size_1-of-4">
-              <span><lightning-input  style="width:80%" onchange={termChangeHandler} type="number" name="term" label="Agreement Term" ></lightning-input></span>  
+              <span><lightning-input  style="width:80%" onchange={termChangeHandler} type="number" name="term" label="Agreement Term" required></lightning-input></span>  
               </div>
               
       </div>

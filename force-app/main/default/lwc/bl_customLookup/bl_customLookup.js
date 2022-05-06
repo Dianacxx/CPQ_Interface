@@ -1,8 +1,8 @@
 import { LightningElement, api, wire, track } from 'lwc';
 import search from '@salesforce/apex/SearchLookupController.search'; 
 
-import { subscribe, publish, MessageContext } from 'lightning/messageService';
-import UPDATE_INTERFACE_CHANNEL from '@salesforce/messageChannel/update_Interface__c';
+//import { subscribe, publish, MessageContext } from 'lightning/messageService';
+//import UPDATE_INTERFACE_CHANNEL from '@salesforce/messageChannel/update_Interface__c';
 
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
@@ -25,9 +25,10 @@ export default class Bl_customLookup extends LightningElement {
     @track optionIsCustomerPart = ''; 
 
     connectedCallback(){
-        this.subscribeToMessageChannel();
+        //this.subscribeToMessageChannel();
     }
-
+ 
+    /*
     @wire(MessageContext)
     messageContext;
 
@@ -41,7 +42,7 @@ export default class Bl_customLookup extends LightningElement {
     handleMessage(message) {
         //console.log('Not neccessary yet - Lookup Componenet message')
     }
-
+    */
     //Lookup field combobox options, ganlde change
     get productOptions() {
         return [
@@ -138,7 +139,7 @@ export default class Bl_customLookup extends LightningElement {
         //console.log('option : '+ this.productSelected);
         search({searchTerm : this.searchTerm, quoteId: this.recordId, option: this.productSelected})
         .then((data)=>{
-                console.log('Seacrh data: '+JSON.stringify(data));
+                //console.log('Seacrh data: '+JSON.stringify(data));
                 this.error = undefined;
                 this.records = data;
                 if (this.records.length == 0){

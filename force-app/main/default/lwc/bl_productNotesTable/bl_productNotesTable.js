@@ -12,7 +12,7 @@ export default class Bl_productNotesTable extends LightningElement {
     //INITIALIZE TABLE PRODUCT NOTES
     connectedCallback(){
         if(this.quoteNotesString=='[name: \"none\"]'){
-            console.log('THERE IS NO NOTES');
+            //console.log('THERE IS NO NOTES');
         } else {
             this.quoteNotes = JSON.parse(this.quoteNotesString);
             this.quoteNotesLength = this.quoteNotes.length;

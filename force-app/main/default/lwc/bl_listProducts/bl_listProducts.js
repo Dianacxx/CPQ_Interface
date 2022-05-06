@@ -179,7 +179,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             this.template.querySelectorAll('lightning-datatable').forEach(each => {
                 each.selectedRows = [];
             });
-            console.log('Length of products added: '+this.allReviews.length)
+            ////console.log('Length of products added: '+this.allReviews.length)
             }
             else {
                 const evt = new ShowToastEvent({
@@ -258,10 +258,6 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             //console.log('Review L: ');
             //console.log(this.listFiltersReview);
         }
-        //console.log('columnsRequiredReview');
-        //console.log(this.columnsRequiredReview);
-        //console.log('listFiltersReview');
-        //console.log(this.listFiltersReview);
         
         this.filtersLoading = true; 
         this.productTypeShow = true; 
@@ -652,7 +648,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     printProducts(){
         this.loadingFilteData = true;
         let filters = this.filtersForApex;  
-        //console.log('filters:');
+        console.log('filters:');
         //console.log(filters);
         //console.log('tab: ' +this.tabSelected);
         //console.log('filteredGrouping: ' + this.trackList.lookupCode);
@@ -663,8 +659,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         console.log(JSON.stringify(filters)); 
         filteredProductPrinter({filterValues: JSON.stringify(filters), level1: tabSelectedValue, filteredGrouping: this.trackList.lookupCode})
         .then((data)=>{
-            //console.log('Products Filtered');
-            //console.log(data);
+            console.log('Products Filtered');
+            console.log(data);
             
             this.recordsAmount = data.length; 
             this.filterResults = data; 
@@ -877,7 +873,6 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                         //console.log('No property');
                         let ind = this.listNspValuesToDisplay.findIndex(element => element.property ==  dataParse[i].label);
                         //console.log('Properties: '+ Object.getOwnPropertyNames(this.listNSP[this.firstNSP-1]));
-                        //console.log('Index: '+ ind);
                         if(ind == -1){
                             if (!(dataParse[i].action == 'DISPLAY')){
                                 this.listNspValuesToDisplay.push({property: dataParse[i].label, value: this.listNSP[this.firstNSP-1][dataParse[i].apiName]});
@@ -922,7 +917,6 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         //console.log(this.firstNSP);
         //console.log(this.listNSP.length);
         if(this.firstNSP == this.listNSP.length){ 
-            console.log('Close here NSP window');
             this.showLookupList = false;
             this.popupNSP = false;
             this.saveAndExitNSPFilteredModeal();
@@ -949,7 +943,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         if(ind == -1){
             this.listNspValuesToDisplay.push({property: event.target.label, value: event.target.value });
         } else {
-            console.log(event.target.value);
+            //console.log(event.target.value);
             this.listNspValuesToDisplay[ind].value =  event.target.value; 
         }
         this.listNSP[this.firstNSP-1][event.target.name] = event.target.value; 
@@ -993,11 +987,9 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             auxQuoteLines[i].idTemporal = auxId; 
             auxQuoteLines[i]['filtered_grouping__c'] = this.trackList.lookupCode; 
             if(auxQuoteLines[i].Mix_Fiber_Count_1__c == 1){
-                //console.log('MIX 1'); 
                 auxQuoteLines[i].Mix_Fiber_Count_1__c = '1';
             }
             if(auxQuoteLines[i].Mix_Fiber_Count_2__c == 1){
-                //console.log('MIX 2'); 
                 auxQuoteLines[i].Mix_Fiber_Count_2__c = '1';
             }
             if(auxQuoteLines[i].Length__c == 1){
@@ -1005,7 +997,6 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             } else if (auxQuoteLines[i].Length__c == null || auxQuoteLines[i].Length__c == 'null'){
                 auxQuoteLines[i].Length__c = '0';
             }
-            //auxQuoteLines[i].Mix_Fiber_Count_2__c
         }
 
         let trackListInternal = JSON.parse(JSON.stringify(this.trackList));
@@ -1017,7 +1008,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         addNSPProducts({quoteId: this.recordId, products: JSON.stringify(auxQuoteLines)})//, filteredGrouping: this.trackList.lookupCode})
         .then((data)=>{
             console.log('SUCCESS TURNING NSP QUOTELINES');
-            //console.log(data);
+            console.log(data);
             let nsqQuotelines = JSON.parse(data); 
             for (let lines of nsqQuotelines){
                 let randomId = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(2, 10);
@@ -1077,7 +1068,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         console.log('P: '+JSON.stringify(auxQuoteLines));
         addSelectorQuoteLine({quoteId: this.recordId, products: JSON.stringify(auxQuoteLines)})
         .then((data)=>{
-            //console.log('Data after addSelectorQuoteLine'+ data);
+            console.log('Data after addSelectorQuoteLine'+ data);
             auxQuoteLines = JSON.parse(data); 
             auxQuoteLinesLength = auxQuoteLines.length; 
             //console.log('Length of products: '+ auxQuoteLinesLength);
@@ -1179,8 +1170,6 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         this.endingRecordEdit = (this.endingRecordEdit > this.totalRecountCountEdit) 
                             ? this.totalRecountCountEdit : this.endingRecordEdit;
         this.dataPagesEdit = this.editQuoteLines.slice(this.startingRecordEdit, this.endingRecordEdit);
-        //console.log('dataPages');
-        //console.log(this.dataPages);
         this.startingRecordEdit = this.startingRecordEdit + 1;
     }   
     //Delete from edit popup
