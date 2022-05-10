@@ -1094,10 +1094,6 @@ public with sharing class QuoteControllerMethodsHandler {
                 QuoteLineModel newModel = new QuoteLineModel();
                 newModel.setRecord(line);
                 
-                // ProductReader productReader = new ProductReader();
-                // ProductModel product = new ProductModel();
-
-                // product = productReader.read(newModel.record.SBQQ__Product__c,'01sA0000000TiZnIAK','USD');
                 
                 //Quoteline Fields              
                                 
@@ -1311,10 +1307,7 @@ public with sharing class QuoteControllerMethodsHandler {
                 newModel.record.SBQQ__Product__r.Jacket_Type__c=relatedQuoteLine.jacketType;
                 newModel.record.SBQQ__Product__r.Jacket_Configuration__c=relatedQuoteLine.jacketConfiguration;
 
-                // ConfigValidator validator = new ConfigValidator();
-                // LoadRuleRunner runner = new LoadRuleRunner();
-
-                // ProductModel prod = runner.load( newModel.record.SBQQ__Product__c, quote, null, null, product.configuration, null);
+               
 
                 quoteLinesToInsert.add(newModel);
             } 

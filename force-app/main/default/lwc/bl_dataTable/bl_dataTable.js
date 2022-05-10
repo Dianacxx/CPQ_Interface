@@ -571,7 +571,10 @@ export default class Bl_dataTable extends LightningElement {
                     }
                     if(prop[j]=='quantity'){
                         let minQuote = 1; 
+                        //console.log('Min Q ' + this.quoteLines[index].minimumorderqty);
+                        //console.log('Quantity '+ inputsItems[i].fields[prop[j]]);
                         Number.isInteger(this.quoteLines[index].minimumorderqty) ? minQuote = this.quoteLines[index].minimumorderqty : minQuote = parseInt(this.quoteLines[index].minimumorderqty) ;
+                       
                         //CONDITION OF MINIMUM QUANTITY
                         let minQMult = 0;
                         this.quoteLines[index].minimumordermultiple == null ? minQMult = 0 : minQMult = this.quoteLines[index].minimumordermultiple.valueOf(); 

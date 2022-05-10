@@ -411,102 +411,6 @@ public with sharing class QuoteController {
 
         return JSON.serialize(linesToPrint);
     }
-    @AuraEnabled
-    //This is not being used to create quotel ines from the NSP products
-    public static String addNSPQuoteLine(String quoteId, String products, String filteredGrouping){
-        QuoteReader quoteReader = new QuoteReader();
-        // QuoteModel quote = quoteReader.read('a0q5f0000013pc3AAA');
-        
-        List<ProductModel> prodModelList = new List<ProductModel>();
-        List<WrappersClass.QuoteLineWrapperClass> linesToPrint = new List<WrappersClass.QuoteLineWrapperClass>();
-        List<QuoteLineModel> newlyAddedLines = new List<QuoteLineModel>(); //Will storee a list of the added lines
-        QuoteModel quote = quoteReader.read(quoteId);
-        List<QuoteLineModel> previousLines = quote.getLineItems();//gets the lines that are currently in salesforce
-        ProductReader productReader = new ProductReader();
-        Pricebook2 prodPriceBook = [SELECT Id FROM Pricebook2 WHERE Id IN (SELECT SBQQ__PriceBook__c FROM SBQQ__Quote__c WHERE Id =: quoteId) LIMIT 1]; //Query for the pricbook that the product is currently
-        List<WrappersClass.ProductWrapperClass> untypedProductValues = (List<WrappersClass.ProductWrapperClass>) JSON.deserialize(products, List<WrappersClass.ProductWrapperClass>.class );
-        Map<Id,WrappersClass.ProductWrapperClass> prodMap = new Map<Id,WrappersClass.ProductWrapperClass>();
-
-        for(WrappersClass.ProductWrapperClass prod : untypedProductValues){ //puts the values of the produst that comes from the UI before converting into a quote line
-            ProductModel product = productReader.read(prod.id,prodPriceBook.Id,'USD');
-            prodMap.put(prod.id, prod);
-            prodModelList.add(product);
-        }
-        
-
-        ProductAdder adder = new ProductAdder(); 
-        QuoteModel quoteWithProducts = adder.add(quote, prodModelList, 0);
-        List<QuoteLineModel> newLines = quoteWithProducts.getLineItems();
-        System.debug('previous lines -- ' + previousLines.size());
-        System.debug('new lines -- ' + newLines.size());
-        
-        for (QuoteLineModel newLine : newLines) {
-            if (newLine.record.id == null) { 
-                newlyAddedLines.add(newLine); //Puts all of the added lines in a list
-            }
-        }
-
-        
-
-        for (QuoteLineModel newlyAddedLine : newlyAddedLines){
-            WrappersClass.QuoteLineWrapperClass wrapper = new WrappersClass.QuoteLineWrapperClass();
-            WrappersClass.ProductWrapperClass relatedProd = prodMap.get(newlyAddedLine.record.SBQQ__Product__c);
-            wrapper.id = newlyAddedLine.record.id;
-            wrapper.product = newlyAddedLine.record.SBQQ__Product__r.Name;
-            wrapper.productId = newlyAddedLine.record.SBQQ__Product__c;
-            // wrapper.productobj = newlyAddedLine.record.SBQQ__Product__r;
-            // wrapper.description = newlyAddedLine.record.Description__c;
-
-            wrapper.id = newlyAddedLine.record.id;
-            wrapper.product = newlyAddedLine.record.SBQQ__Product__r.Name;
-            wrapper.requiredBy = newlyAddedLine.record.SBQQ__RequiredBy__c;
-            wrapper.productid = newlyAddedLine.record.SBQQ__Product__c;
-            // wrapper.productobj = newlyAddedLine.record.SBQQ__Product__r;
-            wrapper.name = newlyAddedLine.record.Name;
-            wrapper.description = newlyAddedLine.record.SBQQ__Description__c;
-            wrapper.uom = newlyAddedLine.record.UOM__c;
-            wrapper.listunitprice = newlyAddedLine.record.SBQQ__ListPrice__c;
-            wrapper.additionaldiscount = newlyAddedLine.record.SBQQ__Discount__c;
-            wrapper.netunitprice = newlyAddedLine.record.SBQQ__NetPrice__c; 
-            wrapper.billingtolerance = newlyAddedLine.record.BL_Billing_Tolerance__c; 
-            wrapper.source = newlyAddedLine.record.BL_Source__c; 
-            wrapper.destination = newlyAddedLine.record.BL_Destination__c;
-            wrapper.alternativeindicator = newlyAddedLine.record.BL_Alternative_Indicator__c;
-            // wrapper.nspofferingdetails = newlyAddedLine.record.SBQQ__Optional__c;
-            wrapper.billingfrequency = newlyAddedLine.record.SBQQ__BillingFrequency__c;
-            wrapper.approvalstatus = newlyAddedLine.record.ApprovalStatus__c;
-            wrapper.billingtype = newlyAddedLine.record.SBQQ__BillingType__c;
-            wrapper.componenttotal = newlyAddedLine.record.SBQQ__ComponentTotal__c;
-            wrapper.enddate = newlyAddedLine.record.SBQQ__EndDate__c;
-            wrapper.length = String.valueOf(newlyAddedLine.record.Length__c);
-            wrapper.originalprice = newlyAddedLine.record.SBQQ__OriginalPrice__c;
-            wrapper.packagetype = newlyAddedLine.record.Package_Type__c;
-            wrapper.packageCover = newlyAddedLine.record.Package_Cover__c;
-            wrapper.volumediscount = newlyAddedLine.record.SBQQ__VolumeDiscount__c;
-            wrapper.color = newlyAddedLine.record.Color__c;
-            wrapper.productType = newlyAddedLine.record.Product_Type__c;
-
-            wrapper.fiberCount1 = relatedProd.fiberCount1;
-            wrapper.fiberCount2 = relatedProd.fiberCount2;
-            wrapper.fiberType1 = relatedProd.fiberType1;
-            wrapper.fiberType2 = relatedProd.fiberType2;
-            wrapper.regionCode = relatedProd.regionCode;
-            wrapper.primaryUOM = relatedProd.primaryUOM;
-            // wrapper.length = relatedProd.lenght;
-            wrapper.isNSP = true;
-
-            linesToPrint.add(wrapper); 
-
-            // if(relatedProd.filteredGrouping == 'Premise Cable'){
-            //     wrapper.color = newlyAddedLine.record.Color__c;
-            //     wrapper.subUnitColor = newlyAddedLine.record.Subunit_Color__c;
-
-            // }
-            
-        }
-        return JSON.serialize(linesToPrint);
-
-    }
 
     //---------------------------------------------------------------------- SAVING METHODS -----------------------------------------------------------------------
     @AuraEnabled
@@ -667,6 +571,7 @@ public with sharing class QuoteController {
         for(AFL_Lookups__c lookup :lengthLookupList){
             lengthCodes.add(lookup.Lookup_Code__c);
         }
+        System.debug(lengthCodes);
 
         List<QuoteLineModel> quoteLinesToInsert = new List<QuoteLineModel>();
         
@@ -677,6 +582,7 @@ public with sharing class QuoteController {
 
         //Gets all the products related to the quote that are configured and puts it in a map, then gets it's configuration in order to create the lines
         Map<Id,Product2> prodMap  = new Map<Id,Product2>([SELECT Id,Filtered_Grouping__c,Product_Type__c FROM Product2 WHERE QLE_Search_Method__c = 'FILTERED']);
+        System.debug('prodMap '+prodMap);
         Map<String, SBQQ__QuoteLine__c> existentLinesMap = new Map<String, SBQQ__QuoteLine__c>();
         Map<String, List<SBQQ__QuoteLine__c>> linesWithParentsMap = new Map<String, List<SBQQ__QuoteLine__c>>();
         List<SBQQ__QuoteLine__c> optionLines = Database.query('SELECT SBQQ__RequiredBy__r.SBQQ__Product__r.Name, SBQQ__RequiredBy__r.Name, ' + String.join(lstFieldNames, ',') + ' FROM SBQQ__QuoteLine__c WHERE SBQQ__RequiredBy__c != null AND  SBQQ__Quote__c =: quoteId');
@@ -757,14 +663,6 @@ public with sharing class QuoteController {
         // }
         getQuote.SBQQ__Primary__c = true;
         update getQuote;
-    }
-    @AuraEnabled
-    public static QuoteModel quoteSaverMethod(QuoteModel quote){
-        QuoteSaver saver = new QuoteSaver();
-        QuoteModel savedQuote = saver.save(quote);
-        
-        return savedQuote;
-
     }
 
     @AuraEnabled

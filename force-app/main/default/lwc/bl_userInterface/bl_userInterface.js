@@ -11,7 +11,6 @@ import printQuoteLines from '@salesforce/apex/QuoteController.printQuoteLinesv2'
 import printNotes from '@salesforce/apex/QuoteController.printNotes'; 
 //import printNotes from '@salesforce/apex/blMockData.printNotes'; 
 
-
 //Quote Saver
 import getQuoteTotal from '@salesforce/apex/QuoteController.getQuoteTotal'; 
 import quoteLineCreator from '@salesforce/apex/QuoteController.quoteLineCreator'; 
@@ -358,7 +357,9 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         this.spinnerLoadingUI = true;
         this.notSaveYet = false; 
         let quoteEdition = JSON.parse(this.quotelinesString);
-
+        console.log('Before Saving ');
+        console.log(this.quotelinesString);
+        
         let quotesToFill = []; 
         for(let i = 0; i< quoteEdition.length; i++){
             //console.log('quoteline '+i); 
