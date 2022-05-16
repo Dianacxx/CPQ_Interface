@@ -664,6 +664,7 @@ public with sharing class QuoteController {
         getQuote.SBQQ__Primary__c = true;
         update getQuote;
     }
+   
 
     @AuraEnabled
     public static String getQuoteTotal(String quoteId){
@@ -1102,7 +1103,7 @@ public with sharing class QuoteController {
                 queryAdditions += 'AW_Wire_Size__c = ' + '\''+filterValuesMap.get('Wire Size') + '\' AND ';
             }
             if(filterValuesMap.get('Model') != null){
-                queryAdditions += 'Model__c = ' +'\''+  filterValuesMap.get('Model') + ' \'AND ';
+                queryAdditions += 'Model__c = ' +'\''+  filterValuesMap.get('Model') + '\'AND ';
             }
             if(filterValuesMap.get('Sub Configuration') != null){
                 queryAdditions += 'Sub_Configuration__c = ' + '\'' +filterValuesMap.get('Sub Configuration') + '\' AND ';

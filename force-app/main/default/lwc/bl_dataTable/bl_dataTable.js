@@ -86,7 +86,7 @@ export default class Bl_dataTable extends LightningElement {
                         this.fieldSet[i].property == 'additionaldisc.(%)' ? this.fieldSet[i].property = 'additionaldiscount' : this.fieldSet[i].property; 
                         if (this.fieldSet[i].property == 'quotelinename'){
                             labelName = 'Product'; //COLUMN NAME IN QLE QUOTE HOME TAB
-                            COLUMNS_HOME.splice(indexDes, 0, { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, wrapText: false, },);
+                            COLUMNS_HOME.splice(indexDes, 0, { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, wrapText: false, initialWidth :150,},);
                             //console.log('Inserting before description');
                         }
                         else {
@@ -95,7 +95,7 @@ export default class Bl_dataTable extends LightningElement {
                             } else {
                                 if(this.fieldSet[i].property == 'description'){
                                     indexDes = i; 
-                                    COLUMNS_HOME.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true,},);
+                                    COLUMNS_HOME.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true,wrapText: false, },);
                                     //console.log('Index description '+indexDes);
                                 } else {
                                     COLUMNS_HOME.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, hideDefaultActions: true},);

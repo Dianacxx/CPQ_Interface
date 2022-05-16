@@ -3,8 +3,9 @@
 }
 
 .slds-modal__container{
-    width: 70% !important;
-    max-width: 70% !important;
+    width: 80% !important;
+    max-width: 80% !important;
     height: 90% !important;
     max-height: 90% !important;
+
 }

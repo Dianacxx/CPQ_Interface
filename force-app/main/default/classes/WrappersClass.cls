@@ -17,12 +17,14 @@ public with sharing class WrappersClass {
         public String name {get;set;}
         public Id requiredBy{get;set;}
         public String product{get;set;}
+        public String minimumorderqty{get;set;}
         public Id productid{get;set;}
         public String clonedFrom{get;set;}
         // public Product2 productobj{get;set;}
         public String tiers{get;set;}
         public String description{get;set;}
         public Decimal quantity{get;set;}
+        public String minimumordermultiple{get;set;}
         public String uom{get;set;}
         public Decimal listunitprice{get;set;}
         public Decimal additionaldiscount{get;set;}
@@ -49,6 +51,7 @@ public with sharing class WrappersClass {
         public String basedesigncode{get;set;}
         public Decimal cablecostpermeter{get;set;}
         public String customer{get;set;} 
+        public String fiberCount{get;set;}
         public String filteredgrouping{get;set;} 
         public Decimal fixedcost{get;set;} 
         public Decimal conncostA{get;set;} 
@@ -90,6 +93,7 @@ public with sharing class WrappersClass {
         public String prodLevel3 {get;set;}
         public String prodLevel4 {get;set;}
         public String customerpart {get;set;}
+        // public String billabletolerance {get;set;}
         public String partnumber {get;set;}
         public Boolean alternative {get;set;}
         public Boolean stock {get;set;}
@@ -111,6 +115,7 @@ public with sharing class WrappersClass {
         public String color{get;set;}
         public String productType{get;set;}
         public String filteredGrouping{get;set;}
+        public String minimumorderqty{get;set;}
         public String fiberCount{get;set;}
         public String fiberType{get;set;}
         public String jacketType{get;set;}

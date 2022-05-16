@@ -545,7 +545,7 @@ public with sharing class QuoteControllerMethodsHandler {
             QuoteLineWrapper wrapper = new QuoteLineWrapper();
             
             //Quoteline Fields 
-                             
+            //Revisar
             String description = newlyAddedLine.record.SBQQ__Description__c;
             if(description!= null){
                 wrapper.description = description.replaceAll('<[^>]*>','');
@@ -629,7 +629,8 @@ public with sharing class QuoteControllerMethodsHandler {
             wrapper.previousSegmentUplift=newlyAddedLine.record.SBQQ__PreviousSegmentUplift__c;
             wrapper.pricebookEntryId=newlyAddedLine.record.SBQQ__PricebookEntryId__c;
             wrapper.priorQuantity=newlyAddedLine.record.SBQQ__PriorQuantity__c;
-            wrapper.product=newlyAddedLine.record.SBQQ__ProductName__c;
+            
+            wrapper.product=newlyAddedLine.record.SBQQ__Product__r.Name;
             wrapper.productOption=newlyAddedLine.record.SBQQ__ProductOption__c;
             wrapper.productid=newlyAddedLine.record.SBQQ__Product__c;
             wrapper.prorateMultiplier=newlyAddedLine.record.SBQQ__ProrateMultiplier__c;
@@ -748,8 +749,6 @@ public with sharing class QuoteControllerMethodsHandler {
             wrapper.taxcode=newlyAddedLine.record.SBQQ__Product__r.SBQQ__TaxCode__c;
             wrapper.taxable=newlyAddedLine.record.SBQQ__Product__r.SBQQ__Taxable__c;
             wrapper.termDiscountSchedule=newlyAddedLine.record.SBQQ__Product__r.SBQQ__TermDiscountSchedule__c;
-            //wrapper.unitcost=newlyAddedLine.record.SBQQ__Product__r.Unit_Cost__c;
-            //wrapper.unitcost= prodMap.get(newlyAddedLine.record.SBQQ__Product__c).Unit_Cost__c;
             wrapper.productType=newlyAddedLine.record.SBQQ__Product__r.Product_Type__c;
             wrapper.fiberCount=newlyAddedLine.record.SBQQ__Product__r.Fiber_Count__c;
             wrapper.jacketColor=newlyAddedLine.record.SBQQ__Product__r.Jacket_Color__c;
@@ -789,8 +788,9 @@ public with sharing class QuoteControllerMethodsHandler {
             wrapper.jacketConfiguration=newlyAddedLine.record.SBQQ__Product__r.Jacket_Configuration__c;
             wrapper.jacketPrint=newlyAddedLine.record.SBQQ__Product__r.Jacket_Print__c;
             wrapper.unitcost= prodMap.get(newlyAddedLine.record.SBQQ__Product__c).Unit_Cost__c;
-            //(newlyAddedLine.record.SBQQ__Product__c).Unit_Cost__c;
+
             
+
             linesToPrint.add(wrapper); 
 
         }
@@ -848,7 +848,7 @@ public with sharing class QuoteControllerMethodsHandler {
             //Quoteline Fields 
 
             wrapper.qlevariableprice = (String)prodMap.get('QLE_Variable_Price__c');
-            wrapper.description=(String)prodMap.get('SBQQ__Description__c');      
+            wrapper.description=(String)prodMap.get('Description');      
             wrapper.id=(String)prodMap.get('Id');
             wrapper.deleted=(Boolean)prodMap.get('Deleted');
             wrapper.name=(String)prodMap.get('Name');
@@ -1220,10 +1220,10 @@ public with sharing class QuoteControllerMethodsHandler {
                 
                 //NSP Fields 
                                                      
-                if(relatedQuoteLine.isNSP == true){
-                    newModel.record.SBQQ__Product__r.Color__c=relatedQuoteLine.color;
-                    newModel.record.SBQQ__Product__r.Subunit_Color__c=relatedQuoteLine.subUnitColor;
-                    newModel.record.SBQQ__Product__r.Jacket_Print__c=relatedQuoteLine.jacketPrint;
+                if(relatedQuoteLine.isNSP == True){
+                    newModel.record.Color__c=relatedQuoteLine.color;
+                    newModel.record.Subunit_Color__c=relatedQuoteLine.subUnitColor;
+                    newModel.record.Jacket_Print__c=relatedQuoteLine.jacketPrint;
                     newModel.record.Package_Type__c = relatedQuoteLine.packagetype;
                     newModel.record.Package_Cover__c = relatedQuoteLine.packageCover;
                     newModel.record.Mix_Fiber_Count_1__c=relatedQuoteLine.fiberCount1;
@@ -1517,12 +1517,14 @@ public with sharing class QuoteControllerMethodsHandler {
                     newQuoteLine.Pricing_Cost__c=line.pricingcost;
                     newQuoteLine.Region_Adder_Central__c=line.regionaddercentral;
                     newQuoteLine.Region_Adder_East__c=line.regionaddereast;
-                    newQuoteLine.Region_Adder_West__c=line.regionadderwest;
                     newQuoteLine.Region_Adder_Northwest__c=line.regionaddernorthwest;
                     newQuoteLine.ResourceCost_A__c=line.resourcecosta;
+                    newQuoteLine.Region_Adder_West__c=line.regionadderwest;
                     newQuoteLine.Minimum_Order_Multiple__c=line.minimumordermultiple;
                     newQuoteLine.Jacket_Type__c=line.jacketType;
                     newQuoteLine.Jacket_Configuration__c=line.jacketConfiguration; 
+
+
 
                     if(prodMap.get(line.productid) != null){
                         if(lengthCodes.contains(prodMap.get(line.productid).Filtered_Grouping__c) && prodMap.get(line.productid).Filtered_Grouping__c=='Patch Panels') {

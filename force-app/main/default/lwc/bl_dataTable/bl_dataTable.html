@@ -28,7 +28,7 @@
     <!--PAGINATION CONTROL END-->
     <!--DATATABLE START-->
     <div class="slds-align_absolute-center slds-var-m-top_small">
-        <lightning-datatable style="width:100%;" key-field="id" draft-values={draftValues} data={dataPages} columns={columns} 
+        <lightning-datatable column-widths-mode="auto" style="width:100%;" key-field="id" draft-values={draftValues} data={dataPages} columns={columns} 
         onrowaction={handleRowAction} onrowselection={handleRowSelection} onsave={handleSaveEdition}
         sorted-by={sortBy} sorted-direction={sortDirection} onsort={handleSortData} ></lightning-datatable>
     </div>
@@ -153,8 +153,10 @@
                     <!-- Modal/Popup Box LWC body starts here -->
                     <div class="slds-modal__content slds-var-m-left_small  slds-var-m-right_small" id="modal-content-id-1">
                         <!--START TABLE TO REORDER -->
-                        <p class="slds-align_absolute-center slds-var-m-bottom_x-small" style="color: blue;">Number of Quote Lines: {quotelinesLength}</p>
-                        <div class="slds-grid slds-grid_vertical">
+                        <p class="slds-align_absolute-center slds-var-m-bottom_x-small" style="color: blue; font-size: 11px;">Number of Quote Lines: {quotelinesLength}</p>
+                        <p class="slds-align_absolute-center slds-var-m-bottom_x-small" style="color: black; font-size: 9px">To reorder lines, please drop and drag by Product Name.</p>
+
+                        <div class="slds-grid slds-grid_vertical slds-var-m-left_small slds-var-m-right_small">
                             <div class="slds-scrollable slds-grow">
                               <div class="slds-scrollable_none">
                                 <table aria-multiselectable="true" class="slds-table slds-no-row-hover slds-table_bordered slds-table_fixed-layout slds-table_resizable-cols" role="grid" >
@@ -166,9 +168,9 @@
                                   </thead>
                                   <tbody>
                                     <template for:each={ElementList} for:item="qlorder" for:index="index">
-                                      <tr key={qlorder.Id} onchange={Change} draggable="true" ondrop={Drop} ondragstart={DragStart} ondragover={DragOver} title={index}>
+                                      <tr key={qlorder.quotelinename} onchange={Change} draggable="true" ondrop={Drop} ondragstart={DragStart} ondragover={DragOver} title={index}>
                                         <td role="gridcell">
-                                            <div class="slds-cell-wrap" title="product">{qlorder.quotelinename}</div>
+                                            <div class="slds-cell-wrap" title={index}>{qlorder.quotelinename}</div>
                                           </td>
                                         <td role="gridcell">
                                           <div class="slds-cell-wrap" title="description">{qlorder.description}</div>

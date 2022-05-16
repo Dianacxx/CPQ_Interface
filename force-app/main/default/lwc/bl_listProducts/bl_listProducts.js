@@ -147,7 +147,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         this.allReviews = [];
         this.goReview = true;
         this.updateReviewTable(); 
-
+        this.readyToCloseNSP = [];
     }
     //Add more products in the filter tab
     moreAdd(){ //Button in pop up that says Add More
@@ -379,8 +379,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                     } else {
                         let sizeOptions = 0; 
                         for (let optionvalue of filters[i].options){
-                            optionvalue.value = optionvalue.label;
-                            optionvalue.value.length > sizeOptions ? sizeOptions = optionvalue.value.length : sizeOptions = sizeOptions; 
+                            optionvalue.label = optionvalue.value;
+                            optionvalue.label.length > sizeOptions ? sizeOptions = optionvalue.label.length : sizeOptions = sizeOptions; 
                         }
                         //console.log('Size option:'+ sizeOptions); 
                         if (0 <= sizeOptions && sizeOptions< 10){
@@ -426,8 +426,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                     //console.log(this.productType[i].options);
                     let sizeOptions = 0; 
                     for (let optionvalue of this.productType[i].options){
-                        optionvalue.value = optionvalue.label;
-                        optionvalue.value.length > sizeOptions ? sizeOptions = optionvalue.value.length : sizeOptions = sizeOptions; 
+                        optionvalue.label = optionvalue.value;
+                        optionvalue.label.length > sizeOptions ? sizeOptions = optionvalue.label.length : sizeOptions = sizeOptions; 
                     }
                     //console.log('Size option:'+ sizeOptions);
                     if (0 <= sizeOptions && sizeOptions< 10){
@@ -491,8 +491,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         this.columnsReview = [{label: 'Product Name', fieldName: 'Name', editable: false, },]; 
         getProductFilteringv2({filteredGrouping: this.trackList.lookupCode, typeSelection: this.requiredApex })
         .then((data)=>{
-            //console.log('SECOND PRODUCT TYPE');
-            //console.log(data);
+            console.log('SECOND PRODUCT TYPE');
+            console.log(data);
             let temporalList = JSON.parse(data);
 
             //This line is to check if it is ADSS Cable to allow convertion in feet
@@ -510,7 +510,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                     //console.log('PICKLIST FILTER');
                     let optionsFilters = JSON.parse(temporalList[i].options); 
                     for (let j = 0; j < optionsFilters.length; j++){
-                        optionsFilters[j] = {label: optionsFilters[j].label, value: optionsFilters[j].label}; 
+                        optionsFilters[j] = {label: optionsFilters[j].value, value: optionsFilters[j].value}; 
                     }
                     temporalList[i].options = optionsFilters; 
                     this.listFilters.push(temporalList[i]); 
@@ -599,7 +599,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                     let ind = this.listFilters.findIndex(element => element.label == temporalList[i].label)
                     if (ind == -1){
                         if (temporalList[i].options == '[]'){
-                            this.listTextFilters.push({label: temporalList[i].label, name: temporalList[i].label});
+                            this.listTextFilters.push({label: temporalList[i].value, name: temporalList[i].label});
                             //console.log('TEXT FILTER');
                         } else if (temporalList[i].options == null || temporalList[i].options == "null") {
                             //console.log('WITH NO OPTIONS FILTER');
@@ -608,7 +608,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                             //console.log('PICKLIST FILTER');
                             let optionsFilters = JSON.parse(temporalList[i].options);  
                             for (let j = 0; j < optionsFilters.length; j++){
-                                optionsFilters[j] = {label: optionsFilters[j].label, value: optionsFilters[j].value}; 
+                                optionsFilters[j] = {label: optionsFilters[j].value, value: optionsFilters[j].value}; 
                             }
                             temporalList[i].options = optionsFilters; 
                             this.listFilters.push(temporalList[i]); 
@@ -622,7 +622,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                             //console.log('PICKLIST FILTER');
                             let optionsFilters = JSON.parse(temporalList[i].options);  
                             for (let j = 0; j < optionsFilters.length; j++){
-                                optionsFilters[j] = {label: optionsFilters[j].label, value: optionsFilters[j].value}; 
+                                optionsFilters[j] = {label: optionsFilters[j].value, value: optionsFilters[j].value}; 
                             }
                             temporalList[i].options = optionsFilters; 
                             this.listFilters[ind] = temporalList[i]; 
@@ -651,12 +651,15 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         console.log('filters:');
         //console.log(filters);
         //console.log('tab: ' +this.tabSelected);
-        //console.log('filteredGrouping: ' + this.trackList.lookupCode);
+        
+        
         //--------FOR OCA / CONNECTIVITY VALUE IN SANDBOX ----------------
         let tabSelectedValue;
         this.tabSelected == 'Connectivity' ? tabSelectedValue = 'OCA' : tabSelectedValue = this.tabSelected; 
         //--------FOR OCA / CONNECTIVITY VALUE IN SANDBOX ----------------
         console.log(JSON.stringify(filters)); 
+        console.log('filteredGrouping: ' + this.trackList.lookupCode);
+        console.log('tabSelectedValue: ' + tabSelectedValue);
         filteredProductPrinter({filterValues: JSON.stringify(filters), level1: tabSelectedValue, filteredGrouping: this.trackList.lookupCode})
         .then((data)=>{
             console.log('Products Filtered');
@@ -853,9 +856,13 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     }
 
     @track checkNSPFields = []; 
+    readyToCloseNSP = [];
     handleNSPTab(event){
         this.clearNSPFields();
         this.firstNSP = event.target.value;
+        let auxiliarClose; 
+        auxiliarClose = this.readyToCloseNSP.find(element => element == this.firstNSP);
+        if (auxiliarClose == undefined) { this.readyToCloseNSP.push(this.firstNSP); } 
         this.gettingNspFields = false;
         NSPAdditionalFields({productId: this.listNSP[this.firstNSP-1].idTemporal})
             .then((data)=>{
@@ -916,7 +923,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     closeNSP(){
         //console.log(this.firstNSP);
         //console.log(this.listNSP.length);
-        if(this.firstNSP == this.listNSP.length){ 
+        if(this.readyToCloseNSP.length == this.listNSP.length){ 
             this.showLookupList = false;
             this.popupNSP = false;
             this.saveAndExitNSPFilteredModeal();
@@ -1063,6 +1070,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             let auxId = auxQuoteLines[i].Id; 
             auxQuoteLines[i].Id = auxQuoteLines[i].idTemporal; 
             auxQuoteLines[i].idTemporal = auxId; 
+            //auxQuoteLines[i].quotelinename = auxQuoteLines[i].product;  
         }
         //console.log('Length of products before close: '+ this.allReviews.length)
         console.log('P: '+JSON.stringify(auxQuoteLines));
