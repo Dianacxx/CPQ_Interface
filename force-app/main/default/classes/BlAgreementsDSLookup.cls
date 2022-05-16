@@ -4,13 +4,16 @@ public with sharing class BlAgreementsDSLookup {
 
     
 
-    @AuraEnabled(cacheable=true)
+    @AuraEnabled
     public static List<DiscountWrapper> getDiscountScheduleInfo( String agreementId ) {
         List<DiscountWrapper> resultList  = new List<DiscountWrapper>();
 
         for( SBQQ__DiscountSchedule__c discountDetails :
          [Select name,
          Id,
+         Contract__c,
+         SBQQ__DiscountUnit__c,
+         CurrencyIsoCode,
          Custom_Fixed_Price__c,
          SBQQ__Product__r.Name,
           SBQQ__Product__r.ProductCode,

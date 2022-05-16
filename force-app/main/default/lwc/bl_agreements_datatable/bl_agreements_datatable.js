@@ -79,21 +79,21 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
         if(this.discountType==='amount'){
            
            
-            this.data[k].Fixed_Price_Adj__c = parseInt(this.data[k].Fixed_Price_Adj__c ) - parseInt(this.discount) ;
-            this.data[k].Variable_Price_Adj__c = parseInt(this.data[k].Variable_Price_Adj__c ) - parseInt(this.discount) ;
+            this.data[k].fixedPriceAdj = parseInt(this.data[k].fixedPriceAdj ) - parseInt(this.discount) ;
+            this.data[k].varPriceAdj = parseInt(this.data[k].varPriceAdj ) - parseInt(this.discount) ;
             console.log('ADDER : ' + parseInt(this.discount))
-            console.log('fixed : ' + (parseInt(this.data[k].Fixed_Price_Adj__c )))
-            console.log('VAR : ' + (parseInt(this.data[k].Variable_Price_Adj__c )))
+            console.log('fixed : ' + (parseInt(this.data[k].fixedPriceAdj )))
+            console.log('VAR : ' + (parseInt(this.data[k].varPriceAdj )))
         }
         else if(this.discountType==='percent'){
            
 
-            this.data[k].Fixed_Price_Adj__c = parseFloat(this.data[k].Fixed_Price_Adj__c ) * (parseFloat(1)-parseFloat(this.discount))/* /parseFloat(100) */;
-            this.data[k].Variable_Price_Adj__c = parseFloat(this.data[k].Variable_Price_Adj__c ) * (parseFloat(1)-(this.discount))/* /parseFloat(100) */ ;
+            this.data[k].fixedPriceAdj = parseFloat(this.data[k].fixedPriceAdj ) * (parseFloat(1)-parseFloat(this.discount))/* /parseFloat(100) */;
+            this.data[k].varPriceAdj = parseFloat(this.data[k].varPriceAdj ) * (parseFloat(1)-(this.discount))/* /parseFloat(100) */ ;
             console.log('this is multiplier: ' + (parseFloat(this.discount)))
-            console.log('this is the original fixed : ' + parseFloat(this.data[k].Fixed_Price_Adj__c ))
-            console.log('this is the original var int : ' + parseFloat(this.data[k].Variable_Price_Adj__c ))
-            console.log('this is the original var float : ' + parseFloat(this.data[k].Variable_Price_Adj__c ))
+            console.log('this is the original fixed : ' + parseFloat(this.data[k].fixedPriceAdj ))
+            console.log('this is the original var int : ' + parseFloat(this.data[k].varPriceAdj ))
+            console.log('this is the original var float : ' + parseFloat(this.data[k].varPriceAdj ))
 /*             this.maxDiscount=1;
  */        }
         }
@@ -139,20 +139,7 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
 
         @track loadTable = false; //To track datatable changes and hide/show table when is loading
     
-        //Call on load of component to get all data
-        
-        myFunction(){
-            console.log("My fu trigered")
-            getDiscountScheduleInfo({agreementId:JSON.parse(this.agreementId)}) 
-            .then(result => {
-                this.data = result;
-                this.loadTable = true; 
-                console.log('DATA AFTER APEX INSIDE MY FUNCTION  ' + JSON.stringify(this.data))
-            })
-            .catch(error => {
-                console.log(error);
-            });
-        }
+
 
 
         connectedCallback()
@@ -190,7 +177,27 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
         } 
 
  
-
+        //Call on load of component to get all data
+        
+        myFunction(){
+            this.loadTable = false; 
+            console.log("Starting my function");
+            setTimeout(()=>{
+                console.log( 'agreementId: '+ JSON.parse(this.agreementId));
+             
+                getDiscountScheduleInfo({agreementId: JSON.parse(this.agreementId) }) 
+                .then(result => {
+                    
+                    this.data = result;
+                    this.loadTable = true; 
+                    console.log('DATA AFTER APEX INSIDE MY FUNCTION  ' + JSON.stringify(result));
+                })
+                .catch(error => {
+                    console.log(error);
+                });
+            },1000); 
+            
+        }
 
     /* DELETE DISCOUNT SCHEDULE */
 
@@ -259,17 +266,18 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
 /*         let mockRandomDisc = 'New-'+Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 10); 
  */        //Creating a new Discount ROW
         let newDiscount = { 
+            discId: mockRandomId, 
             discountName: mockRandomName,
-            Variable_Price_Adj__c:null,
-            Fixed_Price_Adj__c:null,
-            UOM__c: this.selectedRecordId.primaryUom,
-            Contract__c:JSON.parse(this.agreementId),   
+            varPriceAdj:null,
+            fixedPriceAdj:null,
+            uOM: this.selectedRecordId.primaryUom,
+            contract: JSON.parse(this.agreementId),   
             /*  Fixed_Price_Adj__c:this.selectedRecordId.Fixed_Price_Adj__c, */
             productCode: this.selectedRecordId.productName, /*the product code is not being sended from the lookup code - if is necessary it should be sent or called from apex with productId*/
             productId: this.selectedRecordId.id,/* accountId: this.recordId, */
-            Name:mockRandomName,
-            SBQQ__DiscountUnit__c:'Price',
-            SBQQ__Product__c:this.selectedRecordId.id, 
+            //Name:mockRandomName,
+            discountUnit:'Price',
+            //SBQQ__Product__c:this.selectedRecordId.id, 
             productName: this.selectedRecordId.productName,/* 
             SBQQ__Account__c: this.recordId, */
             CurrencyIsoCode:this.currency,
@@ -290,6 +298,7 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
         discountAuxiliar.push(newDiscount); 
         //Rewriting the data 
         this.data = discountAuxiliar; 
+
         //Use the https://codebeautify.org/string-to-json-online to see the JSON.stringify data in console to make sure the
         //Objects, variables and values that you have in the dataTable are Correct. 
         console.log('New Data' + JSON.stringify(this.data));
@@ -371,13 +380,13 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
     /* Saving */
 
     saveDiscountSchedule(){  
-        this.loadTable = false
+        this.loadTable = false;
       
         console.log(' Data before APEX' + JSON.stringify(this.data));
 
-        saveSchedule({disScheList : JSON.stringify(this.data)})
+        saveSchedule({disScheList: JSON.stringify(this.data)})
             .then(result => {
-                {
+                
                    
                     this.dispatchEvent(
                         new ShowToastEvent({
@@ -386,15 +395,17 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
                             variant: 'success',
                         }),
                     );
-                }
+                    console.log("result: ", result);
+                    //console.log("disc", this.disScheList);
+                    //console.log(' Data after refresh' + JSON.stringify(this.data));
+                    setTimeout(()=>{
+                        this.myFunction();
+                        console.log('my function triggered');
+                    },2000); 
+    /*                 setTimeout(()=>{this.loadTable = true;;},5000);
+     */             //setTimeout(()=>{console.log('DATA AFTER APEX OUTSIDE MY FUNCTION  ' + JSON.stringify(this.data));},6000);
+                    
                 
-                console.log("result", result);
-                console.log("disc", this.disScheList);
-                console.log(' Data after refresh' + JSON.stringify(this.data));
-                setTimeout(()=>{this.myFunction();console.log('my function triggered');},2000); 
-/*                 setTimeout(()=>{this.loadTable = true;;},5000);
- */             setTimeout(()=>{console.log('DATA AFTER APEX OUTSIDE MY FUNCTION  ' + JSON.stringify(this.data));},6000);
-            
             })
             .catch(error => {
                 this.message = undefined;
@@ -408,6 +419,8 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
                     }),
                 );
                 console.log("error", JSON.stringify(this.error));
+                console.log(this.error);
+                this.loadTable = true;
             });
           
             

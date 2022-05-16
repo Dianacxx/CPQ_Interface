@@ -92,7 +92,7 @@
      
         
           <BR><BR><BR>
-
+        <lightning-spinner if:false={loadTable} alternative-text="Loading" size="medium"></lightning-spinner>
         <template if:true={loadTable}>
             <lightning-datatable 
             key-field="discountName"

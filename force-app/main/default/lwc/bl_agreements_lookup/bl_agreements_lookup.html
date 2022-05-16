@@ -1,0 +1,65 @@
+<template>
+    <div class="slds-p-horizontal_small">
+        <div class="row">
+            <div class="slds-form-element">
+                <div class="slds-form-element__control">
+                    <div class="slds-combobox_container">
+                        <div class="slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click" aria-expanded="false"
+                            aria-haspopup="listbox" role="combobox">
+                            <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right"
+                                role="none">
+                                <lightning-input type="text" id="combobox-id-16" value={productName}
+                                    onchange={handleKeyChange} onkeydown={handleClick} onclick={handleClick}
+                                    onblur={handleClick} aria-activedescendant="option1" label='Product'
+                                    aria-autocomplete="list" aria-controls="listbox-id-12" role="textbox"
+                                    placeholder="Search..."></lightning-input>                                  
+                            <button
+                                    class="slds-button slds-button_icon slds-input__icon slds-input__icon_right searchButtonStyle"
+                                    title="Remove selected option">
+                                    <lightning-button-icon icon-name="utility:search" variant="bare" alternative-text="Search"
+                                             aria-hidden="true" onclick={handleOpenModal}>
+                                    </lightning-button-icon>
+                           </button>    
+                            </div>
+                            <!-- Start : Parent Search Result -->
+                            <div if:true={messageResult}>
+                                No Product Found!
+                            </div>
+                            <template if:true={showSearchedValues}>
+                                <div class="slds-box" style="height: 130px; overflow-y: scroll;">
+                                    <ul class="" role="">
+                                        <template for:each={productList} for:item="prod">
+                                            <li class="slds-p-around_x-small" style="cursor: pointer;" key={prod.Id}
+                                                onclick={handleParentSelection} data-value={prod.Id} data-primaryuom={prod.Primary_UOM__c}
+                                                data-label={prod.Name}>
+                                                {prod.Name}
+                                            </li>
+                                        </template>
+                                    </ul>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- <section role="dialog" if:true={isshow}  tabindex="-1" class="slds-modal slds-fade-in-open" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1">
+            
+        <div class="slds-modal__container">
+          <header class="slds-modal__header">
+            <lightning-button-icon
+            icon-name="utility:close"
+            variant="bare"
+            onclick={handleCloseModal}
+            alternative-text="Close window" style="float: right;">
+        </lightning-button-icon>
+            <h2 id="modal-heading-01" class="slds-modal__title slds-hyphenate">Product Creation</h2>
+          </header>
+          
+        
+        </div>
+      </section> -->
+</template>

@@ -29,7 +29,12 @@ public with sharing class DiscountWrapper {
     public String type {get;set;}
     @AuraEnabled 
     public String dynamicIcon {get;set;}
-    
+    @AuraEnabled 
+    public String contract {get;set;}
+    @AuraEnabled 
+    public String discountUnit {get;set;}
+    @AuraEnabled 
+    public String CurrencyIsoCode {get;set;}
     
  
 
@@ -49,9 +54,34 @@ public with sharing class DiscountWrapper {
         accountId= disc.SBQQ__Account__c;
         fixedPriceAdj = disc.Fixed_Price_Adj__c;
         varPriceAdj = disc.Variable_Price_Adj__c;
+        contract = disc.Contract__c;
+        discountUnit = disc.SBQQ__DiscountUnit__c; 
+        CurrencyIsoCode = disc.CurrencyIsoCode; 
 /*         unitPrice = disc.SBQQ__QuoteLine__r.SBQQ__RegularPrice__c;
  *//*         unitPrice= disc.SBQQ__Product__r.PricebookEntry__r.PriceUnit;
  */
     }  
-   
+    
+    public class DiscountScheduleWrapper{
+
+        public string discountName {get;set;}     
+        public string discId {get;set;}   
+        public string productName {get;set;}
+        public string productCode {get;set;}
+        public string productId {get;set;}
+        public string primaryUOM {get;set;}
+        public string uOM {get;set;}
+        public Decimal unitPrice {get;set;}
+        public Decimal fixedPriceAdj {get;set;}
+        public Decimal fixedPrice {get;set;}
+        public Decimal varPriceAdj {get;set;}
+        public Id accountId {get;set;}
+        public String tryy {get;set;}
+        public String type {get;set;}
+        public String dynamicIcon {get;set;}
+        public String contract {get;set;}
+        public String discountUnit {get;set;}
+        public String CurrencyIsoCode {get;set;}
+    }
+    
 }
