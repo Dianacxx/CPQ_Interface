@@ -1,0 +1,30 @@
+.slds-modal__container_max {
+    max-width: 80rem !important;
+    width: 80% !important;
+}
+.ApplyButton, .stretchButton{
+    background-color: #0176d3;
+    height: 2.2rem;
+    width : 8.2rem;
+    border-radius: 4px;
+    border-color: #0176d3;
+    color:white;
+    transition-duration: 0s;
+}
+.ApplyButton{
+    width : 100px;
+}
+
+.stretchButton:hover,.ApplyButton:hover   {
+    background-color: #3e5c93; 
+    border-color:#3e5c93;
+    border-radius: 4px;
+
+  }
+.discountInput{
+    width: 5rem;
+}
+.discountType{
+    width:8rem;
+    margin-left: 3rem;
+}
