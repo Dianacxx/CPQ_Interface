@@ -515,6 +515,9 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                     temporalList[i].options = optionsFilters; 
                     this.listFilters.push(temporalList[i]); 
                 }
+                //SPECIAL CASE TO SHOW LENGTH LABEL FOR THE BOX LENGTH VALUE BUT FILTERED BY THAT FIELD*
+                if(temporalList[i].label == 'Box Length') { temporalList[i].label = 'Length'; }
+
                 this.columnsFilters.push({label: temporalList[i].label, fieldName: temporalList[i].apiName,hideDefaultActions: true}); 
                 this.columnsReview.push({label: temporalList[i].label, fieldName: temporalList[i].apiName, editable: false,hideDefaultActions: true});
 
@@ -648,15 +651,18 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     printProducts(){
         this.loadingFilteData = true;
         let filters = this.filtersForApex;  
-        console.log('filters:');
-        //console.log(filters);
-        //console.log('tab: ' +this.tabSelected);
-        
-        
+
+        //-----SPECIAL CASE TO SHOW LENGTH LABEL FOR THE BOX LENGTH VALUE BUT FILTERED BY THAT FIELD*-----
+        let specialLength = filters.findIndex(data => data.label == 'Length');
+        if(specialLength != -1) { filters[specialLength].label = 'Box Length'; }
+        //-----SPECIAL CASE TO SHOW LENGTH LABEL FOR THE BOX LENGTH VALUE BUT FILTERED BY THAT FIELD*-----
+
         //--------FOR OCA / CONNECTIVITY VALUE IN SANDBOX ----------------
         let tabSelectedValue;
         this.tabSelected == 'Connectivity' ? tabSelectedValue = 'OCA' : tabSelectedValue = this.tabSelected; 
         //--------FOR OCA / CONNECTIVITY VALUE IN SANDBOX ----------------
+
+        console.log('filters:');
         console.log(JSON.stringify(filters)); 
         console.log('filteredGrouping: ' + this.trackList.lookupCode);
         console.log('tabSelectedValue: ' + tabSelectedValue);
