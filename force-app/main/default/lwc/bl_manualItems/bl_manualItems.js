@@ -1,16 +1,20 @@
 import { LightningElement, api, track, wire } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
+//GET MOCK PRODUCT FROM SF (IF THERE ARE UPDATES IN THE PRODUCT USED TO CREATE MANUAL ONES)
 import getMockProduct from '@salesforce/apex/blMockData.getMockProduct';
+//TO CREATE NEW QUOTE LINE 
 import addQuoteLine from '@salesforce/apex/QuoteController.addQuoteLine';
+//TO DISPLAT LEVEL OPTIONS AVAILABLE
 import displayLevelsOptions from '@salesforce/apex/QuoteController.displayLevelsOptions';
 
+//GETTING PICKLIST VALUES TO SHOW IN FORM
 import { getPicklistValues } from 'lightning/uiObjectInfoApi';
 import { getObjectInfo } from 'lightning/uiObjectInfoApi';
 import QUOTE_LINE_OBJECT from '@salesforce/schema/SBQQ__QuoteLine__c';
 import PRODUCT_LEVEL_1_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.ProdLevel1__c';
-//import PRIMARY_UOM_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.Primary_UOM__c';
 
+//COLUMNS FOR MANUAL ITEMS
 const columns = [
     {label: 'Manual Item: Part Number', fieldName: 'partnumber'},
     { label: 'Clone', type: 'button-icon',initialWidth: 60,typeAttributes:{iconName: 'action:clone', name: 'clone', variant:'brand', size:'xx-small'}},
@@ -21,6 +25,7 @@ export default class Bl_manualItems extends LightningElement {
     @api productId;
     @api recordId; 
 
+    //GETTING PICKLIST VALUES WITOUT DEPENDENCIES OR APEX METHODS
     @wire(getObjectInfo, { objectApiName: QUOTE_LINE_OBJECT })
     quotelineMetadata;
     @wire(getPicklistValues,{ recordTypeId: '$quotelineMetadata.data.defaultRecordTypeId', 
@@ -32,6 +37,7 @@ export default class Bl_manualItems extends LightningElement {
         this.loadingProcess = true;
     }
     
+    //LIST OF CHARACTERISTICS FOR MANUAL ITEMS REQUIRED 
     @track listOfCaracteristics = [ {label: 'Product Level 1', property: 'prodLevel1', value: '', required: true,}, 
     {label: 'Product Level 2',  property: 'prodLevel2', value: '', required: true,},
     {label: 'Part Number',  property: 'partnumber', value: '', required: true,},
@@ -50,18 +56,22 @@ export default class Bl_manualItems extends LightningElement {
     @track uom = [];
     @track showBillableToleranceCopperclad = false;
 
+    //WHEN A FIELD IS CHANGED, GET THE VALUE TO THE CORRECT PROPERTY
     handleChange(event){
         //console.log('Product Selected: '+event.detail.value);
         //console.log('Check Selected: '+event.detail.checked);
         //console.log('Product Label: '+event.target.label);
         let label = event.target.label;
         let value;
+
+        //IF THE INPUT IS A CHECKBOX OR NOT
         if(label == 'Alternative' || label == 'Stock' ){
             value = event.detail.checked;
         } else {
             value = event.detail.value;
         }
         
+        //CALLING THE DEPENDENT PICKLIST FROM A VALUE
         if(label == 'Product Level 1'){
             displayLevelsOptions({level: 'level 2', selection: value})
             .then((data)=>{ 
@@ -94,6 +104,8 @@ export default class Bl_manualItems extends LightningElement {
         if (label == 'Product Level 3'){
             label = 'prodLevel3';
         }
+
+        //ASIGNING THE VALUE ENTERED TO THE FIELD 
         const index = this.listOfCaracteristics.findIndex(object => {return object.label === label;});
         if(index == -1){
             let propertyValue = label.toLowerCase(); 
@@ -109,6 +121,7 @@ export default class Bl_manualItems extends LightningElement {
         }
     }
 
+    //WHEN RESET BUTTOM IS CALLED
     restarManualForm(){
         this.template.querySelectorAll('lightning-combobox').forEach(each => {each.value = undefined;});
         this.template.querySelectorAll('lightning-input').forEach(each => {each.value = undefined; each.checked = false;});
@@ -131,9 +144,13 @@ export default class Bl_manualItems extends LightningElement {
     @track newManualList = [];
     @api newManualColumns = columns;
     @track numberRowsAdded = 0; 
+
+    //TO CREATE THE QUOTE LINES OF THE MANUAL INFO GIVEN
     submitQuoteline(){
         this.loadingProcess = true;
         this.errorCreating = 0;
+
+        //CHEKING REQUIRED FIELDS NOT FILLED. 
         for(let i=0; i<this.listOfCaracteristics.length;i++){
             if((this.listOfCaracteristics[i].required == true) && (this.listOfCaracteristics[i].value == '')){
                 this.errorCreating = this.errorCreating+1; 
@@ -152,6 +169,7 @@ export default class Bl_manualItems extends LightningElement {
             getMockProduct()
             .then((data)=>{
                 productMockId = data; 
+                //CREATING THE QUOTE LINE AND LET IT COMPLETE TO BE SAVED. 
                 addQuoteLine({quoteId: this.recordId, productId: productMockId})
                 .then((data)=>{
                     let manualQuoteline = JSON.parse(data);
@@ -201,11 +219,12 @@ export default class Bl_manualItems extends LightningElement {
     }
 
     
-    //FOR THE DEPENDENCY FIELDS IN MANUAL ITEM FORM
+    //FOR THE DEPENDENCY FIELDS IN MANUAL ITEM FORM TO BE SHOWN 
     @track PL1_FOC = false;
     @track PL1_ACA = false;
     showProductLevel(event){
         //console.log(event.target.value);
+        //HARDCODE TO AVOID CALLING UNNECESSARY APEX METHODS 
         let productLevel = event.target.value;
         if (productLevel == 'Fiber Optic Cable'){
             this.PL1_FOC = true;
@@ -222,10 +241,14 @@ export default class Bl_manualItems extends LightningElement {
         }
         this.handleChange(event); 
     }
+
+    /* NOT SURE WHY THIS IS HERE BUT IT IS NOT USED YET
     showSpecialCopperclad(event){
         this.listOfCaracteristics.value == 'Copperclad'
     }
+    */
 
+    //IF DELETE OR CLONE MANUAL ITEMS QUOTE LINES
     handleRowAction(event){
         let dataRow = event.detail.row;
         let index = this.newManualList.findIndex(x => x.id === dataRow.id); 

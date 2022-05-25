@@ -1,8 +1,13 @@
 import { LightningElement, api, track, wire} from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
+//APEX METHOD TO GET FIELD SET SHOWN IN DATATABLE 
 import displayFieldSet from '@salesforce/apex/QuoteController.displayFieldSet'; 
+
+//APEX METHOD TO CREATE QUOTE LINES FROM LOOUP FIELD 
 import addQuoteLine from '@salesforce/apex/QuoteController.addQuoteLine';
+
+//APEX METHOD TO SHOW NSP FIELDS IN POP UP
 import NSPAdditionalFields from '@salesforce/apex/QuoteController.NSPAdditionalFields'; 
 
 //TO SHOW POSSIBLE VALUES IN LWC TABLE PICKLIST FIELDS WITHOUT GETTING ERROR FROM APEX
@@ -15,9 +20,7 @@ import LEVEL2_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.ProdLevel2__c';
 import UOM_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.UOM__c';
 
 //TO SHOW DEPENDENCIES VALUES FOR UOM FIELD IF PRODUCT 2 
-//import uomDependencyLevel2 from '@salesforce/apex/blMockData.uomDependencyLevel2'; 
 import uomDependencyLevel2List from '@salesforce/apex/blMockData.uomDependencyLevel2List'; 
-
 
 //CHANNEL SERVICE TO COMMUNICATE COMPONENTS 
 import { subscribe, publish, MessageContext } from 'lightning/messageService';
@@ -53,9 +56,8 @@ export default class Bl_dataTable extends LightningElement {
         const COLUMNS_DETAIL = []; //[ { label: 'Quote Name', fieldName: 'name', sortable: true, },];
         if (this.quotelinesString){
             this.quoteLines = JSON.parse(this.quotelinesString);
-            console.log('Laura is here!');
-            console.log(JSON.stringify(this.quoteLines[0]));
-            console.log(this.quoteLines[0]); 
+            //console.log(JSON.stringify(this.quoteLines[0]));
+            //console.log(this.quoteLines[0]); 
             for(let i=0;i<this.quoteLines.length;i++){
                 if(this.quoteLines[i].product.includes('"')){
                     this.quoteLines[i].product = this.quoteLines[i].product.replace(/['"]+/g, '');
@@ -77,6 +79,7 @@ export default class Bl_dataTable extends LightningElement {
             //console.log('Fieldset loaded: '+ this.fieldSetLength); 
         })
         .then(() => {
+            //HARDCODE TO MAKE SPECIFIC CHANGES IN THE TABLE AND THE VALUES IN PROPERTIES
             let indexDes; 
             for (let i=0; i<this.fieldSetLength;i++){
                 if (this.tabSelected == 'Home'){
@@ -119,6 +122,7 @@ export default class Bl_dataTable extends LightningElement {
                     this.auxiliar = 2;
                 } 
             }
+            //ADD SPECIAL COLUMNS IN TABLE LIKE BUTTONS
             this.columns.push(
                 { label: 'NSP', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:google_news', name: 'NSP', variant:'brand', size:'xxx-small'}},
                 { label: 'Tiers', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:adjust_value', name: 'Tiers', variant:'brand', size:'xxx-small'}},
@@ -144,7 +148,7 @@ export default class Bl_dataTable extends LightningElement {
 
     }
 
-
+    //GETTING PICKLIST VALUES IN UOM/LENGTH UOM/ DEPENDENT ON LEVEL 2
     @wire(getObjectInfo, { objectApiName: QUOTELINE_OBJECT })
     objectInfo;
 
@@ -205,7 +209,7 @@ export default class Bl_dataTable extends LightningElement {
     then in the edition compare with the list to make sure there are no erros. */
 
     
-    
+    //CONNECTING CHANNEL 
     @wire(MessageContext)
     messageContext;
     subscribeToMessageChannel() {
@@ -216,9 +220,11 @@ export default class Bl_dataTable extends LightningElement {
       );
     }
 
+    //HANDLE MESSAGES IN CHANNEL TO UPDATE/DELETE/EIT OR MORE FROM PARENT OT CHILD COMPONENT
     handleMessage(message) {
         //Message when table has changed
         this.spinnerLoading = true;
+        //WHEN CALLING NEW INFO FROM SF
         if (message.auxiliar == 'newtable'){
             this.quotelinesString = message.dataString;
             if (this.quotelinesString){
@@ -233,18 +239,22 @@ export default class Bl_dataTable extends LightningElement {
                 this.updateTable();
             }
         }
+        //WHEN A CHANGE TO THE TABLE HAS BEING DONE 
         else if (message.auxiliar == 'updatetable'){
             this.quotelinesString = message.dataString;
             this.quoteLines = JSON.parse(this.quotelinesString);
             this.updateTable();
         }
+        //WHEN THE REORDER FUNCTION WAS DONE
         else if (message.auxiliar == 'reordertable'){
             this.popUpReorder = true; 
             this.ElementList = this.quoteLines;
         }
+        //WHEN THE REORDER FUNCTION IS CLOSED
         else if (message.auxiliar == 'closereorder'){
             this.popUpReorder = false;
         }
+        //WHEN LINES ARE CLONED
         else if (message.auxiliar =='letsclone'){
             if (this.selectedRows.length > 0){
                 let cloneRows = JSON.parse(JSON.stringify(this.selectedRows)); 
@@ -255,7 +265,8 @@ export default class Bl_dataTable extends LightningElement {
                 for(let i=0;i<this.selectedRows.length;i++){
                     randomId = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(2, 10);
                     randomName = Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 6); 
-                    last4Name = cloneRows[i].name.substr(cloneRows[i].name.length - 4)
+                    last4Name = cloneRows[i].name.substr(cloneRows[i].name.length - 4);
+                    //CREATE A NEW ID BUT MAKE SURE IT HAS THE CLONED ID (IF IT IS ALREADY IN SF)
                     cloneRows[i].id =  'new'+randomId;
                     cloneRows[i].name = 'Clone QL-'+last4Name+'-'+randomName; 
                     if(this.selectedRows[i].id.startsWith('new')){
@@ -268,6 +279,7 @@ export default class Bl_dataTable extends LightningElement {
                     this.quoteLines = [...this.quoteLines, cloneRows[i]];
                 }
                 this.updateTable();
+
                 this.quotelinesString = JSON.stringify(this.quoteLines); 
                 this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
                 this.spinnerLoading = false;
@@ -298,6 +310,7 @@ export default class Bl_dataTable extends LightningElement {
                 this.firstHandler();
             }
         }
+        //WHEN A DISCOUNT VALUES IS ADDED AND APPLY
         else if (message.auxiliar == 'applydiscount'){
             this.discount = message.dataString;
             if (this.selectedRows != undefined && this.selectedRows !=  null && this.selectedRows.length > 0 ){
@@ -393,7 +406,7 @@ export default class Bl_dataTable extends LightningElement {
         this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
     }
 
-    //Lookup search 
+    //Lookup search product selected to be added to table as quote line
     handleProductSelection(event){
         this.spinnerLoading = true;
         //console.log("the selected record id is: "+event.detail);
@@ -463,6 +476,7 @@ export default class Bl_dataTable extends LightningElement {
     @track nonProductLevel2 = [];
     @track minimumQuantityErrors = [];
     @track minimumQuantityMultipleErrors = [];
+
     //Save when table is edited and clicked in save button.
     handleSaveEdition(event){
         //this.valuesUOMString = []; 
@@ -488,6 +502,7 @@ export default class Bl_dataTable extends LightningElement {
                 
                 //console.log(this.quoteLinesEdit[0]);
                 //VALIDATION RULES TO AVOID ERRORS FROM THE USER BEFORE SAVING IN EACH EDITED QUOTE LINE
+                //SPECIAL CASE, PLEASE NOTE THESE ARE FRAGILE BEHAVIORS IN THE UI 
                 for(let j= 0; j<prop.length-1; j++){
                     if(prop[j]=='length'){
                         if (!(this.quoteLines[index].qlevariableprice == 'Cable Length' && 
@@ -592,7 +607,8 @@ export default class Bl_dataTable extends LightningElement {
                         }
                     }
                     this.quoteLines[index][prop[j]] = inputsItems[i].fields[prop[j]];
-                }               
+                }         
+
                 //CHECKING DEPENDENCIES OF EMPTY PRODUCT LEVELS VALUES
                 if(this.quoteLines[index].prodLevel1 == null || this.quoteLines[index].prodLevel1 == undefined){
                     this.quoteLines[index].prodLevel2 = null; 
@@ -614,7 +630,6 @@ export default class Bl_dataTable extends LightningElement {
             }   
 
                 //SHOW ERROR MESSAGES
-                
                 if(this.rowUOMErrors.length >0){
                     this.rowUOMErrors = this.rowUOMErrors.join();
                     const evt01 = new ShowToastEvent({ title: 'Warning Fields', message: this.rowUOMErrors,
@@ -650,7 +665,6 @@ export default class Bl_dataTable extends LightningElement {
                     this.dispatchEvent(evt1);
                 }
                 
-
                 //SHOW SUCCESS MESSAGE!
                 if(this.rowUOMErrors.length == 0 && !this.showUOMValues && this.lengthUomMessageError.length == 0 
                     && this.minimumQuantityErrors.length == 0 && this.minimumQuantityMultipleErrors.length == 0){
@@ -663,11 +677,9 @@ export default class Bl_dataTable extends LightningElement {
                     this.dispatchEvent(evt);
                 }
                
-
                 this.quotelinesString = JSON.stringify(this.quoteLines); 
                 //console.log(this.quoteLinesString);
                 this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
-                
                 
                 this.quoteLinesEdit = [];
                 
@@ -678,6 +690,7 @@ export default class Bl_dataTable extends LightningElement {
         }
     }
 
+    //UPDATE PAGE VIEW OF TABLE 
     updateTable(){
         //this.page = 1;
         this.quotelinesLength = this.quoteLines.length;
@@ -690,7 +703,7 @@ export default class Bl_dataTable extends LightningElement {
 
     @track deleteClick = false; 
     @track dataRow; 
-    //Message to delete row
+    //Message to delete row 
     deleteModal(){
         let quoteLinesDeleted = this.quoteLines; 
         let row = quoteLinesDeleted.findIndex(x => x.id === this.dataRow.id);
@@ -709,16 +722,14 @@ export default class Bl_dataTable extends LightningElement {
         this.dispatchEvent(new CustomEvent('deletedvalues', { detail: this.quotelinesString }));
         this.deleteClick = false;
     }
-
+    //CLOSE DELETE MODAL
     closeModal(){
         this.deleteClick = false;
     }
 
     @track nspShowMessage = false; 
     //Delete Row, NSP and See Tiers/Contracts - when click row buttons
-
     lineNoteValue; //To show in pop up lineNoteValue
-
     handleRowAction(event){
         this.dataRow = event.detail.row;
         switch (event.detail.action.name){
@@ -740,7 +751,7 @@ export default class Bl_dataTable extends LightningElement {
             break;
             case 'Linenote':
                 this.lineNotePopUp = true;
-                //TO SHOW NEW LINES IF THERE IS ONE ALREADY IN THE LINE NOTE
+                //TO SHOW NEW LINES IF THERE IS ONE ALREADY IN THE LINE NOTE WITOUT HTML TAGS 
                 if (this.dataRow.linenote != null){
                     let text =  String(this.dataRow.linenote);
                     //console.log(text)
@@ -760,12 +771,11 @@ export default class Bl_dataTable extends LightningElement {
 
     //Tiers Pop Up 
     @track popUpTiers = false;
-
     closeTiers(){
         this.popUpTiers = false;
     }
 
-    //NSP Products
+    //NSP Products TO SHOW NSP FIELDS DEPENDING ON QUOTE 
     @track nspValues = [];
     @track nspOptions = []; 
     @track nspInputs = [];
@@ -821,6 +831,7 @@ export default class Bl_dataTable extends LightningElement {
         })
     }
 
+    //WHEN USER CHANGES A NSP VALUE IN QUOTE, AUTO SAVES IN QUOITE LINE
     changingNSP(event){
         this.showNSP = false;
         let prop = ((event.target.label).toLowerCase()).replaceAll(/\s/g,''); 
@@ -845,6 +856,7 @@ export default class Bl_dataTable extends LightningElement {
         
     }
 
+    //CLOSE THE NSP POP UP AND RELOAD TABLE TO KEEP VALUES IN ALL COMPONENTS UPDATED 
     @track nspProduct = false;
     closeNsp(){
         if(JSON.stringify(this.quoteLines) != this.quotelinesString){
@@ -865,7 +877,7 @@ export default class Bl_dataTable extends LightningElement {
     @track dataPages = []; 
     @track totalPage = 0;
     @track pageSize = 10; 
-
+    //PAGINATION CONTROL 
     previousHandler() {
         if (this.page > 1) {
             this.page = this.page - 1; //decrease page by 1
@@ -917,17 +929,17 @@ export default class Bl_dataTable extends LightningElement {
 
     //Line Notes Pop-Up
     @track lineNotePopUp = false; 
-
     closeLineNotes(){
         this.lineNotePopUp = false;
         this.newLineNote = '';
     }
-
+    //CHANGING LINE NOTES
     @track newLineNote; 
     changingLineNote(event){
         //console.log(event.detail.value); 
         this.newLineNote = event.detail.value;
     }
+    //SABING LINE NOTES, UPDATING TAB AND DELETING HTML TAGS 
     saveLineNote(){
         let index = this.quoteLines.findIndex(x => x.id === this.dataRow.id);
         let text = this.newLineNote;

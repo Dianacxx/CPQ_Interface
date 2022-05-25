@@ -29,6 +29,7 @@ export default class Bl_productNotesTable extends LightningElement {
     @track totalPage = 0;
     @track pageSize = 5; 
 
+    //UPDATE PAGE VIEW WHEN CHANGE OF PAGE 
     updateNotes(){
         this.quoteNotesLength = this.quoteNotes.length; 
         this.totalRecountCount = this.quoteNotesLength;  
@@ -36,6 +37,8 @@ export default class Bl_productNotesTable extends LightningElement {
         this.searchable = this.quoteNotes.slice(0,this.pageSize); 
         this.endingRecord = this.pageSize;
     }
+
+    //PAGE NAVIGATION CONTROL FUNCTIONS (Pagination)
     previousHandler() {
         if (this.page > 1) {
             this.page = this.page - 1; //decrease page by 1

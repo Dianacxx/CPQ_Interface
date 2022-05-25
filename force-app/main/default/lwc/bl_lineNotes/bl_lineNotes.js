@@ -1,18 +1,17 @@
 import { LightningElement, api, track  } from 'lwc';
 
-//NOT USE BECAUSE IT MAKES THE TABLE LINE NOTES LOOK IN ONE LINE. 
-//import displayFieldSet from '@salesforce/apex/QuoteController.displayFieldSet'; 
-
 export default class Bl_lineNotes extends LightningElement {
     @api quotelinesString; 
     @api quotelines = [];
     @track columns = [];
+
     connectedCallback(){
         if(this.quoteNotesString=='[]'){
             //console.log('THERE IS NO LINE NOTES');
         } else {
             this.quotelines = JSON.parse(this.quotelinesString); 
             this.quotelines.forEach((quoteline)=>{ 
+                //GETTING THE QUOTES OUT OF THE PRODUCTS NAMES FIELDS. 
                 if(quoteline.product.includes('"')){
                 quoteline.product = quoteline.product.replace(/['"]+/g, '');
             }});
@@ -29,7 +28,7 @@ export default class Bl_lineNotes extends LightningElement {
     @track totalRecountCount = 0;
     @track totalPage = 0;
     @track pageSize = 10; 
- 
+    //pagination control
     updateLineNotes(){
         this.quotelinesLength = this.quotelines.length; 
         this.totalRecountCount = this.quotelinesLength;  

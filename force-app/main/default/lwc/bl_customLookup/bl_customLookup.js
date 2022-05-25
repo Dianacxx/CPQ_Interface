@@ -1,10 +1,8 @@
 import { LightningElement, api, wire, track } from 'lwc';
-import search from '@salesforce/apex/SearchLookupController.search'; 
-
-//import { subscribe, publish, MessageContext } from 'lightning/messageService';
-//import UPDATE_INTERFACE_CHANNEL from '@salesforce/messageChannel/update_Interface__c';
-
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+
+//APEX METHOD TO SEARCH PRODUCTS IN QLE
+import search from '@salesforce/apex/SearchLookupController.search'; 
 
 export default class Bl_customLookup extends LightningElement {
     @api recordId; 
@@ -17,7 +15,8 @@ export default class Bl_customLookup extends LightningElement {
     @track isValueSelected;
     @track blurTimeout;
     @track searchTerm;
-    //css
+
+    //CSS CLASS
     @track boxClass = 'slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click slds-has-focus';
     @track inputClass = '';
     
@@ -25,25 +24,9 @@ export default class Bl_customLookup extends LightningElement {
     @track optionIsCustomerPart = ''; 
 
     connectedCallback(){
-        //this.subscribeToMessageChannel();
     }
- 
-    /*
-    @wire(MessageContext)
-    messageContext;
 
-    subscribeToMessageChannel() {
-      this.subscription = subscribe(
-        this.messageContext,
-        UPDATE_INTERFACE_CHANNEL,
-        (message) => this.handleMessage(message)
-      );
-    }
-    handleMessage(message) {
-        //console.log('Not neccessary yet - Lookup Componenet message')
-    }
-    */
-    //Lookup field combobox options, ganlde change
+    //Lookup field combobox options, handle change to type of search
     get productOptions() {
         return [
             { label: 'Product Name', value: 'name' },
@@ -51,6 +34,8 @@ export default class Bl_customLookup extends LightningElement {
             { label: 'Competitor Part Number', value: 'competitor' },
         ];
     }
+
+    //WHEN THE USER CHANGE THE TYPE OF SEARCH
     @track productSelected = 'name';
     handleProductSelected(event) {
         this.productSelected = event.detail.value;
@@ -59,6 +44,7 @@ export default class Bl_customLookup extends LightningElement {
     @track customerObj; 
     @track customerDisplay = false; 
     @track competitorDisplay = false; 
+
     //Calling LookUp Search with Default 'Product Name' (name)
     @wire(search, {searchTerm : '$searchTerm', quoteId: '$recordId', option: '$productSelected'})
     wiredRecords({ error, data }) {
@@ -71,19 +57,13 @@ export default class Bl_customLookup extends LightningElement {
             } else {
                 if (!(this.productSelected == 'name' )) { 
                     for (let k = 0; k< this.records.length; k++){
-                        //console.log('Values of this.records ' + Object.getOwnPropertyNames(this.records[k]));
-                        //console.log('Customer_Part_Cross_References__r '+ this.records[k].Customer_Part_Cross_References__r)
                         if(this.records[k].hasOwnProperty('Customer_Part_Cross_References__r')){
                             this.customerDisplay = true; 
                             this.competitorDisplay = false;
-                            //customer = this.records[k].Customer_Part_Cross_References__r;
-                            //console.log('Customer = '+ customer[k].Customer_Item_Number__c);
                         }
                         else if(this.records[k].hasOwnProperty('Competitor_Cross_References__r')){
                             this.competitorDisplay = true; 
                             this.customerDisplay = false; 
-                            //competitor = this.records[k].Competitor_Cross_References__r;
-                            //console.log('competitor = '+ JSON.stringify(competitor[k]));
                         } 
                     } 
                 }
@@ -102,6 +82,8 @@ export default class Bl_customLookup extends LightningElement {
             this.dispatchEvent(evt);
         }
     }
+
+    //CHANGING CSS CLASS DEPENDING BEHAVIOR
     handleClick() {
         this.searchTerm = '';
         this.inputClass = 'slds-has-focus';
@@ -112,6 +94,8 @@ export default class Bl_customLookup extends LightningElement {
             this.boxClass = 'slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click slds-has-focus'
         }, 300);
     }
+
+    //WHEN A PRODUCT IN THE LIST HAS BEEN SELECTED 
     onSelect(event) {
         let selectedId = event.currentTarget.dataset.id;
         let selectedName = event.currentTarget.dataset.name;
@@ -128,10 +112,7 @@ export default class Bl_customLookup extends LightningElement {
         
     }
 
-    handleRemovePill() {
-        this.isValueSelected = false;
-    }
-
+    //WHEN THE SEARCH BAR HAS CHANGED, THE NEW SEARCH IS DONE
     onChange(event) {
         this.searchTerm = event.target.value;
         //console.log('search Term : '+ this.searchTerm);
@@ -145,6 +126,7 @@ export default class Bl_customLookup extends LightningElement {
                 if (this.records.length == 0){
                     this.records = [{"Id":"norecords","Name":"NO RECORDS","IsActive":true}];
                 } else {
+                    //TO SHOW CUTOMER PART OR COMPETITOR REFERENCE IN THE SEARCH
                 if (!(this.productSelected == 'name' )) { 
                     for (let k = 0; k< this.records.length; k++){
                         if(this.records[k].hasOwnProperty('Customer_Part_Cross_References__r')){

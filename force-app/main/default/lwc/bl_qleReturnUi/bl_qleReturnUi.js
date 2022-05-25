@@ -1,5 +1,7 @@
 import { LightningElement, api } from 'lwc';
 import { NavigationMixin } from 'lightning/navigation';
+
+//APEX METHODS TO GET THE QUOTE LINE INFO TO RETURN FROM SF QLE TO CUSTOM QLE
 import gettingRecordId from '@salesforce/apex/blMockData.gettingRecordId';
 import gettingQuoteName from '@salesforce/apex/blMockData.gettingQuoteName';
 
@@ -7,14 +9,18 @@ export default class Bl_qleReturnUi extends NavigationMixin(LightningElement) {
     @api waiting = false; 
     @api recordId; 
     @api quoteName; 
+
     connectedCallback(){
         this.waiting = false; 
         //console.log('IN THE INTERMEDIAL COMPONENT');
+
+        //QUETTING QUOTE ID TO RETURN THERE
         gettingRecordId()
         .then((data)=>{
             this.recordId = data; 
             this.waiting = true; 
             //console.log('Record ID'+this.recordId); 
+            //JUST TO SHOW QUOTE NUMBER 
             gettingQuoteName({quoteId: this.recordId})
             .then((data)=>{
                 this.quoteName = data; 

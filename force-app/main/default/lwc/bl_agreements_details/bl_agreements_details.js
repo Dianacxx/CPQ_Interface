@@ -10,13 +10,15 @@ import REVIEW_SCHEDULE_FIELD from '@salesforce/schema/Contract.Review_Schedule__
 import Id from '@salesforce/user/Id';
 import UserNameFld from '@salesforce/schema/User.Name';
 
-
+//Apply to chidlren accounts 
 import applyToChildAgreement from '@salesforce/apex/applyToChildAgreement.applyToChildAgreementProcess'; 
+
+
 
 export default class Bl_agreements_details extends NavigationMixin(LightningElement) {
 
-     @api recordId;
-    @track loadingSecondPage = false;
+      @api recordId;
+      @track loadingSecondPage = false;
      /* change handlers */
 
      name;
@@ -32,7 +34,6 @@ export default class Bl_agreements_details extends NavigationMixin(LightningElem
      
      nameChangeHandler(event){
          this.name = event.target.value;
-
      }
      typeChangeHandler(event){
          this.type = event.target.value;
@@ -56,9 +57,6 @@ export default class Bl_agreements_details extends NavigationMixin(LightningElem
      handleApplyToChild(){
          //console.log('Apply to child');
          this.applyToChild = !this.applyToChild; 
-
-         //Calling the save method of the agreement if it automatically saves when clicked. 
-         //this.createAgreement();
      }
 
      /* Save and Next button  */
@@ -81,9 +79,8 @@ export default class Bl_agreements_details extends NavigationMixin(LightningElem
             });
 
      }
-
-     
     createAgreement(){
+
         this.loadingSecondPage = true;
         if (this.name == '' || this.name == null || this.type == '' || this.type == null ||
         this.schedule == '' || this.schedule == null || this.reviewer == '' || this.reviewer == null ||
@@ -96,84 +93,88 @@ export default class Bl_agreements_details extends NavigationMixin(LightningElem
             this.dispatchEvent(event);
             this.loadingSecondPage = false;
         } else {
-            var fields = { 'AccountId' : this.recordId, 'Agreement_Name__c' : this.name, 'Agreement_Type__c' : this.type, 'Review_Schedule__c' : this.schedule, 'Reviewer__c' : this.reviewer, 'StartDate' : this.startDate, 'ContractTerm' : this.term};
-            var objRecordInput = {'apiName' : 'Contract', fields};
-            createRecord(objRecordInput)
-            .then(createdAgreement => {
-                const event = new ShowToastEvent({
-                    title: 'Agreement Created Successfully',
-                    message:'Agreement created with Id: ' +createdAgreement.id,
-                    variant:'success'
-                });
-                this.dispatchEvent(event);
-                if(this.applyToChild){
-                    console.log('Apply to child');
-                    applyToChildAgreement({agreementId: createdAgreement.id, accountId: this.recordId})
-                    .then((data)=>{
-                        if (data == 'Yes'){
-                            /*
+                         
+                var fields = { 'AccountId' : this.recordId, 'Agreement_Name__c' : this.name, 'Agreement_Type__c' : this.type, 'Review_Schedule__c' : this.schedule, 'Reviewer__c' : this.reviewer, 'StartDate' : this.startDate, 'ContractTerm' : this.term};
+                var objRecordInput = {'apiName' : 'Contract', fields};
+            
+                createRecord(objRecordInput).then(
+                    createdAgreement => {
+                    const event = new ShowToastEvent({
+                        title: 'Agreement Created Successfully',
+                        message:'Agreement created with Id: ' +createdAgreement.id,
+                        variant:'success'
+                    });
+                    this.dispatchEvent(event);
+
+                    if(this.applyToChild){
+                        console.log('Apply to child');
+                        applyToChildAgreement({agreementId: createdAgreement.id, accountId: this.recordId})
+                        .then((data)=>{
+                            if (data == 'Yes'){
+                                /*
+                                const event = new ShowToastEvent({
+                                    title: 'Success Creating the Agreement to children Accounts',
+                                    message: 'The children have the agreement applied.',
+                                    variant:'success'
+                                });
+                                this.dispatchEvent(event);
+                                */
+                                console.log('Success Creating the Agreement to children Accounts');
+                            } else if (data == 'No'){
+                                const event = new ShowToastEvent({
+                                    title: 'There are not children Accounts related to this Account',
+                                    message: '',
+                                    variant:'info'
+                                });
+                                this.dispatchEvent(event);
+                            } else {
+                                const event = new ShowToastEvent({
+                                    title: 'The Apex method has something wrong',
+                                    message: 'This message is never going to be seen unless the apex method has an error returnig yes or no',
+                                    variant:'error'
+                                });
+                                this.dispatchEvent(event);
+                            }
+                        })
+                        .catch((error)=>{
+                            console.log(error);
                             const event = new ShowToastEvent({
-                                title: 'Success Creating the Agreement to children Accounts',
-                                message: 'The children have the agreement applied.',
-                                variant:'success'
-                            });
+                                title: 'Error Creating the Agreement to children Accounts',
+                                message: 'Open console to see Error', variant:'error' });
                             this.dispatchEvent(event);
-                            */
-                            console.log('Success Creating the Agreement to children Accounts');
-                        } else if (data == 'No'){
-                            const event = new ShowToastEvent({
-                                title: 'There are not children Accounts related to this Account',
-                                message: '',
-                                variant:'info'
-                            });
-                            this.dispatchEvent(event);
-                        } else {
-                            const event = new ShowToastEvent({
-                                title: 'The Apex method has something wrong',
-                                message: 'This message is never going to be seen unless the apex method has an error returnig yes or no',
-                                variant:'error'
-                            });
-                            this.dispatchEvent(event);
+                        })
+                    }
+
+
+
+
+                    /* Open screen Two */
+                    var compDefinition = {
+                        componentDef: "c:bl_agreements_ui_2",
+                        attributes: {
+                            recordId: this.recordId,
+                            agreementId : JSON.stringify(createdAgreement.id)
                         }
-                    })
-                    .catch((error)=>{
-                        console.log(error);
-                        const event = new ShowToastEvent({
-                            title: 'Error Creating the Agreement to children Accounts',
-                            message: 'Open console to see Error', variant:'error' });
-                        this.dispatchEvent(event);
-                    })
-                }
-                /* Open screen Two */
-                
-                var compDefinition = {
-                    componentDef: "c:bl_agreements_ui_2",
-                    attributes: {
-                        recordId: this.recordId,
-                        agreementId : JSON.stringify(createdAgreement.id)
-                    }
-                };
-                this.loadingSecondPage = false;
-                // Base64 encode the compDefinition JS object
-                var encodedCompDef = btoa(JSON.stringify(compDefinition));
-                this[NavigationMixin.Navigate]({
-                    type: 'standard__webPage',
-                    attributes: {
-                        url: '/one/one.app#' + encodedCompDef
-                    }
-                });
-                
-            })
-            .catch(error => {
-                console.log(error)
-                const event = new ShowToastEvent({
-                    title: 'SERVER ERROR',
-                    message:'Open console to see error.',
-                    variant:'error'
-                });
-                this.dispatchEvent(event);
-            });     
-        }
+                    };
+                    // Base64 encode the compDefinition JS object
+                    var encodedCompDef = btoa(JSON.stringify(compDefinition));
+                    this[NavigationMixin.Navigate]({
+                        type: 'standard__webPage',
+                        attributes: {
+                            url: '/one/one.app#' + encodedCompDef
+                        }
+                    });
+
+                })
+                .catch(error => {
+                    const event = new ShowToastEvent({
+                        title: 'ERROR!',
+                        message:'the following error has occured: ',
+                        variant:'error'
+                    });
+                    this.dispatchEvent(event);
+                });     
+            }
     }
 
      /* Cancel button */

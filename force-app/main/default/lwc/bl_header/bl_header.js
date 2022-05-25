@@ -1,7 +1,9 @@
 import { LightningElement, api, wire, track} from 'lwc';
-//To get quote information
+
+//TO GET QUOTE INFORMATION
 import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
 
+//GETTING FIELDS OF QUOTE USED
 import NAME_FIELD from '@salesforce/schema/SBQQ__Quote__c.Name';
 import ACCOUNT_NAME_FIELD from '@salesforce/schema/SBQQ__Quote__c.SBQQ__Account__r.Name'; 
 import CONTACT_NAME_FIELD from '@salesforce/schema/SBQQ__Quote__c.SBQQ__PrimaryContact__r.Name';
@@ -10,7 +12,6 @@ import END_USER_PROJECT_FIELD from '@salesforce/schema/SBQQ__Quote__c.SBQQ__Oppo
 import DATE_FIELD from '@salesforce/schema/SBQQ__Quote__c.SBQQ__StartDate__c';
 import END_USER_ACC_FIELD  from '@salesforce/schema/SBQQ__Quote__c.SBQQ__Opportunity2__r.AccountId';
 import END_USER_ACC_NAME_FIELD  from '@salesforce/schema/Account.Name';
-
 import REVISION_NUMBER_FIELD from '@salesforce/schema/SBQQ__Quote__c.Review__c';
 
 //To show error message
@@ -65,8 +66,8 @@ export default class Bl_header extends LightningElement {
             this.dispatchEvent(evt);
         } 
     }
+
     //GET ACCOUNT OF OPPORTUNITY INFORMATION
-    
     @wire(getRecord, { recordId: '$opportEndUserID', fields: [END_USER_ACC_NAME_FIELD]})
     accountData({error, data}){
         if (data){

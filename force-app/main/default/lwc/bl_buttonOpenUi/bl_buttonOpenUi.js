@@ -4,6 +4,8 @@ import { ShowToastEvent } from 'lightning/platformShowToastEvent'; //To show mes
 
 //SAVING RECORD ID IN CUSTOM ACTION TO QLE
 import savingRecordId from '@salesforce/apex/blMockData.savingRecordId'; 
+
+//CHECKING IF THE QUOTE HAS A PRICE BOOK ASSIGNED
 import checkPricebookInQuote from '@salesforce/apex/blMockData.checkPricebookInQuote'; 
 
 export default class ButtonOpenUi extends NavigationMixin(LightningElement) {
@@ -14,8 +16,10 @@ export default class ButtonOpenUi extends NavigationMixin(LightningElement) {
     @track disableButton = false;
 
     @api quoteLinesAuxiliar; 
-    //NAVIGATION TO OPEN UI
+    //NAVIGATION TO OPEN UI 
     handleNavigateUi(){
+
+        //NAVIGATE IF IT HAS A PRICEBOOK
         checkPricebookInQuote({quoteId: this.recordId})
         .then((data)=>{
             if (data == 'YES'){

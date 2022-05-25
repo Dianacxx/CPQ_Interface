@@ -1,44 +1,54 @@
 import { LightningElement, api, wire, track } from 'lwc';
 
+//CHANNEL TO CONNECT SOME COMPONENTS THAT ARE NOT RELATED
 import { publish, MessageContext } from 'lightning/messageService';
 import UPDATE_INTERFACE_CHANNEL from '@salesforce/messageChannel/update_Interface__c';
 
+//NAVIGATION TO OTHER WINDOWS FUNCTIONS + NOTIFICATION FUNCTIONS
 import { NavigationMixin } from 'lightning/navigation';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
-//QuoteLines and Notes info 
+//APEX METHOD TO PRINT QUOTE LINES A PRODUCT NOTES
 import printQuoteLines from '@salesforce/apex/QuoteController.printQuoteLinesv2';
 import printNotes from '@salesforce/apex/QuoteController.printNotes'; 
-//import printNotes from '@salesforce/apex/blMockData.printNotes'; 
 
-//Quote Saver
+//APEX METHOD TO GET QUOTE TOTAL
 import getQuoteTotal from '@salesforce/apex/QuoteController.getQuoteTotal'; 
+
+//APEX METHOD TO CREATE/EDIT/DELETE QUOTE LINES
 import quoteLineCreator from '@salesforce/apex/QuoteController.quoteLineCreator'; 
 import editAndDeleteQuotes from '@salesforce/apex/QuoteController.editAndDeleteQuotes';
+
+//APEX METHOD TO DELETE THE RECORD THAT SAVES THE QUOTE ID 
 import deletingRecordId from '@salesforce/apex/blMockData.deletingRecordId';
+
 
 export default class UserInterface extends NavigationMixin(LightningElement) {
     @api recordId; //Quote Record Id that opens the UI
     @api quotelinesString; //Quotelines information in string
     @api quoteNotesString; //Quotelines Notes in string 
-    @api totalValue;
-    @api originalquotelinesString; 
+    @api totalValue; //quote total
+    @api originalquotelinesString; //String to avoid calling saving methods if nothing changes 
     @api disableButton; //To active clone button
 
     @track showPSTab = false; //To open Product Selection TAB
-    @track activeTab = 'UI'; 
+    @track activeTab = 'UI';  //Show the active tab (QLE or Product selection)
 
-    @track spinnerLoadingUI = false;
-    @track totalValueLoading = false;
-    @track errorInQuotes = false; //To show error message when something goes wrong
+    @track spinnerLoadingUI = false; //loading spinner boolean
+    @track totalValueLoading = false; //loagind bar boolean for quote total
+    @track errorInQuotes = false; //To show error message when something goes really wrong
+
     //Initialize UI
     connectedCallback(){
-        this.disableButton = true; 
+
+        //To let everything as it starts
+        this.disableButton = true;  
         this.spinnerLoadingUI = true;
         //console.log('Record Id: '+this.recordId);
         this.desactiveCloneButton();
 
-        //Not replace with callData() because there we can make more changes when update data
+        //Calling the methods to print the information
+        //Note: not replace with callData() because there we can make more changes when update data
         printQuoteLines({ quoteId: this.recordId})
         .then(data =>{
             if (data){
@@ -48,25 +58,21 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 this.isLoading = true; 
                 //console.log('quoteLines String SUCCESS ');
                 //console.log('quoteLines String SUCCESS: '+ this.quotelinesString);
-                if (this.quoteLinesString == '[]'){
+                //If there are not quote lines in quote (to avoid errors in child components)
+                if (this.quoteLinesString == '[]'){ 
                     this.quoteLinesString = '[id: \"none\"]';
                     //console.log(this.quoteLinesString);
                     //console.log('No quotelines yet');
-                    const payload = { 
-                        dataString: this.quotelinesString,
-                        auxiliar: 'newtable'
-                      };
-                    publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
                 }
                 const payload = { 
                     dataString: this.quotelinesString,
                     auxiliar: 'newtable'
                   };
                 publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
-                let quoteLines = JSON.parse(this.quotelinesString);
-                console.log('Laura is here!');
-                console.log(JSON.stringify(quoteLines[0]));
-                console.log(quoteLines[0]); 
+                //let quoteLines = JSON.parse(this.quotelinesString);
+                //console.log(JSON.stringify(quoteLines[0]));
+
+                //Apex method to print quote total at the beggining 
                 getQuoteTotal({quoteId: this.recordId})
                 .then((data)=>{
                         //console.log('NEW QUOTE TOTAL data');
@@ -75,7 +81,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                         this.spinnerLoadingUI = false;
                 })
                 .catch((error)=>{
-                        //console.log('NEW QUOTE TOTAL error');
+                        console.log('NEW QUOTE TOTAL error');
                         console.log(error);
                         this.spinnerLoadingUI = false;
                 }); 
@@ -84,9 +90,11 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         .catch(error =>{
             if (error){
                 this.quotelinesString = undefined; 
-                //console.log('quoteLines String ERROR:');
+                console.log('quoteLines String ERROR:');
                 console.log(error);
                 let messageError; 
+
+                //THESE CONDITIONALS ARE TO SHOW THE USER THE EXACT ERROR MESSAGE
                 if (error.hasOwnProperty('body')){
                     if(error.body.hasOwnProperty('pageErrors')){
                         if(error.body.pageErrors[0].hasOwnProperty('message')){
@@ -115,7 +123,6 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         .then(data =>{
             if (data){
                 this.quoteNotesString = data; 
-                //console.log('notes string SUCCESS');
                 //console.log('notes string SUCCESS: '+ this.quoteNotesString);
                 if (this.quoteNotesString == '[]'){
                     this.quoteNotesString = '[name: \"none\"]';
@@ -129,7 +136,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 this.quoteNotesString = undefined; 
                 this.disableButton = true;
                 this.quoteNotesString = '[name: \"none\"]';
-                //console.log('notes string ERROR: ');
+                console.log('notes string ERROR: ');
                 console.log(error);
                 let messageError; 
                 if (error.hasOwnProperty('body')){
@@ -155,8 +162,9 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         })
     }
 
-    //CALL DATA ONCE AGAIN FROM SF WHEN SAVE BUTTON CLICKED
+    //CALL DATA ONCE AGAIN FROM SF WHEN SAVE BUTTON CLICKED (UPDATE DATA IN UI WITH ID'S FROM SF)
     callData(){
+        //IF THERE IS AN ERROR TO AVOID DELETING WHAT IS IN THE UI 
         if (this.notGoodToGoBundle[0] || this.notGoodToGoBundle[1]){
             const evt = new ShowToastEvent({
                 title: 'Data from Salesforce is not going to load.',
@@ -169,6 +177,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         } else {
             this.spinnerLoadingUI = true;
             this.totalValueLoading = true;
+            //ALL THE SET TIMEOUT IS A DELAY WHILE SF DO THE CALCULATIONS AND SAVES THE INFO, THIS CAN CHANGE IN THE FUTURE
             setTimeout(()=>{
                 printQuoteLines({ quoteId: this.recordId})
                 .then(data =>{
@@ -193,11 +202,10 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                             //console.log(data);
                             this.totalValue = data;
                             this.totalValueLoading = false;
-                            //console.log(`Call to refresh data took ${endTime - startTime} milliseconds`)
                             setTimeout(()=>{this.spinnerLoadingUI = false;}, 1000);
                         })
                         .catch((error)=>{
-                            //console.log('NEW QUOTE TOTAL error');
+                            console.log('NEW QUOTE TOTAL error');
                             console.log(error);
                             this.spinnerLoadingUI = false;
                         }); 
@@ -243,8 +251,9 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                         this.error = error;
                         this.disableButton = true;
                         this.quoteNotesString = '[name: \"none\"]';
-                        //console.log('notes string ERROR: ');
-                        //console.log(this.error);
+                        
+                        console.log('notes string ERROR: ');
+                        console.log(this.error);
                         const evt = new ShowToastEvent({
                             title: 'UI NOTES Error',
                             message: 'Unexpected error using UI - NOTES',
@@ -262,7 +271,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     @wire(MessageContext)
     messageContext;
 
-    //WHEN TABLE OF QUOTELINES IS CHANGED
+    //WHEN TABLE OF QUOTELINES IS CHANGED (TO UPDATE ALL THE COMPONENTS)
     updateTableData(event){
         //console.log('Deleted, Clone, Reorder OR Edited Values');
         this.quotelinesString = event.detail; 
@@ -275,16 +284,9 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         this.newLineNote();    
     }
 
-    /*
-    //WHEN NOTES DELETED
-    updateTableDataNotes(event){
-        console.log('Deleted Notes Values');
-        this.quoteNotesString = event.detail;
-    }
-    */
 
     @track disableReorder; //Only reorder quotelines
-    //WHEN CHANGE FROM TAB TO TAB 
+    //WHEN CHANGE FROM TAB TO TAB IN QLE SECTION 
     handleActive(event){
         if (event.target.value=='Notes'){
             //this.quoteNotesString = this.quoteNotesString; 
@@ -307,7 +309,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             this.disableReorder = true;
             this.disableButton = true;
             this.desactiveCloneButton();
-        } else {
+        } else { //MUST BE 'QUOTE HOME)
             //this.quotelinesString =  this.quotelinesString; 
             //console.log('Quotelines');
             this.activeCloneButton();
@@ -320,16 +322,17 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         }      
     }
 
-    //TO CLONE BUTTON ACTIVE
-    
+    //TO ACTIVE CLONE BUTTON 
     activeCloneButton(){
         this.disableButton = false;
     }
-
+    //TO DESACTIVE CLONE BUTTON 
     desactiveCloneButton(){
         this.disableButton = true;
         //console.log('Clone/Apply Button desactive');
     }
+
+    //TO UPDATE COMPONENTS AND BUTTONS WHEN CLONE ACTION
     handleClone(){
         const payload = { 
             dataString: null,
@@ -357,10 +360,11 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         this.spinnerLoadingUI = true;
         this.notSaveYet = false; 
         let quoteEdition = JSON.parse(this.quotelinesString);
-        console.log('Before Saving ');
-        console.log(this.quotelinesString);
+        //console.log('Before Saving ');
+        //console.log(this.quotelinesString);
         
         let quotesToFill = []; 
+        //TO GET ERROR IF THE USER SAVES WITOURH FILLING REQUIRED FIELDS IN TABLE
         for(let i = 0; i< quoteEdition.length; i++){
             //console.log('quoteline '+i); 
             if (quoteEdition[i].qlevariableprice == 'Cable Length' && quoteEdition[i].isNSP == false){
@@ -369,6 +373,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                     quotesToFill.push(i+1);
                 }
             } else {
+                //OR MAKE IT EASY TO THE USER BUT FILLING THE ONES THAT NOT REQUIRED ANY ACTION
                 if(!quoteEdition[i].lengthuom){
                     //console.log('Is NA product');
                     quoteEdition[i].lengthuom = 'NA';
@@ -376,7 +381,9 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 }
             }
         }
+
         this.quotelinesString = JSON.stringify(quoteEdition);
+        //SHOW THE ERROR OR CONTINUE SAVING PROCESS
         if(this.notSaveYet){
             const evt = new ShowToastEvent({
                 title: 'Required Fields before saving',
@@ -396,6 +403,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
 
     @api notGoodToGoBundle = [false, false]; 
 
+    //WHEN A DICOUNT IS ADD TO MULTIPLE LINES, AND APPLY BUTTON IS CLICKED
     handleDiscount(){
         this.handleSaveAndCalculate();
         this.desactiveCloneButton();
@@ -411,6 +419,8 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         return new Promise((resolve) => {
             //console.log('Record ID: '+this.recordId);
             let quoteEdition = JSON.parse(this.quotelinesString);
+
+            //FILLING FIELDS IF USER MAKES A MISTAKE OR AVOID FILLING THEM 
             for(let i = 0; i< quoteEdition.length; i++){
                 if(quoteEdition[i].quantity == null || quoteEdition[i].quantity == 'null'){
                     quoteEdition[i].minimumorderqty == null ? quoteEdition[i].quantity = 1 : quoteEdition[i].quantity = quoteEdition[i].minimumorderqty;
@@ -436,6 +446,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             this.quotelinesString = JSON.stringify(quoteEdition);
             //console.log('Before Editing but with quantity and nup: '+this.quotelinesString);
 
+            //APEX METHOD TO EDIT OR DELETE QUOTE LINES FROM SF
             editAndDeleteQuotes({quoteId: this.recordId, quoteLines: this.quotelinesString})
             .then(()=>{
                 const payload = { 
@@ -444,7 +455,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 };
                 this.notGoodToGoBundle[0] = false; 
                 publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload);   
-                console.log('1. Quote lines updated, now proceed with new quote lines');
+                console.log('A. Quote lines updated');
             })
             .catch((error)=>{
                 if(this.toPS){
@@ -457,6 +468,8 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 console.log(error);
                 let errorMessage;
                 this.spinnerLoadingUI = false;
+
+                //TO SHOW THE USER THE EXACT ERROR MESSAGE
                 if(error != undefined){
                     if(error.body != undefined){
                         if(error.body.exceptionType != undefined){
@@ -471,12 +484,8 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                         }
                         else if (error.body.fieldErrors!= undefined){
                             let prop = Object.getOwnPropertyNames(error.body.fieldErrors);
-                            //console.log(error.body.fieldErrors[prop[0]][0].message)
                             errorMessage = error.body.fieldErrors[prop[0]][0].message;
-                            //console.log(error); 
                         } else if (error.body.stackTrace != undefined) {
-                            console.log(error.body.stackTrace);
-                            console.log(error.body.message);
                             errorMessage = JSON.stringify(error.body.stackTrace);
                         } else {
                             errorMessage = 'Developer: Open console to see error message';
@@ -501,15 +510,17 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         });
         
     }
+
     //Method that saves the new quote lines created in the UI
     async callCreateMethod(){
         return new Promise((resolve) => {
             //console.log('Record ID: '+this.recordId);
             //console.log('Before Creating New: '+this.quotelinesString);
 
+            //APEX METHOD TO CREATE NEW QUOTELINES
             quoteLineCreator({quoteId: this.recordId, quoteLines: this.quotelinesString})
             .then(()=>{
-                console.log('2. New quote lines created, now proceed with new total');
+                console.log('B. New quote lines created');
                 const payload = { 
                     dataString: this.quotelinesString,
                     auxiliar: 'updatetable'
@@ -521,21 +532,6 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                     this.callData();
                     this.notGoodToGoBundle[1] = false;
                     //this.spinnerLoadingUI = false;
-
-                    /*COMMENT THIS ONLY TO AVOID SHOWING THIS WHEN THERE IS AN ERROR
-                    if(!this.notGoodToGoBundle[0] && !this.notGoodToGoBundle[1]){
-                        setTimeout(() => {
-                        const evt = new ShowToastEvent({
-                            title: 'Success saving the new quote lines',
-                            message: 'New quote lines saved on Salesforce',
-                            variant: 'success',
-                            mode: 'dismissable'
-                        });
-                        this.dispatchEvent(evt);
-                        }, 5000);
-                    }*/
-                    
-                    
                 }, 5000);
                 
             })
@@ -563,11 +559,8 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                         }
                         else if (error.body.fieldErrors!= undefined){
                             let prop = Object.getOwnPropertyNames(error.body.fieldErrors);
-                            console.log(error.body.fieldErrors[prop[0]][0].message)
                             errorMessage = JSON.stringify(error.body.fieldErrors[prop[0]]);
-                            //console.log(error); 
                         } else if (error.body.stackTrace != undefined) {
-                            console.log(error.body.stackTrace)
                             errorMessage = JSON.stringify(error.body.stackTrace);
                         }
                         else {
@@ -592,8 +585,10 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         resolve();
         });   
     }
+
     //NAVIGATE TO QUOTE RECORD PAGE 
     async exitToRecordPage(){
+        //DELETING THE RECORD WITH THE QUOTE ID TO AVOID USING SF MEMORY
         deletingRecordId({quoteId: this.recordId})
         .then(()=>{
             console.log('Quote Id Record for this user was delete'); 
@@ -603,6 +598,8 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             console.log(error); 
         })
         this.spinnerLoadingUI = true;
+
+        //NAVIGATE TO RECORD PAGE 
         setTimeout(() => {
             this.spinnerLoadingUI = false;
             this[NavigationMixin.Navigate]({
@@ -616,10 +613,13 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         }, 1000);
   
     }
-    //SAVING BEFORE QUOTE RECORD PAGE
+
+    //SAVING BEFORE QUOTE NAVIGATE RECORD PAGE
     async navigateToQuoteRecordPage() {
         let quoteEdition = JSON.parse(this.quotelinesString);
         let quotesToFill = []; 
+
+        //SAME PROCESS AS SAVING AND CALCULATE BUT ADDING THE NAVIGATION PROCESS IF IT IS GOOD TO GO
         for(let i = 0; i< quoteEdition.length; i++){
             if (quoteEdition[i].qlevariableprice == 'Cable Length' && 
                 (quoteEdition[i].isNSP == false || quoteEdition[i].isNSP == false)){
@@ -657,8 +657,8 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         this.showPSTab = false; 
         this.activeTab = 'UI';
     }
+
     //NAVIGATE BACK TO UI FROM PRODUCT SELECTION TAB WHEN SAVE AN EXIT
-    //(MISSING SAVE IN ARRAY)
     @api girdDataFocTabAdd = [];
     @api girdDataAcaTabAdd = []; 
     @api girdDataConnTabAdd = []; 
@@ -678,12 +678,15 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     @track toPS = false; 
     async navitageToProductSelection(){
         this.toPS = true;
+
+        //BEFORE NAVIGATE TO PRODUCT SELECTION, QUOTE LINES IN QLE ARE SAVED. IF THERE IS AN ERROR
+        //NOT NAVIGATION AND SHOW THE NOTIFICATION
         if (!(this.originalquotelinesString == this.quotelinesString)){
             await this.handleSaveAndCalculate();
             if ((this.notGoodToGoBundle[0]==true) || (this.notGoodToGoBundle[1]==true)){
                 const evt = new ShowToastEvent({
                     title: 'ERROR Saving the quotelines',
-                    message: 'open console',
+                    message: 'Please, open browser console to see error',
                     variant: 'error',
                     mode: 'dismissable'
                 });
@@ -698,8 +701,8 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             this.notSaveYet = false; 
             let quoteEdition = JSON.parse(this.quotelinesString); 
 
+            //PROCESS TO AVOID USER ERRORS BEFORE SAVING.
             for(let i = 0; i< quoteEdition.length; i++){
-                //console.log('quoteline '+i); 
                 if (quoteEdition[i].qlevariableprice == 'Cable Length' && quoteEdition[i].isNSP == false){
                     if(quoteEdition[i].length<0 || (quoteEdition[i].lengthuom != 'Meters' && quoteEdition[i].lengthuom != 'Feet')){
                         this.notSaveYet = true;
@@ -707,6 +710,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                     }
                 } 
             }
+            //TELL THE USER MISSING FIELDS
             if(this.notSaveYet){
                 this.showPSTab = false; 
                 this.activeTab = 'UI';
@@ -762,7 +766,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     }
 
 
-    //IMPORT LINES PROCESS
+    //IMPORT LINES NAVIGATION PROCESS
     handleImportLines(){
         let link = '/apex/SBQQ__ImportLines?id='+this.recordId; 
         

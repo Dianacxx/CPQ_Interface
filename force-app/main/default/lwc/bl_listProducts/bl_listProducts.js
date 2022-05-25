@@ -2,13 +2,18 @@ import { LightningElement, api , track} from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { NavigationMixin } from 'lightning/navigation';
 
+//APEX METHOD TO SEE PRODUCTS BY FILTERED VALUES
 import filteredProductPrinter from '@salesforce/apex/QuoteController.filteredProductPrinter';
+
+//APEX METHODS TO GET FILTERS IN FILTERED POP UP
 import getFirstFilter from '@salesforce/apex/QuoteController.getFirstFilter'; 
 import getProductFilteringv2 from '@salesforce/apex/QuoteController.getProductFilteringv2';
 import getAdditionalFiltering from '@salesforce/apex/QuoteController.getAdditionalFiltering';
+
+//APEX METHOD TO SEE NSP FIELDS THAT MUST BE FILLED. 
 import NSPAdditionalFields from '@salesforce/apex/QuoteController.NSPAdditionalFields'; 
 
-//THIS ONE HAS A PROBLEM RIGHT NOW FOR MULTIPLE PRODUCTS IN ONE CONVERTION
+//CREATING QUOTE LINES DEPENDING IF IT NSP OR NOT NSP 
 import addSelectorQuoteLine from '@salesforce/apex/QuoteController.addSelectorQuoteLine'; //FOR THE NON NSP PRODUCTS
 import addNSPProducts from '@salesforce/apex/QuoteController.addNSPProducts';
 
@@ -38,10 +43,9 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     connectedCallback(){
         this.filtersLoading = false; 
         this.showLookupList = true;
-        //ADSS Cable - Loose Tube Cable - Premise Cable - SkyWrap Cable - Wrapping Tube Cable
     }
 
-    //Get actions depending on the value and the process in the UI
+    //GET COLUMNS VALUES DEPENDING ON TABLE SHOWN
     constructor() {
         super();
         this.gridColumns = [ 
@@ -53,6 +57,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             { label: '', type: 'action', typeAttributes: { rowActions: this.getRowActions.bind(this) } },
         ];
     }
+
+    //Get row actions depending on the value and the process in the UI
     getRowActions(row, doneCallback) {
         const actions = [];
         if (row.isAdd[0] == false && (row.selectionType == 'Filtered' || row.selectionType == 'Configured') ) {
@@ -78,7 +84,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         //console.log('Row '+ Object.getOwnPropertyNames(row));
         //console.log('Row selectionType '+ row.selectionType);
         switch (event.detail.action.name){
-            case 'add':
+            case 'add': //THE LOOKUP CODE MUST BE FILTERED OR CONFIGURED TO DO SOMETHING IF NOT, DESACTIVE 
                 if (row.selectionType == 'Filtered'){
                     this.trackList = JSON.parse(JSON.stringify(row));
                     this.openFilterPopup = true; 
@@ -98,7 +104,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                     row.selectionType = '';
                 }
             break; 
-            case 'clone':
+            case 'clone': 
                 //console.log('Row attr: '+Object.getOwnPropertyNames(row));
                 //console.log('Clone!')
                 this.showLookupList = false;
@@ -274,6 +280,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             this.goReview = false; 
             this.rowsSelected = JSON.parse(JSON.stringify(event.detail.selectedRows)); 
             for (let i = 0; i< this.rowsSelected.length; i++){
+                //THIS IS DONE TO AVOID DELETING ROWS BY PRODUCT ID (SINCE THE USER CAN ADD THE PRODUCT MULTIPLE TIMES)
                 this.rowsSelected[i]['idTemporal'] = this.rowsSelected[i].Id;
                 this.rowsSelected[i].Id = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(2, 10);
             }
@@ -355,6 +362,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     @track styleProductType; //To handle size of the combobox bar
     //Calling the first product (Required one)
     callFiltersInPopUp(filterGroup){
+
+        //RESTARTING ALL THE VARIABLES TO SHOW THE FILTERS
         this.productType = [];
         this.listTextFilters = []; 
         this.listFilters = []; 
@@ -366,6 +375,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         this.productTypeShow = false; 
         this.filtersLoading = false;
         //console.log('filterGroup: '+ filterGroup);
+
+        //SPECIAL CASE WHEN THE FIRST FILTERED IS NOT PRODUCT TYPE
         if (this.trackList.lookupCode == 'Closures'){ 
             //console.log('WORKING ON CLOSURES' + filterGroup);
             getFirstFilter({filteredGrouping: filterGroup})
@@ -383,6 +394,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                             optionvalue.label.length > sizeOptions ? sizeOptions = optionvalue.label.length : sizeOptions = sizeOptions; 
                         }
                         //console.log('Size option:'+ sizeOptions); 
+
+                        //TO RESIZE THE COMBOBOX DEPENDING ON VALUES DISPLAY
                         if (0 <= sizeOptions && sizeOptions< 10){
                             this.styleProductType = 'size1';
                         } else if (10 <= sizeOptions && sizeOptions< 25){
@@ -430,6 +443,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                         optionvalue.label.length > sizeOptions ? sizeOptions = optionvalue.label.length : sizeOptions = sizeOptions; 
                     }
                     //console.log('Size option:'+ sizeOptions);
+                    //TO RESIZE THE COMBOBOX DEPENDING ON VALUES DISPLAY
                     if (0 <= sizeOptions && sizeOptions< 10){
                         this.styleProductType = 'size1';
                     } else if (10 <= sizeOptions && sizeOptions< 20){
@@ -491,8 +505,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         this.columnsReview = [{label: 'Product Name', fieldName: 'Name', editable: false, },]; 
         getProductFilteringv2({filteredGrouping: this.trackList.lookupCode, typeSelection: this.requiredApex })
         .then((data)=>{
-            console.log('SECOND PRODUCT TYPE');
-            console.log(data);
+            //console.log('SECOND PRODUCT TYPE');
+            //console.log(data);
             let temporalList = JSON.parse(data);
 
             //This line is to check if it is ADSS Cable to allow convertion in feet
@@ -512,6 +526,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                     for (let j = 0; j < optionsFilters.length; j++){
                         optionsFilters[j] = {label: optionsFilters[j].value, value: optionsFilters[j].value}; 
                     }
+                    optionsFilters.unshift({label: '--None--', value: '--None--'}); //ADD VALUE TO DELETE ONE FILTER IF NOT NECESSARY ANYMORE
                     temporalList[i].options = optionsFilters; 
                     this.listFilters.push(temporalList[i]); 
                 }
@@ -522,11 +537,12 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                 this.columnsReview.push({label: temporalList[i].label, fieldName: temporalList[i].apiName, editable: false,hideDefaultActions: true});
 
             }
+
+            //CHANGIN STOCK VALUE TO SHOW ICON VALUES 
             this.columnsFilters.push({label: 'Stock',hideDefaultActions: true, initialWidth: 35, fieldName: "",cellAttributes: {iconName: { fieldName: "Stock__c"}}}); 
             this.columnsReview.push(
                 {label: 'Stock',  fieldName: "",hideDefaultActions: true, initialWidth: 35,cellAttributes: {iconName: { fieldName: "Stock__c"}}},
-                {type: 'button-icon',hideDefaultActions: true, initialWidth: 30,typeAttributes:{ iconName: 'utility:delete', name: 'delete', iconClass: 'slds-icon-text-error'
-            }}); 
+                {type: 'button-icon',hideDefaultActions: true, initialWidth: 30,typeAttributes:{ iconName: 'utility:delete', name: 'delete', iconClass: 'slds-icon-text-error'}}); 
             this.filtersLoading = true; 
             //console.log('Filter List');
             //console.log(JSON.stringify(this.listFilters));
@@ -552,6 +568,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         //console.log('FEET BOX '+ event.detail.checked);
         this.feetToMeters = event.detail.checked; 
     }
+
     //Handle the changes in picklist to show products in FILTER TAB
     handleInputChange(event){
         if (this.filtersForApex.length == 0){
@@ -563,31 +580,21 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             }
         }
         let indexFilter = this.filtersForApex.findIndex(x => x.label == event.target.label); 
-
-        //The convertion from feet to meters. 
-        if (this.feetToMeters && (event.target.label == 'Max Span at Light' || 
-        event.target.label == 'Max Span at Medium' ||  event.target.label == 'Max Span at Heavy' )){
-            //console.log('Convertion from feet to meters'); 
-            let inFeet = event.detail.value / 3.281; 
-            inFeet = inFeet.toFixed(2);
-            if( indexFilter > -1){
-                this.filtersForApex[indexFilter].value = inFeet; 
-            } else {
-                this.filtersForApex.push({label: event.target.label, value: inFeet}); 
-            }
+        if (event.detail.value == '--None--'){
+            if (indexFilter > -1){ this.filtersForApex.splice(indexFilter, 1);} 
         } else {
-            if( indexFilter > -1){
-                this.filtersForApex[indexFilter].value = event.detail.value; 
+            //The convertion from feet to meters. 
+            if (this.feetToMeters && (event.target.label == 'Max Span at Light' || 
+            event.target.label == 'Max Span at Medium' ||  event.target.label == 'Max Span at Heavy' )){
+                //console.log('Convertion from feet to meters'); 
+                let inFeet = event.detail.value / 3.281; 
+                inFeet = inFeet.toFixed(2);
+                indexFilter > -1 ? this.filtersForApex[indexFilter].value = inFeet : this.filtersForApex.push({label: event.target.label, value: inFeet});     
             } else {
-                this.filtersForApex.push({label: event.target.label, value:event.detail.value}); 
+                indexFilter > -1 ? this.filtersForApex[indexFilter].value = event.detail.value : this.filtersForApex.push({label: event.target.label, value:event.detail.value}); 
             }
-        }
-
-
-        //Extra Filters Dependencies.
-        //ONLY FOR CAMBLE ASSEMBLIES + CUSTOMER REQUIRED FILTER
-        //ONLY FOR PIGTAILS + MODEL
-        if ( (this.trackList.lookupCode == 'Cable Assemblies' && event.target.label == 'Customer')  
+            //ONLY FOR CAMBLE ASSEMBLIES + CUSTOMER REQUIRED FILTER OR PIGTAILS + MODEL GETTING ADDITIONAL FILTERS
+            if ( (this.trackList.lookupCode == 'Cable Assemblies' && event.target.label == 'Customer')  
             || (this.trackList.lookupCode == 'Pigtails' && event.target.label == 'Model')){
             //console.log('LookupCode: '+this.trackList.lookupCode + ' Filed: '+ event.target.label);
             //console.log('Customer/Model Value: '+JSON.stringify(event.detail.value));
@@ -613,6 +620,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                             for (let j = 0; j < optionsFilters.length; j++){
                                 optionsFilters[j] = {label: optionsFilters[j].value, value: optionsFilters[j].value}; 
                             }
+                            optionsFilters.unshift({label: '--None--', value: '--None--'});
                             temporalList[i].options = optionsFilters; 
                             this.listFilters.push(temporalList[i]); 
                         }
@@ -633,16 +641,16 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                     }
                     
                 }
-               
+            
             })
             .catch((error)=>{
                 console.log('Not Cable Assemblies/Pigtails extra fields');
                 console.log(error)
             })
         }
-    
-        //console.log(JSON.stringify(this.filtersForApex));
-        //console.log(this.tabSelected);
+
+        }
+        //Extra Filters Dependencies.
         this.printProducts();
     }
 
@@ -662,14 +670,14 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         this.tabSelected == 'Connectivity' ? tabSelectedValue = 'OCA' : tabSelectedValue = this.tabSelected; 
         //--------FOR OCA / CONNECTIVITY VALUE IN SANDBOX ----------------
 
-        console.log('filters:');
-        console.log(JSON.stringify(filters)); 
-        console.log('filteredGrouping: ' + this.trackList.lookupCode);
-        console.log('tabSelectedValue: ' + tabSelectedValue);
+        //console.log('filters:');
+        //console.log(JSON.stringify(filters)); 
+        //console.log('filteredGrouping: ' + this.trackList.lookupCode);
+        //console.log('tabSelectedValue: ' + tabSelectedValue);
         filteredProductPrinter({filterValues: JSON.stringify(filters), level1: tabSelectedValue, filteredGrouping: this.trackList.lookupCode})
         .then((data)=>{
-            console.log('Products Filtered');
-            console.log(data);
+            //console.log('Products Filtered');
+            //console.log(data);
             
             this.recordsAmount = data.length; 
             this.filterResults = data; 
@@ -829,6 +837,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
 
     saveLookingNSP(){
         //console.log('Tab: '+this.tabSelected + 'LookupCode: ' +this.trackList.lookupCode)
+        //LOGIC TO SHOW NSP POP UP
         if ( 
         ((this.tabSelected == 'ACA') && ((this.trackList.lookupCode != 'Copperclad'))) || 
         ((this.tabSelected == 'Fiber Optic Cable') && ( (this.trackList.lookupCode == 'Premise Cable') || 
@@ -854,6 +863,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         }
         
     }
+
+    //RESTART NSP FIELDS FOR EACH PRODUCT
     clearNSPFields(){
         this.nspPicklist = [];
         this.nspNumbers = [];
@@ -863,6 +874,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
 
     @track checkNSPFields = []; 
     readyToCloseNSP = [];
+
+    //TO SHOW NSP FIELDS DEPENDING ON VALUES AND TYPES FOR EACH PRODUCT 
     handleNSPTab(event){
         this.clearNSPFields();
         this.firstNSP = event.target.value;
@@ -926,6 +939,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             })
     }
 
+
+    //TO FINISH PROCESS OF NSP, MUST BE ADDED TO ALL THE PRODUCTS.
     closeNSP(){
         //console.log(this.firstNSP);
         //console.log(this.listNSP.length);
@@ -947,6 +962,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     }
 
     @track listNspValuesToDisplay = [];
+    //WHEN CHANGING A NSP VALUE (BY DEFAULT IT IS GOING TO HAVE THE FIRST VALUE ONCE THE PRODUCT TAB IS SELECTED)
     nspPicklistChange(event){
         //console.log('When select a new value'); 
         //console.log('Field Name: '+event.target.name);
@@ -978,22 +994,24 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                 return e == true;
             });
             this.listNSP[this.firstNSP-1]['checked'] = isFull; 
-            console.log('Is full:'+ isFull); 
+            //console.log('Is full:'+ isFull); 
         }
         if(this.listNSP[this.firstNSP-1]['checked']){
             //this.listNSP[this.firstNSP-1]['iconName'] = "utility:check"; 
-            console.log('ALL porperties done!'); 
+            //console.log('ALL porperties done!'); 
             this.checkNSPFields = [];
         } 
         
         
     }
 
-
+    //CREATE QUOTE LINES WITH NSP VALUES
     saveAndExitNSPFilteredModeal(){
         let auxQuoteLines = JSON.parse(JSON.stringify(this.listNSP)); 
         //console.log(Object.getOwnPropertyNames(this.listNSP[0]));
         let auxQuoteLinesLength  = auxQuoteLines.length; 
+
+        //CHECKING VALUES ARE GOOD WITH THE TYPE OF VARIABLE IN SF
         for(let i=0; i<auxQuoteLines.length; i++){
             let auxId = auxQuoteLines[i].Id; 
             auxQuoteLines[i].Id = auxQuoteLines[i].idTemporal; 
@@ -1014,23 +1032,24 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
 
         let trackListInternal = JSON.parse(JSON.stringify(this.trackList));
         let listToDisplayInternal = JSON.parse(JSON.stringify(this.listToDisplayAdd));
-        console.log('Before QL NSP: '+ JSON.stringify(auxQuoteLines));
+        //console.log('Before QL NSP: '+ JSON.stringify(auxQuoteLines));
         
-        //HERE THE NSP
-    
+        //CREATING NSP QUOTE LINES
         addNSPProducts({quoteId: this.recordId, products: JSON.stringify(auxQuoteLines)})//, filteredGrouping: this.trackList.lookupCode})
         .then((data)=>{
-            console.log('SUCCESS TURNING NSP QUOTELINES');
-            console.log(data);
+            //console.log('SUCCESS TURNING NSP QUOTELINES');
+            //console.log(data);
             let nsqQuotelines = JSON.parse(data); 
             for (let lines of nsqQuotelines){
+                //SINCE THE QUOTE LINES ARE NEW, THE ID MUST HAVE NEW OR XXX 
                 let randomId = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(2, 10);
                 let randomName = Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 6); 
                 lines.id =  'new'+randomId;
                 lines.name = 'New QL-'+randomName;
             }
 
-            console.log('after QL NSP '+ JSON.stringify(nsqQuotelines));
+            //console.log('after QL NSP '+ JSON.stringify(nsqQuotelines));
+            //ADDING THE QUOTE LINES TO A SPECIFIC LOOKUP CODE
             let auxQuoteLinesLength = nsqQuotelines.length; 
             trackListInternal['listOfProducts'] = nsqQuotelines; 
             trackListInternal.isAdd[0] = true;
@@ -1067,11 +1086,13 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                  
     }
 
+    //CREATE QUOTE LINES WITOUT NSP VALUES
     saveAndExitFilterModal(){
         this.showLookupList = false;
         let auxQuoteLines = JSON.parse(JSON.stringify(this.allReviews)); 
         let auxQuoteLinesLength;
         //console.log('THIS '+ JSON.stringify(this.allReviews));
+        //CHANGING THE ID (INTERNAL UI ID) WITH THE TEMPORAL ID (PRODUCT ID)
         for(let i=0; i<auxQuoteLines.length; i++){
             let auxId = auxQuoteLines[i].Id; 
             auxQuoteLines[i].Id = auxQuoteLines[i].idTemporal; 
@@ -1079,10 +1100,12 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             //auxQuoteLines[i].quotelinename = auxQuoteLines[i].product;  
         }
         //console.log('Length of products before close: '+ this.allReviews.length)
-        console.log('P: '+JSON.stringify(auxQuoteLines));
+        //console.log('P: '+JSON.stringify(auxQuoteLines));
+
+        //CREATE THE QUOTE LINES
         addSelectorQuoteLine({quoteId: this.recordId, products: JSON.stringify(auxQuoteLines)})
         .then((data)=>{
-            console.log('Data after addSelectorQuoteLine'+ data);
+            //console.log('Data after addSelectorQuoteLine'+ data);
             auxQuoteLines = JSON.parse(data); 
             auxQuoteLinesLength = auxQuoteLines.length; 
             //console.log('Length of products: '+ auxQuoteLinesLength);
@@ -1186,7 +1209,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         this.dataPagesEdit = this.editQuoteLines.slice(this.startingRecordEdit, this.endingRecordEdit);
         this.startingRecordEdit = this.startingRecordEdit + 1;
     }   
-    //Delete from edit popup
+
+    //Delete a quote lines from the edit popup
     handleDeleteEdit(event){
         this.editLoading = true; 
         let row = event.detail.row; 
@@ -1197,6 +1221,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             this.editLoading = false;
         },500);
     }
+
+    //When a change in the edit pop up is done 
     saveEditPopUp(){
         this.editLookupCodeRow.listOfProducts = this.editQuoteLines; 
         let a = this.editLookupCodeRow.lookupCode.indexOf('(');
@@ -1212,10 +1238,6 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
    
     //--------------------------------------------------------------------------------------
     //CONFIGURED POP UP FUNCTIONS
-    /*
-    closeConfiguredAlert(){
-        this.openConfiguredPopup = false; 
-    }*/
     continueConfiguredQLE(){
         this.bundleLoading = true; 
         const evt = new ShowToastEvent({
@@ -1229,7 +1251,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         setTimeout(()=>{
             //this.closeConfiguredAlert();
             this.dispatchEvent(new CustomEvent('savebeforeconfigured', { detail: this.trackConfig }));
-            console.log('Send to PS component');
+            //console.log('Send to PS component');
         }, 250);
         
     }

@@ -2,8 +2,11 @@ import { LightningElement, api , track} from 'lwc';
 import { NavigationMixin } from 'lightning/navigation';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
+//APEX METHOD TO GET LOOKUP CODES TO SHOW IN CHILD COMPONENT
 import getProductLevels  from '@salesforce/apex/QuoteController.getProductLevels'; 
+//APEX METHOD TO SAVE THE QUOTE LINES CREATED IN PS
 import quoteLineCreator from '@salesforce/apex/QuoteController.quoteLineCreator'; 
+//APEX METHOD THAT CALLS THE CUSTOM ACTION TO GO TO CONFIGURED PAGE 
 import customActionId from '@salesforce/apex/blMockData.customActionId'; 
 
 export default class Bl_productSelection extends NavigationMixin(LightningElement) {
@@ -25,10 +28,13 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
     @api girdDataTandITabAdd = []; 
     @api girdDataManualItemTabAdd = []; 
 
-
+    //STARTING COMPONENT
     connectedCallback(){
         //this.savePSValues = true;
         let isAddVector = [false, true, true, true];
+
+        //GETTING LOOKUP CODES FOR EACH TAB NOTE THAT IS HARDCODED BECAUSE THE VALUES ARE ESTABLISHED 
+        //IF THIS CHANGES IN THE OBJECT, MUST BE CHANGED HERE TOO.
         getProductLevels({level1: 'ACA'})
         .then((data)=>{
             this.girdDataAcaTab = JSON.parse(data);
@@ -40,7 +46,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             this.girdDataAcaTab.sort((a, b) => (a.lookupCode > b.lookupCode) ? 1 : -1);
         })
         .catch((error)=>{
-            //console.log('ERROR ACA');
+            console.log('ERROR ACA');
             console.log(error);
         });
 
@@ -55,7 +61,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             this.girdDataConnTab.sort((a, b) => (a.lookupCode > b.lookupCode) ? 1 : -1);
         })
         .catch((error)=>{
-            //console.log('ERROR Connectivity');
+            console.log('ERROR Connectivity');
             console.log(error);
         });
 
@@ -73,7 +79,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
 
         })
         .catch((error)=>{
-            //console.log('ERROR Fiber Optic Cable');
+            console.log('ERROR Fiber Optic Cable');
             console.log(error);
         });
 
@@ -89,7 +95,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
 
         })
         .catch((error)=>{
-            //console.log('ERROR Cable');
+            console.log('ERROR Cable');
             console.log(error);
         });
 
@@ -104,7 +110,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             this.girdDataTandITab.sort((a, b) => (a.lookupCode > b.lookupCode) ? 1 : -1);
         })
         .catch((error)=>{
-            //console.log('ERROR Test & Inspection');
+            console.log('ERROR Test & Inspection');
             console.log(error);
         })
         //this.savePSValues = true;
@@ -117,6 +123,9 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         //console.log('Saving in before anything else');
         this.savePSValues = true;
         this.quotesAdded = []; 
+
+        //FOR EACH VALUE LIST OF QUOTE LINES IN EACH TAB, CHECKING THE VALUES ARE CORRECT TO AVOID SAVING ERRORS
+        //IT CAN BE CHANGE WITH ONE LIST AND FOR LOOP IN THE FUTURE 
         if(this.girdDataAcaTabAdd.length > 0){
             //console.log('ACA LIST');
             let list1 = JSON.parse(JSON.stringify(this.girdDataAcaTabAdd)); 
@@ -318,7 +327,9 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
 
         let stringQuotesAdded = JSON.stringify(this.quotesAdded);
         //console.log('Quote ID: '+this.recordId);
-        console.log('Quotelines before process: '+stringQuotesAdded); 
+        //console.log('Quotelines before process: '+stringQuotesAdded); 
+
+        //IF THERE ARE NOT QUOTE LINES ADDED
         this.configBundleId = event.detail; 
         if(stringQuotesAdded == '[]'){
             this.savePSValues = false;
@@ -326,6 +337,8 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             this.notGoodToGoBundle = false;
             this.navigateToBundle();
         } else {
+
+            //SAVING QUOTE LINES BEFORE GOING TO CONFIGURED PAGE
             quoteLineCreator({quoteId: this.recordId, quoteLines: stringQuotesAdded})
             .then(()=>{
                 //console.log('Quotes Saved from PS'); 
@@ -338,7 +351,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             })
             .catch((error)=>{
                 this.notGoodToGoBundle = true;
-                //console.log('Error saving from PS'); 
+                console.log('Error saving from PS'); 
                 console.log(error); 
                 let errorMessage;
                 if(error != undefined){
@@ -355,9 +368,8 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                         }
                         else if (error.body.fieldErrors!= undefined){
                             let prop = Object.getOwnPropertyNames(error.body.fieldErrors);
-                            //console.log(error.body.fieldErrors[prop[0]][0].message)
                             errorMessage = error.body.fieldErrors[prop[0]][0].message;
-                            //console.log(error); 
+                            
                         } else {
                             errorMessage = 'Developer: Open console to see error message';
                         }
@@ -378,6 +390,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             }
         
     }
+
     //creating and Saving the quotelines from Product Selector
     navigateToBundle(){
         if (this.notGoodToGoBundle){
@@ -395,9 +408,9 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                 let customActionAddProducts = data; //Add Products Id
                 //console.log('relatedProductId: '+this.configBundleId); 
                 
+                //LINK TO NAVIGATE TO CONFIGURED PAGE OF THE PRODUCT + QUOTE + CUSTOM ACTION
                 let link = '/apex/sbqq__sb?id='+this.recordId+'&clc=0#/product/pc?qId='+
                 this.recordId+'&aId='+customActionAddProducts+'&pId='+this.configBundleId+'&redirectUrl=LineEditor&open=0';
-                
                 
                 this[NavigationMixin.Navigate]({
                     type: 'standard__webPage',
@@ -414,7 +427,6 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         }
     }
 
-
     //When click cancel button in Product Selection UI
     handleCancel(){
         this.dispatchEvent(new CustomEvent('cancelps'));
@@ -426,19 +438,17 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
     saveListToDisplay(event){
         //console.log('Save List To Display in PS');
         //console.log(JSON.stringify(event.detail));
+
+        //SAVING EVERY TIME THEY ADD A NEW PRODUCT IN EACH TAB 
         switch (event.detail.tab){
             case 'ACA':
                 this.girdDataAcaTabAdd = event.detail.list;
             break; 
             case 'Connectivity':
-                //console.log('Before '+ JSON.stringify(this.girdDataConnTabAdd));
                 this.girdDataConnTabAdd = event.detail.list;
-                //console.log('After '+ JSON.stringify(this.girdDataConnTabAdd));
             break; 
             case 'Fiber Optic Cable':
-                //console.log('Before '+ JSON.stringify(this.girdDataFocTab));
                 this.girdDataFocTabAdd = event.detail.list;
-                //console.log('After '+ JSON.stringify(this.girdDataFocTab));
             break; 
             case 'Cable':
                 this.girdDataCableTabAdd = event.detail.list;
@@ -448,16 +458,18 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             break; 
             case 'Manual Items':
                 this.girdDataManualItemTabAdd = event.detail.list;
-                //console.log('---------- MANUAL ITEMS IN PARENT, MISSING SAVING ---------');
             break; 
             default:
             break; 
         }
     }
+
     //When click Save and Exit button in Product Selection UI
     handleSaveAndExit(){
         this.savePSValues = true;
         this.quotesAdded = []; 
+
+        //SAME PROCESS OF SAVING BEFORE NAVIGATION TO OTHER PAGE
         if(this.girdDataAcaTabAdd.length > 0){
             //console.log('ACA LIST');
             let list1 = JSON.parse(JSON.stringify(this.girdDataAcaTabAdd)); 
@@ -656,7 +668,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         }
         let stringQuotesAdded = JSON.stringify(this.quotesAdded);
         //console.log('Quote ID: '+this.recordId);
-        console.log('Quotelines before process: '+stringQuotesAdded); 
+        //console.log('Quotelines before process: '+stringQuotesAdded); 
         if(stringQuotesAdded == '[]'){
             //console.log('No quotes to save, going to QLE'); 
             this.dispatchEvent(new CustomEvent('saveandexitps')); 
@@ -684,9 +696,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                         }
                         else if (error.body.fieldErrors!= undefined){
                             let prop = Object.getOwnPropertyNames(error.body.fieldErrors);
-                            //console.log(error.body.fieldErrors[prop[0]][0].message)
                             errorMessage = error.body.fieldErrors[prop[0]][0].message;
-                            //console.log(error); 
                         } else {
                             errorMessage = 'Developer: Open console to see error message';
                         }
@@ -704,7 +714,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                 });
                 this.dispatchEvent(evt);
                 this.savePSValues = false;
-                //console.log('Error saving from PS'); 
+                console.log('Error saving from PS'); 
                 console.log(error); 
             })
         }     
