@@ -1,0 +1,34 @@
+<template> 
+
+    <!-- Section 1 -->
+    <div if:true={isLoaded} class="cstm-spinner">
+		<lightning-spinner alternative-text="Loading..."></lightning-spinner>
+	</div>
+                  
+    
+  
+       <!-- Table -->
+       <template if:true={loadTable}>
+        <lightning-datatable 
+        key-field="discId"
+        onrowaction={handleRowActions}
+        data={data} 
+        columns={columns} 
+        onsave={handleSave}
+        draft-values={draftValues}>
+        </lightning-datatable>
+    </template>
+            <!-- Save Section -->
+
+            
+            
+          <!--   <div class="slds-align_absolute-center slds-p-top_small">                
+                <lightning-button name="Save" label="Save" onclick={saveRecord} ></lightning-button>
+            </div>
+         -->
+
+
+    
+ 
+
+</template>

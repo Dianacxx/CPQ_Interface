@@ -1,0 +1,99 @@
+<template>
+    <lightning-card class="slds-var-m-top_medium">
+        <div class="slds-var-p-around_medium lgc-bg" >
+        <lightning-spinner if:true={loadingProcess} alternative-text="Loading" size="medium"></lightning-spinner>
+        <div class="slds-grid slds-wrap">
+            <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-3" style="background-color:rgba(195, 197, 196, 0.288);">
+                <lightning-button-group class="slds-align_absolute-center slds-var-m-top_small">
+                    <lightning-button label="Submit" onclick={submitQuoteline} variant="brand"></lightning-button>
+                    <lightning-button label="Clear" onclick={restarManualForm} variant="destructive"></lightning-button>
+                </lightning-button-group>
+                <template if:true={errorShow} class="slds-align_absolute-center">
+                    <div class="slds-var-m-top_small slds-var-p-around_x-small lgc-bg slds-align_absolute-center" 
+                    style="background-color:rgba(238, 0, 0, 0.459);">
+                        <h2 class="slds-align_absolute-center slds-text-heading_small">
+                            There are fields required that you did not fill.
+                        </h2>
+                    </div>
+                </template>
+                <!--PRODUCT LEVEL 1 PICKLIST-->
+                <template if:true={productLevel1Picklist.data}>
+                    <lightning-combobox required name="Product Level 1" label="Product Level 1" value={ProdLevel1}
+                        options={productLevel1Picklist.data.values} onchange={showProductLevel} class="slds-var-m-top_small">
+                    </lightning-combobox>
+                </template>
+                <!--PRODUCT LEVEL 2 PICKLIST-->
+                <template if:true={productLevel2Picklist}>
+                    <lightning-combobox required name="Product Level 2" label="Product Level 2" value={ProdLevel2}
+                        options={level2} onchange={handleChange}>
+                    </lightning-combobox>
+                </template>
+                <!--PRODUCT LEVEL 3 PICKLIST-->
+                <template if:true={productLevel3Picklist}>
+                    <lightning-combobox name="Product Level 3" label="Product Level 3" value={ProdLevel3}
+                        options={level3} onchange={handleChange}>
+                    </lightning-combobox>
+                </template>
+                <template if:true={productLevel1Picklist.data}>
+                <!--PART NUMBER TEXT-->
+                <lightning-input required type="text" label="Part Number" onchange={handleChange} value={PartNumber}></lightning-input>
+                <!--DESCRIPTION TEXT-->
+                <lightning-input-rich-text required label-visible label="Description" onchange={handleChange} value={Description}
+                disabled-categories="FORMAT_FONT,FORMAT_TEXT,FORMAT_BODY,ALIGN_TEXT,INSERT_CONTENT,REMOVE_FORMATTING"></lightning-input-rich-text>
+                <!--<lightning-button label="Insert Description" onclick={handleDescriptionClick}> </lightning-button>-->
+                <!--QUANTITY NUMBER-->
+                <lightning-input required type="number" label="Quantity" onchange={handleChange} value={Quantity}></lightning-input>
+                <!--PRIMARY UOM PICKLIST Dependent on Product Level 2-->
+                <template if:true={uomList}>
+                    <lightning-combobox required name="UOM" label="Primary UOM" value={value}
+                        options={uom} onchange={handleChange}>
+                    </lightning-combobox>
+                </template>
+                <!--PRICE NUMBER-->
+                <lightning-input required type="number" label="Price" onchange={handleChange} value={Price}></lightning-input>
+                <!--LINE NOTE TEXT-->
+                <lightning-input-rich-text label-visible type="text" label="Line Note" onchange={handleChange} value={LineNote}
+                disabled-categories="FORMAT_FONT,FORMAT_TEXT,FORMAT_BODY,ALIGN_TEXT,INSERT_CONTENT,REMOVE_FORMATTING"></lightning-input-rich-text>
+                <!--<lightning-button label="Insert Line Note" onclick={handleLineNoteClick}> </lightning-button>-->
+                <!--CUSTOMER PART TEXT-->
+                <lightning-input type="text" label="Customer Part" onchange={handleChange} value={CustomerPart}></lightning-input>
+                <lightning-layout multiple-rows="false">
+                    <!--ALTERNATIVE PART TEXT-->
+                    <lightning-input class="slds-var-m-top_small slds-var-m-bottom_x-small" type="checkbox" label="Alternative" onchange={handleChange} value={Alternative}></lightning-input>
+                    <!--STOCK PART TEXT-->
+                    <lightning-input class="slds-var-m-top_small slds-var-m-bottom_x-small" type="checkbox" label="Stock" onchange={handleChange} value={Stock}></lightning-input>   
+                </lightning-layout>
+                </template>
+                <!--IF LEVEL 1 ACA UNIT COST-->
+                <template if:true={PL1_ACA}>
+                    <div>
+                        <lightning-input class="slds-var-m-bottom_small" type="number" label="Unit Cost" onchange={handleChange} value={UnitCost}></lightning-input>
+                    </div>
+                    <template if:true={showBillableToleranceCopperclad}>
+                        <lightning-input type="number" label="Billing Tolerance" onchange={handleChange} value={BillableTolerance}></lightning-input>
+                    </template>
+                </template>
+                <!--IF LEVEL 1 FIBER OPTIC CABLE MAX LENGTH STEEL/WOOD & Billable Tolerance-->
+                <template if:true={PL1_FOC}>
+                    <div>
+                        <lightning-input type="number" label="Max Length on Steel" onchange={handleChange} value={MaxLengthSteel}></lightning-input>
+                        <lightning-input class="slds-var-m-bottom_small" type="number" label="Max Length on Wood" onchange={handleChange} value={MaxLengthWood}></lightning-input>
+                        <lightning-input type="number" label="Billing Tolerance" onchange={handleChange} value={BillableTolerance}></lightning-input>
+                    </div>
+                </template> 
+
+            </div>
+            <div class="slds-col slds-size_1-of-1 slds-large-size_2-of-3">
+                <lightning-spinner if:true={showManualTable} alternative-text="Loading" variant="brand" size="small"></lightning-spinner>
+                <template if:false={showManualTable}>
+                    <div class="slds-align_absolute-center slds-var-m-top_small">
+                        <lightning-datatable style="width: 85%;" key-field="name" data={newManualList} columns={newManualColumns}
+                        onrowaction={handleRowAction} hide-checkbox-column></lightning-datatable>
+                     </div>
+                </template>
+            </div>
+        </div>
+</div>    
+</lightning-card>
+    
+</template>

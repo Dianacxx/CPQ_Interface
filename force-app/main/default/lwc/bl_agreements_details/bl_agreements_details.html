@@ -1,0 +1,316 @@
+<template>
+    <lightning-card>
+     
+        <div class="slds-grid slds-grid_align-center slds-m-bottom_large">
+          <div class="slds-col slds-size_1-of-3">
+          </div>
+          <div class="slds-col slds-size_1-of-3">
+            <span class="slds-page-header__title slds-truncate ">
+              <h1 class="slds-text-heading_large slds-m-left_large slds-p-left_large"  style="color:gray;"> AGREEMENT DETAILS </h1> </span>
+          </div><div class="slds-col slds-size_1-of-3">
+          </div>
+        </div>
+        <div class="slds-grid slds-grid_align-center slds-m-bottom_large">
+        <div class="slds-col slds-size_1-of-4">
+        </div>
+        <div class="slds-col slds-size_1-of-4">
+               
+        <!--<lightning-button-icon icon-name="action:new"    variant="brand" alternative-text="Apply"
+          class="slds-m-left_xx-small" title="Apply"></lightning-button-icon> -->
+          <lightning-spinner if:true={loadingSecondPage}  alternative-text="Loading" size="medium"></lightning-spinner>
+          <lightning-button-stateful class="slds-var-m-left_xx-small slds-var-m-right_x-small" variant="brand"
+          label-when-off="Apply" label-when-on="Applying" label-when-hover="Unapply"
+          icon-name-when-off="action:new" icon-name-when-on="action:check" icon-name-when-hover="action:close"
+          selected={applyToChild} onclick={handleApplyToChild}> </lightning-button-stateful>
+          Apply To All Child Accounts
+          <br><br><br>
+
+          
+      </div>
+
+      <!-- Buttons -->
+      <div class="slds-col slds-size_1-of-4"> 
+            
+      <div class="slds-col slds-size_1-of-4">
+              
+                </div>
+
+<!--         <lightning-button-icon icon-name="action:upload"  label = "Upload"  variant="brand" alternative-text="Upload"  class="slds-m-left_large" title="Upload"></lightning-button-icon>
+ -->        <br><br><br>
+          <br><br>
+        <div class="slds-col ">
+          <span><lightning-button class="stretchButton slds-m-right_small" variant="brand" label="Save & Next" onclick={createAgreement}></lightning-button></span>
+<!--           <span><lightning-button class="stretchButton" variant="brand" label="Next"  onclick={handleNext}></lightning-button></span>  
+ -->          <span><lightning-button class="stretchButton" variant="brand" label="Cancel"  onclick={handleCancel}></lightning-button></span>  
+        </div>
+      </div>
+        <div class="slds-col slds-size_1-of-4">  </div>
+      </div>
+                
+                            
+        <!-- fields -->
+          <div class="slds-grid slds-grid_align-center slds-m-bottom_large">
+            <div class="slds-col slds-size_1-of-5">
+              <span></span>
+            </div>
+                <div class="slds-col slds-size_1-of-5">
+                  <lightning-input type="text" style="width:80%" label="Agreement Name" placeholder="Enter a name..." onchange={nameChangeHandler} ></lightning-input>
+
+               
+                </div>
+                <div class="slds-col slds-size_1-of-5">
+                  <span>
+
+                    <div class="slds-form-element__control">  
+                      <div class="slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click" aria-expanded="false"
+                      aria-haspopup="listbox" role="combobox">
+                      <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right"
+                          role="none">
+                          <lightning-input style="width:80%"  type="search" id="combobox-id-16" value={accountName}
+                              onchange={searchHandleKeyChange} onkeydown={searchHandleClick} onclick={searchHandleClick}
+                              onblur={searchHandleClick} aria-activedescendant="option1" label='End User'
+                              aria-autocomplete="list" aria-controls="listbox-id-12" role="textbox"
+                              placeholder="Search an End User"></lightning-input> 
+                       
+                          
+                      </div>
+                      <div if:true={messageResult}>
+                          No Result Found!
+                      </div>
+                      <template if:true={showSearchedValues}>
+                          <div class="slds-box" style="height: 130px; overflow-y: scroll;">
+                              <ul class="" role="">
+                                  <template for:each={accountList} for:item="actObj">
+                                      <li class="slds-p-around_x-small" style="cursor: pointer;" key={actObj.Id}
+                                          onclick={parentHandleAction} data-value={actObj.Id}
+                                          data-label={actObj.Name}>
+                                          {actObj.Name}
+                                      </li>
+                                  </template>
+                              </ul>
+                          </div>
+                      </template>
+                  </div>                      </div>
+
+                  </span>
+                </div>
+                <div class="slds-col slds-size_1-of-5">
+                <span>
+                  <template if:true={agreementTypePicklist.data}>
+                    <lightning-combobox style="width:80%"
+                  name="type"
+                  label="Channel Type"
+                  value=""
+                  
+                  placeholder="Select a Type"
+                  options={agreementTypePicklist.data.values}
+                  onchange={typeChangeHandler}
+                  
+          ></lightning-combobox>
+        </template></span>
+                </div>
+                <div class="slds-col slds-size_1-of-5">
+                  <span></span>
+                </div>
+               
+           </div>
+
+           <div class="slds-grid slds-grid_align-center slds-m-bottom_large">
+                    <div class="slds-col slds-size_1-of-5">
+                    <span>
+                     
+                     </span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-5">
+                      <span>
+                        <template if:true={currencyPicklist.data}>
+                          <lightning-combobox style="width:80%"
+                        name="Currency"
+                        label="Currency"
+                        value={initialCurrency}
+                        placeholder=""
+                        options={currencyPicklist.data.values}
+                        onchange={currencyChangeHandler}
+                        
+                ></lightning-combobox>
+              </template>
+                      </span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-5">
+                      <span>
+
+
+                        <div class="slds-form-element__control">  
+                          <div class="slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click" aria-expanded="false"
+                          aria-haspopup="listbox" role="combobox">
+                          <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right"
+                              role="none">
+                              <lightning-input style="width:80%"  type="search" id="combobox" value={reviewerName}
+                                  onchange={searchHandleKeyChangeReviewer} onkeydown={searchHandleClickReviewer} onclick={searchHandleClickReviewer}
+                                  onblur={searchHandleClickReviewer} aria-activedescendant="option1" label='Salesperson'
+                                  aria-autocomplete="list" aria-controls="listbox-id-12" role="textbox"
+                                  placeholder="Search a Salesperson"></lightning-input> 
+                           
+                              
+                          </div>
+                          <div if:true={messageResultReviewer}>
+                              No Result Found!
+                          </div>
+                          <template if:true={showSearchedValuesReviewer}>
+                              <div class="slds-box" style="height: 130px; overflow-y: scroll;">
+                                  <ul class="" role="">
+                                      <template for:each={reviewerList} for:item="userObjReviewer">
+                                          <li class="slds-p-around_x-small" style="cursor: pointer;" key={userObjReviewer.Id}
+                                              onclick={parentHandleActionReviewer} data-value={userObjReviewer.Id}
+                                              data-label={userObjReviewer.Name}>
+                                              {userObjReviewer.Name}
+                                          </li>
+                                      </template>
+                                  </ul>
+                              </div>
+                          </template>
+                      </div>                      </div>
+
+
+
+
+                        
+                      </span>  
+                    </div>
+                    <div class="slds-col slds-size_1-of-5">
+                      <span>
+                        <template if:true={competitorPicklist.data}>
+                          <lightning-combobox style="width:80%"
+                        name="Competitor"
+                        label="Competitor"
+                        value=""
+                        placeholder="Select a Competitor"
+                        options={competitorPicklist.data.values}
+                        onchange={competitorChangeHandler}
+                        
+                ></lightning-combobox>
+              </template>
+                       </span>
+                      </div>
+                      <div class="slds-col slds-size_1-of-5">
+                        <span>
+                         
+                         </span>
+                        </div>
+                    
+            </div>
+
+
+
+            <!-- pzsplzlpszlpszszlpszlpszlpszszlpsz -->
+
+
+
+
+            <div class="slds-grid slds-grid_align-center slds-m-bottom_large">
+              <div class="slds-col slds-size_1-of-5">
+                <span></span>
+              </div>
+                  <div class="slds-col slds-size_1-of-5">
+                  <lightning-input style="width:80%"  onchange={startDateChangeHandler} type="date" name="start date" label="Start Date" ></lightning-input>
+  
+               
+                  </div>
+                  <div class="slds-col slds-size_1-of-5">
+                    <span>
+  
+                      <div class="slds-grid slds-gutters" style="width: 87%;">
+                  
+                        <div class="slds-col slds-size_2-of-3">
+                          <span> <template if:true={reviewSchedulePicklist.data}>
+                            <lightning-combobox 
+                            name="schedule"
+                            label="Review Schedule"
+                            
+                            value=""
+                            placeholder="Select an Option"
+                            options={reviewSchedulePicklist.data.values}
+                            onchange={ScheduleChangeHandler}
+                            
+                    ></lightning-combobox>
+                  </template> </span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-3">
+                          <span> <lightning-input    onchange={termChangeHandler} type="number" name="term" label="Term" ></lightning-input></span>
+                        </div>
+                      </div>
+  
+                    </span>
+                  </div>
+                  <div class="slds-col slds-size_1-of-5">
+                  <span>
+                                       <template if:true={cadencePicklist.data}>
+                      <lightning-combobox 
+                          style="width: 80%;"
+                          name="Cadence"
+                          label="Rise/Fall Cadence"
+                          value="None"
+                          placeholder="Select an Option"
+                          options={cadencePicklist.data.values}
+                          onchange={cadenceChangeHandler}>
+                        </lightning-combobox>
+    </template></span>
+                  </div>
+                  <div class="slds-col slds-size_1-of-5">
+                    <span></span>
+                  </div>
+                 
+             </div>
+
+
+
+
+
+
+
+            <!-- lkazdkpozakdpzakpdzakpodazkdazk^k^dzak^dza^kp -->
+   
+           
+
+
+            <!-- COMENT URL SECTION -->
+
+
+            <div class="slds-grid slds-grid_align-center slds-m-bottom_large">
+              <div class="slds-col slds-size_1-of-2">
+                <lightning-input type="url" style="width: 55%;margin-left:40%"  label="URL to SharePoint" placeholder="Enter valid URL here..." onchange={urlChangeHandler} ></lightning-input>
+
+             
+              </div>
+              
+                  <div class="slds-col slds-size_1-of-2">
+                    <lightning-input type="text" style="width: 52%;" label="Comments" placeholder="Enter a comment..." onchange={commentChangeHandler} ></lightning-input>
+
+                 
+                  </div>
+               <!--    <div class="slds-col slds-size_1-of-5">
+                    <span>                     <lightning-input type="text"  label="Agreement Name" placeholder="Enter a name..." onchange={nameChangeHandler} ></lightning-input>
+
+                    </span> </div> 
+                  <div class="slds-col slds-size_1-of-5">
+                    <span>                     <lightning-input type="text"  label="Agreement Name" placeholder="Enter a name..." onchange={nameChangeHandler} ></lightning-input>
+                    </span> </div> 
+                  <div class="slds-col slds-size_1-of-5">
+                    <span>                      <lightning-input type="text"  label="Agreement Name" placeholder="Enter a name..." onchange={nameChangeHandler} ></lightning-input>
+                    </span> </div>  -->
+                  
+                  
+                            
+  
+               
+                 
+                 
+             </div>
+            <!-- END OF COMMENTS -->
+               <br><br><br>
+                    
+            
+    </lightning-card>
+                                          
+     
+</template>

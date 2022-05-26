@@ -1,0 +1,30 @@
+.slds-modal__container {
+    max-width: 90rem !important;
+    width: 90% !important;
+}
+
+.stretchButton{
+    font-size: 11px;
+}
+
+.size1{
+    width:150px;
+}
+.size2{
+    width:200px;
+}
+.size3{
+    width:250px;
+}
+.size4{
+    width:300px;
+}
+.size5{
+    width:400px;
+}
+.size6{
+    width:650px;
+}
+.size7{
+    width:80vw;
+}

@@ -1,0 +1,34 @@
+<template>
+    <lightning-card>
+
+    <lightning-layout multiple-rows class="slds-border_top slds-border_right slds-border_left slds-m-left_large slds-m-right_large"> 
+        <!--Title and Discount fields-->
+        <lightning-layout-item size="12" small-device-size="8" padding="around-small">
+        <span class="slds-page-header__title slds-truncate">
+            <h2 class="slds-text-heading_large slds-m-left_large" style="color:gray;">Add Products</h2>
+        </span>
+        </lightning-layout-item>
+        <lightning-layout-item size="9" small-device-size="6" padding="around-small" style="width: 200 px;">
+          <div class="slds-p-top_none">
+            <c-bl_agreements_lookup onvalueselected={handleValueSelcted}></c-bl_agreements_lookup>
+
+        </div>
+        </lightning-layout-item>
+        <!--Button Set-->
+        <lightning-layout-item size="12" small-device-size="6" padding="around-small">
+            <div class="slds-align_absolute-center slds slds-m-around_small">
+                    <button class="stretchButton slds-m-right_small" disabled={disableReorder} onclick={handleReorder}>Refresh Prices</button>
+                    <button class="stretchButton slds-m-right_small"  onclick={handlePreviousScreen}>Previous Screen</button>
+                    <button class="stretchButton "  onclick={handleCancel}>Cancel</button>
+            </div>
+            <div class="slds-align_absolute-center slds-m-around_small">
+                <button class="stretchButton slds-m-right_small" disabled={disableReorder} onclick={handleReorder}>Save Changes</button>
+                <button class="stretchButton slds-m-right_small"  onclick={handleSaveAndCalculate}>Save & Exit</button>
+                <button class="stretchButton "  onclick={navigateToQuoteRecordPage}>Activate</button>
+        </div>
+            
+        </lightning-layout-item>
+    </lightning-layout>
+</lightning-card>
+
+</template>

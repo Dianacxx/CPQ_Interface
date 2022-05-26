@@ -1,0 +1,29 @@
+<template>
+  
+        <template if:true={isLoading}>
+            <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+        </template>
+        <template if:false={isLoading}>
+            <div class="slds-grid slds-gutters">
+          
+                <div class="slds-col ">
+                  <span>
+                   <c-bl_agreements_clone record-id={recordId}></c-bl_agreements_clone>
+                  </span>   
+                </div>
+                
+                <div class="slds-col ">
+                  <span> <lightning-button variant="brand" label="Review Agreement" title="Open UI" 
+                    onclick={handleNavigateUi} class="slds-align_absolute-center" disabled={disableButton} ></lightning-button>
+          </span>
+                </div>
+                <div class="slds-col ">
+                    <span>
+                    </span>   
+                  </div>
+                
+              </div>
+            
+             </template>
+  
+</template>

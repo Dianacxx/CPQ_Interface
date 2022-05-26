@@ -1,0 +1,115 @@
+<template>
+   
+        <!-- lightning button for open modal window -->
+        <lightning-button variant="brand"
+        label="Clone"
+        title="Clone"
+        onclick={openModal}
+        class="slds-m-left_x-small">
+     </lightning-button>
+     <!--Use template if:true to display/hide popup based on isModalOpen value--> 
+     <template if:true={isModalOpen}>
+         <!-- Modal/Popup Box LWC starts here -->
+         <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+             <div class="slds-modal__container">
+                 <!-- Modal/Popup Box LWC header here -->
+                 <header class="slds-modal__header">
+                     <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={closeModal}>
+                         <lightning-icon icon-name="utility:close"
+                             alternative-text="close"
+                             variant="inverse"
+                             size="small" ></lightning-icon>
+                         <span class="slds-assistive-text">Close</span>
+                     </button>
+                     <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Clone Agreement</p></h2>
+                 </header>
+                 <!-- Modal/Popup Box LWC body starts here -->
+
+                 <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+
+                    <!-- ACCOUNT  -->
+                    <!-- <div class="slds-spinner_container"> -->
+                    <lightning-spinner class="slds-spinner_container" if:false={loadTable} alternative-text="Loading" size="medium"></lightning-spinner>
+             <!--    </div> -->
+                    <div class="slds-form-element__control">  
+                        <div class="slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click" aria-expanded="false"
+                        aria-haspopup="listbox" role="combobox">
+                        <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right"
+                            role="none">
+                            <lightning-input style="width:80%" type="search" id="combobox-id-16" value={accountName}
+                                onchange={searchHandleKeyChange} onkeydown={searchHandleClick} onclick={searchHandleClick}
+                                onblur={searchHandleClick} aria-activedescendant="option1" label='Account'
+                                aria-autocomplete="list" aria-controls="listbox-id-12" role="textbox"
+                                placeholder="Search..."></lightning-input> 
+                         
+                            
+                        </div>
+                        <div if:true={messageResult}>
+                            No Result Found!
+                        </div>
+                        <template if:true={showSearchedValues}>
+                            <div class="slds-box" style="height: 130px; overflow-y: scroll;">
+                                <ul class="" role="">
+                                    <template for:each={accountList} for:item="actObj">
+                                        <li class="slds-p-around_x-small" style="cursor: pointer;" key={actObj.Id}
+                                            onclick={parentHandleAction} data-value={actObj.Id}
+                                            data-label={actObj.Name}>
+                                            {actObj.Name}
+                                        </li>
+                                    </template>
+                                </ul>
+                            </div>
+                        </template>
+                    </div>                      </div>
+
+
+
+<!-- END USER -->
+                    <div class="slds-form-element__control">  
+                        <div class="slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click" aria-expanded="false"
+                        aria-haspopup="listbox" role="combobox">
+                        <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right"
+                            role="none">
+                            <lightning-input style="width:80%" type="search" id="combobox-id" value={accountNameEndUser}
+                                onchange={searchHandleKeyChangeEndUser} onkeydown={searchHandleClickEndUser} onclick={searchHandleClickEndUser}
+                                onblur={searchHandleClickEndUser} aria-activedescendant="option1" label='End User'
+                                aria-autocomplete="list" aria-controls="listbox-id-12" role="textbox"
+                                placeholder="Search..."></lightning-input> 
+                         
+                            
+                        </div>
+                        <div if:true={messageResultEndUser}>
+                            No Result Found!
+                        </div>
+                        <template if:true={showSearchedValuesEndUser}>
+                            <div class="slds-box" style="height: 130px; overflow-y: scroll;">
+                                <ul class="" role="">
+                                    <template for:each={accountListEndUser} for:item="actObjEndUser">
+                                        <li class="slds-p-around_x-small" style="cursor: pointer;" key={actObjEndUser.Id}
+                                            onclick={parentHandleActionEndUser} data-value={actObjEndUser.Id}
+                                            data-label={actObjEndUser.Name}>
+                                            {actObjEndUser.Name}
+                                        </li>
+                                    </template>
+                                </ul>
+                            </div>
+                        </template>
+                    </div>                      </div>
+                       
+                        <lightning-input type="text" label="Agreement Name" style="width:80% "  placeholder="Enter a name..." onchange={nameChangeHandler}   ></lightning-input>
+                      
+                    
+
+                 </div>
+                 <!-- Modal/Popup Box LWC footer starts here -->
+                 <footer class="slds-modal__footer">
+                     <button class="slds-button slds-button_neutral slds-hidden" data-id="cloneTiers"  onclick={cloneTiers} title="Cancel">ko</button>
+                     <button class="slds-button slds-button_neutral" onclick={closeModal} title="Cancel">Cancel</button>
+                     <button class="slds-button slds-button_brand" onclick={cloneAgreement} data-id="clone1" 
+                     title="Clone">Clone</button>
+                 </footer>
+             </div>
+         </section>
+         <div class="slds-backdrop slds-backdrop_open"></div>
+     </template>
+</template>

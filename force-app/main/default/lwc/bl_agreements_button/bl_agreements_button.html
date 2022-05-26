@@ -1,0 +1,9 @@
+<template>
+        <template if:true={isLoading}>
+            <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+        </template>
+        <template if:false={isLoading}>
+            <lightning-button variant="brand" label="New Sales Agreement" title="Open UI" 
+                onclick={handleNavigateUi} class="slds-align_absolute-center" disabled={disableButton} ></lightning-button>
+        </template>
+</template>

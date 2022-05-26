@@ -1,0 +1,11 @@
+.stretchButton{
+    font-size: 11px;
+}
+
+.slds-modal__container{
+    width: 80% !important;
+    max-width: 80% !important;
+    height: 90% !important;
+    max-height: 90% !important;
+
+}
