@@ -1,3 +1,6 @@
-.comboboxSize {
-    width: 90%;
+.slds-modal__container{
+    width: 60% !important;
+    max-width: 60% !important;
+    height: 90% !important;
+    max-height: 90% !important;
 }

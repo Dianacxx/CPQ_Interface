@@ -6,6 +6,10 @@ public with sharing class DiscountWrapper {
     @AuraEnabled 
     public string productName {get;set;}
     @AuraEnabled 
+    public String minimumQuantity {get;set;}
+    @AuraEnabled 
+    public string description {get;set;}
+    @AuraEnabled 
     public string productCode {get;set;}
     @AuraEnabled 
     public string productId {get;set;}
@@ -34,7 +38,15 @@ public with sharing class DiscountWrapper {
     @AuraEnabled 
     public String discountUnit {get;set;}
     @AuraEnabled 
-    public String CurrencyIsoCode {get;set;}
+    public String cur {get;set;}
+    @AuraEnabled 
+    public String freight {get;set;}
+    @AuraEnabled 
+    public String reels {get;set;}
+    @AuraEnabled 
+    public String lineNote {get;set;}
+    @AuraEnabled 
+    public String uomAdder {get;set;}
     
  
 
@@ -48,6 +60,8 @@ public with sharing class DiscountWrapper {
         productCode = disc.SBQQ__Product__r.ProductCode;
         productId = disc.SBQQ__Product__r.Id;
         productName = disc.SBQQ__Product__r.Name;  
+        minimumQuantity = disc.SBQQ__Product__r.Minimum_Order_Qty__c	;  
+        description = disc.SBQQ__Product__r.Description;  
         primaryUOM = disc.SBQQ__Product__r.Primary_UOM__c;  
         uOM = disc.UOM__c; 
         dynamicIcon = disc.dynamicIcon__c; 
@@ -56,7 +70,11 @@ public with sharing class DiscountWrapper {
         varPriceAdj = disc.Variable_Price_Adj__c;
         contract = disc.Contract__c;
         discountUnit = disc.SBQQ__DiscountUnit__c; 
-        CurrencyIsoCode = disc.CurrencyIsoCode; 
+        cur = disc.CurrencyIsoCode; 
+        freight = disc.Freight__c; 
+        reels = disc.Reels__c; 
+        lineNote = disc.lineNote__c; 
+        uomAdder = disc.uomAdder__c; 
 /*         unitPrice = disc.SBQQ__QuoteLine__r.SBQQ__RegularPrice__c;
  *//*         unitPrice= disc.SBQQ__Product__r.PricebookEntry__r.PriceUnit;
  */
@@ -65,11 +83,16 @@ public with sharing class DiscountWrapper {
     public class DiscountScheduleWrapper{
 
         public string discountName {get;set;}     
+        public string uomAdder {get;set;}     
+        public string lineNote {get;set;}     
+        public string reels {get;set;}     
+        public string freight {get;set;}     
         public string discId {get;set;}   
         public string productName {get;set;}
         public string productCode {get;set;}
         public string productId {get;set;}
         public string primaryUOM {get;set;}
+        public string cur {get;set;}
         public string uOM {get;set;}
         public Decimal unitPrice {get;set;}
         public Decimal fixedPriceAdj {get;set;}

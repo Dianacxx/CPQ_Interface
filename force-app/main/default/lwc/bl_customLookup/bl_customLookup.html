@@ -1,6 +1,8 @@
 <template>
     <div>
-        <lightning-combobox class="slds-var-m-bottom_small slds-var-m-left_small slds-var-m-right_small  slds-size_1-of-3" name="TypeSearch" label="Search By" value={productSelected} placeholder="Type of Product" options={productOptions} onchange={handleProductSelected} ></lightning-combobox>
+        <lightning-combobox class="slds-var-m-bottom_small slds-var-m-left_small slds-var-m-right_small  
+        slds-size_1-of-3" name="TypeSearch" label="Search By" value={productSelected} 
+        placeholder="Type of Product" options={productOptions} onchange={handleProductSelected} ></lightning-combobox>
     </div>
     <div>
         <div class="slds-form-element slds-var-m-left_small slds-var-m-right_small ">
@@ -18,7 +20,8 @@
             <div id="listbox-id-1" class="slds-dropdown slds-dropdown_length-with-icon-7 slds-dropdown_fluid" role="listbox">
                 <ul class="slds-listbox slds-listbox_vertical" role="presentation">
                     <template for:each={records} for:item="record">
-                        <li key={record.Id} onclick={onSelect} data-id={record.Id} role="presentation" data-name={record.Name}>
+                        <li key={record.Id} onclick={onSelect} data-id={record.Id} role="presentation" data-name={record.Name} 
+                        data-level={record.ProdLevel1__c} data-filtergroup={record.Filtered_Grouping__c}>
                             <span class="slds-lookup__item-action slds-lookup__item-action--label" role="option">
                                 <lightning-icon class="slds-icon slds-icon--small slds-icon-text-default" icon-name={iconName} alternative-text={objName} size="small"></lightning-icon>
                                 <span class="slds-truncate">{record.Name}</span>

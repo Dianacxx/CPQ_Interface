@@ -1032,7 +1032,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
 
         let trackListInternal = JSON.parse(JSON.stringify(this.trackList));
         let listToDisplayInternal = JSON.parse(JSON.stringify(this.listToDisplayAdd));
-        //console.log('Before QL NSP: '+ JSON.stringify(auxQuoteLines));
+        console.log('Before QL NSP: '+ JSON.stringify(auxQuoteLines));
         
         //CREATING NSP QUOTE LINES
         addNSPProducts({quoteId: this.recordId, products: JSON.stringify(auxQuoteLines)})//, filteredGrouping: this.trackList.lookupCode})

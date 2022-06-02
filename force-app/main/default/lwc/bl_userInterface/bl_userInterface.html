@@ -39,20 +39,30 @@
                                     <div class="slds-col slds-var-m-top_large ">
                                         <lightning-button class="stretchButton slds-var-m-left_small" variant="brand" label="Apply" disabled={disableButton} onclick={handleApplyDiscount}></lightning-button>
                                         <lightning-helptext content="Apply discounts will save the quote lines you have added in the table."></lightning-helptext>
+                                        <!--OVERRIDE REASON SECTION-->
+                                        <template if:true={activeOverrideReason}>
+                                            <lightning-combobox  label="Deviation Reason" value={overrideReason} required
+                                            placeholder="Select Reason" options={overrideReasonsList.data.values} onchange={handleChangeOverrideReason} ></lightning-combobox>
+                                            <lightning-input type="text" label="Override Comment" placeholder="Comment here" onchange={handleOverrideComment}></lightning-input>
+                                            <lightning-combobox  label="Override Type" value={overrideType} 
+                                            placeholder="Select Type" options={overrideTypeList.data.values} onchange={handleOverrideType} ></lightning-combobox>
+                                            <lightning-button  variant="success" label="Update" onclick={updateQuote} class="slds-var-p-around_x-small slds-var-m-left_small"></lightning-button>
+                                        </template> 
+                                        <!--OVERRIDE REASON SECTION-->
                                     </div>
                                 </div>
                             </lightning-layout-item>
                             <!--Button Set-->
                             <lightning-layout-item size="12" small-device-size="6" padding="around-small">
                                 <div class="slds-align_absolute-center">
-                                        <lightning-button class="stretchButton slds-var-m-right_small" variant="brand" label="Reorder Lines" disabled={disableReorder} onclick={handleReorder}></lightning-button>
-                                        <lightning-button class="stretchButton slds-var-m-right_small" variant="brand-outline" label="Save & Calculate" onclick={handleSaveAndCalculate}></lightning-button>
+                                        <lightning-button class="stretchButton slds-var-m-right_small" variant="brand-outline" label="Reorder Lines" disabled={disableReorder} onclick={handleReorder}></lightning-button>
+                                        <lightning-button class="stretchButton slds-var-m-right_small" variant="brand" label="Save & Calculate" onclick={handleSaveAndCalculate}></lightning-button>
                                         <lightning-button class="stretchButton" variant="brand" label="Save & Exit"  onclick={navigateToQuoteRecordPage}></lightning-button>
                                         </div>
                                 <div class="slds-align_absolute-center slds-var-m-top_small">
                                         <lightning-button class="stretchButton slds-var-m-right_small" variant="brand-outline" label="Product Selection" onclick={navitageToProductSelection}></lightning-button>
                                         <lightning-button class="stretchButton slds-var-m-right_small" variant="brand-outline" label="Clone Selected" disabled={disableButton} onclick={handleClone}></lightning-button>
-                                        <lightning-button class="stretchButton" variant="destructive-text" label="Import Lines" onclick={handleImportLines}></lightning-button>
+                                        <lightning-button class="stretchButton" variant="brand-outline" label="Import Lines" onclick={handleImportLines}></lightning-button>
                                 </div>
                                 <div class="slds-align_absolute-center slds-var-m-top_small">
                                     <h1 class="slds-text-heading_medium">Quote Total: <lightning-formatted-number value={totalValue} format-style="currency" currency-code="USD"></lightning-formatted-number></h1>
@@ -69,12 +79,12 @@
                                     <lightning-tab label="Quote Home" value="Home" onactive={handleActive}>
                                         <c-bl_data-table record-id={recordId} tab-selected="Home" quotelines-string={quotelinesString} 
                                         ondeletedvalues={updateTableData} oneditedtable={updateTableData} onclone={activeCloneButton} 
-                                        onnotselected={desactiveCloneButton} ondiscount={handleDiscount} onnewlinenote={newLineNote}></c-bl_data-table>
+                                        onnotselected={desactiveCloneButton} ondiscount={handleDiscount} onnewlinenote={newLineNote} onoverridereason={activeOverrideReasonFields}></c-bl_data-table>
                                     </lightning-tab>
                                     <lightning-tab label="Detail View" value="Detail" onactive={handleActive}>
                                         <c-bl_data-table record-id={recordId} tab-selected="Detail" quotelines-string={quotelinesString} 
                                         ondeletedvalues={updateTableData} oneditedtable={updateTableData} onclone={activeCloneButton} 
-                                        onnotselected={desactiveCloneButton} ondiscount={handleDiscount}></c-bl_data-table>
+                                        onnotselected={desactiveCloneButton} ondiscount={handleDiscount} onoverridereason={activeOverrideReasonFields}></c-bl_data-table>
                                     </lightning-tab>
                                     <lightning-tab label="Product Notes" value="Notes" onactive={handleActive}>
                                         <c-bl_product-notes-table record-id={recordId} quote-notes-string={quoteNotesString}></c-bl_product-notes-table>

@@ -1,7 +1,7 @@
 <template>
     <!--POP UP TIERS START-->
     <template if:true={popUpTiers}>
-        <section aria-modal="true" class="slds-modal slds-fade-in-open slds-align_absolute-center">
+        <section aria-modal="true" class="slds-modal slds-fade-in-open slds-align_absolute-center" >
             <div class="slds-modal__container slds-var-m-left_small  slds-var-m-right_small">
                 <header class="slds-modal__header slds-var-m-left_small  slds-var-m-right_small">
                     <h1>TEMPORARY WORK HERE, PLEASE CLOSE THIS POP-UP, Brick Lane - {recordId} </h1>
@@ -11,14 +11,13 @@
                 <div class="slds-modal__content slds-var-m-left_small  slds-var-m-right_small">
                     <div class="slds-var-p-around_small slds-align_absolute-center slds-grid slds-grid_vertical">
                         <div class="slds-col">
-                        <lightning-card class="slds-var-m-left_large slds-var-m-right_large" title={uomOfQuoteline}>
-
+                            <h1 class="slds-align_absolute-center slds-var-m-top_small slds-var-m-bottom_small">{uomOfQuoteline}</h1>
                             <!--CUSTOMER TIER PICKLIST-->
-                            <lightning-combobox class="comboboxSize" name="customerTier" label="Customer Tier" value={CustomerTier}
+                            <lightning-combobox style="width: 60%;" class="slds-align_absolute-center" name="customerTier" label="Customer Tier" value={CustomerTier}
                             placeholder="Select Tier" options={optionsCustomer} onchange={handleCustomerChange} ></lightning-combobox>
                             
                             <!--BASE PRICE INPUT-->
-                            <lightning-input class="comboboxSize" style="width: 90%;" type="number" name="BasePriceOverride" label="Base Price Override"
+                            <lightning-input  style="width: 40%;" class="slds-align_absolute-center" type="number" name="BasePriceOverride" label="Base Price Override"
                              placeholder="$" onchange={handleBasePriceChange} ></lightning-input>
                     
                             <!--AGREEMENT LOOK UP FIELD START-->
@@ -29,17 +28,19 @@
                                             <div id="box" class={boxClass} aria-expanded="true" aria-haspopup="listbox" role="combobox">
                                                 <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right" role="none">
                                                 <div class="slds-p-top_none">
-                                                    <lightning-input class={inputClass} type="search" id="inputAgreement" value={agreementSearchTearm}
+                                                    <lightning-input  style="width: 50%;"  class={inputClass} type="search" id="inputAgreement" value={agreementSearchTearm}
                                                             onclick={handleClick} onblur={onBlur} onchange={onChange} label="Agreement">
                                                     </lightning-input>
                                                 </div>
                                                 </div>
-                                                <div id="listbox-id-1" class="comboboxSize slds-dropdown slds-dropdown_length-with-icon-7" role="listbox">
-                                                    <ul class="comboboxSize slds-listbox slds-listbox_vertical" role="presentation">
-                                                        <template for:each={records} for:item="record">
-                                                            <li class="comboboxSize" key={record.Id} onclick={onSelect} data-id={record.Id} role="presentation" data-name={record.Agreement_Name__c}>
+                                                <div id="listbox-id-1" class="slds-dropdown slds-dropdown_length-with-icon-7" role="listbox">
+                                                    <ul  style="width: 50%;"  class="slds-listbox slds-listbox_vertical" role="presentation">
+                                                        <template for:each={recordsTiers} for:item="record">
+                                                            <li  style="width: 50%;"  key={record.Id} onclick={onSelect} data-id={record.Id} role="presentation" data-name={record.Agreement_Name__c}>
                                                                 <span role="option">
+                                                                <!--    
                                                                     <lightning-icon class="slds-icon slds-icon--small slds-icon-text-default slds-var-m-right_xx-small" icon-name="standard:contract" size="small"></lightning-icon>
+                                                                -->
                                                                     <span class="slds-truncate">{record.Agreement_Name__c}</span>
                                                                 </span>
                                                             </li>
@@ -51,31 +52,33 @@
                                     </div>
                                 </div>
                             </div>
-                            <!--LOOK UP FIELD END-->
+                            <!--AGREEMENT LOOK UP FIELD END-->
                             
                             <!--TIERS TABLE-->
                             <template if:true={showTiersList}>
                                 <div class="slds-var-m-top_small">
                                     <p>Price Breaks</p>
                                     <!--column-widths-mode="auto"-->
-                                    <lightning-datatable  style="width:100%;" key-field="id" data={tiers} columns={tiersColumns} hide-checkbox-column	
+                                    <lightning-datatable key-field="id" data={tiers} columns={tiersColumns} hide-checkbox-column	
                                     ></lightning-datatable>
                                 </div>
                                 
                             </template>
-                    
-                        </lightning-card>
                         </div>
                         
                         <div class="slds-col">
+                            <!--OVERRIDE REASON SECTION-->
                             <template if:true={activeOverrideReason}>
                                 THIS GOES IN THE UI, OUTSIDE POP UP, ALONG WITH THE APPLY DISCOUNT VALUES. ajust sizes!!!
                                 <lightning-combobox  label="Deviation Reason" value={overrideReason} required
-                                placeholder="Select Progress" options={overrideReasonsList.data.values} onchange={handleChangeOverrideReason} ></lightning-combobox>
+                                placeholder="Select Reason" options={overrideReasonsList.data.values} onchange={handleChangeOverrideReason} ></lightning-combobox>
                                 <lightning-input type="text" label="Override Comment" placeholder="Comment here" onchange={handleOverrideComment}></lightning-input>
+                                <lightning-combobox  label="Override Type" value={overrideType} 
+                                placeholder="Select Type" options={overrideTypeList.data.values} onchange={handleOverrideType} ></lightning-combobox>
                                 <lightning-button  variant="success" label="Update" onclick={updateQuote} class="slds-var-p-around_x-small slds-var-m-left_small"></lightning-button>
 
                             </template> 
+                             <!--OVERRIDE REASON SECTION-->
                         </div>
                         
                     </div>

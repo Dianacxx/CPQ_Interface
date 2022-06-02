@@ -682,6 +682,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
               }, 500);
             })
             .catch((error)=>{
+                let errorMessage; 
                 if(error != undefined){
                     if(error.body != undefined){
                         if(error.body.exceptionType != undefined){

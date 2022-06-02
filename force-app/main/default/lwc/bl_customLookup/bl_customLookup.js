@@ -99,8 +99,11 @@ export default class Bl_customLookup extends LightningElement {
     onSelect(event) {
         let selectedId = event.currentTarget.dataset.id;
         let selectedName = event.currentTarget.dataset.name;
+        let level =  event.currentTarget.dataset.level;
+        let filtergroup =  event.currentTarget.dataset.filtergroup;
+        let productInfo = {Id: selectedId, Name: selectedName, level: level, filtergroup: filtergroup, }; 
         if(!(selectedId == 'norecords')){
-            const valueSelectedEvent = new CustomEvent('lookupselected', {detail:  selectedId });
+            const valueSelectedEvent = new CustomEvent('lookupselected', {detail:  productInfo });
             this.dispatchEvent(valueSelectedEvent);
             this.isValueSelected = true;
             this.selectedName = selectedName;
@@ -124,7 +127,7 @@ export default class Bl_customLookup extends LightningElement {
                 this.error = undefined;
                 this.records = data;
                 if (this.records.length == 0){
-                    this.records = [{"Id":"norecords","Name":"NO RECORDS","IsActive":true}];
+                    this.records = [{"Id":"norecords","Name":"NO RECORDS","IsActive":false, level: '', filtergroup: '', }];
                 } else {
                     //TO SHOW CUTOMER PART OR COMPETITOR REFERENCE IN THE SEARCH
                 if (!(this.productSelected == 'name' )) { 

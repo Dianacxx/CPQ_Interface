@@ -8,7 +8,12 @@ public with sharing class SearchAgreementLookupController {
         for(Contract con : junctionRecords){
             contSet.add(con.id);
         }
-        myQuery = 'Select Id, Agreement_Name__c FROM Contract WHERE AccountId =: accId OR ID IN: contSet AND Name LIKE\'%' + searchTerm + '%\'';
+        List<Contract> agreementRecords = [Select Id, Agreement_Name__c FROM Contract WHERE AccountId =: accId OR ID IN: contSet];
+        Set<Id> agreementIds = new Set<Id>();
+        for(Contract con : agreementRecords){
+            agreementIds.add(con.id);
+        }
+        myQuery = 'Select Id, Agreement_Name__c FROM Contract WHERE ID IN: agreementIds AND Agreement_Name__c LIKE\'%' + searchTerm + '%\'';
         List<sObject> lookUpList = database.query(myQuery);
         System.debug('all contract records from query --- '+ lookUpList.size());
         return lookUpList;

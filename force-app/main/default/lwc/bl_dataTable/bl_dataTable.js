@@ -6,9 +6,22 @@ import displayFieldSet from '@salesforce/apex/QuoteController.displayFieldSet';
 
 //APEX METHOD TO CREATE QUOTE LINES FROM LOOUP FIELD 
 import addQuoteLine from '@salesforce/apex/QuoteController.addQuoteLine';
+//APEX METHOD TO CREATE NSP FROM LOOKUP
+import addNSPProducts from '@salesforce/apex/QuoteController.addNSPProducts';
 
 //APEX METHOD TO SHOW NSP FIELDS IN POP UP
 import NSPAdditionalFields from '@salesforce/apex/QuoteController.NSPAdditionalFields'; 
+
+//APEX METHOD THAT SEARCH THE AGREEMENT IN TIER POP-UP (POP-UP DATATABLE)
+import searchAgreement from '@salesforce/apex/SearchAgreementLookupController.search'; 
+
+//APEX METHOD THAT RETRIEVE TIERS OF THE AGREEMENT SELECTED
+import discountPrinter from '@salesforce/apex/DiscountController.discountPrinter'; 
+
+//GETTING THE ACCOUNT OF THE QUOTE (POP-UP DATATABLE)
+import ACCOUNT_ID_FIELD from '@salesforce/schema/SBQQ__Quote__c.SBQQ__Account__c'; 
+import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
+
 
 //TO SHOW POSSIBLE VALUES IN LWC TABLE PICKLIST FIELDS WITHOUT GETTING ERROR FROM APEX
 //ADD NAME PICKLIST FIELD WHEN A NEW FIELD IN TABLE IS ADD. 
@@ -26,9 +39,46 @@ import uomDependencyLevel2List from '@salesforce/apex/blMockData.uomDependencyLe
 import { subscribe, publish, MessageContext } from 'lightning/messageService';
 import UPDATE_INTERFACE_CHANNEL from '@salesforce/messageChannel/update_Interface__c';
 
+//TIER COLUMNS FOR TABLE IN TIERS POP-UP (POP-UP DATATABLE)
+const TIER_COLUMNS = [
+    { label: 'Tier Name', fieldName: 'name', initialWidth: 100, },
+    { label: 'Number', fieldName: 'tierNumber', type: 'number', initialWidth: 100,},
+    { label: 'Discount', fieldName: 'discount', type: 'number', initialWidth: 100, },
+];
+
+//DATA TABLE COLUMNS FOR EACH TAB USED
+const QUOTE_LINE_COLUMNS = [
+    { label: 'Product', fieldName: 'quotelinename', editable: true ,sortable: true, wrapText: false, initialWidth :325,},
+    { label: 'Description', fieldName: 'description', editable: true ,sortable: true, wrapText: false,},
+    { label: 'Quantity', fieldName: 'quantity', editable: true ,sortable: true, wrapText: false,type: 'number',hideDefaultActions: true },
+    { label: 'UOM', fieldName: 'uom', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true},
+    { label: 'Length', fieldName: 'length', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true},
+    { label: 'Length UOM', fieldName: 'lengthuom', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true},
+    { label: 'Discount (%)', fieldName: 'additionaldiscount', editable: true ,sortable: true, wrapText: false,type: 'number',hideDefaultActions: true },
+    { label: 'Net Unit Price', fieldName: 'netunitprice', editable: true ,sortable: true, wrapText: false,type: 'number',hideDefaultActions: true },
+    { label: 'List Unit Price', fieldName: 'listunitprice', editable: false ,sortable: true, wrapText: false,type: 'number',hideDefaultActions: true },
+    { label: 'Net Total', fieldName: 'nettotal', editable: false ,sortable: true, wrapText: false,type: 'number',hideDefaultActions: true },
+    { label: 'NSP', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:google_news', name: 'NSP', variant:'brand', size:'xxx-small'}},
+    { label: 'Tiers', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:adjust_value', name: 'Tiers', variant:'brand', size:'xxx-small'}},
+    { label: 'Line Notes', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:new_note', name: 'Linenote', variant:'brand', size:'xxx-small'}},
+    { label: '', type: 'button-icon',initialWidth: 20,typeAttributes:{iconName: 'action:delete', name: 'Delete', variant:'border-filled', size:'xxx-small'}}
+];
+
+const DETAIL_COLUMNS = [
+    { label: 'Product', fieldName: 'quotelinename', editable: true ,sortable: true, wrapText: false, initialWidth :325,},
+    { label: 'Billing Tolerance', fieldName: 'billingTolerance', editable: true ,sortable: true, wrapText: false,type: 'number',hideDefaultActions: true },
+    { label: 'Source', fieldName: 'source', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true},
+    { label: 'Destination', fieldName: 'destination', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true},
+    { label: 'Alternative Indicator', fieldName: 'alternativeindicator', editable: true ,sortable: true, wrapText: false,hideDefaultActions: true },
+    { label: 'NSP', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:google_news', name: 'NSP', variant:'brand', size:'xxx-small'}},
+    { label: 'Tiers', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:adjust_value', name: 'Tiers', variant:'brand', size:'xxx-small'}},
+    { label: 'Line Notes', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:new_note', name: 'Linenote', variant:'brand', size:'xxx-small'}},
+    { label: '', type: 'button-icon',initialWidth: 20,typeAttributes:{iconName: 'action:delete', name: 'Delete', variant:'border-filled', size:'xxx-small'}}
+];
+
 export default class Bl_dataTable extends LightningElement {
     @api recordId;
-    @api auxiliar; //Auxiliar variable to see how informaton works
+    @api auxiliar = false; //Auxiliar variable to see how informaton works
 
     @api tabSelected; //To display fields depending on tab
     @api spinnerLoading = false; //To show loading when changes
@@ -47,13 +97,29 @@ export default class Bl_dataTable extends LightningElement {
     //Applying discount
     @track discount; 
 
-
+    //TIERS VARIBALES (POP-UP DATATABLE)
+    tiers = []; 
+    tiersColumns = TIER_COLUMNS; 
+    popUpTiers = false;
+    showTiersList = false;
+    accountId; 
+    @track selectedName;
+    @track recordsTiers;
+    @track blurTimeout;
+    @track searchTermTier;
+    showTiers = false;
+    //CSS VARIABLES (POP-UP DATATABLE)
+    @track boxClass = 'slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click slds-has-focus';
+    @track inputClass = 'slds-align_absolute-center';
+    
     connectedCallback(){
         this.subscribeToMessageChannel();
         //DEPENDING ON TAB, CHANGE COLUMS VALUES
         this.spinnerLoading = true; 
-        const COLUMNS_HOME = []; //[ { label: 'Quote Name', fieldName: 'name', sortable: true, },];
-        const COLUMNS_DETAIL = []; //[ { label: 'Quote Name', fieldName: 'name', sortable: true, },];
+        
+        this.tabSelected == 'Home' ? this.isQuoteLinesTab = true : this.isQuoteLinesTab = false; 
+        this.tabSelected == 'Home' ? this.columns = QUOTE_LINE_COLUMNS : this.columns =  DETAIL_COLUMNS; 
+
         if (this.quotelinesString){
             this.quoteLines = JSON.parse(this.quotelinesString);
             //console.log(JSON.stringify(this.quoteLines[0]));
@@ -68,8 +134,13 @@ export default class Bl_dataTable extends LightningElement {
             this.updateTable();
         }
         //Make available the look up field
-        this.tabSelected == 'Home' ? this.isQuoteLinesTab = true : this.isQuoteLinesTab = false; 
         //console.log(Object.getOwnPropertyNames(this.quoteLines[0])); 
+        this.spinnerLoading = false; 
+        this.dispatchEvent(new CustomEvent('notselected'));
+
+
+        //NOT USE OF FIELD SET ANYMORE 
+        /*
         displayFieldSet() 
         .then((data) => {
             this.error = undefined;
@@ -98,7 +169,7 @@ export default class Bl_dataTable extends LightningElement {
                             } else {
                                 if(this.fieldSet[i].property == 'description'){
                                     indexDes = i; 
-                                    COLUMNS_HOME.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true,wrapText: false, },);
+                                    COLUMNS_HOME.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true,wrapText: false, initialWidth :150, },);
                                     //console.log('Index description '+indexDes);
                                 } else {
                                     COLUMNS_HOME.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, hideDefaultActions: true},);
@@ -107,9 +178,16 @@ export default class Bl_dataTable extends LightningElement {
                         }
                     }
                     this.columns = COLUMNS_HOME; 
-                    this.auxiliar = 1;
                 } else if (this.tabSelected == 'Detail'){
-                    if (this.fieldSet[i].key == 'DETAIL'){
+                    if (this.fieldSet[i].property == 'quotelinename'){
+                        let labelName = 'Product'; //COLUMN NAME IN QLE DETAIL TAB
+                        if (!this.auxiliar){
+                            COLUMNS_DETAIL.unshift({ label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, wrapText: false, initialWidth :150,},);
+                            console.log('Inserting Once');
+                            this.auxiliar = true; 
+                        }
+                    } 
+                    else if (this.fieldSet[i].key == 'DETAIL'){
                         let labelName;
                         this.fieldSet[i].required ? labelName = '*'+this.fieldSet[i].label: labelName = this.fieldSet[i].label;
                         if (this.fieldSet[i].type == 'CURRENCY' || this.fieldSet[i].type == 'PERCENT' || this.fieldSet[i].type == 'DOUBLE'){
@@ -119,7 +197,6 @@ export default class Bl_dataTable extends LightningElement {
                         }
                     }
                     this.columns = COLUMNS_DETAIL; 
-                    this.auxiliar = 2;
                 } 
             }
             //ADD SPECIAL COLUMNS IN TABLE LIKE BUTTONS
@@ -144,7 +221,7 @@ export default class Bl_dataTable extends LightningElement {
             });
             this.dispatchEvent(evt);
         });
-        
+        */
 
     }
 
@@ -208,7 +285,17 @@ export default class Bl_dataTable extends LightningElement {
     /* put here uomDependencyLevel2List with all the picklist value 2 to get the list depending on product 2 and 
     then in the edition compare with the list to make sure there are no erros. */
 
-    
+    //WIRE METHOD TO GET ACCOUNT INFO (POP-UP DATATABLE)
+    @wire(getRecord, { recordId: '$recordId', fields: ACCOUNT_ID_FIELD})
+    quoteData({error, data}){
+        if (data){
+            let account = data;
+            this.accountId = getFieldValue(account, ACCOUNT_ID_FIELD ); }
+        else {
+            this.accountId = 'NO ACCOUNT'; 
+        }
+    }
+
     //CONNECTING CHANNEL 
     @wire(MessageContext)
     messageContext;
@@ -247,7 +334,7 @@ export default class Bl_dataTable extends LightningElement {
         }
         //WHEN THE REORDER FUNCTION WAS DONE
         else if (message.auxiliar == 'reordertable'){
-            this.popUpReorder = true; 
+            this.tabSelected == 'Detail' ? this.popUpReorder = false : this.popUpReorder = true; 
             this.ElementList = this.quoteLines;
         }
         //WHEN THE REORDER FUNCTION IS CLOSED
@@ -409,7 +496,153 @@ export default class Bl_dataTable extends LightningElement {
     //Lookup search product selected to be added to table as quote line
     handleProductSelection(event){
         this.spinnerLoading = true;
-        //console.log("the selected record id is: "+event.detail);
+        console.log("the selected record id is: ");
+        console.log(JSON.stringify(event.detail));
+        let level = event.detail.level; 
+        let lookupcode = event.detail.filtergroup; 
+        let productId = event.detail.Id; 
+
+        //FOR NSP LOOKUP SEARCH ADDITION
+        if (((level == 'ACA') && ((lookupcode != 'Copperclad'))) || 
+            ((level == 'Fiber Optic Cable') && ((lookupcode == 'Premise Cable') || 
+            (lookupcode == 'Loose Tube Cable') || (lookupcode == 'ADSS Cable')) )) {
+               
+                addQuoteLine({quoteId: this.recordId, productId: productId})
+                .then((data) => {
+                    console.log('SUCCESS TURNING NSP QUOTELINES');
+                    console.log(data);
+                    let newQuotelines = JSON.parse(data); 
+                    for (let i=0; i< newQuotelines.length; i++){
+                        //To create auxiliar ID and Name
+                        let randomId = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 10);
+                        let randomName = Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 10);//Math.random().toFixed(36).substring(0, 7)); 
+                        newQuotelines[i].id = 'new'+randomId; 
+                        newQuotelines[i].name = 'New QL-'+randomName; 
+                        newQuotelines[i].minimumorderqty == null ? newQuotelines[i].quantity = 1 : newQuotelines[i].quantity = newQuotelines[i].minimumorderqty;
+                        newQuotelines[i].netunitprice = 1;
+                        newQuotelines[i].alternative = false;
+                        newQuotelines[i].quotelinename = newQuotelines[i].product;
+                        
+                        //SPECIAL BEHAVIOR TO ADD LENGTH BASE VALUES 
+                        if (newQuotelines[i].filteredGrouping == 'Cable Assemblies' || newQuotelines[i].productType == 'Patch Panel - Stubbed'){
+                            newQuotelines[i].qlevariableprice = 'Cable Length'; 
+                        } else {
+                            newQuotelines[i].qlevariableprice = null ; 
+                        }
+                        if (!(newQuotelines[i].qlevariableprice == 'Cable Length')){
+                            newQuotelines[i].length = 'NA';
+                            newQuotelines[i].lengthuom = 'NA';
+                        }
+                        
+                        //NSP CHECK BOX VALUE
+                        newQuotelines[i].isNSP = true; 
+                        if (newQuotelines[i].prodLevel1 == null){
+                            newQuotelines[i].prodLevel2 = null;
+                        }
+                        if (newQuotelines[i].prodLevel2 == null){
+                            newQuotelines[i].uom = null;
+                        }
+                        this.quoteLines = [...this.quoteLines, newQuotelines[i]];
+                    }
+    
+                    this.updateTable();
+                    this.quotelinesString = JSON.stringify(this.quoteLines); 
+                    this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
+                    
+                    //----------
+                    setTimeout(()=>{
+                        const evt = new ShowToastEvent({
+                            title: 'NSP Product added',
+                            message: 'Please, add the NSP fields first',
+                            variant: 'info',
+                            mode: 'dismissable'
+                        });
+                        this.dispatchEvent(evt);
+                        this.spinnerLoading = false;
+                        //NSP POP UP OPEN 
+                        this.nspProduct = true; 
+                        this.nspShowMessage = true;
+                        //----------
+                        this.dataRow = this.quoteLines[this.quoteLines.length-1];
+                        this.showNSPValues();
+                    },250); 
+                })
+                .catch((error)=>{
+                    console.log('ERROR TURNING NSP QUOTELINES');
+                    console.log(error);
+                    const evt = new ShowToastEvent({
+                        title: 'Error creating the quote line',
+                        message: 'The server has problems creating quote lines',
+                        variant: 'error',
+                        mode: 'dismissable'
+                    });
+                    this.dispatchEvent(evt);
+                })
+        } else {
+            //let productId = event.detail.Id; 
+            let newQuotelines; //New quoteline
+            let randomId;     //Random Id for new quoteline
+            let randomName;   //Random Name for new quoteline
+            addQuoteLine({quoteId: this.recordId, productId: productId})
+            .then((data) => {
+                //console.log('Add Product DATA: '+ data); 
+                newQuotelines = JSON.parse(data); 
+                for (let i=0; i< newQuotelines.length; i++){
+                    //To create auxiliar ID and Name
+                    randomId = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 10);
+                    randomName = Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 10);//Math.random().toFixed(36).substring(0, 7)); 
+                    newQuotelines[i].id = 'new'+randomId; 
+                    newQuotelines[i].name = 'New QL-'+randomName; 
+                    newQuotelines[i].minimumorderqty == null ? newQuotelines[i].quantity = 1 : newQuotelines[i].quantity = newQuotelines[i].minimumorderqty;
+                    newQuotelines[i].netunitprice = 1;
+                    newQuotelines[i].alternative = false;
+                    newQuotelines[i].quotelinename = newQuotelines[i].product;
+                    //SPECIAL BEHAVIOR TO ADD LENGTH BASE VALUES 
+                    if (newQuotelines[i].filteredGrouping == 'Cable Assemblies' || newQuotelines[i].productType == 'Patch Panel - Stubbed'){
+                        newQuotelines[i].qlevariableprice = 'Cable Length'; 
+                    } else {
+                        newQuotelines[i].qlevariableprice = null ; 
+                    }
+                    if (!(newQuotelines[i].qlevariableprice == 'Cable Length')){
+                        newQuotelines[i].length = 'NA';
+                        newQuotelines[i].lengthuom = 'NA';
+                    }
+                    if (newQuotelines[i].prodLevel1 == null){
+                        newQuotelines[i].prodLevel2 = null;
+                    }
+                    if (newQuotelines[i].prodLevel2 == null){
+                        newQuotelines[i].uom = null;
+                    }
+                    this.quoteLines = [...this.quoteLines, newQuotelines[i]];
+                }
+                this.updateTable();
+                this.quotelinesString = JSON.stringify(this.quoteLines); 
+                this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
+                this.spinnerLoading = false;
+                setTimeout(()=>{
+                    const evt = new ShowToastEvent({
+                        title: 'Product added in the table',
+                        message: 'The product you searched was added',
+                        variant: 'success',
+                        mode: 'dismissable'
+                    });
+                    this.dispatchEvent(evt);
+                },250);
+            })
+            .catch((error) =>{
+                console.log('Add Product ERROR: ');
+                console.log(error);
+                this.spinnerLoading = false;
+                const evt = new ShowToastEvent({
+                    title: 'Error creating QuoteLine',
+                    message: 'The product selected cannot turn into a quoteline',
+                    variant: 'error',
+                    mode: 'sticky'
+                });
+                this.dispatchEvent(evt);
+            }) 
+        }
+        /*
         let productId = event.detail; 
         let newQuotelines; //New quoteline
         let randomId;     //Random Id for new quoteline
@@ -465,6 +698,7 @@ export default class Bl_dataTable extends LightningElement {
             });
             this.dispatchEvent(evt);
         }) 
+        */
     }
 
     @track quoteLinesEdit;
@@ -774,6 +1008,116 @@ export default class Bl_dataTable extends LightningElement {
     closeTiers(){
         this.popUpTiers = false;
     }
+    //CHANGE CSS (POP-UP DATATABLE)
+    handleClick() {
+        this.searchTermTier = '';
+        this.inputClass = 'slds-align_absolute-center slds-has-focus';
+        this.boxClass = 'slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click slds-has-focus slds-is-open';
+    }
+    onBlur() {
+        this.blurTimeout = setTimeout(() => {
+            this.boxClass = 'slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click slds-has-focus'
+        }, 300);
+    }
+
+    //WHEN SELECTING AN AGREEMENT FROM THE LIST  (POP-UP DATATABLE)
+    onSelect(event) {
+        let selectedId = event.currentTarget.dataset.id;
+        let selectedName = event.currentTarget.dataset.name;
+        console.log('Selected:' + selectedId+', '+selectedName);
+        this.template.querySelectorAll("[id*='inputAgreement']").forEach(each => { each.value = undefined; });
+        if(!(selectedId == 'norecords')){
+            //selectedId 
+            //this.showTiers = false; 
+            discountPrinter({agreementId: '8002h000000engBAAQ' /*selectedId*/, prodId: '01t2h000004Rvu1AAC' })
+            .then((data)=>{
+                console.log('discount Tiers GOOD'); 
+                console.log(data);
+                this.tiers = JSON.parse(data); 
+                this.showTiers = true; 
+                this.showTiersList = true;
+            })
+            .catch((error)=>{
+                console.log('discount Tiers BAD'); 
+                console.log(error);
+            })
+            /*
+            const valueSelectedEvent = new CustomEvent('lookupselected', {detail:  selectedId });
+            this.dispatchEvent(valueSelectedEvent);
+            this.isValueSelected = true;
+            this.selectedName = selectedName;
+            */
+            if(this.blurTimeout) {
+                clearTimeout(this.blurTimeout);
+            }
+            this.boxClass = 'slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click slds-has-focus';
+        }
+        
+    }
+
+    //WHEN CHANGING THE TERM TO LOOK UP THE AGREEMENT (POP-UP DATATABLE)
+    onChange(event) {
+        this.searchTermTier = event.target.value;
+        //console.log('search Term : '+ this.searchTermTier);
+        //IF NOT RELATED ACCOUNT 
+        if(this.accountId == 'NO ACCOUNT'){
+            const evt = new ShowToastEvent({
+                title: 'No Account available',
+                message: 'This quote has no associated account',
+                variant: 'error',
+                mode: 'dismissable'
+            });
+            this.dispatchEvent(evt);
+        } else {
+            searchAgreement( {accId : this.accountId, searchTerm: this.searchTermTier})
+            .then((data)=>{
+                    this.recordsTiers = data;
+                    if (this.recordsTiers.length == 0){
+                        this.recordsTiers = [{"Id":"norecords","Agreement_Name__c":"NO RECORDS",}];
+                    } 
+            })
+            .catch((error)=>{
+                console.log('Lookup ERROR: '); 
+                console.log(error);
+                const evt = new ShowToastEvent({
+                    title: 'No agreements found',
+                    message: 'This quote has no associated agreements',
+                    variant: 'warning',
+                    mode: 'dismissable'
+                });
+                this.dispatchEvent(evt);
+            });
+        }
+        
+    }
+
+    //WHEN CHANGING CUSTOMER TIER VALUE (POP-UP DATATABLE)
+    customerTier; 
+    handleCustomerChange(event){
+        console.log('customer change');
+        this.customerTier = event.target.value; 
+    }
+
+    //WHEN CHANGING THE BASE PRICE VALUE (POP-UP DATATABLE)
+    basePrice; 
+    handleBasePriceChange(event){
+        console.log('base price');
+        this.basePrice = event.target.value; 
+    }
+    
+
+    //WHEN CLICK IN CHANGE VALUE (POP-UP DATATABLE) - SEND MESSAGE TO UI FROM DATATABLE COMPONENT 
+    changeTiers(){
+        //CHANGE HERE VALUES OF BASE PRICE, AGREEMENT AND CUSTOMER ONCE CLICKED
+        //ASK WHICH VALUES CAN CHANGE, TO SEE IF THEY ARE REQUIRED ALL OF THEM OR HOW THEY WORK. 
+        //UNCOMMENT THIS WHEN CODE IN DATA TABLE TO ACTIVE THE Override Reason THING
+        this.dispatchEvent(new CustomEvent('overridereason'));
+        //HERE CALLS THE SAVING METHOD OF THE QUOTE LINE, AND RETRIEVE THE INFO THAT CAHNGES WHEN SAVING
+        //this.activeOverrideReasonFields(); 
+        console.log('change clicked');
+        this.closeTiers();
+    }
+
 
     //NSP Products TO SHOW NSP FIELDS DEPENDING ON QUOTE 
     @track nspValues = [];

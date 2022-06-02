@@ -22,6 +22,16 @@ import editAndDeleteQuotes from '@salesforce/apex/QuoteController.editAndDeleteQ
 //APEX METHOD TO DELETE THE RECORD THAT SAVES THE QUOTE ID 
 import deletingRecordId from '@salesforce/apex/blMockData.deletingRecordId';
 
+//APEX METHODS FOR OVERRIDE REASON
+//GETTING PICKLIST VALUES WITOUTH DEPENDENCIES OR APEX METHODS FOR TIERS FIELDS
+import { getPicklistValues, getObjectInfo } from 'lightning/uiObjectInfoApi';
+import QUOTE_LINE_OBJECT from '@salesforce/schema/SBQQ__QuoteLine__c';
+import OVERRIDE_REASON from '@salesforce/schema/SBQQ__Quote__c.Override_Reason__c';
+import OVERRIDE_TYPE from '@salesforce/schema/SBQQ__Quote__c.Override_Type__c';
+
+//APEX METHOD TO UPDAT QUOTE 
+import quoteSaver from '@salesforce/apex/DiscountController.quoteSaver'; 
+
 
 export default class UserInterface extends NavigationMixin(LightningElement) {
     @api recordId; //Quote Record Id that opens the UI
@@ -357,48 +367,55 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         //CALL APEX METHOD TO SAVE QUOTELINES AND NOTES
         //this.labelButtonSave =  event.target.label;
         //console.log('Label '+ label);
-        this.spinnerLoadingUI = true;
-        this.notSaveYet = false; 
-        let quoteEdition = JSON.parse(this.quotelinesString);
-        //console.log('Before Saving ');
-        //console.log(this.quotelinesString);
-        
-        let quotesToFill = []; 
-        //TO GET ERROR IF THE USER SAVES WITOURH FILLING REQUIRED FIELDS IN TABLE
-        for(let i = 0; i< quoteEdition.length; i++){
-            //console.log('quoteline '+i); 
-            if (quoteEdition[i].qlevariableprice == 'Cable Length' && quoteEdition[i].isNSP == false){
-                if(quoteEdition[i].length<0 || (quoteEdition[i].lengthuom != 'Meters' && quoteEdition[i].lengthuom != 'Feet')){
-                    this.notSaveYet = true;
-                    quotesToFill.push(i+1);
-                }
-            } else {
-                //OR MAKE IT EASY TO THE USER BUT FILLING THE ONES THAT NOT REQUIRED ANY ACTION
-                if(!quoteEdition[i].lengthuom){
-                    //console.log('Is NA product');
-                    quoteEdition[i].lengthuom = 'NA';
-                    quoteEdition[i].length = 'NA';
-                }
-            }
-        }
-
-        this.quotelinesString = JSON.stringify(quoteEdition);
-        //SHOW THE ERROR OR CONTINUE SAVING PROCESS
-        if(this.notSaveYet){
+        if(this.activeOverrideReason){
             const evt = new ShowToastEvent({
-                title: 'Required Fields before saving',
-                message: 'You have not put the required values of length and length UOM in rows: '+quotesToFill.join(),
+                title: 'Required Deviation Reason Fields before saving',
+                message: 'The Deviation Reason field should be update before saving',
                 variant: 'error', mode: 'sticky' });
             this.dispatchEvent(evt);
-            this.spinnerLoadingUI = false;
         } else {
-            //console.log('S&C quoteLines: '+this.quotelinesString);
-            this.callEditAnDeleteMethod().then(this.callCreateMethod());
-            //this.spinnerLoadingUI = false;
-            //console.log(`Saving method took ${endTime - startTime} milliseconds`);
-            this.desactiveCloneButton();
+            this.spinnerLoadingUI = true;
+            this.notSaveYet = false; 
+            let quoteEdition = JSON.parse(this.quotelinesString);
+            //console.log('Before Saving ');
+            //console.log(this.quotelinesString);
+            
+            let quotesToFill = []; 
+            //TO GET ERROR IF THE USER SAVES WITOURH FILLING REQUIRED FIELDS IN TABLE
+            for(let i = 0; i< quoteEdition.length; i++){
+                //console.log('quoteline '+i); 
+                if (quoteEdition[i].qlevariableprice == 'Cable Length' && quoteEdition[i].isNSP == false){
+                    if(quoteEdition[i].length<0 || (quoteEdition[i].lengthuom != 'Meters' && quoteEdition[i].lengthuom != 'Feet')){
+                        this.notSaveYet = true;
+                        quotesToFill.push(i+1);
+                    }
+                } else {
+                    //OR MAKE IT EASY TO THE USER BUT FILLING THE ONES THAT NOT REQUIRED ANY ACTION
+                    if(!quoteEdition[i].lengthuom){
+                        //console.log('Is NA product');
+                        quoteEdition[i].lengthuom = 'NA';
+                        quoteEdition[i].length = 'NA';
+                    }
+                }
+            }
+
+            this.quotelinesString = JSON.stringify(quoteEdition);
+            //SHOW THE ERROR OR CONTINUE SAVING PROCESS
+            if(this.notSaveYet){
+                const evt = new ShowToastEvent({
+                    title: 'Required Fields before saving',
+                    message: 'You have not put the required values of length and length UOM in rows: '+quotesToFill.join(),
+                    variant: 'error', mode: 'sticky' });
+                this.dispatchEvent(evt);
+                this.spinnerLoadingUI = false;
+            } else {
+                //console.log('S&C quoteLines: '+this.quotelinesString);
+                this.callEditAnDeleteMethod().then(this.callCreateMethod());
+                //this.spinnerLoadingUI = false;
+                //console.log(`Saving method took ${endTime - startTime} milliseconds`);
+                this.desactiveCloneButton();
+            }
         }
-        
     }
 
     @api notGoodToGoBundle = [false, false]; 
@@ -484,7 +501,9 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                         }
                         else if (error.body.fieldErrors!= undefined){
                             let prop = Object.getOwnPropertyNames(error.body.fieldErrors);
-                            errorMessage = error.body.fieldErrors[prop[0]][0].message;
+                            //errorMessage = error.body.fieldErrors[prop[0]][0].message;
+                            errorMessage = 'There is a Field Error problem, please make sure the values are correct';
+                            console.log('Field Error');
                         } else if (error.body.stackTrace != undefined) {
                             errorMessage = JSON.stringify(error.body.stackTrace);
                         } else {
@@ -559,7 +578,9 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                         }
                         else if (error.body.fieldErrors!= undefined){
                             let prop = Object.getOwnPropertyNames(error.body.fieldErrors);
-                            errorMessage = JSON.stringify(error.body.fieldErrors[prop[0]]);
+                            //errorMessage = JSON.stringify(error.body.fieldErrors[prop[0]]);
+                            errorMessage = 'There is a Field Error problem, please make sure the values are correct';
+                            console.log('Field Error');
                         } else if (error.body.stackTrace != undefined) {
                             errorMessage = JSON.stringify(error.body.stackTrace);
                         }
@@ -777,5 +798,87 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 recordId : this.recordId,
             }
         })
+    }
+
+
+    //OVERRIDE REASON FUNCTION
+    //WIRE METHODS TO GET QUOTE OVERRIDE REASON  INFO (UI)
+    @wire(getObjectInfo, { objectApiName: QUOTE_LINE_OBJECT })
+    quotelineMetadata;
+    @wire(getPicklistValues,{ recordTypeId: '$quotelineMetadata.data.defaultRecordTypeId', 
+            fieldApiName: OVERRIDE_REASON})
+    overrideReasonsList;
+
+    //WIRE METHODS TO GET QUOTE OVERRIDE TYPE  INFO (UI)
+    @wire(getPicklistValues,{ recordTypeId: '$quotelineMetadata.data.defaultRecordTypeId', 
+            fieldApiName: OVERRIDE_TYPE})
+    overrideTypeList;
+
+    activeOverrideReason = false;
+    activeOverrideReasonFields(){
+        console.log('Activate reason window');
+        this.activeOverrideReason = true; 
+    }
+    //WHEN CHANGING THE OVERRIDE REASON CHANGE
+    handleChangeOverrideReason(event){
+        console.log('Override Reason');
+        this.overrideReason = event.target.value; 
+    }
+
+    //WHEN CHANGING THE OVERRIDE COMMENT  
+    handleOverrideComment(event){
+        console.log('Comment Here');
+        this.overrideComment = event.target.value;
+    }
+
+    //WHEN CHANGING THE OVERRIDE TYPE  
+    handleOverrideType(event){
+        console.log('Type Here');
+        this.overrideType = event.target.value;
+    }
+
+    //WHEN CLICKING IN THE UPDATE QUOTE TO CHANGE THE REASON 
+    updateQuote(){
+        console.log('Update quote');
+        //TO SEE THE REQUIRED FIELD TO OVERRIDE
+        if (this.overrideReason == '' || this.overrideReason == null){
+            const evt = new ShowToastEvent({
+                title: 'Please, select an Override Reason',
+                message: 'Select an override reason to save the quote',
+                variant: 'error',
+                mode: 'dismissable'
+            });
+            this.dispatchEvent(evt);
+        } else {
+            console.log('Update quote');
+            let quoteWrap = {id: this.recordId,
+                overridereason: this.overrideReason,
+                overridecomments: this.overrideComment,
+                overridetype: this.overrideType, }
+            quoteSaver({quote: JSON.stringify(quoteWrap)})
+            .then(()=>{
+                console.log('QUOTE UPDATED');
+                const evt = new ShowToastEvent({
+                    title: 'Quote Updated',
+                    message: 'The values are saved in Salesforce',
+                    variant: 'success',
+                    mode: 'dismissable'
+                });
+                this.dispatchEvent(evt);
+                this.activeOverrideReason = false; 
+            })
+            .catch((error)=>{
+                console.log('QUOTE NOT UPDATED');
+                console.log(error);
+                const evt = new ShowToastEvent({
+                    title: 'Cannot update the quote',
+                    message: 'There is an error updating the quote, please wait and try again.',
+                    variant: 'error',
+                    mode: 'dismissable'
+                });
+                this.dispatchEvent(evt);
+            })
+            //CALL THE APEX METHOD THAT SAVES THE INFO INTO THE QUOTE
+        }
     }
 }
