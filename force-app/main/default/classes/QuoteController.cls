@@ -1,172 +1,11 @@
 public with sharing class QuoteController {
 
-    // ---------------------------------------------------------------- FIELD SET HANDLER -----------------------------------------------------------------------------------
-    @AuraEnabled (cacheable = true)
-    public static String displayFieldSet(){
-     
-        List<Schema.FieldSetMember> homeFieldSetMemberListEditable =  FieldSetHandler.getQuote('BL_Quote_Home','SBQQ__QuoteLine__c');
-        List<Schema.FieldSetMember> homeFieldSetMemberListNonEditable =  FieldSetHandler.getQuote('BL_Quote_Home_Non_Edit','SBQQ__QuoteLine__c');
-        List<Schema.FieldSetMember> detailViewFieldSetMemberList =  FieldSetHandler.getQuote('BL_Detail_View','SBQQ__QuoteLine__c');
-        List<Schema.FieldSetMember> lineNoteFieldSetMemberList =  FieldSetHandler.getQuote('BL_Line_Note_Set','SBQQ__QuoteLine__c');
-        List<WrappersClass.FieldSetWrapperClass> fieldsToPrint = new List<WrappersClass.FieldSetWrapperClass>();
-        
-        for (Schema.FieldSetMember fieldSetMember : homeFieldSetMemberListEditable) {
-            WrappersClass.FieldSetWrapperClass wrapper = new WrappersClass.FieldSetWrapperClass();
-            String labelWithoutSpaces = fieldSetMember.getLabel().replaceAll( '\\s+', '');
-            wrapper.key = 'HOME';
-            wrapper.editable= true;
-            wrapper.label = fieldSetMember.getLabel();
-            wrapper.required = fieldSetMember.getRequired();
-            wrapper.property = labelWithoutSpaces.toLowerCase();
-            wrapper.apiName = fieldSetMember.getFieldPath();
-
-            wrapper.type =fieldSetMember.getType();
-
-            fieldsToPrint.add(wrapper);
-        }
-        for (Schema.FieldSetMember fieldSetMember : homeFieldSetMemberListNonEditable) {
-            WrappersClass.FieldSetWrapperClass wrapper = new WrappersClass.FieldSetWrapperClass();
-            String labelWithoutSpaces = fieldSetMember.getLabel().replaceAll( '\\s+', '');
-
-            wrapper.key = 'HOME';
-            wrapper.editable= false;
-            wrapper.label = fieldSetMember.getLabel();
-            wrapper.required = fieldSetMember.getRequired();
-            wrapper.property = labelWithoutSpaces.toLowerCase();
-            wrapper.apiName = fieldSetMember.getFieldPath();
-
-            wrapper.type =fieldSetMember.getType();
-
-            fieldsToPrint.add(wrapper);
-        }
-        for (Schema.FieldSetMember fieldSetMember : detailViewFieldSetMemberList) {
-            WrappersClass.FieldSetWrapperClass wrapper = new WrappersClass.FieldSetWrapperClass();
-            String labelWithoutSpaces = fieldSetMember.getLabel().replaceAll( '\\s+', '');
-
-            wrapper.key = 'DETAIL';
-            wrapper.editable = true;
-            wrapper.label = fieldSetMember.getLabel();
-            wrapper.required = fieldSetMember.getRequired(); 
-            wrapper.property = labelWithoutSpaces.toLowerCase();
-            wrapper.apiName = fieldSetMember.getFieldPath();
-            
-            wrapper.type =fieldSetMember.getType();
-
-            fieldsToPrint.add(wrapper);
-        }
-        for (Schema.FieldSetMember fieldSetMember : lineNoteFieldSetMemberList) {
-            WrappersClass.FieldSetWrapperClass wrapper = new WrappersClass.FieldSetWrapperClass();
-            String labelWithoutSpaces = fieldSetMember.getLabel().replaceAll( '\\s+', '');
-
-            wrapper.key = 'NOTE';
-            wrapper.editable = false;
-            wrapper.label = fieldSetMember.getLabel();
-            wrapper.required = fieldSetMember.getRequired(); 
-            wrapper.property = labelWithoutSpaces.toLowerCase();
-            wrapper.apiName = fieldSetMember.getFieldPath();
-            
-            // wrapper.type =fieldSetMember.getType();
-
-            fieldsToPrint.add(wrapper);
-        }
-        
-        return JSON.serialize(fieldsToPrint);
-    }
-
-    // @AuraEnabled
-    // public static String printQuoteLines (String quoteId){
-    //     QuoteReader quoteReader = new QuoteReader();
-    //     // QuoteModel quote = quoteReader.read('a0q5f0000013pc3AAA');
-    //     QuoteModel quote = quoteReader.read(quoteId);
-
-    //     List<Id> tiersIDs = new List<Id>();
-    //     Map<Id, WrappersClass.DiscountTierWrapperClass> tiersMap = new Map<Id, WrappersClass.DiscountTierWrapperClass>();
-
-    //     QuoteLineModel[] quoteLines = quote.getLineItems();
-    //     for (QuoteLineModel line : quoteLines) {
-    //         tiersIDs.add(line.record.SBQQ__DiscountTier__c);
-    //     }
-    //     List<SBQQ__DiscountTier__c> tiersList = [SELECT Id, Name,SBQQ__LowerBound__c,SBQQ__UpperBound__c,SBQQ__Discount__c,SBQQ__DiscountAmount__c,SBQQ__Price__c FROM SBQQ__DiscountTier__c WHERE Id IN : tiersIDs];
-    //     for (SBQQ__DiscountTier__c tier : tiersList) {
-    //         WrappersClass.DiscountTierWrapperClass tierWrapper = new WrappersClass.DiscountTierWrapperClass();
-    //         tierWrapper.id = tier.Id;
-    //         tierWrapper.name = tier.Name;
-    //         tierWrapper.lowerBound = tier.SBQQ__LowerBound__c;
-    //         tierWrapper.upperBound = tier.SBQQ__UpperBound__c;
-    //         tierWrapper.discount = tier.SBQQ__Discount__c;
-    //         tierWrapper.discountAmount = tier.SBQQ__DiscountAmount__c;
-    //         tierWrapper.price = tier.SBQQ__Price__c;
-    //         tiersMap.put(tierWrapper.id, tierWrapper);
-    //     }
-    //     Set<Id> linesWithNotes = new Set<Id>();
-    //     Set<Id> quoteLineIDs = new Set<Id>();
-    //     for (QuoteLineModel line : quoteLines) {
-    //         quoteLineIDs.add(line.record.Id);
-    //     }
-    //     List<WrappersClass.QuoteLineWrapperClass> displayQuoteLine = new List<WrappersClass.QuoteLineWrapperClass> ();
-        
-    //     for (QuoteLineModel line : quoteLines) {
-    //         WrappersClass.QuoteLineWrapperClass wrapper = new WrappersClass.QuoteLineWrapperClass();
-    //         WrappersClass.DiscountTierWrapperClass tierWrapper = new WrappersClass.DiscountTierWrapperClass();            
-    //         // WrappersClass.NoteWrapperClass relatedNotes = noteMap.get(line.record.Name);
-    //         WrappersClass.DiscountTierWrapperClass relatedTier = tiersMap.get(line.record.SBQQ__DiscountTier__c);
-    //         Id discountTier = line.record.SBQQ__DiscountTier__c;
-    //         Decimal listPriceToRound = line.record.SBQQ__ListPrice__c;
-    //         wrapper.id = line.record.id;
-    //         wrapper.name = line.record.name;
-    //         wrapper.product = JSON.serialize(line.record.SBQQ__Product__r.Name);
-    //         wrapper.productid = line.record.SBQQ__Product__c;
-    //         // // wrapper.productobj = line.record.SBQQ__Product__r;
-    //         wrapper.quantity = line.record.SBQQ__Quantity__c;
-    //         String description =line.record.SBQQ__Description__c;
-    //         wrapper.description = description.replaceAll('<[^>]+>',' ');
-    //         wrapper.uom = line.record.UOM__c;
-    //         wrapper.listUnitPrice = listPriceToRound.setScale(2); //Limit to digits.
-    //         wrapper.additionalDiscount = line.record.SBQQ__Discount__c;
-    //         wrapper.netUnitPrice = line.record.SBQQ__NetPrice__c;
-    //         wrapper.netTotal = line.record.SBQQ__NetTotal__c;
-    //         wrapper.billingTolerance = line.record.BL_Billing_Tolerance__c;
-    //         wrapper.source = line.record.BL_Source__c;
-    //         wrapper.destination = line.record.BL_Destination__c;
-    //         wrapper.alternativeIndicator = line.record.BL_Alternative_Indicator__c;
-    //         wrapper.nspOfferingDetails = line.record.BL_NSP_Offering_Details__c;
-    //         wrapper.approvalStatus = line.record.ApprovalStatus__c;
-    //         wrapper.billingType = line.record.SBQQ__BillingType__c;
-    //         wrapper.componentTotal = line.record.SBQQ__ComponentTotal__c;
-    //         wrapper.endDate = line.record.SBQQ__EndDate__c;
-    //         wrapper.length = line.record.Length__c;
-    //         wrapper.originalPrice = line.record.SBQQ__OriginalPrice__c;
-    //         wrapper.packageType = line.record.Package_Type__c;
-    //         wrapper.volumeDiscount = line.record.SBQQ__VolumeDiscount__c;
-    //         if (relatedTier != null) {
-    //             wrapper.tiers = json.serialize(relatedTier);
-    //         }
-    //         // if (relatedNotes != null) {
-    //         //     wrapper.notes = json.serialize(relatedNotes);
-    //         // }
-
-    //         System.debug('tiers - '+ wrapper.tiers);
-            
-    //         if(line.record.SBQQ__ProductOption__c == null){
-    //             displayQuoteLine.add (wrapper);
-    //         }
-            
-    //     }
-
-    //     System.debug(displayQuoteLine);
-    //     System.debug(displayQuoteLine.size());
-    //     return JSON.serialize(displayQuoteLine);
-    // }
-    
     // -------------------------------------------------------------------------------- PRINTERS ---------------------------------------------------------------------
 
     @AuraEnabled
     public static String printQuoteLinesv2(String quoteId){
         
-        SBQQ__Quote__c quote = [SELECT ID FROM SBQQ__Quote__c WHERE ID =: quoteId];
-
-        // List<Id> tiersIDs = new List<Id>();
-        // Map<Id, WrappersClass.DiscountTierWrapperClass> tiersMap = new Map<Id, WrappersClass.DiscountTierWrapperClass>();
+        SBQQ__Quote__c[] quote = [SELECT ID FROM SBQQ__Quote__c WHERE ID =: quoteId];
 
         Map<String, Schema.SObjectField> fieldMap = SBQQ__QuoteLine__c.sObjectType.getDescribe().fields.getMap();
         Set<String> setFieldNames = fieldMap.keySet();
@@ -174,150 +13,17 @@ public with sharing class QuoteController {
         List<SBQQ__QuoteLine__c> quoteLines = Database.query('SELECT SBQQ__Product__r.Name, ' + String.join(lstFieldNames, ',') + ' FROM SBQQ__QuoteLine__c WHERE SBQQ__Quote__c =: quoteId AND SBQQ__ProductOption__c = null');
         Map<String,Product2> prodMap= new Map <String,Product2>();
         Set<String> prodLevelSet = new Set<String>();
-        // for (SBQQ__QuoteLine__c line : quoteLines) {
-        //     tiersIDs.add(line.SBQQ__DiscountTier__c);
-        // }
-        // // The tiers will have to be Handled by a custom object called CustomerTiers, this logic will hace to be replaced by this custom object
-        // List<SBQQ__DiscountTier__c> tiersList = [SELECT Id, Name,SBQQ__LowerBound__c,SBQQ__UpperBound__c,SBQQ__Discount__c,SBQQ__DiscountAmount__c,SBQQ__Price__c FROM SBQQ__DiscountTier__c WHERE Id IN : tiersIDs];
-        // for (SBQQ__DiscountTier__c tier : tiersList) {
-        //     WrappersClass.DiscountTierWrapperClass tierWrapper = new WrappersClass.DiscountTierWrapperClass();
-        //     tierWrapper.id = tier.Id;
-        //     tierWrapper.name = tier.Name;
-        //     tierWrapper.lowerBound = tier.SBQQ__LowerBound__c;
-        //     tierWrapper.upperBound = tier.SBQQ__UpperBound__c;
-        //     tierWrapper.discount = tier.SBQQ__Discount__c;
-        //     tierWrapper.discountAmount = tier.SBQQ__DiscountAmount__c;
-        //     tierWrapper.price = tier.SBQQ__Price__c;
-        //     tiersMap.put(tierWrapper.id, tierWrapper);
-        // }
-        // Set<Id> linesWithNotes = new Set<Id>();
+        
 
         Set<Id> quoteLineIDs = new Set<Id>();
         for (SBQQ__QuoteLine__c line : quoteLines) {
             quoteLineIDs.add(line.Id);
             prodMap.put(line.SBQQ__Product__r.id, line.SBQQ__Product__r);
-            // prodLevelSet.ADD(line.SBQQ__Product__r.ProdLevel1__c);
         }
-        //Get the tiers and put them in a map in order to get a list of the tiers per product level 1
-        // List<CustomerTier__c> costTierList = [SELECT ID, Prod_Level_1__c FROM CustomerTier__c WHERE Prod_Level_1__c IN : prodLevelSet];
-        // Map<String,List<CustomerTier__c>> custTierMap = new Map<String,List<CustomerTier__c>>();
-        // if(costTierList.size() >0){
-        //     for (CustomerTier__c tier : costTierList) {
-        //         if (custTierMap.containsKey(tier.Prod_Level_1__c)) {
-        //             custTierMap.get(tier.Prod_Level_1__c).add(tier);
-        //         }else {
-        //             custTierMap.put(tier.Prod_Level_1__c, new List<CustomerTier__c>{tier});
-        //         }            
-        //     }
-        // }
 
-
-        List<WrappersClass.QuoteLineWrapperClass> displayQuoteLine = new List<WrappersClass.QuoteLineWrapperClass> ();
+        List<QuoteLineWrapper> displayQuoteLine = new List<QuoteLineWrapper> ();
+        displayQuoteLine = QuoteControllerMethodsHandler.quoteToWrapper(quoteLines);
         
-        for (SBQQ__QuoteLine__c line : quoteLines) {
-            WrappersClass.QuoteLineWrapperClass wrapper = new WrappersClass.QuoteLineWrapperClass();
-            WrappersClass.DiscountTierWrapperClass tierWrapper = new WrappersClass.DiscountTierWrapperClass();            
-            // WrappersClass.NoteWrapperClass relatedNotes = noteMap.get(line.record.Name);
-            // WrappersClass.DiscountTierWrapperClass relatedTier = tiersMap.get(line.SBQQ__DiscountTier__c);
-            Id discountTier = line.SBQQ__DiscountTier__c;
-            Decimal listPriceToRound = line.SBQQ__ListPrice__c;
-            wrapper.id = line.id;
-            wrapper.name = line.name;
-            wrapper.product = JSON.serialize(line.SBQQ__Product__r.Name);
-            wrapper.productid = line.SBQQ__Product__c;
-            // // wrapper.productobj = line.SBQQ__Product__r;
-            wrapper.quantity = line.SBQQ__Quantity__c;
-            String description =line.SBQQ__Description__c;
-            if(description!= null){
-                wrapper.description = description.replaceAll('<[^>]*>','');
-            }
-            wrapper.uom = line.UOM__c;
-            if(listPriceToRound!=null){
-                wrapper.listUnitPrice = listPriceToRound.setScale(2); //Limit to digits.
-            }
-            wrapper.additionalDiscount = line.SBQQ__Discount__c;
-            wrapper.netUnitPrice = line.SBQQ__NetPrice__c;
-            wrapper.netTotal = line.SBQQ__NetTotal__c;
-            wrapper.billingTolerance = line.BL_Billing_Tolerance__c;
-            wrapper.source = line.BL_Source__c;
-            wrapper.destination = line.BL_Destination__c;
-            wrapper.alternativeIndicator = line.BL_Alternative_Indicator__c;
-            wrapper.nspOfferingDetails = line.BL_NSP_Offering_Details__c;
-            wrapper.approvalStatus = line.ApprovalStatus__c;
-            wrapper.billingType = line.SBQQ__BillingType__c;
-            wrapper.componentTotal = line.SBQQ__ComponentTotal__c;
-            wrapper.minimumordermultiple = line.Minimum_Order_Multiple__c;
-            wrapper.endDate = line.SBQQ__EndDate__c;
-            wrapper.length = line.Length__c;
-            wrapper.lengthUOM = line.Length_UOM__c;
-            wrapper.originalPrice = line.SBQQ__OriginalPrice__c;
-            wrapper.packageType = line.Package_Type__c;
-            wrapper.volumeDiscount = line.SBQQ__VolumeDiscount__c;
-            wrapper.productType = line.Product_Type__c;
-            wrapper.qlevariableprice = line.QLE_Variable_Price__c;
-            wrapper.prodLevel1 = line.ProdLevel1__c;
-            wrapper.prodLevel2 = line.ProdLevel2__c;
-            // wrapper.billabletolerance = line.Billable_Tolerance__c;
-            wrapper.linenote = line.Line_Note__c;
-            wrapper.minimumorderqty = line.Minimum_Order_Qty__c;
-            if(line.is_NSP__c == true){
-                wrapper.color = line.Color__c;
-                wrapper.subUnitColor = line.Subunit_Color__c;
-                wrapper.jacketPrint = line.Jacket_Print__c;
-                wrapper.packagetype = line.Package_Type__c;
-                wrapper.packageCover = line.Package_Cover__c;
-                wrapper.fiberCount1 = line.Mix_Fiber_Count_1__c;
-                wrapper.fiberCount2 = line.Mix_Fiber_Count_2__c;
-                wrapper.fiberType1 = line.Mix_Fiber_Type_1__c;
-                wrapper.fiberType2 = line.Mix_Fiber_Type_2__c;
-                wrapper.regionCode = line.Region_Code__c;
-
-            }
-            wrapper.isNSP = line.is_NSP__c;
-            wrapper.quotelinename = line.Quote_Line_Name__c;
-
-            //Twinned fields
-            wrapper.basedesigncode = line.Base_Design_Code__c;
-            wrapper.cablecostpermeter = line.CableCostPerMeter__c;
-            wrapper.customer = line.Customer__c;
-            wrapper.filteredgrouping = line.Filtered_Grouping__c;
-            wrapper.fixedcost = line.Fixed_Cost__c;
-            wrapper.primaryUOM = line.Primary_UOM__c;
-            wrapper.quoteitemdescriptiona = line.Quote_Item_Description_Part_A__c;
-            wrapper.quoteitemdescriptionb = line.Quote_Item_Description_Part_B__c;
-            wrapper.minimumordermultiple = line.Minimum_Order_Multiple__c;
-            wrapper.unitcost = line.Unit_Cost__c;
-            wrapper.variableprice1 = line.Variable_Price_1__c;
-            wrapper.busmarginhighvalue = line.Bus_Margin_High_Value__c;
-            wrapper.busmarginlowvalue = line.Bus_Margin_Low_Value__c;
-            wrapper.conncostA = line.ConnCost_A__c;
-            wrapper.conncostB = line.ConnCost_B__c;
-            wrapper.countfactor = line.Count_Factor__c;
-            wrapper.marginchangevalue = line.Margin_Change_Value__c;
-            wrapper.numadapter = line.NumAdapter__c;
-            wrapper.numcables = line.NumCables__c;
-            wrapper.numconnector = line.NumConnector__c;
-            wrapper.pricingcost = line.Pricing_Cost__c;
-            wrapper.regionaddercentral = line.Region_Adder_Central__c;
-            wrapper.regionaddereast = line.Region_Adder_East__c;
-            wrapper.regionadderwest = line.Region_Adder_West__c;
-            wrapper.regionaddernorthwest = line.Region_Adder_Northwest__c;
-            wrapper.resourcecosta = line.ResourceCost_A__c;
-            wrapper.productType = line.Product_Type__c;
-            wrapper.fiberCount = line.Fiber_Count__c;
-
-            // if (relatedTier != null) {
-            //     wrapper.tiers = json.serialize(relatedTier);
-            // }
-            // if (relatedNotes != null) {
-            //     wrapper.notes = json.serialize(relatedNotes);
-            // }
-
-            System.debug('tiers - '+ wrapper.tiers);
- 
-            displayQuoteLine.add (wrapper);
-        }
-
         System.debug(displayQuoteLine);
         System.debug(displayQuoteLine.size());
         return JSON.serialize(displayQuoteLine);
@@ -325,9 +31,7 @@ public with sharing class QuoteController {
     @AuraEnabled (cacheable = true)
     public static String printNotes (String quoteId){
         List<WrappersClass.NoteWrapperClass> noteWrapperList = new List<WrappersClass.NoteWrapperClass>();
-        // QuoteReader quoteReader = new QuoteReader();
-        // QuoteModel quote = quoteReader.read(quoteId);
-        // QuoteLineModel[] quoteLines = quote.getLineItems();
+        
         Map<String,Product2> prodMap= new Map <String,Product2>();
         List<String> notesList = new List<String>();
 
@@ -340,13 +44,11 @@ public with sharing class QuoteController {
         for (SBQQ__QuoteLine__c line : quoteLines) {
             prodMap.put(line.SBQQ__Product__r.id, line.SBQQ__Product__r);
         }
-        // for (QuoteLineModel line : quoteLines) {
-        //     prodMap.put(line.record.SBQQ__Product__r.id, line.record.SBQQ__Product__r);
-        // }
 
-        List<AFL_Note__c> noteList = [SELECT ID, Quote_Note_Type__c,BL_Product__c,BL_Product__r.Id, Note_Text__c FROM AFL_Note__c WHERE BL_Product__c IN : prodMap.values()];
+        List<AFL_Note__c> noteList = [SELECT ID, Quote_Note_Type__c,BL_Product__c,BL_Product__r.Id, Note_Text__c FROM AFL_Note__c WHERE BL_Product__c IN : prodMap.values() AND BL_Product__c != null];
         Map<Id,List<AFL_Note__c>> noteMap = new Map<Id,List<AFL_Note__c>>();
-        if(noteList.size() >0){
+        if(!noteList.isEmpty()){
+            System.debug('THE LIST IS NOT EMPTY -- ' + noteList.size());
             for (AFL_Note__c note : noteList) {
                 if (noteMap.containsKey(note.BL_Product__c)) {
                     noteMap.get(note.BL_Product__c).add(note);
@@ -354,24 +56,26 @@ public with sharing class QuoteController {
                     noteMap.put(note.BL_Product__c, new List<AFL_Note__c>{note});
                 }            
             }
-        }
-        //For each product it returns a lost of the notes that are related to it and concatenates it into a single string
-        for (Id prod : noteMap.keySet()) {
-            Product2 relatedProd = prodMap.get(prod);
-            WrappersClass.NoteWrapperClass wrapper = new WrappersClass.NoteWrapperClass();
-            for (AFL_Note__c note : noteMap.get(prod)) {
-                if (note.Quote_Note_Type__c == 'Product Note') {
-                    notesList.add(note.Note_Text__c);    
+        
+            //For each product it returns a lost of the notes that are related to it and concatenates it into a single string
+        
+            for (Id prod : noteMap.keySet()) {
+                Product2 relatedProd = prodMap.get(prod);
+                WrappersClass.NoteWrapperClass wrapper = new WrappersClass.NoteWrapperClass();
+                for (AFL_Note__c note : noteMap.get(prod)) {
+                    if (note.Quote_Note_Type__c == 'Product Note') {
+                        notesList.add(note.Note_Text__c);    
+                    }
                 }
-            }
-            String concatNote = String.join(notesList, '\n');
-            System.debug('concatenated note -- ' + concatNote);
-            System.debug('product -- ' + prod + 'notes -- ' + noteMap.get(prod).size());
-           wrapper.name  = relatedProd.Name;
-           wrapper.notetext = concatNote;
+                String concatNote = String.join(notesList, '\n');
+                System.debug('concatenated note -- ' + concatNote);
+                System.debug('product -- ' + prod + 'notes -- ' + noteMap.get(prod).size());
+            wrapper.name  = relatedProd.Name;
+            wrapper.notetext = concatNote;
 
-           noteWrapperList.add(wrapper);
-           notesList.clear();
+            noteWrapperList.add(wrapper);
+            notesList.clear();
+            }
         }
         System.debug('CPU time -- '+ Limits.getCpuTime() + 'Time Limit -- ' + Limits.getLimitCpuTime());
 
@@ -383,8 +87,7 @@ public with sharing class QuoteController {
         QuoteReader quoteReader = new QuoteReader();
         ProductModel product = new ProductModel();
         System.debug('product id: '+productId +' quoe id: ' +quoteId);
-        // QuoteModel quote = quoteReader.read('a0q5f0000013pc3AAA');
-        List<WrappersClass.QuoteLineWrapperClass> linesToPrint = new List<WrappersClass.QuoteLineWrapperClass>();
+
         QuoteModel quote = quoteReader.read(quoteId);
         ProductReader productReader = new ProductReader();
         Pricebook2 prodPriceBook = [SELECT Id FROM Pricebook2 WHERE Id IN (SELECT SBQQ__PriceBook__c FROM SBQQ__Quote__c WHERE Id =: quoteId) LIMIT 1];
@@ -399,13 +102,11 @@ public with sharing class QuoteController {
         Map<String, Schema.SObjectField> fieldMap = Product2.sObjectType.getDescribe().fields.getMap();
         Set<String> setFieldNames = fieldMap.keySet();
         list<String> lstFieldNames = new List<String>(setFieldNames);
-        // List<Product2> prodRecord = Database.query('SELECT Unit_Cost__c FROM Product2 WHERE Id =: productId');
-        // List<Product2> prodRecord =[SELECT Unit_Cost__c FROM Product2 WHERE Id =: productId];
+        
         Product2 prodRecord = Database.query('SELECT ' + String.join(lstFieldNames, ',') + ' FROM Product2 WHERE Id =: productId');
 
         List<QuoteLineModel> newlyAddedLines = new List<QuoteLineModel>();
         List<QuoteLineModel> previousLines = quote.getLineItems();
-        // ProductModel product = productReader.read(productId,'01s5f000006Z5SDAA0','USD');
 
         List<ProductModel> productModels = new List<ProductModel>();
         productModels.add(product);
@@ -423,97 +124,13 @@ public with sharing class QuoteController {
                 prodMap.put(newLine.record.SBQQ__Product__c,newLine.record.SBQQ__Product__r);
             }
         }
+
+        List<QuoteLineWrapper> linesToPrint = new List<QuoteLineWrapper>();
+        linesToPrint = QuoteControllerMethodsHandler.modelToWrapper(newlyAddedLines, prodRecord);
+
+
         System.debug('List of new lines '+ newlyAddedLines.size());
-        for (QuoteLineModel newlyAddedLine : newlyAddedLines) {
-            WrappersClass.QuoteLineWrapperClass wrapper = new WrappersClass.QuoteLineWrapperClass();
-            wrapper.id = newlyAddedLine.record.id;
-            wrapper.qlevariableprice = null;
-            wrapper.isNSP = false;
-            wrapper.product = newlyAddedLine.record.SBQQ__Product__r.Name;
-            wrapper.productid = newlyAddedLine.record.SBQQ__Product__c;
-            // // wrapper.productobj = newlyAddedLine.record.SBQQ__Product__r;
-            wrapper.name = newlyAddedLine.record.Name;
-            String description = newlyAddedLine.record.SBQQ__Description__c;
-            if(description!= null){
-                wrapper.description = description.replaceAll('<[^>]*>','');
-            }
-            
-            wrapper.lengthUOM = newlyAddedLine.record.Length_UOM__c;
-            // wrapper.billabletolerance = newlyAddedLine.record.Billable_Tolerance__c;
-            wrapper.listunitprice = newlyAddedLine.record.SBQQ__ListPrice__c;
-            wrapper.additionaldiscount = newlyAddedLine.record.SBQQ__Discount__c;
-            wrapper.netunitprice = newlyAddedLine.record.SBQQ__NetPrice__c; 
-            wrapper.billingtolerance = newlyAddedLine.record.BL_Billing_Tolerance__c; 
-            wrapper.source = newlyAddedLine.record.BL_Source__c; 
-            wrapper.destination = newlyAddedLine.record.BL_Destination__c;
-            wrapper.alternativeindicator = newlyAddedLine.record.BL_Alternative_Indicator__c;
-            // wrapper.nspofferingdetails = newlyAddedLine.record.SBQQ__Optional__c;
-            wrapper.billingfrequency = newlyAddedLine.record.SBQQ__BillingFrequency__c;
-            wrapper.approvalstatus = newlyAddedLine.record.ApprovalStatus__c;
-            wrapper.billingtype = newlyAddedLine.record.SBQQ__BillingType__c;
-            wrapper.componenttotal = newlyAddedLine.record.SBQQ__ComponentTotal__c;
-            wrapper.enddate = newlyAddedLine.record.SBQQ__EndDate__c;
-            wrapper.length = newlyAddedLine.record.Length__c;
-            wrapper.originalprice = newlyAddedLine.record.SBQQ__OriginalPrice__c;
-            wrapper.packagetype = newlyAddedLine.record.Package_Type__c;
-            wrapper.volumediscount = newlyAddedLine.record.SBQQ__VolumeDiscount__c;
-
-            System.debug('NEW QUOTE LINE MODEL ---- '+prodRecord.Unit_Cost__c);
-
-            //Fields that come from the product
-            if(newlyAddedLine.record.SBQQ__Product__r.Primary_UOM__c != null){
-                wrapper.uom = newlyAddedLine.record.SBQQ__Product__r.Primary_UOM__c;
-            }
-            if(newlyAddedLine.record.SBQQ__Product__r.ProdLevel1__c != null){
-                wrapper.prodLevel1 = newlyAddedLine.record.SBQQ__Product__r.ProdLevel1__c;
-            }
-            if(newlyAddedLine.record.SBQQ__Product__r.ProdLevel2__c != null){
-                wrapper.prodLevel2 = newlyAddedLine.record.SBQQ__Product__r.ProdLevel2__c;
-            }
-            if(newlyAddedLine.record.SBQQ__Product__r.ProdLevel3__c != null){
-                wrapper.prodLevel3 = newlyAddedLine.record.SBQQ__Product__r.ProdLevel3__c;
-            }
-            if(newlyAddedLine.record.SBQQ__Product__r.ProdLevel4__c != null){
-                wrapper.prodLevel4 = newlyAddedLine.record.SBQQ__Product__r.ProdLevel4__c;
-            }
-            if(newlyAddedLine.record.SBQQ__Product__r.Minimum_Order_Qty__c != null){
-                wrapper.minimumorderqty = newlyAddedLine.record.SBQQ__Product__r.Minimum_Order_Qty__c;
-            }else{
-                wrapper.minimumorderqty = '1';
-            }
-            wrapper.minimumordermultiple = newlyAddedLine.record.SBQQ__Product__r.Minimum_Order_Multiple__c;
-            wrapper.basedesigncode = newlyAddedLine.record.SBQQ__Product__r.Base_Design_Code__c;
-            wrapper.cablecostpermeter = newlyAddedLine.record.SBQQ__Product__r.CableCostPerMeter__c;
-            wrapper.customer = newlyAddedLine.record.SBQQ__Product__r.Customer__c;
-            wrapper.filteredgrouping = newlyAddedLine.record.SBQQ__Product__r.Filtered_Grouping__c;
-            wrapper.fixedcost = newlyAddedLine.record.SBQQ__Product__r.Fixed_Cost__c;
-            wrapper.primaryUOM = newlyAddedLine.record.SBQQ__Product__r.Primary_UOM__c;
-            wrapper.quoteitemdescriptiona = newlyAddedLine.record.SBQQ__Product__r.Quote_Item_Description_Part_A__c;
-            wrapper.quoteitemdescriptionb = newlyAddedLine.record.SBQQ__Product__r.Quote_Item_Description_Part_B__c;
-            // wrapper.unitcost = newlyAddedLine.record.SBQQ__Product__r.Unit_Cost__c;
-            wrapper.unitcost =prodRecord.Unit_Cost__c;
-            // wrapper.unitcost =product.record.Unit_Cost__c;
-            wrapper.variableprice1 = newlyAddedLine.record.SBQQ__Product__r.Variable_Price_1__c;
-            wrapper.busmarginhighvalue = newlyAddedLine.record.SBQQ__Product__r.Bus_Margin_High_Value__c;
-            wrapper.busmarginlowvalue = newlyAddedLine.record.SBQQ__Product__r.Bus_Margin_Low_Value__c;
-            wrapper.conncostA = newlyAddedLine.record.SBQQ__Product__r.ConnCost_A__c;
-            wrapper.conncostB = newlyAddedLine.record.SBQQ__Product__r.ConnCost_B__c;
-            wrapper.countfactor = newlyAddedLine.record.SBQQ__Product__r.Count_Factor__c;
-            wrapper.marginchangevalue = newlyAddedLine.record.SBQQ__Product__r.Margin_Change_Value__c;
-            wrapper.numadapter = newlyAddedLine.record.SBQQ__Product__r.NumAdapter__c;
-            wrapper.numcables = newlyAddedLine.record.SBQQ__Product__r.NumCables__c;
-            wrapper.numconnector = newlyAddedLine.record.SBQQ__Product__r.NumConnector__c;
-            wrapper.pricingcost = newlyAddedLine.record.SBQQ__Product__r.Pricing_Cost__c;
-            wrapper.regionaddercentral = newlyAddedLine.record.SBQQ__Product__r.Region_Adder_Central__c;
-            wrapper.regionaddereast = newlyAddedLine.record.SBQQ__Product__r.Region_Adder_East__c;
-            wrapper.regionadderwest = newlyAddedLine.record.SBQQ__Product__r.Region_Adder_West__c;
-            wrapper.regionaddernorthwest = newlyAddedLine.record.SBQQ__Product__r.Region_Adder_Northwest__c;
-            wrapper.resourcecosta = newlyAddedLine.record.SBQQ__Product__r.ResourceCost_A__c;
-            wrapper.productType = newlyAddedLine.record.SBQQ__Product__r.Product_Type__c;
-            wrapper.fiberCount = newlyAddedLine.record.SBQQ__Product__r.Fiber_Count__c;
-
-            linesToPrint.add(wrapper); 
-        }
+        
         System.debug('lines to print '+ linesToPrint.size());
         
 
@@ -523,7 +140,6 @@ public with sharing class QuoteController {
     public static String addSelectorQuoteLine(String quoteId, String products) {  //This method transforms a product added in the Product Selector into a Quote Line
         
         QuoteReader quoteReader = new QuoteReader();
-        List<WrappersClass.QuoteLineWrapperClass> linesToPrint = new List<WrappersClass.QuoteLineWrapperClass>();
         Schema.sObjectType sobject_type = Product2.getSObjectType();
         Map<String, Schema.SObjectField> theProductFieldmap = sobject_type.getDescribe().fields.getMap(); //The fields map of the product oject
         List<ProductModel> prodModelList = new List<ProductModel>();
@@ -533,7 +149,6 @@ public with sharing class QuoteController {
         ProductReader productReader = new ProductReader();
         Pricebook2 prodPriceBook = [SELECT Id FROM Pricebook2 WHERE Id IN (SELECT SBQQ__PriceBook__c FROM SBQQ__Quote__c WHERE Id =: quoteId) LIMIT 1];
         List<Product2> deserializedProductValues = (List<Product2>) JSON.deserialize(products, List<Product2>.class );
-        // Map<Id,SBQQ__QuoteLine__c> prodMap = new Map<Id,SBQQ__QuoteLine__c>();
 
         String query ='';
         String strFields = '';
@@ -545,13 +160,6 @@ public with sharing class QuoteController {
             }
         }
 
-        //Create a Map to store all of the Products with their ID as the key
-        // query ='SELECT '+strFields +' FROM Product2';
-        // List<Product2> productList = Database.query(query);
-        // Map<Id, Product2> productsMap = new Map<Id, Product2>();
-        // for(Product2 prod : productList){
-        //     productsMap.put(prod.Id,prod);
-        // }
         Map<String, Product2> prodMap = new Map<String, Product2> ();
 
         for(Product2 prod : deserializedProductValues){ //puts the values of the produst that comes from the UI before converting into a quote line
@@ -561,14 +169,9 @@ public with sharing class QuoteController {
             prodModelList.add(product);
         }
         
-        
-
-        
         ProductAdder adder = new ProductAdder(); 
         QuoteModel quoteWithProducts = adder.add(quote, prodModelList, 0);
         List<QuoteLineModel> newLines = quoteWithProducts.getLineItems();
-        System.debug('previous lines -- ' + previousLines.size());
-        System.debug('new lines -- ' + newLines.size());
         
         for (QuoteLineModel newLine : newLines) {
             if (newLine.record.id == null) { 
@@ -576,300 +179,26 @@ public with sharing class QuoteController {
             }
         }
         
-        // System.debug('List of new lines '+ newlyAddedLines.size());
-        for (QuoteLineModel newlyAddedLine : newlyAddedLines) { //Converts the new lines in a wrapper to print
-            WrappersClass.QuoteLineWrapperClass wrapper = new WrappersClass.QuoteLineWrapperClass();
-            // SBQQ__QuoteLine__c relatedProd = prodMap.get(newlyAddedLine.record.id);
-             // System.debug('related product: ' + relatedProd);
-            wrapper.id = newlyAddedLine.record.id;
-            wrapper.product = newlyAddedLine.record.SBQQ__Product__r.Name;
-            wrapper.requiredBy = newlyAddedLine.record.SBQQ__RequiredBy__c;
-            wrapper.productid = newlyAddedLine.record.SBQQ__Product__c;
-            // wrapper.productobj = newlyAddedLine.record.SBQQ__Product__r;
-            wrapper.name = newlyAddedLine.record.Name;
-            wrapper.description = newlyAddedLine.record.SBQQ__Description__c;
-            // wrapper.uom = newlyAddedLine.record.UOM__c;
-            if(newlyAddedLine.record.SBQQ__Product__r.Primary_UOM__c != null){
-                wrapper.uom = newlyAddedLine.record.SBQQ__Product__r.Primary_UOM__c;
-            }
-            if(newlyAddedLine.record.SBQQ__Product__r.ProdLevel1__c != null){
-                wrapper.prodLevel1 = newlyAddedLine.record.SBQQ__Product__r.ProdLevel1__c;
-            }
-            if(newlyAddedLine.record.SBQQ__Product__r.ProdLevel2__c != null){
-                wrapper.prodLevel2 = newlyAddedLine.record.SBQQ__Product__r.ProdLevel2__c;
-            }
-            if(newlyAddedLine.record.SBQQ__Product__r.ProdLevel3__c != null){
-                wrapper.prodLeveL3 = newlyAddedLine.record.SBQQ__Product__r.ProdLevel3__c;
-            }
-            if(newlyAddedLine.record.SBQQ__Product__r.ProdLevel4__c != null){
-                wrapper.prodLevel4 = newlyAddedLine.record.SBQQ__Product__r.ProdLevel4__c;
-            }
-            if(newlyAddedLine.record.SBQQ__Product__r.Minimum_Order_Qty__c != null){
-                wrapper.minimumorderqty = newlyAddedLine.record.SBQQ__Product__r.Minimum_Order_Qty__c;
-            }else{
-                wrapper.minimumorderqty = '1';
-            }
-            
-            wrapper.listunitprice = newlyAddedLine.record.SBQQ__ListPrice__c;
-            // wrapper.billabletolerance = newlyAddedLine.record.Billable_Tolerance__c;
-            wrapper.additionaldiscount = newlyAddedLine.record.SBQQ__Discount__c;
-            wrapper.netunitprice = newlyAddedLine.record.SBQQ__NetPrice__c; 
-            wrapper.billingtolerance = newlyAddedLine.record.BL_Billing_Tolerance__c; 
-            wrapper.source = newlyAddedLine.record.BL_Source__c; 
-            wrapper.destination = newlyAddedLine.record.BL_Destination__c;
-            wrapper.alternativeindicator = newlyAddedLine.record.BL_Alternative_Indicator__c;
-            // wrapper.nspofferingdetails = newlyAddedLine.record.SBQQ__Optional__c;
-            wrapper.billingfrequency = newlyAddedLine.record.SBQQ__BillingFrequency__c;
-            wrapper.approvalstatus = newlyAddedLine.record.ApprovalStatus__c;
-            wrapper.billingtype = newlyAddedLine.record.SBQQ__BillingType__c;
-            wrapper.componenttotal = newlyAddedLine.record.SBQQ__ComponentTotal__c;
-            wrapper.enddate = newlyAddedLine.record.SBQQ__EndDate__c;
-            wrapper.length = newlyAddedLine.record.Length__c;
-            wrapper.lengthUOM = newlyAddedLine.record.Length_UOM__c;
-            wrapper.originalprice = newlyAddedLine.record.SBQQ__OriginalPrice__c;
-            wrapper.packagetype = newlyAddedLine.record.Package_Type__c;
-            wrapper.packageCover = newlyAddedLine.record.Package_Cover__c;
-            wrapper.volumediscount = newlyAddedLine.record.SBQQ__VolumeDiscount__c;
-            wrapper.color = newlyAddedLine.record.Color__c;
-            wrapper.productType = newlyAddedLine.record.Product_Type__c;
-
-            //Twinned
-            wrapper.minimumordermultiple = newlyAddedLine.record.SBQQ__Product__r.Minimum_Order_Multiple__c;
-            wrapper.basedesigncode = newlyAddedLine.record.SBQQ__Product__r.Base_Design_Code__c;
-            wrapper.cablecostpermeter = newlyAddedLine.record.SBQQ__Product__r.CableCostPerMeter__c;
-            wrapper.fiberCount = newlyAddedLine.record.SBQQ__Product__r.Fiber_Count__c;
-            wrapper.customer = newlyAddedLine.record.SBQQ__Product__r.Customer__c;
-            wrapper.filteredgrouping = newlyAddedLine.record.SBQQ__Product__r.Filtered_Grouping__c;
-            wrapper.fixedcost = newlyAddedLine.record.SBQQ__Product__r.Fixed_Cost__c;
-            wrapper.primaryUOM = newlyAddedLine.record.SBQQ__Product__r.Primary_UOM__c;
-            wrapper.quoteitemdescriptiona = newlyAddedLine.record.SBQQ__Product__r.Quote_Item_Description_Part_A__c;
-            wrapper.quoteitemdescriptionb = newlyAddedLine.record.SBQQ__Product__r.Quote_Item_Description_Part_B__c;
-            // wrapper.unitcost = newlyAddedLine.record.SBQQ__Product__r.Unit_Cost__c;
-            wrapper.unitcost = prodMap.get(newlyAddedLine.record.SBQQ__Product__c).Unit_Cost__c;
-            system.debug('product '+newlyAddedLine.record.SBQQ__Product__r.Fixed_Cost__c+ ' Unit cost '+ prodMap.get(newlyAddedLine.record.SBQQ__Product__c).Unit_Cost__c);
-            wrapper.variableprice1 = newlyAddedLine.record.SBQQ__Product__r.Variable_Price_1__c;
-            wrapper.busmarginhighvalue = newlyAddedLine.record.SBQQ__Product__r.Bus_Margin_High_Value__c;
-            wrapper.busmarginlowvalue = newlyAddedLine.record.SBQQ__Product__r.Bus_Margin_Low_Value__c;
-            wrapper.conncostA = newlyAddedLine.record.SBQQ__Product__r.ConnCost_A__c;
-            wrapper.conncostB = newlyAddedLine.record.SBQQ__Product__r.ConnCost_B__c;
-            wrapper.countfactor = newlyAddedLine.record.SBQQ__Product__r.Count_Factor__c;
-            wrapper.marginchangevalue = newlyAddedLine.record.SBQQ__Product__r.Margin_Change_Value__c;
-            wrapper.numadapter = newlyAddedLine.record.SBQQ__Product__r.NumAdapter__c;
-            wrapper.numcables = newlyAddedLine.record.SBQQ__Product__r.NumCables__c;
-            wrapper.numconnector = newlyAddedLine.record.SBQQ__Product__r.NumConnector__c;
-            wrapper.pricingcost = newlyAddedLine.record.SBQQ__Product__r.Pricing_Cost__c;
-            wrapper.regionaddercentral = newlyAddedLine.record.SBQQ__Product__r.Region_Adder_Central__c;
-            wrapper.regionaddereast = newlyAddedLine.record.SBQQ__Product__r.Region_Adder_East__c;
-            wrapper.regionadderwest = newlyAddedLine.record.SBQQ__Product__r.Region_Adder_West__c;
-            wrapper.regionaddernorthwest = newlyAddedLine.record.SBQQ__Product__r.Region_Adder_Northwest__c;
-            wrapper.resourcecosta = newlyAddedLine.record.SBQQ__Product__r.ResourceCost_A__c;
-            wrapper.productType = newlyAddedLine.record.SBQQ__Product__r.Product_Type__c;
-
-            System.debug('is the wrapper working -- ' + wrapper.fiberType1);
-            linesToPrint.add(wrapper); 
-        }
-        System.debug('lines to print '+ linesToPrint.size());
-        
+        List<QuoteLineWrapper> linesToPrint = new List<QuoteLineWrapper>();
+        linesToPrint = QuoteControllerMethodsHandler.modelToWrapperSelector(newlyAddedLines, prodMap);
 
         return JSON.serialize(linesToPrint);
     }
 
     @AuraEnabled
     public static String addNSPProducts(String quoteId, String products){
-
-        List<WrappersClass.QuoteLineWrapperClass> linesToPrint = new List<WrappersClass.QuoteLineWrapperClass>();
+        
         List<Object> untypedProductValues = (List<Object>) JSON.deserializeuntyped(products);
 
-        for(Object prod : untypedProductValues){ //puts the values of the prod ust that comes from the UI before converting into a quote line
-            Map<String, Object> prodMap = (Map<String, Object>)prod;
-            // wrapper.fiberCount1 = (Decimal)prodMap.get('Mix_Fiber_Count_1__c');
-            // wrapper.fiberCount2 = relatedProd.Mix_Fiber_Count_2__c;
-            WrappersClass.QuoteLineWrapperClass wrapper = new WrappersClass.QuoteLineWrapperClass();
-            if((String)prodMap.get('filtered_grouping__c') == 'Premise Cable'){
-                wrapper.color = (String)prodMap.get('Color__c'); 
-                wrapper.jacketPrint = (String)prodMap.get('Jacket_Print__c');
-                if((String)prodMap.get('Subunit_Color__c') != null){
-                    wrapper.subUnitColor = (String)prodMap.get('Subunit_Color__c');
-                }
-                if((String)prodMap.get('Length_Picklist__c') != null){
-                    wrapper.boxlength = (String)prodMap.get('Length_Picklist__c');
-                }
-                if((String)prodMap.get('Mix_Fiber_Count_1__c') != null && (String)prodMap.get('Mix_Fiber_Count_2__c') != null){
-                    wrapper.fiberCount1 = Decimal.valueOf((String)prodMap.get('Mix_Fiber_Count_1__c'));
-                    wrapper.fiberCount2 = Decimal.valueOf((String)prodMap.get('Mix_Fiber_Count_2__c'));
-                }
-                if((String)prodMap.get('Mix_Fiber_Type_1__c') != null && (String)prodMap.get('Mix_Fiber_Type_2__c') != null){
-                    wrapper.fiberType1 = (String)prodMap.get('Mix_Fiber_Type_1__c');
-                    wrapper.fiberType2 = (String)prodMap.get('Mix_Fiber_Type_2__c');
-                }
-            } else if((String)prodMap.get('filtered_grouping__c') == 'ADSS Cable' || (String)prodMap.get('filtered_grouping__c') == 'Loose Tube Cable'){
-                wrapper.packagetype = (String)prodMap.get('Package_Type__c');
-                wrapper.packageCover = (String)prodMap.get('Package_Cover__c'); 
-                if((String)prodMap.get('Mix_Fiber_Count_1__c') != null && (String)prodMap.get('Mix_Fiber_Count_2__c') != null){
-                    wrapper.fiberCount1 = Decimal.valueOf((String)prodMap.get('Mix_Fiber_Count_1__c'));
-                    wrapper.fiberCount2 = Decimal.valueOf((String)prodMap.get('Mix_Fiber_Count_2__c'));
-                }
-                if((String)prodMap.get('Mix_Fiber_Type_1__c') != null && (String)prodMap.get('Mix_Fiber_Type_2__c') != null){
-                    wrapper.fiberType1 = (String)prodMap.get('Mix_Fiber_Type_1__c');
-                    wrapper.fiberType2 = (String)prodMap.get('Mix_Fiber_Type_2__c');
-                }
-            } else if((String)prodMap.get('filtered_grouping__c') == 'Bus Conductor -Rectangular Bar' || (String)prodMap.get('filtered_grouping__c') == 'Bus Conductor -Seamless Bus Pipe' || (String)prodMap.get('filtered_grouping__c') == 'Bus Conductor -Universal Angle' ){
-                wrapper.regionCode = (String)prodMap.get('Region_Code__c');
-            } else if((String)prodMap.get('filtered_grouping__c') == 'Cable Assemblies'){
-                wrapper.length = (String)prodMap.get('Length__c');
-                // wrapper.length = Decimal.valueOf((String)prodMap.get('Length__c'));
-                wrapper.primaryUOM = (String)prodMap.get('Length_UOM__c');
-            } else if((String)prodMap.get('filtered_grouping__c') == 'Patch Panels'){
-                // wrapper.length = Decimal.valueOf((String)prodMap.get('Length__c'));
-                wrapper.length = (String)prodMap.get('Length__c');
-            }
+        List<QuoteLineWrapper> linesToPrint = new List<QuoteLineWrapper>();
+        linesToPrint = QuoteControllerMethodsHandler.prodMapNSPToWrapper(untypedProductValues);
 
-            wrapper.productid = (Id)prodMap.get('Id');
-            wrapper.product = (String)prodMap.get('Name');
-            //IS THIS NEEDED? 
-            wrapper.uom = (String)prodMap.get('Primary_UOM__c');
-            wrapper.prodLevel1 = (String)prodMap.get('ProdLevel1__c');
-            wrapper.prodLevel2 = (String)prodMap.get('ProdLevel2__c');
-            wrapper.prodLevel3 = (String)prodMap.get('ProdLevel3__c');
-            wrapper.prodLevel4 = (String)prodMap.get('ProdLevel4__c');
-            wrapper.basedesigncode = (String)prodMap.get('Base_Design_Code__c');
-            wrapper.cablecostpermeter = (Decimal)prodMap.get('CableCostPerMeter__c');
-            wrapper.customer = (String)prodMap.get('Customer__c');
-            wrapper.filteredgrouping = (String)prodMap.get('Filtered_Grouping__c');
-            wrapper.fixedcost = (Decimal)prodMap.get('Fixed_Cost__c');
-            wrapper.primaryUOM = (String)prodMap.get('Primary_UOM__c');
-            wrapper.quoteitemdescriptiona = (String)prodMap.get('Quote_Item_Description_Part_A__c');
-            wrapper.quoteitemdescriptionb = (String)prodMap.get('Quote_Item_Description_Part_B__c');
-            wrapper.unitcost = (Decimal)prodMap.get('Unit_Cost__c');
-            wrapper.variableprice1 = (Decimal)prodMap.get('Variable_Price_1__c');
-            wrapper.busmarginhighvalue = (Decimal)prodMap.get('Bus_Margin_High_Value__c');
-            wrapper.busmarginlowvalue = (Decimal)prodMap.get('Bus_Margin_Low_Value__c');
-            wrapper.conncostA = (Decimal)prodMap.get('ConnCost_A__c');
-            wrapper.conncostB = (Decimal)prodMap.get('ConnCost_B__c');
-            wrapper.countfactor = (Decimal)prodMap.get('Count_Factor__c');
-            wrapper.marginchangevalue = (Decimal)prodMap.get('Margin_Change_Value__c');
-            wrapper.numadapter = (String)prodMap.get('NumAdapter__c');
-            wrapper.numcables = (String)prodMap.get('NumCables__c');
-            wrapper.numconnector = (String)prodMap.get('NumConnector__c');
-            wrapper.pricingcost = (Decimal)prodMap.get('Pricing_Cost__c');
-            wrapper.regionaddercentral = (Decimal)prodMap.get('Region_Adder_Central__c');
-            wrapper.fiberCount = (String)prodMap.get('Fiber_Count__c');
-            wrapper.regionaddereast = (Decimal)prodMap.get('Region_Adder_East__c');
-            wrapper.regionadderwest = (Decimal)prodMap.get('Region_Adder_West__c');
-            wrapper.regionaddernorthwest = (Decimal)prodMap.get('Region_Adder_Northwest__c');
-            wrapper.resourcecosta = (Decimal)prodMap.get('ResourceCost_A__c');
-            wrapper.productType = (String)prodMap.get('Product_Type__c');
-            wrapper.minimumordermultiple = (String)prodMap.get('Minimum_Order_Multiple__c');
-            if((String)prodMap.get('Minimum_Order_Qty__c')!= null){
-                wrapper.minimumorderqty = (String)prodMap.get('Minimum_Order_Qty__c');
-            }else{
-                wrapper.minimumorderqty = '1';
-            }
-            
-
-            wrapper.isNSP = true;
-            System.debug('length value: ' + wrapper.length);
-            linesToPrint.add(wrapper);
-        }
         return JSON.serialize(linesToPrint);
-    }
-    @AuraEnabled
-    //This is not being used to create quotel ines from the NSP products
-    public static String addNSPQuoteLine(String quoteId, String products, String filteredGrouping){
-        QuoteReader quoteReader = new QuoteReader();
-        // QuoteModel quote = quoteReader.read('a0q5f0000013pc3AAA');
-        List<WrappersClass.QuoteLineWrapperClass> linesToPrint = new List<WrappersClass.QuoteLineWrapperClass>();
-        List<ProductModel> prodModelList = new List<ProductModel>();
-        List<QuoteLineModel> newlyAddedLines = new List<QuoteLineModel>(); //Will storee a list of the added lines
-        QuoteModel quote = quoteReader.read(quoteId);
-        List<QuoteLineModel> previousLines = quote.getLineItems();//gets the lines that are currently in salesforce
-        ProductReader productReader = new ProductReader();
-        Pricebook2 prodPriceBook = [SELECT Id FROM Pricebook2 WHERE Id IN (SELECT SBQQ__PriceBook__c FROM SBQQ__Quote__c WHERE Id =: quoteId) LIMIT 1]; //Query for the pricbook that the product is currently
-        List<WrappersClass.ProductWrapperClass> untypedProductValues = (List<WrappersClass.ProductWrapperClass>) JSON.deserialize(products, List<WrappersClass.ProductWrapperClass>.class );
-        Map<Id,WrappersClass.ProductWrapperClass> prodMap = new Map<Id,WrappersClass.ProductWrapperClass>();
-
-        for(WrappersClass.ProductWrapperClass prod : untypedProductValues){ //puts the values of the produst that comes from the UI before converting into a quote line
-            ProductModel product = productReader.read(prod.id,prodPriceBook.Id,'USD');
-            prodMap.put(prod.id, prod);
-            prodModelList.add(product);
-        }
-        
-
-        ProductAdder adder = new ProductAdder(); 
-        QuoteModel quoteWithProducts = adder.add(quote, prodModelList, 0);
-        List<QuoteLineModel> newLines = quoteWithProducts.getLineItems();
-        System.debug('previous lines -- ' + previousLines.size());
-        System.debug('new lines -- ' + newLines.size());
-        
-        for (QuoteLineModel newLine : newLines) {
-            if (newLine.record.id == null) { 
-                newlyAddedLines.add(newLine); //Puts all of the added lines in a list
-            }
-        }
-
-        for (QuoteLineModel newlyAddedLine : newlyAddedLines){
-            WrappersClass.QuoteLineWrapperClass wrapper = new WrappersClass.QuoteLineWrapperClass();
-            WrappersClass.ProductWrapperClass relatedProd = prodMap.get(newlyAddedLine.record.SBQQ__Product__c);
-            wrapper.id = newlyAddedLine.record.id;
-            wrapper.product = newlyAddedLine.record.SBQQ__Product__r.Name;
-            wrapper.productId = newlyAddedLine.record.SBQQ__Product__c;
-            // wrapper.productobj = newlyAddedLine.record.SBQQ__Product__r;
-            // wrapper.description = newlyAddedLine.record.Description__c;
-
-            wrapper.id = newlyAddedLine.record.id;
-            wrapper.product = newlyAddedLine.record.SBQQ__Product__r.Name;
-            wrapper.requiredBy = newlyAddedLine.record.SBQQ__RequiredBy__c;
-            wrapper.productid = newlyAddedLine.record.SBQQ__Product__c;
-            // wrapper.productobj = newlyAddedLine.record.SBQQ__Product__r;
-            wrapper.name = newlyAddedLine.record.Name;
-            wrapper.description = newlyAddedLine.record.SBQQ__Description__c;
-            wrapper.uom = newlyAddedLine.record.UOM__c;
-            wrapper.listunitprice = newlyAddedLine.record.SBQQ__ListPrice__c;
-            wrapper.additionaldiscount = newlyAddedLine.record.SBQQ__Discount__c;
-            wrapper.netunitprice = newlyAddedLine.record.SBQQ__NetPrice__c; 
-            wrapper.billingtolerance = newlyAddedLine.record.BL_Billing_Tolerance__c; 
-            wrapper.source = newlyAddedLine.record.BL_Source__c; 
-            wrapper.destination = newlyAddedLine.record.BL_Destination__c;
-            wrapper.alternativeindicator = newlyAddedLine.record.BL_Alternative_Indicator__c;
-            // wrapper.nspofferingdetails = newlyAddedLine.record.SBQQ__Optional__c;
-            wrapper.billingfrequency = newlyAddedLine.record.SBQQ__BillingFrequency__c;
-            wrapper.approvalstatus = newlyAddedLine.record.ApprovalStatus__c;
-            wrapper.billingtype = newlyAddedLine.record.SBQQ__BillingType__c;
-            wrapper.componenttotal = newlyAddedLine.record.SBQQ__ComponentTotal__c;
-            wrapper.enddate = newlyAddedLine.record.SBQQ__EndDate__c;
-            wrapper.length = String.valueOf(newlyAddedLine.record.Length__c);
-            wrapper.originalprice = newlyAddedLine.record.SBQQ__OriginalPrice__c;
-            wrapper.packagetype = newlyAddedLine.record.Package_Type__c;
-            wrapper.packageCover = newlyAddedLine.record.Package_Cover__c;
-            wrapper.volumediscount = newlyAddedLine.record.SBQQ__VolumeDiscount__c;
-            wrapper.color = newlyAddedLine.record.Color__c;
-            wrapper.productType = newlyAddedLine.record.Product_Type__c;
-
-            wrapper.fiberCount1 = relatedProd.fiberCount1;
-            wrapper.fiberCount2 = relatedProd.fiberCount2;
-            wrapper.fiberType1 = relatedProd.fiberType1;
-            wrapper.fiberType2 = relatedProd.fiberType2;
-            wrapper.regionCode = relatedProd.regionCode;
-            wrapper.primaryUOM = relatedProd.primaryUOM;
-            // wrapper.length = relatedProd.lenght;
-            wrapper.isNSP = true;
-
-            linesToPrint.add(wrapper); 
-
-            // if(relatedProd.filteredGrouping == 'Premise Cable'){
-            //     wrapper.color = newlyAddedLine.record.Color__c;
-            //     wrapper.subUnitColor = newlyAddedLine.record.Subunit_Color__c;
-
-            // }
-            
-        }
-        return JSON.serialize(linesToPrint);
-
     }
 
     //---------------------------------------------------------------------- SAVING METHODS -----------------------------------------------------------------------
     @AuraEnabled
-    public static String deleteQuoteLines(List<SBQQ__QuoteLine__c> existingQuoteLines, List<WrappersClass.QuoteLineWrapperClass> receivedQuoteLines){ //This method is called whenever we want to delete a quote line in salesforce
+    public static String deleteQuoteLines(List<SBQQ__QuoteLine__c> existingQuoteLines, List<QuoteLineWrapper> receivedQuoteLines){ //This method is called whenever we want to delete a quote line in salesforce
         List<SBQQ__QuoteLine__c> linesToDelete = new List <SBQQ__QuoteLine__c>();
         Set<String> quoteLineIDs = new Set<String>();
         Set<String> receivedIDs = new Set<String>();
@@ -899,7 +228,7 @@ public with sharing class QuoteController {
         }
 
         //Add the received quote line ids to a set
-        for (WrappersClass.QuoteLineWrapperClass line : receivedQuoteLines) {
+        for (QuoteLineWrapper line : receivedQuoteLines) {
             receivedIDs.add(line.id); 
         }
         try{
@@ -927,27 +256,26 @@ public with sharing class QuoteController {
         return JSON.serialize(linesToDelete);
     }
     @AuraEnabled
-    // @Future
     public static void editAndDeleteQuotes(String quoteId, String quoteLines){//This method changes the values in the edited quote lines in salesforce, with the changes made in the QLE
         QuoteReader quoteReader = new QuoteReader();
         QuoteModel quote = quoteReader.read(quoteId);
-        ProductReader productReader = new ProductReader();
-        ProductModel product = new ProductModel();
+        
+       
         
         SBQQ__Quote__c getQuote = [SELECT ID FROM SBQQ__Quote__c WHERE Id =: quoteId];
         //Checks the quote lines that already exist on salesforce
         List<SBQQ__QuoteLine__c> existingQuoteLines = [SELECT ID,SBQQ__Product__r.QLE_Search_Method__c,SBQQ__Quote__c,Adapter_Quantity__c,SBQQ__AdditionalDiscount__c,SBQQ__Discount__c,SBQQ__AdditionalDiscountAmount__c,SBQQ__AdditionalQuantity__c,AdditionalDiscountUnit__c,SBQQ__AllowAssetRefund__c,BL_Alternative_Indicator__c,Approval_Reasons__c,ApprovalStatus__c,SBQQ__BatchQuantity__c,SBQQ__BillingFrequency__c,BL_Billing_Tolerance__c,SBQQ__BillingType__c,SBQQ__BlockPrice__c,SBQQ__Bundled__c,SBQQ__CarryoverLine__c,SBQQ__ChargeType__c,SBQQ__ComponentCost__c,SBQQ__ComponentDiscountedByPackage__c,SBQQ__ComponentListTotal__c,SBQQ__ComponentTotal__c,SBQQ__ComponentSubscriptionScope__c,SBQQ__ComponentUpliftedByPackage__c,SBQQ__ComponentVisibility__c,SBQQ__CompoundDiscountRate__c,Configuration__c,SBQQ__ConfigurationRequired__c	,SBQQ__ContractedPrice__c, Copperclad_Pricing_Review__c,SBQQ__Cost__c,SBQQ__CostEditable__c,CreatedById,CurrencyIsoCode,Customer_Tier_Additional_Discount__c,SBQQ__CustomerTotal__c,SBQQ__CustomerPrice__c,SBQQ__DefaultSubscriptionTerm__c,SBQQ__Description__c,BL_Destination__c,SBQQ__DiscountSchedule__c,SBQQ__DiscountScheduleType__c,SBQQ__DiscountTier__c,Display_Price__c,SBQQ__DistributorDiscount__c,SBQQ__DynamicOptionId__c,SBQQ__EarliestValidAmendmentStartDate__c,SBQQ__EffectiveEndDate__c ,SBQQ__EffectiveQuantity__c,SBQQ__EffectiveStartDate__c,SBQQ__EffectiveSubscriptionTerm__c,SBQQ__EndDate__c,SBQQ__Existing__c,SBQQ__Favorite__c,Feature_Name__c,Fiber_Count__c,Fiber_Type__c,Final_Item__c,SBQQ__GenerateContractedPrice__c,SBQQ__GrossProfit__c,SBQQ__Group__c,SBQQ__Guidance__c,SBQQ__HasConsumptionSchedule__c,SBQQ__Hidden__c,HiTemp_Pricing_Review__c,SBQQ__Incomplete__c,Jacket_Color__c,Jacket_Configuration__c,Jacket_Print__c,Jacket_Type__c,LastModifiedById,Length__c,Length_UOM__c,Name,Line_Quantity_gt_50k__c,SBQQ__ListTotal__c,SBQQ__ListPrice__c,Margin__c,SBQQ__Markup__c,SBQQ__MarkupRate__c,SBQQ__MarkupAmount__c,SBQQ__MaximumPrice__c,SBQQ__MinimumPrice__c,SBQQ__NetTotal__c,SBQQ__NetPrice__c,SBQQ__NonDiscountable__c,SBQQ__NonPartnerDiscountable__c,BL_NSP_Offering_Details__c,SBQQ__Number__c,SBQQ__OptionDiscount__c,SBQQ__OptionDiscountAmount__c,SBQQ__OptionLevel__c,SBQQ__OptionType__c,SBQQ__Optional__c,SBQQ__OriginalPrice__c,SBQQ__BundledQuantity__c,SBQQ__OriginalQuoteLineId__c,SBQQ__OriginalUnitCost__c,OTDR_Base_Model__c,SBQQ__Bundle__c,SBQQ__PackageCost__c,Package_Cover__c,SBQQ__PackageListTotal__c,SBQQ__PackageProductCode__c,SBQQ__PackageProductDescription__c,SBQQ__PackageTotal__c,Package_Type__c,SBQQ__PartnerDiscount__c,SBQQ__PartnerTotal__c,SBQQ__PartnerPrice__c,SBQQ__SubscriptionPercent__c,SBQQ__SubscriptionBase__c,SBQQ__SubscriptionCategory__c,SBQQ__SubscriptionScope__c,SBQQ__SubscriptionTargetPrice__c,Pigtail_Quantity__c,SBQQ__PreviousSegmentPrice__c,SBQQ__PreviousSegmentUplift__c,SBQQ__Dimension__c,SBQQ__PriceEditable__c,Minimum_Order_Multiple__c,Price_Rule_Debug__c,SBQQ__PricebookEntryId__c,SBQQ__PricingMethod__c,SBQQ__PricingMethodEditable__c,Primary_UOM__c,SBQQ__PriorQuantity__c,ProdLevel1__c,ProdLevel2__c,ProdLevel3__c,ProdLevel4__c,SBQQ__Product__c,SBQQ__ProductCode__c,SBQQ__ProductFamily__c,SBQQ__ProductName__c,SBQQ__ProductOption__c,SBQQ__ProductSubscriptionType__c,Product_Type__c,SBQQ__ProrateMultiplier__c,SBQQ__ProratedListPrice__c,SBQQ__ProratedPrice__c,SBQQ__Quantity__c,Rail_gt_150_pc__c,Reason_for_Deviation__c,SBQQ__RegularTotal__c,SBQQ__RegularPrice__c,SBQQ__Renewal__c,SBQQ__RenewedAsset__c,SBQQ__RenewedSubscription__c,SBQQ__RequiredBy__c,Rollup_Component_Prices__c,SBQQ__SegmentIndex__c,SBQQ__SegmentKey__c,SBQQ__SegmentLabel__c,Selected__c,BL_Source__c,SBQQ__Source__c,SBQQ__SpecialPrice__c,SBQQ__SpecialPriceDescription__c,SBQQ__SpecialPriceType__c,SBQQ__StartDate__c,SBQQ__SubscribedAssetIds__c,SBQQ__SubscriptionPricing__c,SBQQ__SubscriptionTerm__c,SBQQ__SubscriptionType__c,Subunit_Color__c,SBQQ__TaxCode__c,SBQQ__Taxable__c,SBQQ__TermDiscount__c,SBQQ__TermDiscountSchedule__c,SBQQ__TermDiscountTier__c,Test_Formula__c,Tier__c,SBQQ__TotalDiscountRate__c,SBQQ__TotalDiscountAmount__c,SBQQ__UnitCost__c,SBQQ__UnproratedNetPrice__c,UOM__c,SBQQ__UpgradedAsset__c,SBQQ__UpgradedQuantity__c,SBQQ__UpgradedSubscription__c,SBQQ__Uplift__c,SBQQ__UpliftAmount__c,SBQQ__VolumeDiscount__c FROM SBQQ__QuoteLine__c WHERE SBQQ__Quote__c =: quoteId];
         //Gets the quote lines and deserialize it into a quote line wrapper class
-        List<WrappersClass.QuoteLineWrapperClass> untypedQuoteLines = (List<WrappersClass.QuoteLineWrapperClass>) JSON.deserialize(quoteLines, List<WrappersClass.QuoteLineWrapperClass>.class);
-        Map<String,WrappersClass.QuoteLineWrapperClass> receivedLinesMap = new Map<String,WrappersClass.QuoteLineWrapperClass>();
-        for(WrappersClass.QuoteLineWrapperClass line : untypedQuoteLines){
+        List<QuoteLineWrapper> untypedQuoteLines = (List<QuoteLineWrapper>) JSON.deserialize(quoteLines, List<QuoteLineWrapper>.class);
+        Map<String,QuoteLineWrapper> receivedLinesMap = new Map<String,QuoteLineWrapper>();
+        for(QuoteLineWrapper line : untypedQuoteLines){
             String stringID = String.valueOf(line.id);
             if(!stringID.startsWith('new') && line.id != null || !stringID.startsWith('xxx')){
                 receivedLinesMap.put(line.id,line);
             }
         }
 
-        List<QuoteLineModel> quoteLinesToInsert = new List<QuoteLineModel>();
+        
         List<QuoteLineModel> quoteLinesToUpdate = new List<QuoteLineModel>();
         Set<String> quoteLineIDs = new Set<String>();
         Set<String> receivedIDs = new Set<String>();
@@ -956,69 +284,19 @@ public with sharing class QuoteController {
          for (SBQQ__QuoteLine__c line : existingQuoteLines) {
             quoteLineIDs.add(line.id);
         }
-        for (WrappersClass.QuoteLineWrapperClass line : untypedQuoteLines) {
+        for (QuoteLineWrapper line : untypedQuoteLines) {
             receivedIDs.add(line.id);
         }
 
-        // try{
-            for (SBQQ__QuoteLine__c line : existingQuoteLines) {
-                if (receivedIDs.contains(line.id)) {
-                    WrappersClass.QuoteLineWrapperClass relatedQuoteLine = receivedLinesMap.get(line.id);
-                    // System.debug('parent prod '+);
-                    System.debug('related line: ' + relatedQuoteLine.name + ' quantity: ' + relatedQuoteLine.quantity);
-                    QuoteLineModel newModel = new QuoteLineModel();
-                    
 
-                    newModel.setRecord(line);
-                    
-                    product = productReader.read(newModel.record.SBQQ__Product__c,'01sA0000000TiZnIAK','USD');
-                    newModel.record.SBQQ__Quantity__c = relatedQuoteLine.quantity;
-                    newModel.record.Length__c = relatedQuoteLine.length;
-                    newModel.record.Length_UOM__c = relatedQuoteLine.lengthUOM;
-                    newModel.record.UOM__c = relatedQuoteLine.uom;
-                    newModel.record.SBQQ__Discount__c = relatedQuoteLine.additionaldiscount;
-                    newModel.record.Line_Note__c = relatedQuoteLine.linenote;
-                    newModel.record.AdditionalDiscountUnit__c = 'Percent';
-                    newModel.record.SBQQ__NetPrice__c = relatedQuoteLine.netunitprice;
-                    newModel.record.BL_Billing_Tolerance__c = relatedQuoteLine.billingtolerance;
-                    newModel.record.BL_Source__c = relatedQuoteLine.source;
-                    newModel.record.BL_Destination__c = relatedQuoteLine.destination;
-                    newModel.record.BL_Alternative_Indicator__c = relatedQuoteLine.alternativeindicator;
-                    newModel.record.BL_NSP_Offering_Details__c = relatedQuoteLine.nspofferingdetails;
-                    if(relatedQuoteLine.isNSP == true){
-                        newModel.record.Color__c = relatedQuoteLine.color;
-                        newModel.record.Subunit_Color__c = relatedQuoteLine.subUnitColor;
-                        newModel.record.Jacket_Print__c = relatedQuoteLine.jacketPrint;
-                        newModel.record.Package_Type__c = relatedQuoteLine.packagetype;
-                        newModel.record.Package_Cover__c = relatedQuoteLine.packageCover;
-                        newModel.record.Mix_Fiber_Count_1__c = relatedQuoteLine.fiberCount1;
-                        newModel.record.Mix_Fiber_Count_2__c = relatedQuoteLine.fiberCount2;
-                        newModel.record.Mix_Fiber_Type_1__c = relatedQuoteLine.fiberType1;
-                        newModel.record.Mix_Fiber_Type_2__c = relatedQuoteLine.fiberType2;
-                        newModel.record.Mix_Fiber_Type_2__c = relatedQuoteLine.fiberType2;
-                        newModel.record.Region_Code__c = relatedQuoteLine.regionCode;
-                    }
-
-                    ConfigValidator validator = new ConfigValidator();
-                    LoadRuleRunner runner = new LoadRuleRunner();
-
-                    ProductModel prod = runner.load( newModel.record.SBQQ__Product__c, quote, null, null, product.configuration, null);
-                    // ConfigurationModel config = validator.load(newModel.record.SBQQ__Product__c, quote, product.configuration, 'Edit', null);
-                    // ConfigLoader loader = new ConfigLoader();
-                    // ProductModel prod = loader.load(newModel.record.SBQQ__Product__c, quote, null);
-
-                    System.debug('RUNNER : ' + prod);
-
-                    quoteLinesToInsert.add(newModel);
-                } 
-            }
+        List<QuoteLineModel> quoteLinesToInsert = new List<QuoteLineModel>();
+        quoteLinesToInsert = QuoteControllerMethodsHandler.quoteToModel (existingQuoteLines, receivedIDs, receivedLinesMap, quote);
+            
             
             //Inserts the new version of the quote lines into the quote line model
             quote.setLineItems(quoteLinesToInsert);
             List<SBQQ__QuoteLine__c> quoteLineRecordsToUpdate = new List <SBQQ__QuoteLine__c>();
 
-            //quote.setLineItems(quoteLinesToInsert);
-            //System.debug('Setter line items: ' +  quote.getLineItems());
             for(QuoteLineModel line:quote.getLineItems()){
                 System.debug('new quote quantities - ' + line.record.SBQQ__Quantity__c);
                 
@@ -1036,19 +314,10 @@ public with sharing class QuoteController {
                 System.debug('new quote discount - ' + q.SBQQ__Discount__c);
             }
 
-            //Triggering the Quote Calculator API
-            // QuoteCalculator calculator = new QuoteCalculator();
-            // calculator.calculate(quote, 'MyCallback');
-            
-            update quoteLineRecordsToUpdate;
-            // quoteLineCreator(quoteId, quoteLines);
-            
+            update quoteLineRecordsToUpdate; 
+                        
             //Deletes the quote lines from salesforce that are not in the UI
-            String deletion = deleteQuoteLines(existingQuoteLines,untypedQuoteLines);
-
-        // }catch (Exception e) {
-        //     throw new AuraHandledException('Something went wrong: ' + e.getMessage() + 'cause: ' + e.getCause());
-        // }
+            String deletion = deleteQuoteLines(existingQuoteLines, untypedQuoteLines);
             
     }
     @AuraEnabled
@@ -1064,7 +333,7 @@ public with sharing class QuoteController {
         //Checks the quote lines that already exist on salesforce
         List<SBQQ__QuoteLine__c> existingQuoteLines = Database.query('SELECT ' + String.join(lstFieldNames, ',') + ' FROM SBQQ__QuoteLine__c WHERE SBQQ__Quote__c =: quoteId');
         //Gets the quote lines and deserialize it into a quote line wrapper class
-        List<WrappersClass.QuoteLineWrapperClass> untypedQuoteLines = (List<WrappersClass.QuoteLineWrapperClass>) JSON.deserialize(quoteLines, List<WrappersClass.QuoteLineWrapperClass>.class);
+        List<QuoteLineWrapper> untypedQuoteLines = (List<QuoteLineWrapper>) JSON.deserialize(quoteLines, List<QuoteLineWrapper>.class);
 
         //Get the lookups related to the length based products
         List<AFL_Lookups__c> lengthLookupList = [SELECT Name,QLE_Variable_Price__c,Lookup_Type__c,Product_Class_1__c,Lookup_Code__c FROM AFL_Lookups__c WHERE QLE_Variable_Price__c = 'Cable Length'];
@@ -1072,9 +341,10 @@ public with sharing class QuoteController {
         for(AFL_Lookups__c lookup :lengthLookupList){
             lengthCodes.add(lookup.Lookup_Code__c);
         }
+        System.debug(lengthCodes);
 
         List<QuoteLineModel> quoteLinesToInsert = new List<QuoteLineModel>();
-        List<SBQQ__QuoteLine__c> quoteLinerecordsToInsert = new List<SBQQ__QuoteLine__c>();
+        
         List<QuoteLineModel> quoteLinesToUpdate = new List<QuoteLineModel>();
         Set<String> quoteLineIDs = new Set<String>();
         Set<String> receivedIDs = new Set<String>();
@@ -1082,11 +352,11 @@ public with sharing class QuoteController {
 
         //Gets all the products related to the quote that are configured and puts it in a map, then gets it's configuration in order to create the lines
         Map<Id,Product2> prodMap  = new Map<Id,Product2>([SELECT Id,Filtered_Grouping__c,Product_Type__c FROM Product2 WHERE QLE_Search_Method__c = 'FILTERED']);
+        System.debug('prodMap '+prodMap);
         Map<String, SBQQ__QuoteLine__c> existentLinesMap = new Map<String, SBQQ__QuoteLine__c>();
         Map<String, List<SBQQ__QuoteLine__c>> linesWithParentsMap = new Map<String, List<SBQQ__QuoteLine__c>>();
         List<SBQQ__QuoteLine__c> optionLines = Database.query('SELECT SBQQ__RequiredBy__r.SBQQ__Product__r.Name, SBQQ__RequiredBy__r.Name, ' + String.join(lstFieldNames, ',') + ' FROM SBQQ__QuoteLine__c WHERE SBQQ__RequiredBy__c != null AND  SBQQ__Quote__c =: quoteId');
         System.debug('query option lines: ' + optionLines.size());
-        // for(SBQQ__QuoteLine__c line : [SELECT ID,SBQQ__RequiredBy__c FROM SBQQ__QuoteLine__c WHERE SBQQ__RequiredBy__c != null] ){
         //Populate map with existent records
         for (SBQQ__QuoteLine__c line : existingQuoteLines) {
             existentLinesMap.put(line.id,line);
@@ -1105,159 +375,14 @@ public with sharing class QuoteController {
          for (SBQQ__QuoteLine__c line : existingQuoteLines) {
             quoteLineIDs.add(line.id);
         }
-        for (WrappersClass.QuoteLineWrapperClass line : untypedQuoteLines) {
+        for (QuoteLineWrapper line : untypedQuoteLines) {
             receivedIDs.add(line.id);
         }
 
-        for(WrappersClass.QuoteLineWrapperClass line : untypedQuoteLines){
-            if(line.clonedFrom == null){
-                String stringID = String.valueOf(line.id);
-                // System.debug(' line id ' + line.id);
-                if (stringID.startsWith('new') || line.id == null || stringID.startsWith('xxx')) {
-                // if (line.id == null) {
-                    // System.debug('Entered second');
-                    SBQQ__QuoteLine__c newQuoteLine = new SBQQ__QuoteLine__c();
-                    //newQuoteLine.SBQQ__Product__r = '01t8A000007bfC4QAI';
-                    newQuoteLine.SBQQ__Quote__c = getQuote.id;
-                    newQuoteLine.SBQQ__Product__c = line.productid;
-                    newQuoteLine.SBQQ__Quantity__c = line.quantity;
-                    newQuoteLine.SBQQ__Description__c = line.description;
-                    newQuoteLine.UOM__c = line.uom;
-                    newQuoteLine.Length_UOM__c = line.lengthUOM;
-                    newQuoteLine.SBQQ__Discount__c = line.additionaldiscount;
-                    newQuoteLine.AdditionalDiscountUnit__c = 'Percent';
-                    newQuoteLine.SBQQ__NetPrice__c = line.netunitprice;
-                    newQuoteLine.is_NSP__c = line.isNSP;
-                    newQuoteLine.SBQQ__ListPrice__c = line.listunitprice;
-                    newQuoteLine.BL_Billing_Tolerance__c = line.billingtolerance;
-                    newQuoteLine.BL_Source__c = line.source;
-                    // newQuoteLine.Billable_Tolerance__c = line.billabletolerance;
 
-                    newQuoteLine.BL_Destination__c = line.destination;
-                    if(line.alternativeindicator == null){
-                        newQuoteLine.BL_Alternative_Indicator__c = false;                    
-                    }else{
-                        newQuoteLine.BL_Alternative_Indicator__c = Boolean.valueOf(line.alternativeindicator);                    
-                    }
-                    newQuoteLine.BL_NSP_Offering_Details__c = line.nspofferingdetails;
-                    newQuoteLine.Package_Type__c = line.packagetype;
-                    newQuoteLine.Package_Cover__c = line.packageCover;
-                    newQuoteLine.Mix_Fiber_Count_1__c = line.fiberCount1;
-                    newQuoteLine.Mix_Fiber_Count_2__c = line.fiberCount2;
-                    newQuoteLine.Mix_Fiber_Type_1__c = line.fiberType1;
-                    newQuoteLine.Mix_Fiber_Type_2__c = line.fiberType2;
-                    newQuoteLine.Region_Code__c = line.regionCode;
-                    newQuoteLine.Length__c = line.length;
-                    newQuoteLine.Primary_UOM__c = line.primaryUOM;
-                    newQuoteLine.Color__c = line.color;
-                    newQuoteLine.Subunit_Color__c = line.subUnitColor; 
-                    newQuoteLine.Jacket_Print__c = line.jacketPrint; 
-                    newQuoteLine.ProdLevel1__c = line.prodLevel1;
-                    newQuoteLine.ProdLevel2__c = line.prodLevel2;
-                    newQuoteLine.ProdLevel3__c = line.prodLevel3;
-                    newQuoteLine.ProdLevel4__c = line.prodLevel4;
-                    newQuoteLine.Customer_Part__c = line.customerPart;
-                    newQuoteLine.Alternative__c = line.alternative; //THIS OR BL_Alternative_Indicator__c?
-                    newQuoteLine.Stock__c = line.stock;
-                    newQuoteLine.SBQQ__SpecialPrice__c = line.price;
-                    newQuoteLine.SBQQ__PackageProductCode__c = line.partnumber;
-                    newQuoteLine.Line_Note__c = line.linenote;
-                    newQuoteLine.SBQQ__UnitCost__c = line.unitcost;
-                    newQuoteLine.Max_Length_on_Steel__c = line.maxlengthonsteel;
-                    newQuoteLine.Max_Length_on_Wood__c = line.maxlengthonwood;
-                    if(prodMap.get(line.productid) != null){
-                        if(lengthCodes.contains(prodMap.get(line.productid).Filtered_Grouping__c) && prodMap.get(line.productid).Filtered_Grouping__c=='Patch Panels') {
-                            if(prodMap.get(line.productid).Product_Type__c=='Patch Panel - Stubbed'){
-                                newQuoteLine.QLE_Variable_Price__c ='Cable Length';
-                            }else {
-                                newQuoteLine.Length__c = 'NA';
-                                newQuoteLine.Length_UOM__c = 'NA';
-                            }
-                        }else if(lengthCodes.contains(prodMap.get(line.productid).Filtered_Grouping__c) && prodMap.get(line.productid).Filtered_Grouping__c!='Patch Panels'){
-                            newQuoteLine.QLE_Variable_Price__c ='Cable Length';
-                        }else {
-                            newQuoteLine.Length__c = 'NA';
-                            newQuoteLine.Length_UOM__c = 'NA';
-                        }
-                    }
-                    newQuoteLine.Base_Design_Code__c = line.basedesigncode;
-                    newQuoteLine.CableCostPerMeter__c = line.cablecostpermeter;
-                    newQuoteLine.Customer__c = line.customer;
-                    newQuoteLine.Filtered_Grouping__c = line.filteredgrouping;
-                    newQuoteLine.Fixed_Cost__c = line.fixedcost;
-                    newQuoteLine.Primary_UOM__c = line.primaryUOM;
-                    newQuoteLine.Quote_Item_Description_Part_A__c = line.quoteitemdescriptiona;
-                    newQuoteLine.Quote_Item_Description_Part_B__c = line.quoteitemdescriptionb;
-                    newQuoteLine.Unit_Cost__c = line.unitcost;
-                    newQuoteLine.Variable_Price_1__c = line.variableprice1;
-                    newQuoteLine.Bus_Margin_High_Value__c = line.busmarginhighvalue;
-                    newQuoteLine.Bus_Margin_Low_Value__c = line.busmarginlowvalue;
-                    newQuoteLine.ConnCost_A__c = line.conncostA;
-                    newQuoteLine.ConnCost_B__c = line.conncostB;
-                    newQuoteLine.Count_Factor__c = line.countfactor;
-                    newQuoteLine.Margin_Change_Value__c = line.marginchangevalue;
-                    newQuoteLine.NumAdapter__c = line.numadapter;
-                    newQuoteLine.NumCables__c = line.numcables;
-                    newQuoteLine.NumConnector__c = line.numconnector;
-                    newQuoteLine.Pricing_Cost__c = line.pricingcost;
-                    newQuoteLine.Region_Adder_Central__c = line.regionaddercentral;
-                    newQuoteLine.Region_Adder_East__c = line.regionaddereast;
-                    newQuoteLine.Region_Adder_West__c = line.regionadderwest;
-                    newQuoteLine.Region_Adder_Northwest__c = line.regionaddernorthwest;
-                    newQuoteLine.ResourceCost_A__c = line.resourcecosta;
-                    newQuoteLine.Product_Type__c = line.productType;
-                    newQuoteLine.Minimum_Order_Qty__c = line.minimumorderqty;
-                    newQuoteLine.Minimum_Order_Multiple__c = line.minimumordermultiple;
-                    newQuoteLine.Fiber_Count__c = line.fiberCount;
-                    
-                    
-                    quoteLinerecordsToInsert.add(newQuoteLine);
-                }
-                // QuoteLineModel newModel = new QuoteLineModel();
-                // newModel.setRecord(newQuoteLine);
-                // linesFromQuote.add(newModel);
-                // quote.setLineItems(linesFromQuote);
-                
-                // System.debug('saved length ' + newQuoteLine.Length__c);
-            }else{
-                System.debug('cloned from ' + line.clonedFrom);
-                SBQQ__QuoteLine__c parentLine = existentLinesMap.get(line.clonedFrom);
-                SBQQ__QuoteLine__c clonedParent = parentLine.clone(false, false, false, false);
-                clonedParent.SBQQ__Quantity__c = line.quantity;
-                clonedParent.UOM__c = line.uom;
-                clonedParent.SBQQ__Discount__c = line.additionaldiscount;
-                clonedParent.SBQQ__NetPrice__c = line.netunitprice;
+        List<SBQQ__QuoteLine__c> quoteLinerecordsToInsert = new List<SBQQ__QuoteLine__c>();
+        quoteLinerecordsToInsert =  QuoteControllerMethodsHandler.wrapperToQuote (untypedQuoteLines, prodMap, lengthCodes, existentLinesMap, parentWithClone, getQuote);
 
-                if(parentWithClone.containsKey(parentLine)){
-                    System.debug('added to list');
-                    parentWithClone.get(parentLine).add(clonedParent);
-                }else{
-                    System.debug('created list');
-                    parentWithClone.put(parentLine,new List<SBQQ__QuoteLine__c>{clonedParent});
-                }
-                // parentWithClone.put(parentLine,clonedParent);
-                
-                System.debug('quantity of clonesv1 '+parentWithClone.get(parentLine).size());
-
-                // System.debug(' id of the clone '+clonedParent.id);
-                quoteLinerecordsToInsert.add(clonedParent);
-
-                // if(linesWithParentsMap.containsKey(parentLine.name)){
-                //     System.debug('entered here');
-                //     System.debug('number of options: '+linesWithParentsMap.get(parentLine.name).size());
-                //     for(SBQQ__QuoteLine__c l :linesWithParentsMap.get(parentLine.name)){
-                //         l.id = null;
-                //         l.SBQQ__RequiredBy__c = null;
-                //         l.SBQQ__RequiredBy__r = clonedParent;                        
-                //         System.debug('required by ' + l.SBQQ__RequiredBy__c);
-                //         quoteLinerecordsToInsert.add(l);
-                        
-                //         System.debug('to insert size : '+quoteLinerecordsToInsert.size());
-                //     }
-                // }
-                
-            }
-        }
         insert quoteLinerecordsToInsert;
         quoteLinerecordsToInsert.clear();
         System.debug('number of parents ' + parentWithClone.keySet());
@@ -1291,29 +416,8 @@ public with sharing class QuoteController {
         }
         parentWithClone.clear();
         insert quoteLinerecordsToInsert;
-        // for(WrappersClass.QuoteLineWrapperClass line : untypedQuoteLines){
-        //     if(line.clonedFrom != null){
-        //         SBQQ__QuoteLine__c parentLine = existentLinesMap.get(line.clonedFrom);
-        //         if(linesWithParentsMap.containsKey(parentLine.name)){
-        //             for(SBQQ__QuoteLine__c l :linesWithParentsMap.get(parentLine.name)){
-        //                 l.id = null;
-        //                 l.SBQQ__RequiredBy__c = parentWithClone.get(parentLine).id;                        
-        //                 System.debug('required by ' + l.SBQQ__RequiredBy__c);
-        //                 quoteLinerecordsToInsert.add(l);
-        //                 System.debug('to insert size : '+quoteLinerecordsToInsert.size());
-        //             }
-        //         }
-        //     }
-        // }
     }
-    @AuraEnabled
-    public static QuoteModel quoteSaverMethod(QuoteModel quote){
-        QuoteSaver saver = new QuoteSaver();
-        QuoteModel savedQuote = saver.save(quote);
-        
-        return savedQuote;
-
-    }
+   
 
     @AuraEnabled
     public static String getQuoteTotal(String quoteId){
@@ -1322,9 +426,8 @@ public with sharing class QuoteController {
     }
    //-------------------------------------------------------- FILTERING HANDLERS ----------------------------------------------------------------------------------------
     @AuraEnabled
-    public static String getProductLevels(String level1){
+    public static String getProductLevels(String level1){ //Handles the tabs in the product selector by getting all of the level 1 from the lookup object that will be related to the product.
         List<AFL_Lookups__c> lookupList = [SELECT Id,Name,BL_Selection_Type__c,Lookup_Code__c,Product_Class_1__c,BL_Configured_Product__c FROM AFL_Lookups__c WHERE Lookup_Type__c = 'BL Attribute Groupings' AND Product_Class_1__c =:level1];
-        // List<AFL_Lookups__c> lookupList = [SELECT Name, BL_Selection_Type__c,toLabel(Product_Class_1__c), Lookup_Code__c, CreatedDate, Id, CurrencyIsoCode, LastModifiedDate, SystemModstamp FROM AFL_Lookups__c WHERE Lookup_Type__c = 'Product Configurations' AND Enabled_Flag__c = true AND Product_Class_1__c =:level1 ORDER BY Product_Class_1__c ASC NULLS FIRST, Id ASC NULLS FIRST];
         List<WrappersClass.LookupWrapperClass> wrappersToPrintList = new List<WrappersClass.LookupWrapperClass>();
 
         for(AFL_Lookups__c lookup : lookupList){
@@ -1341,7 +444,7 @@ public with sharing class QuoteController {
     }
 
     @AuraEnabled
-    public static String getFirstFilter(String filteredGrouping){
+    public static String getFirstFilter(String filteredGrouping){ //This will get the picklist field from the product whose value controls the other filter values.
         Map<String,BL_Product_Filters__c> custFieldsMap = BL_Product_Filters__c.getAll(); //Get the custom fields in the custom setting
 
         Schema.sObjectType sobject_type = Product2.getSObjectType();
@@ -1378,9 +481,7 @@ public with sharing class QuoteController {
                 filtersMap.put(customFilters.Attribute_1__c,new List<Schema.PicklistEntry>());
             }
                 
-        }
-       
-        
+        }        
 
         for(String filter : filtersMap.keyset()){
             WrappersClass.FilteringWrappingClass wrapper = new WrappersClass.FilteringWrappingClass();
@@ -1538,7 +639,7 @@ public with sharing class QuoteController {
     }
 
     @AuraEnabled
-    public static String getAdditionalFiltering(String customerSelection,String filteredGrouping){
+    public static String getAdditionalFiltering(String customerSelection,String filteredGrouping){ //This is for some filtered groupings that work picklist fields whose values depend on a filter different than the first filter
         Map<String,BL_Product_Filters__c> custFieldsMap = BL_Product_Filters__c.getAll(); //Get the custom fields in the custom setting
 
         Schema.sObjectType sobject_type = Product2.getSObjectType();
@@ -1592,8 +693,7 @@ public with sharing class QuoteController {
         }
 
         String filtersToAdd = JSON.serialize(filtersWrapperToShow);
-        // System.debug(JSON.serialize(filtersWrapperToShow));
-        
+
         return filtersToAdd;
     }
 
@@ -1649,7 +749,7 @@ public with sharing class QuoteController {
         return pickListValues;
     }
 
-    //This holds the query that returns the products dependimg on the filter values selected by the user.
+    //This holds the query that returns the products depending on the filter values selected by the user.
     @AuraEnabled
     public static List<Product2> filteredProductPrinter(String filterValues,String level1,String filteredGrouping){
         List<WrappersClass.FilteringSelectionWrappingClass> untypedfilterValues = (List<WrappersClass.FilteringSelectionWrappingClass>) JSON.deserialize(filterValues, List<WrappersClass.FilteringSelectionWrappingClass>.class );
@@ -1752,10 +852,10 @@ public with sharing class QuoteController {
                 queryAdditions += 'AW_Wire_Size__c = ' + '\''+filterValuesMap.get('Wire Size') + '\' AND ';
             }
             if(filterValuesMap.get('Model') != null){
-                queryAdditions += 'Model__c = ' + filterValuesMap.get('Model') + ' AND ';
+                queryAdditions += 'Model__c = ' +'\''+  filterValuesMap.get('Model') + '\'AND ';
             }
             if(filterValuesMap.get('Sub Configuration') != null){
-                queryAdditions += 'Sub_Configuration__c = ' + filterValuesMap.get('Sub Configuration') + ' AND ';
+                queryAdditions += 'Sub_Configuration__c = ' + '\'' +filterValuesMap.get('Sub Configuration') + '\' AND ';
             }
             if(filterValuesMap.get('Jacket Type') != null){
                 queryAdditions += 'Jacket_Type__c = ' + '\''+ filterValuesMap.get('Jacket Type') + '\' AND ';
@@ -1787,7 +887,7 @@ public with sharing class QuoteController {
                 queryAdditions += 'Product_Type__c = ' + '\'' +filterValuesMap.get('Product Type') + '\' AND ';
             }
             if(filterValuesMap.get('Sub Configuration') != null){
-                queryAdditions += 'Sub_Configuration__c = ' + filterValuesMap.get('Sub Configuration') + ' AND ';
+                queryAdditions += 'Sub_Configuration__c = ' +'\'' + filterValuesMap.get('Sub Configuration') + '\' AND ';
             }
             if(filterValuesMap.get('Breaking Strength') != null){
                 queryAdditions += 'Breaking_Strength__c = ' + '\'' +filterValuesMap.get('Breaking Strength') + '\' AND ';
@@ -1819,7 +919,7 @@ public with sharing class QuoteController {
                 queryAdditions += 'Product_Type__c = ' + '\'' +filterValuesMap.get('Product Type') + '\' AND ';
             }
             if(filterValuesMap.get('Sub Configuration') != null){
-                queryAdditions += 'Sub_Configuration__c = ' + filterValuesMap.get('Sub Configuration') + ' AND ';
+                queryAdditions += 'Sub_Configuration__c = ' + '\'' +filterValuesMap.get('Sub Configuration') + '\' AND ';
             }
             if(filterValuesMap.get('Connector A') != null){
                 queryAdditions += 'Connector_A__c = ' + '\'' +filterValuesMap.get('Connector A') + '\' AND ';
@@ -1933,6 +1033,7 @@ public with sharing class QuoteController {
         System.debug('products : ' + lookUpList.size());
         return lookUpList;
     }
+    //This controls the fields that willl need to be filled from the NSP products depending on which one it is 
     @AuraEnabled
     public static String NSPAdditionalFields(Id productId){
         Map<String,BL_NSP_Fields__c> custFieldsMap = BL_NSP_Fields__c.getAll(); //Get the custom fields in the custom setting
@@ -2282,7 +1383,7 @@ public with sharing class QuoteController {
         String filtersToAdd = JSON.serialize(filtersWrapperToShow);
         return filtersToAdd;
     }
-
+    //Used internally in the NSPAdditionalFields method to print the label of the NSP field and its value
     public static Map<String, Object> NSPDisplayFields(Product2 product, Schema.SObjectField field){
         Map<String, Object> valuesMap = new Map<String, String>(); //Map the label of the field and its value
         WrappersClass.FilteringWrappingClass valuesWrapperToShow = new WrappersClass.FilteringWrappingClass();
@@ -2303,7 +1404,7 @@ public with sharing class QuoteController {
     }
    
      @AuraEnabled
-    //displays the levels on the manual items screen depeneding on the previous value
+    //Handles the display of the the levels on the manual items screen depeneding on the value of the previous level.
     public static String displayLevelsOptions(String level,String selection){
         Schema.sObjectType sobject_type = SBQQ__QuoteLine__c.getSObjectType();
         Map<String, Schema.SObjectField> theQLFieldMap = sobject_type.getDescribe().fields.getMap(); //The fields map of the quote Line object
