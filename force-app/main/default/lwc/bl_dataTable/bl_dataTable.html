@@ -38,7 +38,6 @@
                 <div class="slds-modal__container slds-var-m-left_small  slds-var-m-right_small">
                     <header class="slds-modal__header slds-var-m-left_small  slds-var-m-right_small">
                         <h2 class="slds-text-heading_medium slds-hyphenate">NSP Product: {dataRow.quotelinename}</h2>
-                        <h3 class="slds-text-heading_medium slds-hyphenate">Note: The values are autosaved when changing the field.</h3>
                         <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeNsp}></lightning-icon>
                     </header>
                     <div class="slds-modal__content slds-var-m-left_small  slds-var-m-right_small">
@@ -51,6 +50,7 @@
                             </template>
                             <template if:true={nspShowMessage} class="slds-align_absolute-center">
                                 <div class="slds-grid slds-wrap slds-var-m-top_medium">
+                                    <h3 class="slds-text-heading_medium slds-hyphenate">Note: The values are autosaved when changing the field.</h3>
                                     <div class="slds-col slds-size_1-of-2">
                                         <template for:each={nspValues} for:item="nspRead">
                                             <lightning-layout key={nspRead.label} vertical-align="center" class="small">
@@ -124,6 +124,7 @@
             <section aria-modal="true" class="slds-modal slds-fade-in-open slds-align_absolute-center">
                 <div class="slds-modal__container slds-var-m-left_small  slds-var-m-right_small">
                     <header class="slds-modal__header slds-var-m-left_small  slds-var-m-right_small">
+                        <h2 class="slds-text-heading_medium slds-hyphenate">PLEASE DO NOT WORK HERE - IN PROCESS, BRICK LANE</h2>
                         <h2 class="slds-text-heading_medium slds-hyphenate">Manage Pricing: {dataRow.quotelinename}</h2>
                         <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeTiers}></lightning-icon>
                     </header>

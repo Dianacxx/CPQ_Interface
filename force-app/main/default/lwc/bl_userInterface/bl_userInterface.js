@@ -322,7 +322,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         } else { //MUST BE 'QUOTE HOME)
             //this.quotelinesString =  this.quotelinesString; 
             //console.log('Quotelines');
-            this.activeCloneButton();
+            //this.activeCloneButton();
             const payload = { 
                 dataString: null,
                 auxiliar: 'closereorder'
@@ -340,6 +340,11 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     desactiveCloneButton(){
         this.disableButton = true;
         //console.log('Clone/Apply Button desactive');
+        const payload = { 
+            dataString: null,
+            auxiliar: ''
+          };
+        publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
     }
 
     //TO UPDATE COMPONENTS AND BUTTONS WHEN CLONE ACTION

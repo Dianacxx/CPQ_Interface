@@ -1,8 +1,6 @@
 import { LightningElement, api, track, wire} from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
-//APEX METHOD TO GET FIELD SET SHOWN IN DATATABLE 
-import displayFieldSet from '@salesforce/apex/QuoteController.displayFieldSet'; 
 
 //APEX METHOD TO CREATE QUOTE LINES FROM LOOUP FIELD 
 import addQuoteLine from '@salesforce/apex/QuoteController.addQuoteLine';
@@ -48,16 +46,16 @@ const TIER_COLUMNS = [
 
 //DATA TABLE COLUMNS FOR EACH TAB USED
 const QUOTE_LINE_COLUMNS = [
-    { label: 'Product', fieldName: 'quotelinename', editable: true ,sortable: true, wrapText: false, initialWidth :325,},
-    { label: 'Description', fieldName: 'description', editable: true ,sortable: true, wrapText: false,},
-    { label: 'Quantity', fieldName: 'quantity', editable: true ,sortable: true, wrapText: false,type: 'number',hideDefaultActions: true },
-    { label: 'UOM', fieldName: 'uom', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true},
-    { label: 'Length', fieldName: 'length', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true},
+    { label: 'Product', fieldName: 'quotelinename', editable: false ,sortable: true, wrapText: true, initialWidth: 250,},
+    { label: 'Description', fieldName: 'description', editable: true ,sortable: true, wrapText: false, initialWidth: 140, },
+    { label: 'Quantity', fieldName: 'quantity', editable: true ,sortable: true, wrapText: false,type: 'number',hideDefaultActions: true, initialWidth: 80, },
+    { label: 'UOM', fieldName: 'uom', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true , initialWidth: 70,},
+    { label: 'Length', fieldName: 'length', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true,  initialWidth: 45,},
     { label: 'Length UOM', fieldName: 'lengthuom', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true},
-    { label: 'Discount (%)', fieldName: 'additionaldiscount', editable: true ,sortable: true, wrapText: false,type: 'number',hideDefaultActions: true },
-    { label: 'Net Unit Price', fieldName: 'netunitprice', editable: true ,sortable: true, wrapText: false,type: 'number',hideDefaultActions: true },
-    { label: 'List Unit Price', fieldName: 'listunitprice', editable: false ,sortable: true, wrapText: false,type: 'number',hideDefaultActions: true },
-    { label: 'Net Total', fieldName: 'nettotal', editable: false ,sortable: true, wrapText: false,type: 'number',hideDefaultActions: true },
+    { label: 'Discount (%)', fieldName: 'additionaldiscount', editable: true ,sortable: true, wrapText: false,type: 'number',  initialWidth: 40,hideDefaultActions: true },
+    { label: 'Net Unit Price', fieldName: 'netunitprice', editable: true ,sortable: true, wrapText: false,type: 'number',  initialWidth: 40,hideDefaultActions: true },
+    { label: 'List Unit Price', fieldName: 'listunitprice', editable: false ,sortable: true, wrapText: false,type: 'number',  initialWidth: 40,hideDefaultActions: true },
+    { label: 'Net Total', fieldName: 'nettotal', editable: false ,sortable: true, wrapText: false,type: 'number',  initialWidth: 40,hideDefaultActions: true },
     { label: 'NSP', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:google_news', name: 'NSP', variant:'brand', size:'xxx-small'}},
     { label: 'Tiers', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:adjust_value', name: 'Tiers', variant:'brand', size:'xxx-small'}},
     { label: 'Line Notes', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:new_note', name: 'Linenote', variant:'brand', size:'xxx-small'}},
@@ -65,7 +63,7 @@ const QUOTE_LINE_COLUMNS = [
 ];
 
 const DETAIL_COLUMNS = [
-    { label: 'Product', fieldName: 'quotelinename', editable: true ,sortable: true, wrapText: false, initialWidth :325,},
+    { label: 'Product', fieldName: 'quotelinename', editable: false ,sortable: true, wrapText: false, initialWidth :325,},
     { label: 'Billing Tolerance', fieldName: 'billingTolerance', editable: true ,sortable: true, wrapText: false,type: 'number',hideDefaultActions: true },
     { label: 'Source', fieldName: 'source', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true},
     { label: 'Destination', fieldName: 'destination', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true},
@@ -137,91 +135,6 @@ export default class Bl_dataTable extends LightningElement {
         //console.log(Object.getOwnPropertyNames(this.quoteLines[0])); 
         this.spinnerLoading = false; 
         this.dispatchEvent(new CustomEvent('notselected'));
-
-
-        //NOT USE OF FIELD SET ANYMORE 
-        /*
-        displayFieldSet() 
-        .then((data) => {
-            this.error = undefined;
-            this.fieldSet = JSON.parse(data); 
-            //console.log('fieldSet Prop '+ Object.getOwnPropertyNames(this.fieldSet[0])); 
-            this.fieldSetLength = this.fieldSet.length;
-            //console.log('Fieldset loaded: '+ this.fieldSetLength); 
-        })
-        .then(() => {
-            //HARDCODE TO MAKE SPECIFIC CHANGES IN THE TABLE AND THE VALUES IN PROPERTIES
-            let indexDes; 
-            for (let i=0; i<this.fieldSetLength;i++){
-                if (this.tabSelected == 'Home'){
-                    if (this.fieldSet[i].key == 'HOME'){
-                        let labelName;
-                        this.fieldSet[i].required ? labelName = '*'+this.fieldSet[i].label: labelName = this.fieldSet[i].label;
-                        this.fieldSet[i].property == 'additionaldisc.(%)' ? this.fieldSet[i].property = 'additionaldiscount' : this.fieldSet[i].property; 
-                        if (this.fieldSet[i].property == 'quotelinename'){
-                            labelName = 'Product'; //COLUMN NAME IN QLE QUOTE HOME TAB
-                            COLUMNS_HOME.splice(indexDes, 0, { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, wrapText: false, initialWidth :150,},);
-                            //console.log('Inserting before description');
-                        }
-                        else {
-                            if (this.fieldSet[i].type == 'CURRENCY' || this.fieldSet[i].type == 'PERCENT' || this.fieldSet[i].type == 'DOUBLE'){
-                                COLUMNS_HOME.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, type: 'number',hideDefaultActions: true },);
-                            } else {
-                                if(this.fieldSet[i].property == 'description'){
-                                    indexDes = i; 
-                                    COLUMNS_HOME.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true,wrapText: false, initialWidth :150, },);
-                                    //console.log('Index description '+indexDes);
-                                } else {
-                                    COLUMNS_HOME.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, hideDefaultActions: true},);
-                                }
-                            }
-                        }
-                    }
-                    this.columns = COLUMNS_HOME; 
-                } else if (this.tabSelected == 'Detail'){
-                    if (this.fieldSet[i].property == 'quotelinename'){
-                        let labelName = 'Product'; //COLUMN NAME IN QLE DETAIL TAB
-                        if (!this.auxiliar){
-                            COLUMNS_DETAIL.unshift({ label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable ,sortable: true, wrapText: false, initialWidth :150,},);
-                            console.log('Inserting Once');
-                            this.auxiliar = true; 
-                        }
-                    } 
-                    else if (this.fieldSet[i].key == 'DETAIL'){
-                        let labelName;
-                        this.fieldSet[i].required ? labelName = '*'+this.fieldSet[i].label: labelName = this.fieldSet[i].label;
-                        if (this.fieldSet[i].type == 'CURRENCY' || this.fieldSet[i].type == 'PERCENT' || this.fieldSet[i].type == 'DOUBLE'){
-                            COLUMNS_DETAIL.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable, sortable: true, wrapText: false, type: 'number', },);
-                        } else {
-                            COLUMNS_DETAIL.push( { label: labelName, fieldName: this.fieldSet[i].property, editable: this.fieldSet[i].editable, sortable: true, wrapText: false, },);
-                        }
-                    }
-                    this.columns = COLUMNS_DETAIL; 
-                } 
-            }
-            //ADD SPECIAL COLUMNS IN TABLE LIKE BUTTONS
-            this.columns.push(
-                { label: 'NSP', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:google_news', name: 'NSP', variant:'brand', size:'xxx-small'}},
-                { label: 'Tiers', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:adjust_value', name: 'Tiers', variant:'brand', size:'xxx-small'}},
-                { label: 'Line Notes', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:new_note', name: 'Linenote', variant:'brand', size:'xxx-small'}},
-                { label: '', type: 'button-icon',initialWidth: 20,typeAttributes:{iconName: 'action:delete', name: 'Delete', variant:'border-filled', size:'xxx-small'}}
-            );
-            this.spinnerLoading = false; 
-            this.dispatchEvent(new CustomEvent('notselected'));
-
-        })
-        .catch((error) => {
-            this.error = error;
-            this.fieldSet = undefined; 
-            const evt = new ShowToastEvent({
-                title: 'Error displaying field sets',
-                message: 'Please reload the UI',
-                variant: 'error',
-                mode: 'sticky'
-            });
-            this.dispatchEvent(evt);
-        });
-        */
 
     }
 
@@ -385,6 +298,8 @@ export default class Bl_dataTable extends LightningElement {
                 this.firstHandler();
             } else {
                 this.dispatchEvent(new CustomEvent('notselected'));
+                
+                /*
                 setTimeout(()=> {
                     const evt = new ShowToastEvent({
                         title: 'No Lines selected',
@@ -394,6 +309,7 @@ export default class Bl_dataTable extends LightningElement {
                     });
                     this.dispatchEvent(evt);
                 }, 500);
+                */
                 this.firstHandler();
             }
         }
@@ -436,7 +352,7 @@ export default class Bl_dataTable extends LightningElement {
     }
 
     //Selecting rows
-    @api selectedRows;
+    @api selectedRows = [];
     handleRowSelection(event){
         //TO ALERT THAT A ROW HAS BEEN SELECTED
         if(event.detail.selectedRows.length == 0){
@@ -1127,6 +1043,7 @@ export default class Bl_dataTable extends LightningElement {
     properties = [];
     showNSPValues(){
         this.showNSP = false;
+        console.log(this.dataRow);
         NSPAdditionalFields({productId: this.dataRow.productid })
         .then((data)=>{  
             //console.log('NSP VALUES');
@@ -1167,6 +1084,7 @@ export default class Bl_dataTable extends LightningElement {
                 
                 //console.log('Showing: '+ JSON.stringify(this.nspValues[this.nspValues.length-1]));
             }
+            console.log('Showing: '+ JSON.stringify(this.properties));
             this.showNSP = true;
         })
         .catch((error)=>{
@@ -1203,14 +1121,40 @@ export default class Bl_dataTable extends LightningElement {
     //CLOSE THE NSP POP UP AND RELOAD TABLE TO KEEP VALUES IN ALL COMPONENTS UPDATED 
     @track nspProduct = false;
     closeNsp(){
-        if(JSON.stringify(this.quoteLines) != this.quotelinesString){
-            this.quotelinesString = JSON.stringify(this.quoteLines);
-            this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
+        if (this.nspShowMessage){
+            let fieldsEmpty = 0;
+            for(let i=0 ; i< this.properties.length; i++){
+                if (this.dataRow[this.properties[i].property] == null){
+                    //console.log('Property '+ this.properties[i].property+' is empty');
+                    fieldsEmpty++; 
+                } 
+            } 
+            if(fieldsEmpty > 0){
+                fieldsEmpty = 0; 
+                const evt = new ShowToastEvent({
+                    title: 'Some fields are missing.',
+                    message: 'Please, fill in all NSP fields.',
+                    variant: 'warning',
+                    mode: 'dismissable'
+                });
+                this.dispatchEvent(evt);
+            } else {
+                if(JSON.stringify(this.quoteLines) != this.quotelinesString){
+                    this.quotelinesString = JSON.stringify(this.quoteLines);
+                    this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
+                }
+                this.nspProduct = false; 
+                this.nspValues = [];
+                this.nspOptions = [];
+                this.nspInputs = [];
+            }
+        } else {
+            this.nspProduct = false; 
+            this.nspValues = [];
+            this.nspOptions = [];
+            this.nspInputs = [];
         }
-        this.nspProduct = false; 
-        this.nspValues = [];
-        this.nspOptions = [];
-        this.nspInputs = [];
+        
     }
 
     //Pagination

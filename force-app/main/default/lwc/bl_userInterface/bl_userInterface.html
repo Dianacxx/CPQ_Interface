@@ -25,52 +25,36 @@
                     <!--BODY START-->
                         <!--ADD PRODUCTS SECTION START-->
                         <lightning-layout multiple-rows class="slds-border_top slds-border_right slds-border_left slds-var-m-right_large slds-var-m-left_large"> 
-                            <!--Title and Discount fields-->
-                            <lightning-layout-item size="12" small-device-size="8" padding="around-small">
-                            <span class="slds-page-header__title slds-truncate">
-                                <h2 class="slds-text-heading_large slds-var-m-left_large" style="color:gray;">Add Products</h2>
-                            </span>
-                            </lightning-layout-item>
-                            <lightning-layout-item size="9" small-device-size="6" padding="around-small">
-                                <div class="slds-grid">
-                                    <div class="slds-col slds-var-m-right_medium">
-                                        <lightning-input  class="slds-var-m-left_medium" type="number" label="Line Discount (%)" placeholder="50" value={valueDiscount} onchange={handleValueDiscount}></lightning-input>
-                                    </div>
-                                    <div class="slds-col slds-var-m-top_large ">
-                                        <lightning-button class="stretchButton slds-var-m-left_small" variant="brand" label="Apply" disabled={disableButton} onclick={handleApplyDiscount}></lightning-button>
-                                        <lightning-helptext content="Apply discounts will save the quote lines you have added in the table."></lightning-helptext>
-                                        <!--OVERRIDE REASON SECTION-->
-                                        <template if:true={activeOverrideReason}>
-                                            <lightning-combobox  label="Deviation Reason" value={overrideReason} required
-                                            placeholder="Select Reason" options={overrideReasonsList.data.values} onchange={handleChangeOverrideReason} ></lightning-combobox>
-                                            <lightning-input type="text" label="Override Comment" placeholder="Comment here" onchange={handleOverrideComment}></lightning-input>
-                                            <lightning-combobox  label="Override Type" value={overrideType} 
-                                            placeholder="Select Type" options={overrideTypeList.data.values} onchange={handleOverrideType} ></lightning-combobox>
-                                            <lightning-button  variant="success" label="Update" onclick={updateQuote} class="slds-var-p-around_x-small slds-var-m-left_small"></lightning-button>
-                                        </template> 
-                                        <!--OVERRIDE REASON SECTION-->
-                                    </div>
-                                </div>
-                            </lightning-layout-item>
-                            <!--Button Set-->
-                            <lightning-layout-item size="12" small-device-size="6" padding="around-small">
+                        <!--FUCTIONALITY BUTTONS START-->
+                        <lightning-layout-item size="12" small-device-size="6" padding="around-small">
+                            <div class=" slds-align_absolute-center slds-var-m-top_medium">
+                                
+                                <lightning-button class="stretchButton slds-var-m-right_x-small" variant="brand-outline" label="Product Selection" onclick={navitageToProductSelection}></lightning-button>
+                                <lightning-button class="stretchButton slds-var-m-right_x-small" variant="brand-outline" label="Import Lines" onclick={handleImportLines}></lightning-button>
+                                <lightning-button class="stretchButton slds-var-m-right_x-small" variant="brand-outline" label="Clone Selected" disabled={disableButton} onclick={handleClone}></lightning-button>
+                                <lightning-button class="stretchButton" variant="brand-outline" label="Reorder Lines" disabled={disableReorder} onclick={handleReorder}></lightning-button>
+                            
+                            </div>
+                        </lightning-layout-item>
+                        <!--FUCTIONALITY BUTTONS END-->
+                        <!--SAVE & DISCOUNT  BUTTONS START-->
+                        <lightning-layout-item size="12" small-device-size="6" padding="around-small">
                                 <div class="slds-align_absolute-center">
-                                        <lightning-button class="stretchButton slds-var-m-right_small" variant="brand-outline" label="Reorder Lines" disabled={disableReorder} onclick={handleReorder}></lightning-button>
-                                        <lightning-button class="stretchButton slds-var-m-right_small" variant="brand" label="Save & Calculate" onclick={handleSaveAndCalculate}></lightning-button>
-                                        <lightning-button class="stretchButton" variant="brand" label="Save & Exit"  onclick={navigateToQuoteRecordPage}></lightning-button>
-                                        </div>
-                                <div class="slds-align_absolute-center slds-var-m-top_small">
-                                        <lightning-button class="stretchButton slds-var-m-right_small" variant="brand-outline" label="Product Selection" onclick={navitageToProductSelection}></lightning-button>
-                                        <lightning-button class="stretchButton slds-var-m-right_small" variant="brand-outline" label="Clone Selected" disabled={disableButton} onclick={handleClone}></lightning-button>
-                                        <lightning-button class="stretchButton" variant="brand-outline" label="Import Lines" onclick={handleImportLines}></lightning-button>
+                                    <lightning-input  style="width: 100px;" class="" type="number" label="Line Discount (%)" placeholder="50" value={valueDiscount} onchange={handleValueDiscount}></lightning-input>
+                                    <lightning-button class="stretchButton slds-var-m-top_medium slds-var-m-left_x-small" variant="brand" label="Apply" disabled={disableButton} onclick={handleApplyDiscount}></lightning-button>
+                                    <lightning-helptext content="Apply discounts will save the quote lines you have added in the table."></lightning-helptext>
+                                    <lightning-button class="stretchButton slds-var-m-top_medium slds-var-m-left_x-small slds-var-m-right_x-small" variant="brand" label="Save & Calculate" onclick={handleSaveAndCalculate}></lightning-button>
+                                    <lightning-button class="stretchButton slds-var-m-top_medium " variant="brand" label="Save & Exit"  onclick={navigateToQuoteRecordPage}></lightning-button>
                                 </div>
-                                <div class="slds-align_absolute-center slds-var-m-top_small">
+                                <div class="slds-align_absolute-center slds-var-m-top_x-small">
                                     <h1 class="slds-text-heading_medium">Quote Total: <lightning-formatted-number value={totalValue} format-style="currency" currency-code="USD"></lightning-formatted-number></h1>
                                     <template if:true={totalValueLoading}>
                                         <lightning-dynamic-icon class="slds-var-m-left_x-small" type="eq" option="play" alternative-text="Loading"></lightning-dynamic-icon>                                   
                                     </template>
                                 </div>
-                            </lightning-layout-item>
+                            
+                        </lightning-layout-item>
+                        <!--SAVE & DISCOUNT BUTTONS END-->
                         </lightning-layout>
                         <!--ADD PRODUCTS SECTION END-->
                         <!--TAB SET SECTION START-->
