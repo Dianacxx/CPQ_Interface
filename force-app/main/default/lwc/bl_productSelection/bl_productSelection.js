@@ -35,8 +35,14 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
 
         //GETTING LOOKUP CODES FOR EACH TAB NOTE THAT IS HARDCODED BECAUSE THE VALUES ARE ESTABLISHED 
         //IF THIS CHANGES IN THE OBJECT, MUST BE CHANGED HERE TOO.
+        let startTime = window.performance.now();
+
+        console.log('Method getProductLevels level1: ACA');
         getProductLevels({level1: 'ACA'})
         .then((data)=>{
+            let endTime = window.performance.now();
+            console.log(`getProductLevels ACA method took ${endTime - startTime} milliseconds`);
+
             this.girdDataAcaTab = JSON.parse(data);
             //console.log('ACA Data: ' + data);
             for(let i=0; i<this.girdDataAcaTab.length; i++){
@@ -50,8 +56,12 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             console.log(error);
         });
 
+        let startTime1 = window.performance.now();
         getProductLevels({level1: 'OCA'}) //Connectivity
         .then((data)=>{
+            let endTime = window.performance.now();
+            console.log(`getProductLevels OCA method took ${endTime - startTime1} milliseconds`);
+
             this.girdDataConnTab = JSON.parse(data);
             //console.log('Connectivity Data: ' + data);
             for(let i=0; i<this.girdDataConnTab.length; i++){
@@ -65,8 +75,12 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             console.log(error);
         });
 
+        let startTime2 = window.performance.now();
         getProductLevels({level1: 'Fiber Optic Cable'})
         .then((data)=>{
+            let endTime = window.performance.now();
+            console.log(`getProductLevels Fiber Optic Cable method took ${endTime - startTime2} milliseconds`);
+
             this.girdDataFocTab = JSON.parse(data);
             //console.log('Fiber Optic Cable Data: ' + data);
             for(let i=0; i<this.girdDataFocTab.length; i++){
@@ -83,8 +97,12 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             console.log(error);
         });
 
+        let startTime3 = window.performance.now();
         getProductLevels({level1: 'Cable'})
         .then((data)=>{
+            let endTime = window.performance.now();
+            console.log(`getProductLevels Cable method took ${endTime - startTime3} milliseconds`);
+
             this.girdDataCableTab = JSON.parse(data);
             //console.log('Cable Data: ' + data);
             for(let i=0; i<this.girdDataCableTab.length; i++){
@@ -99,8 +117,12 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             console.log(error);
         });
 
+        let startTime4 = window.performance.now();
         getProductLevels({level1: 'Test and Inspection'})
         .then((data)=>{
+            let endTime = window.performance.now();
+            console.log(`getProductLevels Test and Inspection method took ${endTime - startTime4} milliseconds`);
+
             this.girdDataTandITab = JSON.parse(data);
             //console.log('Test & Inspection Data: ' + data);
             for(let i=0; i<this.girdDataTandITab.length; i++){
@@ -131,7 +153,11 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             let list1 = JSON.parse(JSON.stringify(this.girdDataAcaTabAdd)); 
             for (let list of list1){
                 for (let secondList of list.listOfProducts){
-                    secondList.minimumorderqty == null ? secondList.quantity = 1 : secondList.quantity = secondList.minimumorderqty;
+                    if(secondList.minimumorderqty == null && secondList.quantity == null){
+                        secondList.quantity = 1;
+                    } else if (secondList.quantity < secondList.minimumorderqty){
+                        secondList.quantity = secondList.minimumorderqty;
+                    }
                     secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
@@ -165,7 +191,11 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             let list2 = JSON.parse(JSON.stringify(this.girdDataConnTabAdd)); 
             for (let list of list2){
                 for (let secondList of list.listOfProducts){
-                    secondList.minimumorderqty == null ? secondList.quantity = 1 : secondList.quantity = secondList.minimumorderqty;
+                    if(secondList.minimumorderqty == null && secondList.quantity == null){
+                        secondList.quantity = 1;
+                    } else if (secondList.quantity < secondList.minimumorderqty){
+                        secondList.quantity = secondList.minimumorderqty;
+                    }
                     secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
@@ -204,7 +234,11 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             let list3 = JSON.parse(JSON.stringify(this.girdDataFocTabAdd)); 
             for (let list of list3){ 
                 for (let secondList of list.listOfProducts){
-                    secondList.minimumorderqty == null ? secondList.quantity = 1 : secondList.quantity = secondList.minimumorderqty;
+                    if(secondList.minimumorderqty == null && secondList.quantity == null){
+                        secondList.quantity = 1;
+                    } else if (secondList.quantity < secondList.minimumorderqty){
+                        secondList.quantity = secondList.minimumorderqty;
+                    }
                     secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
@@ -237,7 +271,11 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             let list4 = JSON.parse(JSON.stringify(this.girdDataCableTabAdd)); 
             for (let list of list4){
                 for (let secondList of list.listOfProducts){
-                    secondList.minimumorderqty == null ? secondList.quantity = 1 : secondList.quantity = secondList.minimumorderqty;
+                    if(secondList.minimumorderqty == null && secondList.quantity == null){
+                        secondList.quantity = 1;
+                    } else if (secondList.quantity < secondList.minimumorderqty){
+                        secondList.quantity = secondList.minimumorderqty;
+                    }
                     secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
@@ -271,7 +309,11 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             let list5 = JSON.parse(JSON.stringify(this.girdDataTandITabAdd)); 
             for (let list of list5){
                 for (let secondList of list.listOfProducts){
-                    secondList.minimumorderqty == null ? secondList.quantity = 1 : secondList.quantity = secondList.minimumorderqty;
+                    if(secondList.minimumorderqty == null && secondList.quantity == null){
+                        secondList.quantity = 1;
+                    } else if (secondList.quantity < secondList.minimumorderqty){
+                        secondList.quantity = secondList.minimumorderqty;
+                    }
                     secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
@@ -339,8 +381,15 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         } else {
 
             //SAVING QUOTE LINES BEFORE GOING TO CONFIGURED PAGE
+            let startTime = window.performance.now();
+
+            console.log('Method quoteLineCreator quoteId: '+this.recordId+ ' quoteLines: '+stringQuotesAdded);
             quoteLineCreator({quoteId: this.recordId, quoteLines: stringQuotesAdded})
             .then(()=>{
+
+                let endTime = window.performance.now();
+                console.log(`quoteLineCreator method took ${endTime - startTime} milliseconds`);
+
                 //console.log('Quotes Saved from PS'); 
                 this.savePSValues = false;
                 setTimeout(()=>{
@@ -403,22 +452,37 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             this.dispatchEvent(evt);
         } else {
             //IF THERE ARE NO ERRORS, GET ID OF PRODUCT IN ROW AND GO TO CONFIGURED PRODUCT 
+            let startTime = window.performance.now();
             customActionId()
             .then((data)=>{
+                let endTime = window.performance.now();
+                console.log(`customActionId method took ${endTime - startTime} milliseconds`);
                 let customActionAddProducts = data; //Add Products Id
                 //console.log('relatedProductId: '+this.configBundleId); 
+                if((this.recordId == null || this.recordId == '') ||
+                    (customActionAddProducts == null || customActionAddProducts == '') || 
+                    (this.configBundleId == null || this.configBundleId == '')){
+                        const evt = new ShowToastEvent({
+                            title: 'The Lookup Code is not registered as a configured product.', 
+                            message: 'Please, contact your administrator for more information.',
+                            variant: 'error', mode: 'dismissable'
+                        });
+                        this.dispatchEvent(evt);
+                } else {
+                    //LINK TO NAVIGATE TO CONFIGURED PAGE OF THE PRODUCT + QUOTE + CUSTOM ACTION
+                    let link = '/apex/sbqq__sb?id='+this.recordId+'&clc=0#/product/pc?qId='+
+                    this.recordId+'&aId='+customActionAddProducts+'&pId='+this.configBundleId+'&redirectUrl=LineEditor&open=0';
+
+                    this[NavigationMixin.Navigate]({
+                        type: 'standard__webPage',
+                        attributes: {
+                            url: link,
+                            recordId : this.recordId,
+                        }
+                    })
+                }
                 
-                //LINK TO NAVIGATE TO CONFIGURED PAGE OF THE PRODUCT + QUOTE + CUSTOM ACTION
-                let link = '/apex/sbqq__sb?id='+this.recordId+'&clc=0#/product/pc?qId='+
-                this.recordId+'&aId='+customActionAddProducts+'&pId='+this.configBundleId+'&redirectUrl=LineEditor&open=0';
-                
-                this[NavigationMixin.Navigate]({
-                    type: 'standard__webPage',
-                    attributes: {
-                        url: link,
-                        recordId : this.recordId,
-                    }
-                })})
+            })
             .catch((error)=>{
                 console.log('The custom action does not exist');
                 console.log(error);
@@ -475,7 +539,11 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             let list1 = JSON.parse(JSON.stringify(this.girdDataAcaTabAdd)); 
             for (let list of list1){
                 for (let secondList of list.listOfProducts){
-                    secondList.minimumorderqty == null ? secondList.quantity = 1 : secondList.quantity = secondList.minimumorderqty;
+                    if(secondList.minimumorderqty == null && secondList.quantity == null){
+                        secondList.quantity = 1;
+                    } else if (secondList.quantity < secondList.minimumorderqty){
+                        secondList.quantity = secondList.minimumorderqty;
+                    }
                     secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
@@ -509,7 +577,11 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             let list2 = JSON.parse(JSON.stringify(this.girdDataConnTabAdd)); 
             for (let list of list2){
                 for (let secondList of list.listOfProducts){
-                    secondList.minimumorderqty == null ? secondList.quantity = 1 : secondList.quantity = secondList.minimumorderqty;
+                    if(secondList.minimumorderqty == null && secondList.quantity == null){
+                        secondList.quantity = 1;
+                    } else if (secondList.quantity < secondList.minimumorderqty){
+                        secondList.quantity = secondList.minimumorderqty;
+                    }
                     secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
@@ -534,6 +606,8 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                     if(secondList.prodLevel3 == null || secondList.prodLevel3 == undefined){
                         secondList.prodLevel4 =	null;
                     }
+                    //SPECIAL BEHAVIOR TO AVOID ACTIVATE THE VALIDATION RULE IN PRODUCT
+                    //SELECTION PAGE, SINCE THE QUANTITY HERE IS NOT EDITABLE.
                     if(secondList.productType == 'Patch Panel - Stubbed' ){
                         secondList.length = 5;
                     }
@@ -546,7 +620,11 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             let list3 = JSON.parse(JSON.stringify(this.girdDataFocTabAdd)); 
             for (let list of list3){ 
                 for (let secondList of list.listOfProducts){
-                    secondList.minimumorderqty == null ? secondList.quantity = 1 : secondList.quantity = secondList.minimumorderqty;
+                    if(secondList.minimumorderqty == null && secondList.quantity == null){
+                        secondList.quantity = 1;
+                    } else if (secondList.quantity < secondList.minimumorderqty){
+                        secondList.quantity = secondList.minimumorderqty;
+                    }
                     secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
@@ -579,7 +657,11 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             let list4 = JSON.parse(JSON.stringify(this.girdDataCableTabAdd)); 
             for (let list of list4){
                 for (let secondList of list.listOfProducts){
-                    secondList.minimumorderqty == null ? secondList.quantity = 1 : secondList.quantity = secondList.minimumorderqty;
+                    if(secondList.minimumorderqty == null && secondList.quantity == null){
+                        secondList.quantity = 1;
+                    } else if (secondList.quantity < secondList.minimumorderqty){
+                        secondList.quantity = secondList.minimumorderqty;
+                    }
                     secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
@@ -613,7 +695,11 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             let list5 = JSON.parse(JSON.stringify(this.girdDataTandITabAdd)); 
             for (let list of list5){
                 for (let secondList of list.listOfProducts){
-                    secondList.minimumorderqty == null ? secondList.quantity = 1 : secondList.quantity = secondList.minimumorderqty;
+                    if(secondList.minimumorderqty == null && secondList.quantity == null){
+                        secondList.quantity = 1;
+                    } else if (secondList.quantity < secondList.minimumorderqty){
+                        secondList.quantity = secondList.minimumorderqty;
+                    }
                     secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
@@ -673,13 +759,18 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             //console.log('No quotes to save, going to QLE'); 
             this.dispatchEvent(new CustomEvent('saveandexitps')); 
         } else {
+
+            let startTime = window.performance.now();
+            console.log('Method quoteLineCreator quoteId: '+this.recordId+ ' quoteLines: '+stringQuotesAdded);
             quoteLineCreator({quoteId: this.recordId, quoteLines: stringQuotesAdded})
             .then(()=>{
+                let endTime = window.performance.now();
+                console.log(`quoteLineCreator method took ${endTime - startTime} milliseconds`);
                 //console.log('Quotes Saved from PS, going to QLE'); 
                 this.savePSValues = false;
                 setTimeout(()=>{
                     this.dispatchEvent(new CustomEvent('saveandexitps')); 
-              }, 500);
+              }, 1500);
             })
             .catch((error)=>{
                 let errorMessage; 

@@ -38,6 +38,7 @@
                 <!--PART NUMBER TEXT-->
                 <lightning-input required type="text" label="Part Number" onchange={handleChange} value={PartNumber}></lightning-input>
                 <!--DESCRIPTION TEXT-->
+                <p>Press enter to save the Description field.</p>
                 <lightning-input-rich-text required label-visible label="Description" onchange={handleChange} value={Description}
                 disabled-categories="FORMAT_FONT,FORMAT_TEXT,FORMAT_BODY,ALIGN_TEXT,INSERT_CONTENT,REMOVE_FORMATTING"></lightning-input-rich-text>
                 <!--<lightning-button label="Insert Description" onclick={handleDescriptionClick}> </lightning-button>-->
@@ -52,6 +53,7 @@
                 <!--PRICE NUMBER-->
                 <lightning-input required type="number" label="Price" onchange={handleChange} value={Price}></lightning-input>
                 <!--LINE NOTE TEXT-->
+                <p>Press enter to save the Line Note field.</p>
                 <lightning-input-rich-text label-visible type="text" label="Line Note" onchange={handleChange} value={LineNote}
                 disabled-categories="FORMAT_FONT,FORMAT_TEXT,FORMAT_BODY,ALIGN_TEXT,INSERT_CONTENT,REMOVE_FORMATTING"></lightning-input-rich-text>
                 <!--<lightning-button label="Insert Line Note" onclick={handleLineNoteClick}> </lightning-button>-->

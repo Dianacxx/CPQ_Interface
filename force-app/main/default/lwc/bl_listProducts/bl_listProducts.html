@@ -19,6 +19,7 @@
                     <h2 class="slds-text-heading_medium slds-hyphenate">Filter & Select: {trackList.lookupCode}</h2>
                     <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeFilterAndSelected}></lightning-icon>
                 </header>
+                <!--NOT WORK HERE FOR ALL THE CONTENT HERE style="overflow: initial;" to show picklist values outside pop-up for combobox component-->
                 <div class="slds-modal__content slds-var-m-left_medium slds-var-m-right_medium">
                     <div class="slds-var-p-around_small slds-var-m-left_medium slds-var-m-right_medium">
                         <lightning-tabset active-tab-value={activeFilterTab} class="slds-var-m-left_large slds-var-m-right_large">
@@ -182,6 +183,68 @@
         <div class="slds-backdrop slds-backdrop_open"></div>
     </template>
     <!--FILTERED ADD POP-UP END-->
+     <!--EXTRA FIELDS START-->
+     <template if:true={extraFields}>
+        <section aria-modal="true" class="slds-modal slds-fade-in-open slds-align_absolute-center" style="background-color: rgba(28, 91, 199, 0.404)">
+            <div class="slds-modal__container slds-var-m-left_medium  slds-var-m-right_medium">
+                <header class="slds-modal__header slds-var-m-left_medium slds-var-m-right_medium">
+                    <h2 class="slds-text-heading_medium slds-hyphenate">Set Extra Values</h2>
+                    <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeExtraFields}></lightning-icon>
+                </header>
+                <!--style="overflow: initial;" to show picklist values outside pop-up for combobox component-->
+                <div style="overflow: initial;" class="slds-modal__content slds-var-m-left_medium slds-var-m-right_medium slds-var-m-right_medium">
+                    <div class="slds-var-m-left_medium slds-var-m-top_small">                    
+                    <lightning-icon icon-name="standard:choice" alternative-text="ProductList" title="ProductList"></lightning-icon>
+                    <h1 class="slds-var-m-left_xx-small slds-form-element__label" >Products: </h1>
+                    <lightning-tabset active-tab-value={firstExtraFields}>
+                        <template for:each={listExtraFields} for:item="extraFields">
+                            <!--onclick={handleNSPTab} in tab under -->
+                            <lightning-tab icon-name={extraFields.iconName} class="slds-has-success slds-var-m-left_medium slds-var-m-right_medium" 
+                            onactive={handleExtraTab} key={extraFields.Id}  label={extraFields.tabNsp} value={extraFields.tabNsp}>
+                                <div class="slds-align_absolute-center slds-var-p-around_xx-small lgc-bg">
+                                    <p style="border-style: groove; padding: 6px; font-size:16px;"><b>Product:</b> {extraFields.Name} - <b>Product Type:</b> {extraFields.Product_Type__c}</p>
+                                </div>
+                                <lightning-layout multiple-rows class="slds-align_absolute-center">
+                                        <lightning-layout-item size="6" small-device-size="4">
+                                            <lightning-combobox style="overflow: initial; width: 80%;" label="UOM" options={uomValues} 
+                                            onchange={uomChangeNonNsp} value={extraFields.Primary_UOM__c} placeholder={extraFields.Primary_UOM__c}></lightning-combobox>
+                                        </lightning-layout-item>
+                                        <lightning-layout-item size="6" small-device-size="4">    
+                                            <lightning-input style="width: 80%;" class="slds-var-m-left_small" type="number" label="Quantity"
+                                            value={extraFields.Minimum_Order_Qty__c} onchange={quantityChangeNonNsp}
+                                            max={extraFields.Max_Order_Quantity__c} min={extraFields.Minimum_Order_Qty__c}></lightning-input> 
+                                        </lightning-layout-item>
+                                </lightning-layout>
+                                <lightning-spinner if:true={spinnerShowingUOMs} alternative-text="Loading" size="medium"></lightning-spinner>
+                                <template if:true={showLengthBase}>
+                                    <lightning-layout multiple-rows class="slds-align_absolute-center">
+                                            <lightning-layout-item size="6" small-device-size="4">
+                                                <lightning-combobox style="overflow: initial; width: 80%;" label="Length UOM" options={lengthUomValues} 
+                                                onchange={lengthUomChangeNonNsp}></lightning-combobox>
+                                            </lightning-layout-item>
+                                            <lightning-layout-item size="6" small-device-size="4">    
+                                                <lightning-input style="width: 80%;" class="slds-var-m-left_small" type="number" label="Length"
+                                                onchange={lengthChangeNonNsp}></lightning-input> 
+                                            </lightning-layout-item>
+                                    </lightning-layout>
+                                </template>
+                            </lightning-tab>
+                        </template>
+                    </lightning-tabset>
+                    </div>
+                    <div style="background-color:#f1ce30;" class="slds-var-m-top_medium slds-var-m-bottom_medium
+                     slds-var-p-around_xx-small slds-align_absolute-center lgc-bg">
+                        <p><b>Note:</b>  The values are by default from the Product.</p>
+                    </div>
+                </div>
+                <footer class="slds-modal__footer slds-var-m-left_medium  slds-var-m-right_medium">
+                    <lightning-button variant="brand" label="Done" title="Close" onclick={closeExtraFields} ></lightning-button>    
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+    <!--EXTRA FIELDS POP-UP END-->
     <!--NSP POP-UP START-->
     <template if:true={popupNSP}>
         <section aria-modal="true" class="slds-modal slds-fade-in-open slds-align_absolute-center" style="background-color: rgba(28, 91, 199, 0.404)">
@@ -190,7 +253,8 @@
                     <h2 class="slds-text-heading_medium slds-hyphenate">Action Required! Populate NSP Fields</h2>
                     <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeNSP}></lightning-icon>
                 </header>
-                <div class="slds-modal__content  slds-var-m-left_medium slds-var-m-right_medium slds-var-m-right_medium">
+                <!--style="overflow: initial;" to show picklist values outside pop-up for combobox component-->
+                <div style="overflow: initial;" class="slds-modal__content slds-var-m-left_medium slds-var-m-right_medium slds-var-m-right_medium">
                     <div class="slds-var-m-left_medium slds-var-m-top_small">                    
                     <lightning-icon icon-name="standard:choice" alternative-text="ProductList" title="ProductList"></lightning-icon>
                     <h1 class="slds-var-m-left_xx-small slds-form-element__label" >Products: </h1>
@@ -198,21 +262,32 @@
                         <template for:each={listNSP} for:item="nspP">
                             <!--onclick={handleNSPTab} in tab under -->
                             <lightning-tab icon-name={nspP.iconName} class="slds-has-success slds-var-m-left_medium slds-var-m-right_medium" onactive={handleNSPTab} key={nspP.Id}  label={nspP.tabNsp} value={nspP.tabNsp}>
-                                <div style="background-color:#fab8ce;" class="slds-align_absolute-center slds-var-p-around_xx-small lgc-bg">
-                                    <p style="font-size:16px;"><b>Product:</b> {nspP.Name} - <b>Product Type:</b> {nspP.Product_Type__c}</p>
+                                <div class="slds-align_absolute-center slds-var-p-around_xx-small lgc-bg">
+                                    <p style="border-style: groove; padding: 6px; font-size:16px;"><b>Product:</b> {nspP.Name} - <b>Product Type:</b> {nspP.Product_Type__c}</p>
                                 </div>
+                                <lightning-layout multiple-rows class="slds-align_absolute-center">
+                                        <lightning-layout-item size="6" small-device-size="4">
+                                            <lightning-combobox style="overflow: initial; width: 80%;" label="UOM" options={uomValues} 
+                                            onchange={uomChange} value={nspP.Primary_UOM__c} placeholder={nspP.Primary_UOM__c}></lightning-combobox>
+                                        </lightning-layout-item>
+                                        <lightning-layout-item size="6" small-device-size="4">    
+                                            <lightning-input style="width: 80%;" class="slds-var-m-left_small" type="number" label="Quantity"
+                                            value={nspP.Minimum_Order_Qty__c} onchange={quantityChange}
+                                            max={nspP.Max_Order_Quantity__c} min={nspP.Minimum_Order_Qty__c}></lightning-input> 
+                                        </lightning-layout-item>
+                                </lightning-layout>
                                 <lightning-spinner if:false={gettingNspFields} alternative-text="Loading" size="medium"></lightning-spinner>
                                 <template if:true={gettingNspFields}>
                                     <lightning-layout multiple-rows="false">
                                     <template for:each={listNspValuesToDisplay} for:item="nspValue">
-                                        <div style="background-color:#a1d5f8c2;" class="slds-var-p-around_xx-small lgc-bg" key={nspValue.label}>
+                                        <div style="background-color: white;" class="slds-var-p-around_xx-small lgc-bg" key={nspValue.label}>
                                            <p  class="slds-var-m-right_x-small" key={nspValue.label}><b>{nspValue.property}:</b> {nspValue.value}</p>
                                         </div>
                                     </template>
                                     </lightning-layout>
                                     <lightning-layout multiple-rows="false">
                                     <template for:each={nspDisplayOnly} for:item="nspDisplay">
-                                        <div style="background-color:#a1d5f8c2;" key={nspDisplay.label} class="slds-var-p-around_xx-small lgc-bg">
+                                        <div style="background-color: white;" key={nspDisplay.label} class="slds-var-p-around_xx-small lgc-bg">
                                           <p  class="slds-var-m-right_x-small" key={nspDisplay.label}><b>{nspDisplay.label}:</b> {nspDisplay.value}</p>
                                         </div>
                                     </template>
@@ -220,7 +295,7 @@
                                     <lightning-layout multiple-rows="false">
                                     <template for:each={nspPicklist} for:item="nspPicklistItem">
                                         <div key={nspPicklistItem.label}>
-                                            <lightning-combobox class="slds-var-m-right_x-small" key={nspPicklistItem.label} label={nspPicklistItem.label} 
+                                            <lightning-combobox style="overflow: initial;" class="slds-var-m-right_x-small" key={nspPicklistItem.label} label={nspPicklistItem.label} 
                                             options={nspPicklistItem.options} name={nspPicklistItem.apiName} onchange={nspPicklistChange} 
                                             value={nspPicklistItem.value}></lightning-combobox>
                                         </div>

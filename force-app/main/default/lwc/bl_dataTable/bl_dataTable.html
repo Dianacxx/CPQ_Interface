@@ -32,6 +32,51 @@
         onrowaction={handleRowAction} onrowselection={handleRowSelection} onsave={handleSaveEdition}
         sorted-by={sortBy} sorted-direction={sortDirection} onsort={handleSortData} ></lightning-datatable>
     </div>
+        
+        <!--UOM POP-UP START-->
+        <template if:true={uomPopupOpen}>
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container slds-modal__container_uom">
+                    <header class="slds-modal__header slds-var-m-left_small  slds-var-m-right_small">
+                        <h2 class="slds-text-heading_medium slds-hyphenate">Changing UOM: {dataRow.uom}</h2>
+                        <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeUomPopup}></lightning-icon>
+                    </header>
+                    <div style="overflow: initial;" class="slds-modal__content slds-p-around_medium slds-var-m-left_small  slds-var-m-right_small">
+                        <lightning-combobox class="slds-align_absolute-center" style="width:80%" name="uom" label="UOM" value={newUOM}
+                        options={uomList} onchange={uomHandler}>
+                        </lightning-combobox>
+                    </div>
+                    <footer class="slds-modal__footer slds-var-m-left_small  slds-var-m-right_small">
+                        <button class="slds-button slds-button_neutral" onclick={closeUomPopup} title="Cancel">Cancel</button>
+                        <button class="slds-button slds-button_brand" onclick={saveUom} title="Change">Change</button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+        <!--UOM POP-UP END-->
+        <!--LENGTH UOM POP-UP START-->
+        <template if:true={lengthUomPopupOpen}>
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container slds-modal__container_uom">
+                    <header class="slds-modal__header slds-var-m-left_small  slds-var-m-right_small">
+                        <h2 class="slds-text-heading_medium slds-hyphenate">Changing LENGTH UOM: {dataRow.lengthuom}</h2>
+                        <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeLengthUomPopup}></lightning-icon>
+                    </header>
+                    <div style="overflow: initial;" class="slds-modal__content slds-p-around_medium slds-var-m-left_small  slds-var-m-right_small" >
+                        <lightning-combobox class="slds-align_absolute-center" style="width:80%" name="lengthuom" label="Length UOM" value={newLengthUOM}
+                        options={lengthUomList} onchange={lengthUomHandler}>
+                        </lightning-combobox>
+                    </div>
+                    <footer class="slds-modal__footer slds-var-m-left_small  slds-var-m-right_small">
+                        <button class="slds-button slds-button_neutral" onclick={closeLengthUomPopup} title="Cancel">Cancel</button>
+                        <button class="slds-button slds-button_brand" onclick={saveLengthUom} title="Change">Change</button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+        <!--LENGTH UOM POP-UP END-->
         <!--POP UP NSP PRODUCTS START-->
         <template if:true={nspProduct}>
             <section aria-modal="true" class="slds-modal slds-fade-in-open slds-align_absolute-center">
@@ -40,7 +85,8 @@
                         <h2 class="slds-text-heading_medium slds-hyphenate">NSP Product: {dataRow.quotelinename}</h2>
                         <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeNsp}></lightning-icon>
                     </header>
-                    <div class="slds-modal__content slds-var-m-left_small  slds-var-m-right_small">
+                    <!--style="overflow: initial;" to show picklist values outside pop-up for combobox component-->
+                    <div style="overflow: initial;" class="slds-modal__content slds-var-m-left_small  slds-var-m-right_small">
                         <div class="slds-var-p-around_small slds-align_absolute-center">
                             <template if:false={nspShowMessage}>
                                 <p style="font-size: 18px;" class="slds-align_absolute-center">This quote line has not NSP values.</p>
@@ -49,8 +95,8 @@
                                 <lightning-spinner alternative-text="Loading"></lightning-spinner>
                             </template>
                             <template if:true={nspShowMessage} class="slds-align_absolute-center">
-                                <div class="slds-grid slds-wrap slds-var-m-top_medium">
-                                    <h3 class="slds-text-heading_medium slds-hyphenate">Note: The values are autosaved when changing the field.</h3>
+                                <div class="slds-grid slds-wrap slds-var-m-top_medium slds-var-m-left_small slds-var-m-right_small">
+                                    <h3 class="slds-text-heading_medium slds-hyphenate slds-align_absolute-center slds-var-m-bottom_small">Note: The values are autosaved when changing the field.</h3>
                                     <div class="slds-col slds-size_1-of-2">
                                         <template for:each={nspValues} for:item="nspRead">
                                             <lightning-layout key={nspRead.label} vertical-align="center" class="small">
@@ -77,15 +123,7 @@
                             </div>
                             </template>
                         </div>
-                        <!--TO MAKE THE POP UP AJUST THE SIZE OF THE COMBOBOX LIST - NOT WORKING AS EXPECTED-->
-                        <!--
-                        <template if:true={nspShowMessage}> 
-                            <template for:each={nspValues} for:item="nspDown">
-                                <div key={nspDown} class="slds-var-m-top-x_large slds-var-p-around_x-large lgc-bg slds-align_absolute-center" 
-                                style="background-color:rgb(255, 255, 255);"></div>
-                            </template> 
-                        </template>
-                        -->
+                    
                     </div>
                     <footer class="slds-modal__footer slds-var-m-left_small  slds-var-m-right_small">
                         <lightning-button  variant="destructive-text" label="Cancel" onclick={closeNsp} class="slds-p-around_x-small slds-m-right_small"></lightning-button>

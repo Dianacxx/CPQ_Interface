@@ -2,31 +2,48 @@ import { LightningElement,api,wire,track } from 'lwc';
 import getDiscountScheduleInfo from '@salesforce/apex/BlAgreementsDSLookup.getDiscountScheduleInfo';
 import getUnitPrice from '@salesforce/apex/BlAgreementsDSLookup.getUnitPrice';
 import getCurrency from '@salesforce/apex/BlAgreementsDSLookup.getCurrency';
-import getFixedPrice from '@salesforce/apex/FixedPriceReader.reader';
-
+import readerV2 from '@salesforce/apex/FixedPriceReader.readerV2';
+/* import getFixedPrice from '@salesforce/apex/FixedPriceReader.reader';
+ */import getAgreementDetails from '@salesforce/apex/BlAgreementsDSLookup.getAgreementDetails';
+ import getAccountName from '@salesforce/apex/BlAgreementsDSLookup.getAccountName';
+ import getUserName from '@salesforce/apex/BlAgreementsDSLookup.getUserName';
 import FIXEDPRICE_FIELD from '@salesforce/schema/SBQQ__DiscountSchedule__c.Fixed_Price_Adj__c';
 import myUOM from '@salesforce/apex/BlAgreementsDSLookup.myUOM';
 import { getObjectInfo,getPicklistValues } from 'lightning/uiObjectInfoApi';
 import { NavigationMixin } from 'lightning/navigation';
-import { updateRecord } from 'lightning/uiRecordApi';
+import { getRecord, getFieldValue, updateRecord } from 'lightning/uiRecordApi';
 import CONTRACT_STATUS from '@salesforce/schema/Contract.Status'
+import CONTRACT_ID from '@salesforce/schema/Contract.Id'
+import DS_OBJECT from '@salesforce/schema/SBQQ__DiscountSchedule__c'
+import UOM_FIELD from '@salesforce/schema/SBQQ__DiscountSchedule__c.UOM__c'
+import getUoms from '@salesforce/apex/BlAgreementsDSLookup.getUoms';
+import PRODUCT_OBJECT from '@salesforce/schema/Product2';
+import UOM_PROD_FIELD from '@salesforce/schema/Product2.Primary_UOM__c';
+
 import CONTRACT_OBJECT from '@salesforce/schema/Contract';
 import { refreshApex } from '@salesforce/apex';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import saveSchedule from '@salesforce/apex/SaveController.saveSchedule';
+
+const fields = [CONTRACT_STATUS, CONTRACT_ID];
+
 export default class Bl_agreements_datatable extends NavigationMixin(LightningElement) {
     @api recordId
      currency; 
-     maxValue
+     maxValue;
+     agreementDetails;
     @api currency;
+    datalos
     @track precio;
     @track data;
     @api discountId
     @api discountNombre
     maxDiscount;
     refreshTable ;
+    @track uomPopupOpen = false;
     @track formatter;
     @track isModalOpen = false;
+    @api isModalOpen
     @track isDeleteModalOpen = false;
     @track showLoadingSpinner = false;
     @track newDiscount
@@ -41,6 +58,33 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
     finalString;
     loadApplyInput = true;
     loadbuttons = true;
+     @api currencyContract;
+     name;
+     type;
+     url;
+     comment;
+     schedule;
+     cadence;
+     reviewer;
+     startDate;
+     endDate;
+     endUser;
+     status;
+     owner;
+     customer;
+     endUserName;
+     market;
+     ownerName;
+     salesPerson;
+     competitor;
+     uOM;
+
+
+
+
+
+
+
     handleActivateContract(){
 
         this.activeBoolean = !this.activeBoolean
@@ -51,6 +95,10 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
             this.activateString = 'Decativate'
             console.log('shoud be DEAC : '+this.activateString)
             this.loadbuttons = true
+            
+           
+
+          
 
         }
         else{
@@ -67,7 +115,8 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
         //console.log('Apply to child');
         this.applyToChild = !this.applyToChild; 
     }
-
+    @wire(getRecord, { recordId: '$agreementId', fields })
+    contract;
   
     handleApplyDiscount(){
         this.loadTable = false
@@ -117,25 +166,37 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
 
     //define columns for the data table, make sure the 'fieldName' is similar to what is in wrapper class
     columns = [
-        {label: 'Product', fieldName: 'productName', type: 'text'},
-/*         {label: 'Discount Name', fieldName: 'discountName', type: 'text', editable: true,},
- */        /* {label: 'Discount ID', fieldName: 'discId' , type: 'text'},
-        {label: 'Account ID', fieldName: 'accountId' , type: 'text'}, 
-        {label: 'Product ID', fieldName: 'productId' , type: 'text'}, */
-/*         {label: 'Primary UOM', fieldName: 'primaryUOM' ,value:this.trial ,type: 'text',editable:true},
- */     {label: 'UOM', fieldName: 'uOM' , value:'Box', type: 'text',editable:true},
-        {label: 'Fixed Price', fieldName: '' , type: 'number',},
-       {label: 'Fixed Price Adj', fieldName: 'fixedPriceAdj', editable: true , type: 'number'},
-        {label: 'Variable Price', fieldName: '' , type: 'number'},
-        {label: 'Variable Price Adj', fieldName: 'varPriceAdj', editable: true , type: 'number'},
-        //{ label : 'Edit',type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:new_note', name: 'edit', variant:'brand', size:'xx-small'}},
-        { label : 'Tiers',type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:description', name: 'view' ,  variant:'brand', size:'xx-small'}},
+        {label: 'Product',initialWidth: 200, fieldName: 'productName', type: 'text'},
+        {label: 'Description',initialWidth: 300,fieldName: 'description' , type: 'text'},
+        {label: 'Min Qty',initialWidth: 80,fieldName: 'minimumQuantity', type: 'text'},
+        {label: 'UOM2',initialWidth: 80,fieldName: 'uOM', type: 'text',editable: true},
+        {label: 'UOM', initialWidth: 80,fieldName: 'uOM' ,type: "button",editable: true, typeAttributes: {  
+            label: { fieldName: 'uOM' },  
+            name: 'uomChange',  
+/*             value: { fieldName: 'uOM' },  
+ */            iconPosition: 'left'  
+        }},  
+        {label: 'Price',initialWidth: 80, fieldName: 'fixedPrice' , type: 'currency',
+        typeAttributes: { currencyCode: {fieldName:'cur'}, step: '0.001' },},
+        {label: 'Price Adj', initialWidth: 80,fieldName: 'fixedPriceAdj', editable: true , type: 'currency',
+        typeAttributes: { currencyCode: {fieldName:'cur'}, step: '0.001' },},
+        {label: 'Adder',initialWidth: 80 ,fieldName: 'varPriceAdj', editable: true , type: 'currency',
+        typeAttributes: { currencyCode: {fieldName:'cur'}, step: '0.001' },},
+        {label: 'UOM',initialWidth: 80, fieldName:'uomAdder',editable: true , type: 'text'},
+        { label : 'Qty',type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:description', name: 'view' ,  variant:'brand', size:'xx-small'}},
         { label : '' ,type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:delete', name: 'delete', variant:'border-filled', size:'xx-small'}},
-        { label : 'approval' ,initialWidth: 30,cellAttributes: { iconName: { fieldName: 'dynamicIcon' } } },
+        { label : '' ,initialWidth: 30,cellAttributes: { iconName: { fieldName: 'dynamicIcon' } } },
 
         ];
 
-
+        columnsDetails = [
+            {label: 'Product',initialWidth: 200, fieldName: 'productName', type: 'text'},
+            {label: 'Description',initialWidth: 300,fieldName: 'description' , type: 'text'},
+            {label: 'Freight',initialWidth: 85,fieldName: 'freight', type: 'text',editable:true},
+            {label: 'Reels', initialWidth: 80,fieldName: 'reels' , type: 'text',editable:true},
+            {label: 'Line Note',initialWidth: 500,fieldName: 'lineNote'  , type: 'text',editable:true},
+            { label : '' ,type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:delete', name: 'delete', variant:'border-filled', size:'xx-small'}},
+        ]
 
         @track loadTable = false; //To track datatable changes and hide/show table when is loading
     
@@ -144,7 +205,7 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
 
         connectedCallback()
         {
-            console.log('dedede');
+            console.log('efinal');
             console.log(JSON.parse(this.agreementId));
             getDiscountScheduleInfo({/* recordId : this.recordId , */ agreementId:JSON.parse(this.agreementId)}) 
             .then(result => {
@@ -156,18 +217,104 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
                 console.log(error);
             });
 
-            getCurrency({accId : this.recordId }) 
+
+
+
+           
+            
+
+            getUoms() 
             .then(result => {
-                this.currency = result[0].CurrencyIsoCode;
-                console.log('tialaaa ' + result[0].CurrencyIsoCode);
-                console.log('result ' + JSON.stringify(result[0].CurrencyIsoCode));
-                console.log('noloe ' + JSON.stringify(this.currency[0].CurrencyIsoCode));
-                console.log('de ' + this.currency);
-                console.log('string ' + JSON.stringify(this.currency.CurrencyIsoCode));
+                
+                console.log('UOMS : ' + JSON.stringify(result));
             })
             .catch(error => {
                 console.log(error);
             });
+
+           
+           
+            getAgreementDetails({agreementId: JSON.parse(this.agreementId)})
+            .then(result => {
+                this.agreementDetails = result;
+                console.log('Details : ' + JSON.stringify(this.agreementDetails));
+                this.currencyContract = this.agreementDetails[0].CurrencyIsoCode;
+                this.name = this.agreementDetails[0].Agreement_Name__c;
+                this.type = this.agreementDetails[0].Agreement_Type__c;
+                this.url = this.agreementDetails[0].URL_to_SharePoint__c;
+                this.comment = this.agreementDetails[0].comments__c;
+                this.schedule = this.agreementDetails[0].Review_Schedule__c;
+                this.cadence = this.agreementDetails[0].Rise_Fall_Cadence__c;
+                this.reviewer = this.agreementDetails[0].reviewer1__c;
+                this.startDate = this.agreementDetails[0].StartDate;
+                this.endDate = this.agreementDetails[0].EndDate;
+                this.endUser = this.agreementDetails[0].EndUser__c;
+                this.status = this.agreementDetails[0].Status;
+                this.owner = this.agreementDetails[0].CreatedById;
+                this.competitor = this.agreementDetails[0].Competitor__c;
+                
+            
+                getAccountName({cuentaId : this.endUser}) 
+                .then(result => {
+                    this.endUserName = result[0].Name;
+                    
+                  
+                })
+                .catch(error => {
+                    console.log(error);
+                });
+
+                getUserName({userId : this.owner}) 
+                .then(result => {
+                    console.log('owner'+result)
+
+                    this.ownerName = result[0].Name;
+                    
+                  
+                })
+                .catch(error => {
+                    console.log(error);
+                });
+
+                getUserName({userId : this.reviewer}) 
+                .then(result => {
+                    console.log('salesperson'+result)
+                    this.salesPerson = result[0].Name;
+                    
+                  
+                })
+                .catch(error => {
+                    console.log(error);
+                });
+
+                console.log('pp'+this.currency)
+
+                getCurrency({accId : this.recordId }) 
+                .then(result => {
+                    this.customer = result[0].Name;
+                    this.currency = result[0].CurrencyIsoCode;
+                    this.market = result[0].Customer_Class__c;
+                   
+                    console.log('customer : ' + JSON.stringify(this.customer));
+                    console.log('end user stringgi : ' + JSON.stringify(this.endUser));
+                    console.log('end user : ' + this.endUser);
+                    console.log('recordID string : ' + JSON.stringify(this.recordId));
+                    console.log('recordId : ' + this.recordId);
+                })
+                .catch(error => {
+                    console.log(error);
+                });
+           
+            })
+            .catch(error => {
+                console.log(error);
+            });
+
+          
+           
+            
+           
+
           
             
     
@@ -214,13 +361,21 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
             case 'view':
 /*                 this.saveDiscountSchedule()
  */                this.discountNombre = row.discountName;
-                    console.log(JSON.stringify(this.newDiscount));
+                    console.log('newDiscount'+JSON.stringify(this.newDiscount));
 /*                 setTimeout(()=>{this.isModalOpen = true;;},2000);
  */                this.isModalOpen = true;
 /*                 saveDiscountSchedule();
  */                
             /*   this.delDiscount(row); */
             break;
+            case 'uomChange':
+                console.log( this.uomPopupOpen);
+
+                this.uomPopupOpen = true;
+                console.log( this.uomPopupOpen);
+                
+            break;
+
         }
     }
 
@@ -244,6 +399,8 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
  
     closeModal() {
         this.isModalOpen = false;}
+    closeUomPopup() {
+        this.uomPopupOpen = false;}
     closeDeleteModal() {
         this.isDeleteModalOpen = false;}
 
@@ -255,53 +412,88 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
     handleValueSelcted(event) {
         this.selectedRecordId = event.detail;
         console.log('The product is here now');
-        console.log(JSON.stringify(this.selectedRecordId));
+        console.log(JSON.stringify(this.selectedRecordId.id));
+        console.log('Account ID'+this.recordId)
+        console.log('Product ID'+this.selectedRecordId.id)
+        console.log('Currency ID '+this.currencyContract)
 
 
-        //Creating a mock ID since is not created in SF yet, and it's necesarry to keep track of the table changes or deletions 
-            let mockRandomId = 'New-'+Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 10); 
-           let mockRandomName = 'Schedule-'+Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 10);
-            
-    
-/*         let mockRandomDisc = 'New-'+Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 10); 
- */        //Creating a new Discount ROW
-        let newDiscount = { 
-            discId: mockRandomId, 
-            discountName: mockRandomName,
-            varPriceAdj:null,
-            fixedPriceAdj:null,
-            uOM: this.selectedRecordId.primaryUom,
-            contract: JSON.parse(this.agreementId),   
-            /*  Fixed_Price_Adj__c:this.selectedRecordId.Fixed_Price_Adj__c, */
-            productCode: this.selectedRecordId.productName, /*the product code is not being sended from the lookup code - if is necessary it should be sent or called from apex with productId*/
-            productId: this.selectedRecordId.id,/* accountId: this.recordId, */
-            //Name:mockRandomName,
-            discountUnit:'Price',
-            //SBQQ__Product__c:this.selectedRecordId.id, 
-            productName: this.selectedRecordId.productName,/* 
-            SBQQ__Account__c: this.recordId, */
-            CurrencyIsoCode:this.currency,
-            dynamicIcon:'action:new_campaign',
-             /*Account Id that opens UI*/ }
-        /*NOTE: To create a discount Schedule is neccesary the name, type (picklist) and discount unit (picklist)
-            So make sure that these values are defined when they click save. Can be default unless AFL wants to select them before.
-            Maybe the wrapper has to add these values, in case of doubt talk with Diana to understand the saving methods. 
-        */
         
-        //This process is to rewrite the data for the datatable. 
-        //It's not possible directly since is an object that's directly used in wire (Not sure why this not working)
-        let discountAuxiliar = [];
-        for (let dis of this.data){
-            discountAuxiliar.push(dis);
-        }
-        //Add the new row
-        discountAuxiliar.push(newDiscount); 
-        //Rewriting the data 
-        this.data = discountAuxiliar; 
 
-        //Use the https://codebeautify.org/string-to-json-online to see the JSON.stringify data in console to make sure the
-        //Objects, variables and values that you have in the dataTable are Correct. 
-        console.log('New Data' + JSON.stringify(this.data));
+        readerV2({ AccountId:this.recordId, ProductId:this.selectedRecordId.id/* ,  DSCurrencyIsoCode:this.currencyContract */ }) 
+        .then(result => {
+            this.datalos = result
+            console.log('READER V2 DATA STRINGI ' + JSON.stringify(result));
+            console.log('READER V2 DATA  ' + result);
+
+
+             //Creating a mock ID since is not created in SF yet, and it's necesarry to keep track of the table changes or deletions 
+             let mockRandomId = 'New-'+Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 10); 
+             let mockRandomName = 'Schedule-'+Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 10);
+              
+      
+  /*         let mockRandomDisc = 'New-'+Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 10); 
+   */        //Creating a new Discount ROW
+          let newDiscount = { 
+              discId: mockRandomId, 
+              discountName: mockRandomName,
+              varPriceAdj:null,
+              fixedPriceAdj:null,
+              uOM: this.selectedRecordId.primaryUom,
+              fixedPrice: this.datalos,
+              description: this.selectedRecordId.Description,
+              minimumQuantity: this.selectedRecordId.minimumQuantity,
+              contract: JSON.parse(this.agreementId), 
+              cur : this.currencyContract,
+              freight :'No' , 
+              reels :'No' ,
+              lineNote : null,
+              uomAdder : null,
+              
+              
+              /*  Fixed_Price_Adj__c:this.selectedRecordId.Fixed_Price_Adj__c, */
+              productCode: this.selectedRecordId.productName, /*the product code is not being sended from the lookup code - if is necessary it should be sent or called from apex with productId*/
+              productId: this.selectedRecordId.id,/* accountId: this.recordId, */
+              //Name:mockRandomName,
+              discountUnit:'Price',
+              //SBQQ__Product__c:this.selectedRecordId.id, 
+              productName: this.selectedRecordId.productName,/* 
+              SBQQ__Account__c: this.recordId, */
+              dynamicIcon:'action:new_campaign',
+               /*Account Id that opens UI*/ }
+          /*NOTE: To create a discount Schedule is neccesary the name, type (picklist) and discount unit (picklist)
+              So make sure that these values are defined when they click save. Can be default unless AFL wants to select them before.
+              Maybe the wrapper has to add these values, in case of doubt talk with Diana to understand the saving methods. 
+          */
+          
+          //This process is to rewrite the data for the datatable. 
+          //It's not possible directly since is an object that's directly used in wire (Not sure why this not working)
+          let discountAuxiliar = [];
+          for (let dis of this.data){
+              discountAuxiliar.push(dis);
+          }
+          //Add the new row
+          discountAuxiliar.push(newDiscount); 
+          //Rewriting the data 
+          this.data = discountAuxiliar; 
+  
+          //Use the https://codebeautify.org/string-to-json-online to see the JSON.stringify data in console to make sure the
+          //Objects, variables and values that you have in the dataTable are Correct. 
+          console.log('New Data' + JSON.stringify(this.data));
+
+
+
+
+        })
+        .catch(error => {
+            console.log(error);
+        });
+
+
+
+
+
+       
     }
 
     //The LWC datatable need to save the values and the 'SAVE/CANCEL' buttons are deafult when editing (onsave)
@@ -402,6 +594,11 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
                         this.myFunction();
                         console.log('my function triggered');
                     },2000); 
+
+                    setTimeout(()=>{  console.log("arrived here");this.template.querySelector('[data-id="getPrice"]').click();
+                ;this.loadTable=true},2000)
+        
+        
     /*                 setTimeout(()=>{this.loadTable = true;;},5000);
      */             //setTimeout(()=>{console.log('DATA AFTER APEX OUTSIDE MY FUNCTION  ' + JSON.stringify(this.data));},6000);
                     
@@ -424,8 +621,8 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
             });
           
             
-           /*  setTimeout(()=>{ this.getPrice(); */
-
+/*             setTimeout(()=>{ this.getPrice();console.log('get price now : ')},4000);
+ */            
            
     }
 
@@ -465,12 +662,76 @@ handleDiscount(event){
  
 
 getPrice(){
-   
-    getFixedPrice({contractId :this.agreementId}) 
-      
+   console.log('Im clicked ')
+/*     getFixedPrice({contractId :JSON.parse(this.agreementId)}) 
+ */      
      
      
         }
 
+
+        dsUom=[];
+        uoms=[];
+        uomError;
+        @wire( getObjectInfo, { objectApiNames: DS_OBJECT })
+        dsObjectMetadata;
      
+        @wire(getPicklistValues, { recordTypeId: '$dsObjectMetadata.data.defaultRecordTypeId', fieldApiName: UOM_FIELD })
+        uomPicklist({data,error}){
+            if(data){
+                this.dsUom = data.values;
+                console.log('yyy' + JSON.stringify(this.dsUom))
+                this.fetchUoms();
+            }
+            
+        };
+
+        fetchUoms(){
+            getUoms()
+            .then((result) => {
+                console.log('UOMS STRING'+JSON.stringify(result))
+                let options = [];
+                for ( var key in this.dsUom){
+                    options.push({label: this.dsUom[key].label,value:this.dsUom[key].value})
+                }
+
+                this.uoms = result.map((record) =>{
+                    return {
+                        ...record,
+                        'uomOptions':options,
+
+                    }
+                });
+                this.uomError = undefined
+            })
+            .catch((error) => {
+                this.uomError = error,
+                this.uoms = undefined
+            })
+        }
+
+
+
+        /* UOM PICKLIST */
+
+        @wire(getObjectInfo, { objectApiName: PRODUCT_OBJECT })
+        uomMetadata;
+        @wire(getPicklistValues,
+            {
+                recordTypeId: '$uomMetadata.data.defaultRecordTypeId', 
+                fieldApiName: UOM_PROD_FIELD
+            }
+    
+        )
+        uomList;
+
+        uomHandler(event){
+            this.uOM = event.target.value;
+        }
+        saveUom(){
+            console.log('NEW DISCOUNT'+JSON.stringify(this.newDiscount))
+            this.uomPopupOpen=false;
+        }
+     
+   
 }

@@ -73,8 +73,11 @@ export default class Bl_manualItems extends LightningElement {
         
         //CALLING THE DEPENDENT PICKLIST FROM A VALUE
         if(label == 'Product Level 1'){
+            let startTime = window.performance.now();
             displayLevelsOptions({level: 'level 2', selection: value})
             .then((data)=>{ 
+                let endTime = window.performance.now();
+                console.log(`displayLevelsOptions method took ${endTime - startTime} milliseconds`);
                 let aux = JSON.parse(data);
                 this.level2 = JSON.parse(aux[0].options);
                 this.productLevel2Picklist = true;
@@ -85,16 +88,24 @@ export default class Bl_manualItems extends LightningElement {
             if(value == 'Copperclad'){
                 this.showBillableToleranceCopperclad = true;
             }
+            let startTime = window.performance.now();
             displayLevelsOptions({level: 'level 3', selection: value})
             .then((data)=>{ 
+                let endTime = window.performance.now();
+                console.log(`displayLevelsOptions method took ${endTime - startTime} milliseconds`);
+                
                 let aux = JSON.parse(data);
                 this.level3 = JSON.parse(aux[0].options);
                 this.productLevel3Picklist = true;
             })
             .catch((error)=>{console.log('Error in Third Level'); console.log(error);})
 
+            let startTime2 = window.performance.now();
             displayLevelsOptions({level: 'UOM', selection: value})
             .then((data)=>{ 
+                let endTime2 = window.performance.now();
+                console.log(`displayLevelsOptions method took ${endTime2 - startTime2} milliseconds`);
+                
                 let aux = JSON.parse(data);
                 this.uom = JSON.parse(aux[0].options);
                 this.uomList = true;
@@ -114,10 +125,11 @@ export default class Bl_manualItems extends LightningElement {
                 propertyValue = 'prodLevel3';
             }
             this.listOfCaracteristics.push({label: label, value: value, property:propertyValue, required: false,});
-            //console.log(this.listOfCaracteristics[this.listOfCaracteristics.length-1]);
+            console.log(this.listOfCaracteristics[this.listOfCaracteristics.length-1]);
 
         } else {
             this.listOfCaracteristics[index].value = value;
+            console.log(this.listOfCaracteristics[this.listOfCaracteristics.length-1]);
         }
     }
 
@@ -136,6 +148,7 @@ export default class Bl_manualItems extends LightningElement {
             this.productLevel2Picklist = false;
             this.productLevel3Picklist = false;
             this.uomList = false;
+            this.errorShow = false;
     }
 
     errorCreating = 0; 
@@ -158,7 +171,7 @@ export default class Bl_manualItems extends LightningElement {
                 //console.log('Label empty '+this.listOfCaracteristics[i].label); 
             }
         }
-        //console.log('Requires: '+this.errorCreating);
+        //console.log('Manual Requires: '+this.errorCreating);
         if (this.errorCreating > 0){
             this.errorShow = true; 
             this.loadingProcess = false;
@@ -166,12 +179,22 @@ export default class Bl_manualItems extends LightningElement {
             this.showManualTable = true; 
             this.errorShow = false; 
             let productMockId; 
+
+            let startTime = window.performance.now();
             getMockProduct()
             .then((data)=>{
+                let endTime = window.performance.now();
+                console.log(`getMockProduct method took ${endTime - startTime} milliseconds`);
+
                 productMockId = data; 
-                //CREATING THE QUOTE LINE AND LET IT COMPLETE TO BE SAVED. 
+                //CREATING THE QUOTE LINE AND LET IT COMPLETE TO BE SAVED.
+                let startTime2 = window.performance.now(); 
+                console.log('Method addQuoteLine Manual quoteId:'+this.recordId+ ' productId ' +productMockId);
                 addQuoteLine({quoteId: this.recordId, productId: productMockId})
                 .then((data)=>{
+                    let endTime2 = window.performance.now();
+                    console.log(`addQuoteLine method took ${endTime2 - startTime2} milliseconds`);
+
                     let manualQuoteline = JSON.parse(data);
                     this.numberRowsAdded += 1; 
                     manualQuoteline[0].id = 'new-manual'+Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 10);

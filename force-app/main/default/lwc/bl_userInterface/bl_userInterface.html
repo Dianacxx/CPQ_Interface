@@ -27,19 +27,17 @@
                         <lightning-layout multiple-rows class="slds-border_top slds-border_right slds-border_left slds-var-m-right_large slds-var-m-left_large"> 
                         <!--FUCTIONALITY BUTTONS START-->
                         <lightning-layout-item size="12" small-device-size="6" padding="around-small">
-                            <div class=" slds-align_absolute-center slds-var-m-top_medium">
-                                
+                            <div class="slds-col slds-align_absolute-center slds-var-m-top_medium">
                                 <lightning-button class="stretchButton slds-var-m-right_x-small" variant="brand-outline" label="Product Selection" onclick={navitageToProductSelection}></lightning-button>
                                 <lightning-button class="stretchButton slds-var-m-right_x-small" variant="brand-outline" label="Import Lines" onclick={handleImportLines}></lightning-button>
                                 <lightning-button class="stretchButton slds-var-m-right_x-small" variant="brand-outline" label="Clone Selected" disabled={disableButton} onclick={handleClone}></lightning-button>
                                 <lightning-button class="stretchButton" variant="brand-outline" label="Reorder Lines" disabled={disableReorder} onclick={handleReorder}></lightning-button>
-                            
                             </div>
                         </lightning-layout-item>
                         <!--FUCTIONALITY BUTTONS END-->
                         <!--SAVE & DISCOUNT  BUTTONS START-->
                         <lightning-layout-item size="12" small-device-size="6" padding="around-small">
-                                <div class="slds-align_absolute-center">
+                                <div class="slds-col slds-align_absolute-center">
                                     <lightning-input  style="width: 100px;" class="" type="number" label="Line Discount (%)" placeholder="50" value={valueDiscount} onchange={handleValueDiscount}></lightning-input>
                                     <lightning-button class="stretchButton slds-var-m-top_medium slds-var-m-left_x-small" variant="brand" label="Apply" disabled={disableButton} onclick={handleApplyDiscount}></lightning-button>
                                     <lightning-helptext content="Apply discounts will save the quote lines you have added in the table."></lightning-helptext>

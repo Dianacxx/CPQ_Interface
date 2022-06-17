@@ -5,16 +5,18 @@ import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 //APEX METHOD TO CREATE QUOTE LINES FROM LOOUP FIELD 
 import addQuoteLine from '@salesforce/apex/QuoteController.addQuoteLine';
 //APEX METHOD TO CREATE NSP FROM LOOKUP
-import addNSPProducts from '@salesforce/apex/QuoteController.addNSPProducts';
+//import addNSPProducts from '@salesforce/apex/QuoteController.addNSPProducts';
 
 //APEX METHOD TO SHOW NSP FIELDS IN POP UP
 import NSPAdditionalFields from '@salesforce/apex/QuoteController.NSPAdditionalFields'; 
 
+/*
 //APEX METHOD THAT SEARCH THE AGREEMENT IN TIER POP-UP (POP-UP DATATABLE)
 import searchAgreement from '@salesforce/apex/SearchAgreementLookupController.search'; 
 
 //APEX METHOD THAT RETRIEVE TIERS OF THE AGREEMENT SELECTED
 import discountPrinter from '@salesforce/apex/DiscountController.discountPrinter'; 
+*/
 
 //GETTING THE ACCOUNT OF THE QUOTE (POP-UP DATATABLE)
 import ACCOUNT_ID_FIELD from '@salesforce/schema/SBQQ__Quote__c.SBQQ__Account__c'; 
@@ -27,8 +29,8 @@ import QUOTELINE_OBJECT from '@salesforce/schema/SBQQ__QuoteLine__c';
 import { getObjectInfo } from 'lightning/uiObjectInfoApi';
 import { getPicklistValues } from 'lightning/uiObjectInfoApi';
 import LENGTH_UOM_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.Length_UOM__c';
-import LEVEL2_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.ProdLevel2__c';
-import UOM_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.UOM__c';
+//import LEVEL2_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.ProdLevel2__c';
+//import UOM_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.UOM__c';
 
 //TO SHOW DEPENDENCIES VALUES FOR UOM FIELD IF PRODUCT 2 
 import uomDependencyLevel2List from '@salesforce/apex/blMockData.uomDependencyLevel2List'; 
@@ -46,28 +48,36 @@ const TIER_COLUMNS = [
 
 //DATA TABLE COLUMNS FOR EACH TAB USED
 const QUOTE_LINE_COLUMNS = [
-    { label: 'Product', fieldName: 'quotelinename', editable: false ,sortable: true, wrapText: true, initialWidth: 250,},
-    { label: 'Description', fieldName: 'description', editable: true ,sortable: true, wrapText: false, initialWidth: 140, },
-    { label: 'Quantity', fieldName: 'quantity', editable: true ,sortable: true, wrapText: false,type: 'number',hideDefaultActions: true, initialWidth: 80, },
-    { label: 'UOM', fieldName: 'uom', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true , initialWidth: 70,},
-    { label: 'Length', fieldName: 'length', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true,  initialWidth: 45,},
-    { label: 'Length UOM', fieldName: 'lengthuom', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true},
-    { label: 'Discount (%)', fieldName: 'additionaldiscount', editable: true ,sortable: true, wrapText: false,type: 'number',  initialWidth: 40,hideDefaultActions: true },
-    { label: 'Net Unit Price', fieldName: 'netunitprice', editable: true ,sortable: true, wrapText: false,type: 'number',  initialWidth: 40,hideDefaultActions: true },
-    { label: 'List Unit Price', fieldName: 'listunitprice', editable: false ,sortable: true, wrapText: false,type: 'number',  initialWidth: 40,hideDefaultActions: true },
-    { label: 'Net Total', fieldName: 'nettotal', editable: false ,sortable: true, wrapText: false,type: 'number',  initialWidth: 40,hideDefaultActions: true },
+    { label: 'Product', fieldName: 'quotelinename', editable: false ,sortable: true, wrapText: false, initialWidth: 250,},
+    { label: 'Description', fieldName: 'description', editable: true ,sortable: true, wrapText: false, initialWidth: 100,},
+    { label: 'Quantity', fieldName: 'quantity', editable: true ,sortable: true, wrapText: false,type: 'number',hideDefaultActions: true,  },
+    {label: 'UOM',sortable: true,fieldName: 'uom' ,type: "button", typeAttributes: 
+    { label: { fieldName: 'uom' }, name: 'uomChange',value: { fieldName: 'uom' }, iconPosition: 'right', variant: 'base', iconName: 'utility:chevrondown',}, },
+    //{ label: 'UOM', fieldName: 'uom', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true , },
+    { label: 'Length', fieldName: 'length', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true,  },
+    //{ label: 'Length UOM', fieldName: 'lengthuom', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true,  },
+    {label: 'Length UOM',sortable: true,fieldName: 'lengthuom' ,type: "button", typeAttributes: 
+    { label: { fieldName: 'lengthuom' }, name: 'lengthUomChange',value: { fieldName: 'lengthuom' }, iconPosition: 'right', variant: 'base', iconName: 'utility:chevrondown',},},
+    { label: 'Discount (%)', fieldName: 'discount', editable: true ,sortable: true, wrapText: false,type: 'number', hideDefaultActions: true },
+    { label: 'Net Unit Price', fieldName: 'netunitprice', editable: true ,sortable: true, wrapText: false,type: 'number',  hideDefaultActions: true },
+    { label: 'List Unit Price', fieldName: 'listunitprice', editable: false ,sortable: true, wrapText: false,type: 'number',  hideDefaultActions: true },
+    { label: 'Net Total', fieldName: 'nettotal', editable: false ,sortable: true, wrapText: false,type: 'number',  hideDefaultActions: true },
     { label: 'NSP', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:google_news', name: 'NSP', variant:'brand', size:'xxx-small'}},
     { label: 'Tiers', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:adjust_value', name: 'Tiers', variant:'brand', size:'xxx-small'}},
     { label: 'Line Notes', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:new_note', name: 'Linenote', variant:'brand', size:'xxx-small'}},
     { label: '', type: 'button-icon',initialWidth: 20,typeAttributes:{iconName: 'action:delete', name: 'Delete', variant:'border-filled', size:'xxx-small'}}
 ];
 
+
 const DETAIL_COLUMNS = [
     { label: 'Product', fieldName: 'quotelinename', editable: false ,sortable: true, wrapText: false, initialWidth :325,},
     { label: 'Billing Tolerance', fieldName: 'billingTolerance', editable: true ,sortable: true, wrapText: false,type: 'number',hideDefaultActions: true },
     { label: 'Source', fieldName: 'source', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true},
     { label: 'Destination', fieldName: 'destination', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true},
-    { label: 'Alternative Indicator', fieldName: 'alternativeindicator', editable: true ,sortable: true, wrapText: false,hideDefaultActions: true },
+    {label: 'Alternative Indicator',sortable: true/*,fieldName: 'alternativeindicator'*/ ,type: "button", typeAttributes: 
+    { /*label: { fieldName: 'alternativeindicator' },*/ name: 'alternativeindicator',value: { fieldName: 'alternativeindicator' }, iconPosition: 'right', variant: 'base', iconName: { fieldName: 'dynamicIcon' } /*'utility:sort'*/,},},
+   
+   // { label: 'Alternative Indicator', fieldName: 'alternativeindicator', editable: true ,sortable: true, wrapText: false,hideDefaultActions: true },
     { label: 'NSP', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:google_news', name: 'NSP', variant:'brand', size:'xxx-small'}},
     { label: 'Tiers', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:adjust_value', name: 'Tiers', variant:'brand', size:'xxx-small'}},
     { label: 'Line Notes', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:new_note', name: 'Linenote', variant:'brand', size:'xxx-small'}},
@@ -126,6 +136,9 @@ export default class Bl_dataTable extends LightningElement {
                 if(this.quoteLines[i].product.includes('"')){
                     this.quoteLines[i].product = this.quoteLines[i].product.replace(/['"]+/g, '');
                 }
+                this.quoteLines[i].alternativeindicator == true ? this.quoteLines[i]['dynamicIcon'] = 'utility:check':
+                this.quoteLines[i]['dynamicIcon'] = 'utility:close'; 
+                
                 //console.log('No double quotes: '+ this.quoteLines[i].product);
             }
             this.quoteLinesString = JSON.stringify(this.quoteLines);
@@ -145,17 +158,26 @@ export default class Bl_dataTable extends LightningElement {
     @wire(getPicklistValues, { recordTypeId: '$objectInfo.data.defaultRecordTypeId', fieldApiName: LENGTH_UOM_FIELD})
     lengthUom;
 
+    /*
     level2Dependencies = [];
+    goodDependencies = false;
+
     
     @wire(getPicklistValues, { recordTypeId: '$objectInfo.data.defaultRecordTypeId', fieldApiName: LEVEL2_FIELD})
     level2Picklist({ error, data }) {
         if (data) {
-            //console.log('WIRE LIST');
+            //
+            console.log('WIRE LIST');
             //console.log(JSON.stringify(data));
             let prodL2 = []; 
             data.values.forEach( element => { prodL2.push(element.label);}); 
+
+            let startTime = window.performance.now();
             uomDependencyLevel2List({productLevel2 : prodL2})
             .then((data)=>{
+                this.goodDependencies = true; 
+                let endTime = window.performance.now();
+                console.log(`uomDependencyLevel2List method took ${endTime - startTime} milliseconds`);
                 //console.log(data);
                 let dependency = JSON.parse(data); 
                 let levelsNames = Object.getOwnPropertyNames(dependency); 
@@ -173,18 +195,21 @@ export default class Bl_dataTable extends LightningElement {
             })
             .catch((error)=>{
                 console.log(error);
-                const evt = new ShowToastEvent({
-                    title: 'There is a problem loading the Error Checker for the UOM value', 
-                    message: 'Please, do not edit UOM values now or reload the UI to correct this mistake.',
-                    variant: 'warning', mode: 'dismissable'
-                });
-                this.dispatchEvent(evt);
+                if (!this.goodDependencies){
+                    const evt = new ShowToastEvent({
+                        title: '2. There is a problem loading the Error Checker for the UOM value', 
+                        message: 'Please, do not edit UOM values now or reload the UI to correct this mistake.',
+                        variant: 'warning', mode: 'dismissable'
+                    });
+                    this.dispatchEvent(evt);
+                }
+                
             })
             
         } else if (error) {
             console.log('WIRE LIST ERROR');
             const evt = new ShowToastEvent({
-                title: 'There is a problem loading the Error Checker for the UOM value', 
+                title: '1. There is a problem loading the Error Checker for the UOM value', 
                 message: 'Please, do not edit UOM values now or reload the UI to correct this mistake.',
                 variant: 'warning', mode: 'dismissable'
             });
@@ -195,8 +220,7 @@ export default class Bl_dataTable extends LightningElement {
 
     @wire(getPicklistValues, { recordTypeId: '$objectInfo.data.defaultRecordTypeId', fieldApiName: UOM_FIELD})
     uom;
-    /* put here uomDependencyLevel2List with all the picklist value 2 to get the list depending on product 2 and 
-    then in the edition compare with the list to make sure there are no erros. */
+    */
 
     //WIRE METHOD TO GET ACCOUNT INFO (POP-UP DATATABLE)
     @wire(getRecord, { recordId: '$recordId', fields: ACCOUNT_ID_FIELD})
@@ -232,6 +256,8 @@ export default class Bl_dataTable extends LightningElement {
                 for(let i=0;i<this.quoteLines.length;i++){
                     if(this.quoteLines[i].product.includes('"')){
                     this.quoteLines[i].product = this.quoteLines[i].product.replace(/['"]+/g, '');
+                    this.quoteLines[i].alternativeindicator == true ? this.quoteLines[i]['dynamicIcon'] = 'utility:check':
+                    this.quoteLines[i]['dynamicIcon'] = 'utility:close'; 
                     //console.log('No double quotes: '+ this.quoteLines[i].product);
                     }
                 }
@@ -320,8 +346,8 @@ export default class Bl_dataTable extends LightningElement {
                 for(let j = 0; j< this.selectedRows.length; j++){
                     let index = this.quoteLines.findIndex(x => x.id === this.selectedRows[j].id);
                     //console.log('quotelines Name: '+this.quoteLines[index].name + ' selected Name: ' +this.selectedRows[j].name)
-                    this.quoteLines[index].additionaldiscount = (this.discount);
-                    //console.log('Disccount apply: '+this.quoteLines[index].additionaldiscount);
+                    this.quoteLines[index].discount = (this.discount);
+                    //console.log('Disccount apply: '+this.quoteLines[index].discount);
                 }
                 this.updateTable();
                 this.quotelinesString = JSON.stringify(this.quoteLines); 
@@ -412,21 +438,24 @@ export default class Bl_dataTable extends LightningElement {
     //Lookup search product selected to be added to table as quote line
     handleProductSelection(event){
         this.spinnerLoading = true;
-        console.log("the selected record id is: ");
-        console.log(JSON.stringify(event.detail));
+        //console.log("the selected record id is: ");
+        //console.log(JSON.stringify(event.detail));
         let level = event.detail.level; 
         let lookupcode = event.detail.filtergroup; 
         let productId = event.detail.Id; 
 
         //FOR NSP LOOKUP SEARCH ADDITION
-        if (((level == 'ACA') && ((lookupcode != 'Copperclad'))) || 
+        if (((level == 'ACA') && (lookupcode != 'Copperclad') && (lookupcode != '') && (lookupcode != null) ) || 
             ((level == 'Fiber Optic Cable') && ((lookupcode == 'Premise Cable') || 
             (lookupcode == 'Loose Tube Cable') || (lookupcode == 'ADSS Cable')) )) {
-               
+                
+                let startTime = window.performance.now();
                 addQuoteLine({quoteId: this.recordId, productId: productId})
                 .then((data) => {
-                    console.log('SUCCESS TURNING NSP QUOTELINES');
-                    console.log(data);
+                    let endTime = window.performance.now();
+                    console.log(`addQuoteLine method took ${endTime - startTime} milliseconds`);
+                    //console.log('SUCCESS TURNING NSP QUOTELINES');
+                    //console.log(data);
                     let newQuotelines = JSON.parse(data); 
                     for (let i=0; i< newQuotelines.length; i++){
                         //To create auxiliar ID and Name
@@ -448,6 +477,9 @@ export default class Bl_dataTable extends LightningElement {
                         if (!(newQuotelines[i].qlevariableprice == 'Cable Length')){
                             newQuotelines[i].length = 'NA';
                             newQuotelines[i].lengthuom = 'NA';
+                        } else {
+                            newQuotelines[i].length = '5';
+                            newQuotelines[i].lengthuom = 'Meters';
                         }
                         
                         //NSP CHECK BOX VALUE
@@ -499,8 +531,12 @@ export default class Bl_dataTable extends LightningElement {
             let newQuotelines; //New quoteline
             let randomId;     //Random Id for new quoteline
             let randomName;   //Random Name for new quoteline
+
+            let startTime = window.performance.now();
             addQuoteLine({quoteId: this.recordId, productId: productId})
             .then((data) => {
+                let endTime = window.performance.now();
+                console.log(`addQuoteLine method took ${endTime - startTime} milliseconds`);
                 //console.log('Add Product DATA: '+ data); 
                 newQuotelines = JSON.parse(data); 
                 for (let i=0; i< newQuotelines.length; i++){
@@ -522,6 +558,9 @@ export default class Bl_dataTable extends LightningElement {
                     if (!(newQuotelines[i].qlevariableprice == 'Cable Length')){
                         newQuotelines[i].length = 'NA';
                         newQuotelines[i].lengthuom = 'NA';
+                    } else {
+                        newQuotelines[i].length = '5';
+                        newQuotelines[i].lengthuom = 'Meters';
                     }
                     if (newQuotelines[i].prodLevel1 == null){
                         newQuotelines[i].prodLevel2 = null;
@@ -843,6 +882,8 @@ export default class Bl_dataTable extends LightningElement {
     //UPDATE PAGE VIEW OF TABLE 
     updateTable(){
         //this.page = 1;
+        //console.log('EVERY TIME YOU UPDATE');
+        //console.log(JSON.stringify(this.quoteLines));
         this.quotelinesLength = this.quoteLines.length;
         this.totalRecountCount = this.quotelinesLength;  
         this.totalPage = Math.ceil(this.totalRecountCount / this.pageSize); 
@@ -880,14 +921,19 @@ export default class Bl_dataTable extends LightningElement {
     @track nspShowMessage = false; 
     //Delete Row, NSP and See Tiers/Contracts - when click row buttons
     lineNoteValue; //To show in pop up lineNoteValue
+    uomPopupOpen = false; //To open pop-up that changes UOM value
+    lengthUomPopupOpen = false;  //To open pop-up that changes Length UOM value
+
     handleRowAction(event){
         this.dataRow = event.detail.row;
+        console.log(Object.getOwnPropertyNames(event.detail));
         switch (event.detail.action.name){
             case 'Delete':
                 this.deleteClick = true; 
             break;
             case 'Tiers':
-                this.popUpTiers = true;
+                //this.popUpTiers = true; //UNCOMMENT THIS WHEN CR OF AGREEMENT
+                alert('THIS IS NOT DONE YET');
             break;
             case 'NSP':
                 this.nspProduct = true; 
@@ -913,12 +959,137 @@ export default class Bl_dataTable extends LightningElement {
                     this.lineNoteValue = '';
                 }
             break;
+            case 'uomChange':
+                this.newUOM = ''; 
+                this.searchUomValuesForProduct2();
+                this.uomPopupOpen = true; 
+            break;
+            case 'lengthUomChange':
+                this.newLengthUOM = ''; 
+                this.searchLenthUomValues();
+                this.lengthUomPopupOpen = true; 
+            break; 
+            case 'alternativeindicator':
+                this.changingAlternative();
+            break;
             default: 
                 alert('There is an error trying to complete this action');
         }
 
     }
 
+    //UOM POP UP
+    uomList = [];
+
+    searchUomValuesForProduct2(){
+        if(this.dataRow.prodLevel2 != null && this.dataRow.prodLevel2 != ''){
+            uomDependencyLevel2List({productLevel2 : this.dataRow.prodLevel2})
+            .then((data)=>{
+                //console.log('HERE UOM VALUES');
+                //console.log(data);
+                let list = JSON.parse(data);
+                let prodLevel2 = Object.getOwnPropertyNames(list);
+                this.uomList = list[prodLevel2[0]];
+            })
+            .catch((error)=>{
+                console.log(error);
+                const evt = new ShowToastEvent({
+                    title: 'There is a problem loading the possible values for the UOM value', 
+                    message: 'Please, do not edit UOM values now or reload the UI to correct this mistake.',
+                    variant: 'error', mode: 'dismissable'
+                });
+                this.dispatchEvent(evt);
+            })
+        } else {
+            const evt = new ShowToastEvent({
+                title: 'Ther is not Product level 2 for this quote line', 
+                message: 'The Product Level 2 is empty, the UOM value is not avialable',
+                variant: 'warning', mode: 'dismissable'
+            });
+            this.dispatchEvent(evt);
+            this.closeUomPopup();
+        }
+       
+    }
+    closeUomPopup(){
+        this.uomPopupOpen = false; 
+    }
+    newUOM = ''; 
+    uomHandler(event){
+        this.newUOM = event.target.value; 
+    }   
+    saveUom(){
+        if(this.newUOM === '' || this.newUOM == null){
+            console.log('No changes but save value.');
+        } else {
+            let index = this.quoteLines.findIndex(x => x.id === this.dataRow.id);
+            this.quoteLines[index].uom = this.newUOM;
+            this.quotelinesString = JSON.stringify(this.quoteLines); 
+            this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
+        }
+        
+        this.closeUomPopup();
+    }
+
+    //LENGTH POP UP
+    lengthUomList = [];
+
+    searchLenthUomValues(){
+        if(this.lengthUom.data.values){
+            this.lengthUomList = this.lengthUom.data.values; 
+        } else {
+            const evt = new ShowToastEvent({
+                title: 'There is not lengthUom for this quote line', 
+                message: 'Please, Do not change the Length UOM value, it is not avialable now.',
+                variant: 'warning', mode: 'dismissable'
+            });
+            this.dispatchEvent(evt);
+            this.closeLengthUomPopup();
+        }
+    }
+
+    closeLengthUomPopup(){
+        this.lengthUomPopupOpen = false; 
+    }
+
+    newLengthUOM = ''; 
+    lengthUomHandler(event){
+        this.newLengthUOM = event.target.value; 
+    }   
+    saveLengthUom(){
+        //SPECIAL BEHAVIOR TO ADD LENGTH BASE VALUES 
+        // if (this.dataRow.filteredGrouping == 'Cable Assemblies' || this.dataRow.productType == 'Patch Panel - Stubbed'){
+        //     this.dataRow.qlevariableprice = 'Cable Length'; 
+        // } else {
+        //     newQuotelines[i].qlevariableprice = null ; 
+        // }
+        if (!(this.dataRow.qlevariableprice == 'Cable Length')){
+            this.newLengthUOM = 'NA';
+        } 
+
+        if(this.newLengthUOM === '' || this.newLengthUOM == null){
+            console.log('No changes but save value.');
+        } else {
+            let index = this.quoteLines.findIndex(x => x.id === this.dataRow.id);
+            this.quoteLines[index].lengthuom = this.newLengthUOM;
+            this.quotelinesString = JSON.stringify(this.quoteLines); 
+            this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
+        }
+        
+        this.closeLengthUomPopup();
+    }
+
+
+    //Alternative Indicator change
+    changingAlternative(){
+
+        let index = this.quoteLines.findIndex(x => x.id === this.dataRow.id);
+        this.quoteLines[index].alternativeindicator =  !this.quoteLines[index].alternativeindicator;
+        this.quoteLines[index].alternativeindicator == true ? this.quoteLines[index].dynamicIcon = 'utility:check':
+                this.quoteLines[index].dynamicIcon = 'utility:close'; 
+        this.quotelinesString = JSON.stringify(this.quoteLines); 
+        this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
+    }
     //Tiers Pop Up 
     @track popUpTiers = false;
     closeTiers(){
@@ -972,6 +1143,7 @@ export default class Bl_dataTable extends LightningElement {
     }
 
     //WHEN CHANGING THE TERM TO LOOK UP THE AGREEMENT (POP-UP DATATABLE)
+    /* UNCOMMENT WHE CR OF AGREEMENT
     onChange(event) {
         this.searchTermTier = event.target.value;
         //console.log('search Term : '+ this.searchTermTier);
@@ -1006,6 +1178,7 @@ export default class Bl_dataTable extends LightningElement {
         }
         
     }
+    */
 
     //WHEN CHANGING CUSTOMER TIER VALUE (POP-UP DATATABLE)
     customerTier; 
@@ -1044,8 +1217,12 @@ export default class Bl_dataTable extends LightningElement {
     showNSPValues(){
         this.showNSP = false;
         console.log(this.dataRow);
+
+        let startTime = window.performance.now();
         NSPAdditionalFields({productId: this.dataRow.productid })
         .then((data)=>{  
+            let endTime = window.performance.now();
+            console.log(`NSPAdditionalFields method took ${endTime - startTime} milliseconds`);
             //console.log('NSP VALUES');
             //console.log(data);
             let nspVal = JSON.parse(data); 
@@ -1084,7 +1261,7 @@ export default class Bl_dataTable extends LightningElement {
                 
                 //console.log('Showing: '+ JSON.stringify(this.nspValues[this.nspValues.length-1]));
             }
-            console.log('Showing: '+ JSON.stringify(this.properties));
+            //console.log('Showing: '+ JSON.stringify(this.properties));
             this.showNSP = true;
         })
         .catch((error)=>{

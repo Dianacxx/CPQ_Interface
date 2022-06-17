@@ -1,4 +1,4 @@
-import { LightningElement, api , track} from 'lwc';
+import { LightningElement, api , track, wire} from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { NavigationMixin } from 'lightning/navigation';
 
@@ -17,6 +17,15 @@ import NSPAdditionalFields from '@salesforce/apex/QuoteController.NSPAdditionalF
 import addSelectorQuoteLine from '@salesforce/apex/QuoteController.addSelectorQuoteLine'; //FOR THE NON NSP PRODUCTS
 import addNSPProducts from '@salesforce/apex/QuoteController.addNSPProducts';
 
+//TO SHOW DEPENDENCIES VALUES FOR UOM FIELD IF PRODUCT 2 
+import uomDependencyLevel2List from '@salesforce/apex/blMockData.uomDependencyLevel2List'; 
+
+//TO SHOW POSSIBLE VALUES IN LWC TABLE PICKLIST FIELDS WITHOUT GETTING ERROR FROM APEX
+//ADD NAME PICKLIST FIELD WHEN A NEW FIELD IN TABLE IS ADD. 
+import QUOTELINE_OBJECT from '@salesforce/schema/SBQQ__QuoteLine__c';
+import { getObjectInfo } from 'lightning/uiObjectInfoApi';
+import { getPicklistValues } from 'lightning/uiObjectInfoApi';
+import LENGTH_UOM_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.Length_UOM__c';
 
 export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     @api recordId; 
@@ -147,6 +156,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     @track activeFilterTab = 'Filter';
     //Close the pop up and restart the values
     closeFilterAndSelected(){
+        
         this.openFilterPopup = false;
         this.clearFilters();
         this.reviewDisplay = []; 
@@ -156,6 +166,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         this.readyToCloseNSP = [];
     }
     //Add more products in the filter tab
+    rowsSelected = [];
     moreAdd(){ //Button in pop up that says Add More
         //Change to filter tab
         this.activeFilterTab = 'Filter';
@@ -170,8 +181,10 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     }
     //If the user clicks the Review Tab
     handleReviewTabActive(){ //If user returns to tab clicking in the name
+
         this.activeFilterTab = 'Review';
         this.tabOption = true;
+        
     }
     //Button to add products from filter tab to the list without changing Tab
     addProducts(){
@@ -355,7 +368,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     @track requiredApex; 
     @track productTypeShow = false; 
 
-    @track columnsFilters = [{label: 'Product Name', fieldName: 'Name', editable: false, wrapText: false,},];
+    @track columnsFilters = [{label: 'Product Name', fieldName: 'Name', editable: false, wrapText: true,  initialWidth: 250, },];
     @track columnsReview = [{label: 'Product Name', fieldName: 'Name', editable: false, },]; 
     @track columnsRequired = []; 
 
@@ -369,7 +382,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         this.listFilters = []; 
         this.filtersLoading = false; 
         this.filtersForApex = []; 
-        this.columnsFilters = [{label: 'Product Name', fieldName: 'Name', editable: false, wrapText: false, },]; 
+        this.columnsFilters = [{label: 'Product Name', fieldName: 'Name', editable: false, wrapText: true,  initialWidth: 250,},];
         this.columnsReview = [{label: 'Product Name', fieldName: 'Name', editable: false, },]; 
         this.columnsRequired = [];
         this.productTypeShow = false; 
@@ -379,8 +392,15 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         //SPECIAL CASE WHEN THE FIRST FILTERED IS NOT PRODUCT TYPE
         if (this.trackList.lookupCode == 'Closures'){ 
             //console.log('WORKING ON CLOSURES' + filterGroup);
+
+            let startTime = window.performance.now();
+
+            console.log('Method getFirstFilter filteredGrouping: '+filterGroup);
             getFirstFilter({filteredGrouping: filterGroup})
             .then((data)=>{
+                let endTime = window.performance.now();
+                console.log(`getFirstFilter method took ${endTime - startTime} milliseconds`);
+
                 let filters = JSON.parse(data);
                 //console.log('Required filters: '+data); 
                 for (let i =0; i < filters.length; i++){
@@ -428,8 +448,14 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                 console.log(error); 
             })
         } else {
+
+            let startTime = window.performance.now();
+
+            console.log('Method getFirstFilter filteredGrouping: '+filterGroup);
             getFirstFilter({filteredGrouping: filterGroup})
             .then((data)=>{
+                let endTime = window.performance.now();
+                console.log(`getFirstFilter method took ${endTime - startTime} milliseconds`);
                 //console.log('FIRST PRODUCT TYPE:');
                 //console.log(filterGroup); 
                 this.productType = JSON.parse(data);
@@ -503,8 +529,15 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         this.listFilters = [];
         this.columnsFilters = [{label: 'Product Name', fieldName: 'Name', editable: false, wrapText: false, },]; 
         this.columnsReview = [{label: 'Product Name', fieldName: 'Name', editable: false, },]; 
+
+        let startTime = window.performance.now();
+
+        console.log('Method getProductFilteringv2 filteredGrouping: '+ this.trackList.lookupCode+' typeSelection'+ this.requiredApex);
         getProductFilteringv2({filteredGrouping: this.trackList.lookupCode, typeSelection: this.requiredApex })
         .then((data)=>{
+            let endTime = window.performance.now();
+            console.log(`getProductFilteringv2 method took ${endTime - startTime} milliseconds`);
+
             //console.log('SECOND PRODUCT TYPE');
             //console.log(data);
             let temporalList = JSON.parse(data);
@@ -598,8 +631,15 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             || (this.trackList.lookupCode == 'Pigtails' && event.target.label == 'Model')){
             //console.log('LookupCode: '+this.trackList.lookupCode + ' Filed: '+ event.target.label);
             //console.log('Customer/Model Value: '+JSON.stringify(event.detail.value));
+
+            let startTime = window.performance.now();
+            console.log('Method getAdditionalFiltering customerSelection: '+ event.detail.value+' filteredGrouping'+ this.trackList.lookupCode);
+
             getAdditionalFiltering({customerSelection: event.detail.value, filteredGrouping: this.trackList.lookupCode})
             .then((data)=>{
+                let endTime = window.performance.now();
+                console.log(`getAdditionalFiltering method took ${endTime - startTime} milliseconds`);
+
                 //console.log('Cable Assemblies or Pigtails');
                 //console.log(data); 
                 let temporalList = JSON.parse(data); 
@@ -674,8 +714,14 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         //console.log(JSON.stringify(filters)); 
         //console.log('filteredGrouping: ' + this.trackList.lookupCode);
         //console.log('tabSelectedValue: ' + tabSelectedValue);
+        let startTime = window.performance.now();
+
+        console.log('Method filteredProductPrinter filterValues: '+ JSON.stringify(filters)+' level1 '+ tabSelectedValue+ ' filteredGrouping '+this.trackList.lookupCode);
+
         filteredProductPrinter({filterValues: JSON.stringify(filters), level1: tabSelectedValue, filteredGrouping: this.trackList.lookupCode})
         .then((data)=>{
+            let endTime = window.performance.now();
+            console.log(`filteredProductPrinter method took ${endTime - startTime} milliseconds`);
             //console.log('Products Filtered');
             //console.log(data);
             
@@ -858,23 +904,113 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             this.firstNSP = 1;
         }
         else {
-            this.saveAndExitFilterModal();
-            this.closeFilterAndSelected();
+            this.extraFields = true;
+            this.listExtraFields = JSON.parse(JSON.stringify(this.allReviews));
+            let i = 1;
+            for (let nsp of this.listExtraFields){ 
+                nsp['tabNsp'] = i; 
+                i += 1;
+            }
+            this.firstExtraFields = 1;
         }
         
     }
+    //EXTRA FIELDS FUNCTION - POP UP
+    extraFields = false;
 
-    //RESTART NSP FIELDS FOR EACH PRODUCT
-    clearNSPFields(){
-        this.nspPicklist = [];
-        this.nspNumbers = [];
-        this.nspDisplayOnly = [];
-        this.listNspValuesToDisplay = [];
+    closeExtraFields(){
+        this.extraFields = false;
+        this.saveAndExitFilterModal();
+        this.closeFilterAndSelected();
+    }
+    handleExtraTab(event){
+        this.showLengthBase = false; 
+        this.firstExtraFields= event.target.value;
+        this.showExtraFielsdValues();
+    }
+
+    //GETTING PICKLIST VALUES IN UOM/LENGTH UOM/ DEPENDENT ON LEVEL 2
+    @wire(getObjectInfo, { objectApiName: QUOTELINE_OBJECT })
+    objectInfo;
+
+    @wire(getPicklistValues, { recordTypeId: '$objectInfo.data.defaultRecordTypeId', fieldApiName: LENGTH_UOM_FIELD})
+    lengthUom;
+
+    lengthUomValues = [];
+    spinnerShowingUOMs = false;
+    showExtraFielsdValues(){
+        this.spinnerShowingUOMs = true;
+        if(this.listExtraFields[this.firstExtraFields-1].Filtered_Grouping__c == 'Cable Assemblies' || 
+        this.listExtraFields[this.firstExtraFields-1].Product_Type__c == 'Patch Panel - Stubbed' ){
+            this.showLengthBase = true; 
+            if(this.lengthUom.data.values){
+                this.lengthUomValues = this.lengthUom.data.values; 
+            } else {
+                const evt = new ShowToastEvent({
+                    title: 'There is not lengthUom for this quote line', 
+                    message: 'Please, Do not change the Length UOM value, it is not avialable now.',
+                    variant: 'warning', mode: 'dismissable'
+                });
+                this.dispatchEvent(evt);
+                this.showLengthBase = false;
+            }
+        } else {
+            this.showLengthBase = false; 
+        }
+        
+        uomDependencyLevel2List({productLevel2 : this.listExtraFields[this.firstExtraFields-1].ProdLevel2__c})
+        .then((data)=>{
+            let list = JSON.parse(data);
+            let prodLevel2 = Object.getOwnPropertyNames(list);
+            this.uomValues = list[prodLevel2[0]];
+            this.spinnerShowingUOMs = false;
+        })
+        .catch((error)=>{
+            console.log(error);
+            const evt = new ShowToastEvent({
+                title: 'Error with UOM values',
+                message: 'You cannot change the UOM value here, please add product and go to the QLE interface to edit the value',
+                variant: 'warning',
+                mode: 'dismissable'
+            });
+            this.dispatchEvent(evt);
+        })
+    }
+
+    lengthUomChangeNonNsp(event){
+        console.log('length uom');
+        console.log(event.detail.value);
+        let ind = this.extraValuesChangeList.findIndex(element => element.tabNsp == this.listExtraFields[this.firstExtraFields-1].tabNsp);
+        if(ind == -1){
+            this.extraValuesChangeList.push({tabNsp: this.listExtraFields[this.firstExtraFields-1].tabNsp, 
+                productId: this.listExtraFields[this.firstExtraFields-1].idTemporal, 
+                uom: this.listExtraFields[this.firstExtraFields-1].Primary_UOM__c, 
+                quantity: this.listExtraFields[this.firstExtraFields-1].Minimum_Order_Qty__c, 
+                lengthuom: event.detail.value,
+                length: null});
+        } else {
+            this.extraValuesChangeList[ind].lengthuom =  event.target.value; 
+        }
+    }
+    lengthChangeNonNsp(event){
+        console.log('length');
+        console.log(event.detail.value);
+        let ind = this.extraValuesChangeList.findIndex(element => element.tabNsp == this.listExtraFields[this.firstExtraFields-1].tabNsp);
+        if(ind == -1){
+            this.extraValuesChangeList.push({tabNsp: this.listExtraFields[this.firstExtraFields-1].tabNsp, 
+                productId: this.listExtraFields[this.firstExtraFields-1].idTemporal, 
+                uom: this.listExtraFields[this.firstExtraFields-1].Primary_UOM__c, 
+                quantity: this.listExtraFields[this.firstExtraFields-1].Minimum_Order_Qty__c, 
+                lengthuom: null,
+                length: event.detail.value});
+        } else {
+            this.extraValuesChangeList[ind].length =  event.target.value; 
+        }
     }
 
     @track checkNSPFields = []; 
     readyToCloseNSP = [];
-
+    uomValues; 
     //TO SHOW NSP FIELDS DEPENDING ON VALUES AND TYPES FOR EACH PRODUCT 
     handleNSPTab(event){
         this.clearNSPFields();
@@ -883,8 +1019,32 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         auxiliarClose = this.readyToCloseNSP.find(element => element == this.firstNSP);
         if (auxiliarClose == undefined) { this.readyToCloseNSP.push(this.firstNSP); } 
         this.gettingNspFields = false;
+
+        let startTime = window.performance.now();
+
+        console.log('Method NSPAdditionalFields productId: '+ this.listNSP[this.firstNSP-1].idTemporal);
+
+        uomDependencyLevel2List({productLevel2 : this.listNSP[this.firstNSP-1].ProdLevel2__c})
+        .then((data)=>{
+            let list = JSON.parse(data);
+            let prodLevel2 = Object.getOwnPropertyNames(list);
+            this.uomValues = list[prodLevel2[0]];
+        })
+        .catch((error)=>{
+            console.log(error);
+            const evt = new ShowToastEvent({
+                title: 'Error with UOM values',
+                message: 'You cannot change the UOM value here, please add product and go to the QLE interface to edit the value',
+                variant: 'warning',
+                mode: 'dismissable'
+            });
+            this.dispatchEvent(evt);
+        })
+        
         NSPAdditionalFields({productId: this.listNSP[this.firstNSP-1].idTemporal})
             .then((data)=>{
+                let endTime = window.performance.now();
+                console.log(`NSPAdditionalFields method took ${endTime - startTime} milliseconds`);
                 //console.log('IN handleNSPTab CALLING THE PRODUCT #' + (this.firstNSP-1).toString());
                 //console.log(data);
                 let dataParse = JSON.parse(data); 
@@ -929,7 +1089,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                         this.nspDisplayOnly.push({label: dataParse[i].label, value: dataParse[i].options}); 
                     }
                 }
-
+                
                 this.gettingNspFields = true;
 
             })
@@ -939,6 +1099,58 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             })
     }
 
+    extraValuesChangeList = []; 
+    uomChange(event){
+        //console.log('uom Here');
+        let ind = this.extraValuesChangeList.findIndex(element => element.tabNsp == this.listNSP[this.firstNSP-1].tabNsp);
+        if(ind == -1){
+            this.extraValuesChangeList.push({tabNsp: this.listNSP[this.firstNSP-1].tabNsp, productId: this.listNSP[this.firstNSP-1].idTemporal, uom: event.target.value, quantity: this.listNSP[this.firstNSP-1].Minimum_Order_Qty__c });
+        } else {
+            this.extraValuesChangeList[ind].uom =  event.target.value; 
+        }
+        //console.log(JSON.stringify(this.extraValuesChangeList));
+    }
+    uomChangeNonNsp(event){
+        //console.log('uom Here');
+        let ind = this.extraValuesChangeList.findIndex(element => element.tabNsp == this.listExtraFields[this.firstExtraFields-1].tabNsp);
+        if(ind == -1){
+            this.extraValuesChangeList.push({tabNsp: this.listExtraFields[this.firstExtraFields-1].tabNsp, 
+                productId: this.listExtraFields[this.firstExtraFields-1].idTemporal, 
+                uom: event.target.value, quantity: this.listExtraFields[this.firstExtraFields-1].Minimum_Order_Qty__c });
+        } else {
+            this.extraValuesChangeList[ind].uom =  event.target.value; 
+        }
+        //console.log(JSON.stringify(this.extraValuesChangeList));
+    }
+    quantityChange(event){
+        //console.log('Q Here');
+        let ind = this.extraValuesChangeList.findIndex(element => element.tabNsp == this.listNSP[this.firstNSP-1].tabNsp);
+        if(ind == -1){
+            this.extraValuesChangeList.push({tabNsp: this.listNSP[this.firstNSP-1].tabNsp, productId: this.listNSP[this.firstNSP-1].idTemporal, uom: this.listNSP[this.firstNSP-1].Primary_UOM__c, quantity: event.target.value });
+        } else {
+            this.extraValuesChangeList[ind].quantity =  event.target.value; 
+        }
+        //console.log(JSON.stringify(this.extraValuesChangeList));
+    }
+    quantityChangeNonNsp(event){
+        let ind = this.extraValuesChangeList.findIndex(element => element.tabNsp == this.listExtraFields[this.firstExtraFields-1].tabNsp);
+        if(ind == -1){
+            this.extraValuesChangeList.push({tabNsp: this.listExtraFields[this.firstExtraFields-1].tabNsp, 
+                productId: this.listExtraFields[this.firstExtraFields-1].idTemporal, 
+                uom: this.listExtraFields[this.firstExtraFields-1].Primary_UOM__c, quantity: event.target.value });
+        } else {
+            this.extraValuesChangeList[ind].quantity =  event.target.value; 
+        }
+    }
+
+    //RESTART NSP FIELDS FOR EACH PRODUCT
+    clearNSPFields(){
+        this.nspPicklist = [];
+        this.nspNumbers = [];
+        this.nspDisplayOnly = [];
+        this.listNspValuesToDisplay = [];
+        //this.extraValuesChangeList = [];
+    }
 
     //TO FINISH PROCESS OF NSP, MUST BE ADDED TO ALL THE PRODUCTS.
     closeNSP(){
@@ -1035,20 +1247,40 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         console.log('Before QL NSP: '+ JSON.stringify(auxQuoteLines));
         
         //CREATING NSP QUOTE LINES
+        let startTime = window.performance.now();
+        console.log('Method addNSPProducts quoteId: '+  this.recordId + ' products '+JSON.stringify(auxQuoteLines));
+
         addNSPProducts({quoteId: this.recordId, products: JSON.stringify(auxQuoteLines)})//, filteredGrouping: this.trackList.lookupCode})
         .then((data)=>{
+            let endTime = window.performance.now();
+            console.log(`addNSPProducts method took ${endTime - startTime} milliseconds`);
             //console.log('SUCCESS TURNING NSP QUOTELINES');
             //console.log(data);
             let nsqQuotelines = JSON.parse(data); 
             for (let lines of nsqQuotelines){
+                
+                let indEctraFields = this.extraValuesChangeList.findIndex(element => element.productId == lines.productid);
+                if(indEctraFields != -1){
+                    if (parseInt(this.extraValuesChangeList[indEctraFields].quantity) > parseInt(lines.minimumorderqty)){
+                        lines.quantity = parseInt(this.extraValuesChangeList[indEctraFields].quantity);
+                    } 
+                    if (this.extraValuesChangeList[indEctraFields].uom != lines.uom){
+                        lines.uom = this.extraValuesChangeList[indEctraFields].uom; 
+                    }
+                    this.extraValuesChangeList.splice(indEctraFields,1);
+                }
                 //SINCE THE QUOTE LINES ARE NEW, THE ID MUST HAVE NEW OR XXX 
                 let randomId = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(2, 10);
                 let randomName = Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 6); 
                 lines.id =  'new'+randomId;
                 lines.name = 'New QL-'+randomName;
+
+                console.log('LAST ONE'); 
+                console.log(lines);
+                console.log(this.extraValuesChangeList[indEctraFields]); 
             }
 
-            //console.log('after QL NSP '+ JSON.stringify(nsqQuotelines));
+            console.log('after QL NSP '+ JSON.stringify(nsqQuotelines));
             //ADDING THE QUOTE LINES TO A SPECIFIC LOOKUP CODE
             let auxQuoteLinesLength = nsqQuotelines.length; 
             trackListInternal['listOfProducts'] = nsqQuotelines; 
@@ -1103,13 +1335,37 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         //console.log('P: '+JSON.stringify(auxQuoteLines));
 
         //CREATE THE QUOTE LINES
+        let startTime = window.performance.now();
+
+        console.log('Method addSelectorQuoteLine quoteId: '+  this.recordId + ' products '+JSON.stringify(auxQuoteLines));
+
         addSelectorQuoteLine({quoteId: this.recordId, products: JSON.stringify(auxQuoteLines)})
         .then((data)=>{
+            let endTime = window.performance.now();
+            console.log(`addSelectorQuoteLine method took ${endTime - startTime} milliseconds`);
+
             //console.log('Data after addSelectorQuoteLine'+ data);
             auxQuoteLines = JSON.parse(data); 
             auxQuoteLinesLength = auxQuoteLines.length; 
             //console.log('Length of products: '+ auxQuoteLinesLength);
             for (let putId of auxQuoteLines){
+                let indEctraFields = this.extraValuesChangeList.findIndex(element => element.productId == putId.productid);
+                if(indEctraFields != -1){
+                    if (parseInt(this.extraValuesChangeList[indEctraFields].quantity) > parseInt(putId.minimumorderqty)){
+                        putId.quantity = parseInt(this.extraValuesChangeList[indEctraFields].quantity);
+                    } 
+                    if (this.extraValuesChangeList[indEctraFields].uom != putId.uom){
+                        putId.uom = this.extraValuesChangeList[indEctraFields].uom; 
+                    }
+                    if (parseInt(this.extraValuesChangeList[indEctraFields].length) != null){
+                        putId.length = parseInt(this.extraValuesChangeList[indEctraFields].length);
+                    } 
+                    if (this.extraValuesChangeList[indEctraFields].lengthuom != null){
+                        putId.lengthuom = this.extraValuesChangeList[indEctraFields].lengthuom; 
+                    }
+                    this.extraValuesChangeList.splice(indEctraFields,1);
+                }
+
                 let randomId = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(2, 10);
                 let randomName = Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 6); 
                 putId.id =  'new'+randomId;

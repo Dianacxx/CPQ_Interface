@@ -1,6 +1,12 @@
 .slds-modal__container_max {
+    max-width: 35rem !important;
+    width: 35% !important;
+}
+.modal__container_uom{
     max-width: 80rem !important;
-    width: 80% !important;
+    width: 60% !important;
+    height: 35rem;
+
 }
 .ApplyButton, .stretchButton{
     background-color: #0176d3;

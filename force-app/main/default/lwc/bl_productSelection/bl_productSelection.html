@@ -26,6 +26,11 @@
                         list-to-display={girdDataAcaTab} list-to-display-add={girdDataAcaTabAdd}
                         onsavebeforeconfigured={saveBeforeConfigured} onlisttodisplayadd={saveListToDisplay}></c-bl_list-products>
                     </lightning-tab>
+                    <lightning-tab label="Cable" onactive={handleActive}>
+                        <c-bl_list-products record-id={recordId} tab-selected="Cable" 
+                        list-to-display={girdDataCableTab} list-to-display-add={girdDataCableTabAdd}
+                        onsavebeforeconfigured={saveBeforeConfigured} onlisttodisplayadd={saveListToDisplay}></c-bl_list-products>
+                    </lightning-tab>
                     <lightning-tab label="Connectivity" onactive={handleActive}>
                         <c-bl_list-products record-id={recordId} tab-selected="Connectivity" 
                         list-to-display={girdDataConnTab}  list-to-display-add={girdDataConnTabAdd}
@@ -34,11 +39,6 @@
                     <lightning-tab label="Fiber Optic Cable" onactive={handleActive}>
                         <c-bl_list-products record-id={recordId} tab-selected="Fiber Optic Cable" 
                         list-to-display={girdDataFocTab} list-to-display-add={girdDataFocTabAdd}
-                        onsavebeforeconfigured={saveBeforeConfigured} onlisttodisplayadd={saveListToDisplay}></c-bl_list-products>
-                    </lightning-tab>
-                    <lightning-tab label="Cable" onactive={handleActive}>
-                        <c-bl_list-products record-id={recordId} tab-selected="Cable" 
-                        list-to-display={girdDataCableTab} list-to-display-add={girdDataCableTabAdd}
                         onsavebeforeconfigured={saveBeforeConfigured} onlisttodisplayadd={saveListToDisplay}></c-bl_list-products>
                     </lightning-tab>
                     <lightning-tab label="Test & Inspection" onactive={handleActive}>

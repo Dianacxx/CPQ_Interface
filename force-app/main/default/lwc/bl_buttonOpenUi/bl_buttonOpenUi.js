@@ -20,11 +20,21 @@ export default class ButtonOpenUi extends NavigationMixin(LightningElement) {
     handleNavigateUi(){
 
         //NAVIGATE IF IT HAS A PRICEBOOK
+        let startTime = window.performance.now();
+        console.log('Method checkPricebookInQuote quoteId '+this.recordId);
+
         checkPricebookInQuote({quoteId: this.recordId})
         .then((data)=>{
+            let endTime = window.performance.now();
+            console.log(`search method took ${endTime - startTime} milliseconds`);
             if (data == 'YES'){
+
+                let startTime1 = window.performance.now();
+                console.log('Method savingRecordId quoteId '+this.recordId);
                 savingRecordId({quoteId: this.recordId})
                 .then(() => {
+                    let endTime1 = window.performance.now();
+                    console.log(`savingRecordId method took ${endTime1 - startTime1} milliseconds`);
                     //console.log('RECORD SAVE IN ACTION!');
                     var compDefinition = {
                         componentDef: "c:bl_userInterface",
