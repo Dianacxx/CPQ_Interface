@@ -59,7 +59,7 @@ const QUOTE_LINE_COLUMNS = [
     {label: 'Length UOM',sortable: true,fieldName: 'lengthuom' ,type: "button", typeAttributes: 
     { label: { fieldName: 'lengthuom' }, name: 'lengthUomChange',value: { fieldName: 'lengthuom' }, iconPosition: 'right', variant: 'base', iconName: 'utility:chevrondown',},},
     { label: 'Discount (%)', fieldName: 'discount', editable: true ,sortable: true, wrapText: false,type: 'number', hideDefaultActions: true },
-    { label: 'Net Unit Price', fieldName: 'netunitprice', editable: true ,sortable: true, wrapText: false,type: 'number',  hideDefaultActions: true },
+    { label: 'Net Unit Price', fieldName: 'netunitprice', editable: false ,sortable: true, wrapText: false,type: 'number',  hideDefaultActions: true },
     { label: 'List Unit Price', fieldName: 'listunitprice', editable: false ,sortable: true, wrapText: false,type: 'number',  hideDefaultActions: true },
     { label: 'Net Total', fieldName: 'nettotal', editable: false ,sortable: true, wrapText: false,type: 'number',  hideDefaultActions: true },
     { label: 'NSP', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:google_news', name: 'NSP', variant:'brand', size:'xxx-small'}},

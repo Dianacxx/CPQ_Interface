@@ -523,8 +523,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         this.requiredApex = event.detail.value;
         //let index = this.filtersForApex.findIndex(label => label.label === event.detail.label);
         this.filtersForApex.push({label: event.target.label, value: this.requiredApex});
-        //console.log('filteredGrouping: '+ this.trackList.lookupCode)
-        //console.log('typeSelection: '+ this.requiredApex);
+        
         this.listTextFilters = [];
         this.listFilters = [];
         this.columnsFilters = [{label: 'Product Name', fieldName: 'Name', editable: false, wrapText: false, },]; 
