@@ -466,6 +466,8 @@ export default class Bl_dataTable extends LightningElement {
                         newQuotelines[i].minimumorderqty == null ? newQuotelines[i].quantity = 1 : newQuotelines[i].quantity = newQuotelines[i].minimumorderqty;
                         newQuotelines[i].netunitprice = 1;
                         newQuotelines[i].alternative = false;
+                        newQuotelines[i].alternativeindicator = false;
+                        newQuotelines[i].dynamicIcon = 'utility:close';
                         newQuotelines[i].quotelinename = newQuotelines[i].product;
                         
                         //SPECIAL BEHAVIOR TO ADD LENGTH BASE VALUES 
@@ -548,6 +550,9 @@ export default class Bl_dataTable extends LightningElement {
                     newQuotelines[i].minimumorderqty == null ? newQuotelines[i].quantity = 1 : newQuotelines[i].quantity = newQuotelines[i].minimumorderqty;
                     newQuotelines[i].netunitprice = 1;
                     newQuotelines[i].alternative = false;
+                    newQuotelines[i].alternativeindicator = false;
+                    newQuotelines[i].dynamicIcon = 'utility:close';
+                    
                     newQuotelines[i].quotelinename = newQuotelines[i].product;
                     //SPECIAL BEHAVIOR TO ADD LENGTH BASE VALUES 
                     if (newQuotelines[i].filteredGrouping == 'Cable Assemblies' || newQuotelines[i].productType == 'Patch Panel - Stubbed'){
@@ -614,7 +619,8 @@ export default class Bl_dataTable extends LightningElement {
                 newQuotelines[i].name = 'New QL-'+randomName; 
                 newQuotelines[i].minimumorderqty == null ? newQuotelines[i].quantity = 1 : newQuotelines[i].quantity = newQuotelines[i].minimumorderqty;
                 newQuotelines[i].netunitprice = 1;
-                newQuotelines[i].alternative = false;
+                newQuotelines[i].alternativeindicator = false;
+                 newQuotelines[i].alternative = false;
                 newQuotelines[i].quotelinename = newQuotelines[i].product;
                 newQuotelines[i].length = 'NA';
                 newQuotelines[i].lengthuom = 'NA';
@@ -881,7 +887,7 @@ export default class Bl_dataTable extends LightningElement {
 
     //UPDATE PAGE VIEW OF TABLE 
     updateTable(){
-        //this.page = 1;
+        this.page = 1;
         //console.log('EVERY TIME YOU UPDATE');
         //console.log(JSON.stringify(this.quoteLines));
         this.quotelinesLength = this.quoteLines.length;
@@ -890,6 +896,7 @@ export default class Bl_dataTable extends LightningElement {
         this.dataPages = this.quoteLines.slice(0,this.pageSize); 
         this.endingRecord = this.pageSize;
         this.quotelinesLength = this.quoteLines.length;
+        //this.firstHandler();
     }
 
     @track deleteClick = false; 
@@ -924,9 +931,20 @@ export default class Bl_dataTable extends LightningElement {
     uomPopupOpen = false; //To open pop-up that changes UOM value
     lengthUomPopupOpen = false;  //To open pop-up that changes Length UOM value
 
+    convertToPlain(html){
+        // Create a new div element
+        var tempDivElement = document.createElement("div");
+        // Set the HTML content with the given value
+        tempDivElement.innerHTML = html;
+        // Retrieve the text property of the element 
+        return tempDivElement.textContent || tempDivElement.innerText || "";
+    } 
+
+    @track richtext = '<br><p>carp</p><br><ul><li class=\'msgSuccess\'>1 item(s) added to cart successfully</li><li class=\'msgErr\'>3 item(s) were not added to the cart</li><li class=\'msgWarn\'>Invalid SKU: 710-900007</li><li class=\'msgWarn\'>Invalid SKU: ABC</li><li class=\'msgWarn\'>Invalid SKU: XYZ</li></ul>';
+
     handleRowAction(event){
         this.dataRow = event.detail.row;
-        console.log(Object.getOwnPropertyNames(event.detail));
+       //console.log(Object.getOwnPropertyNames(event.detail));
         switch (event.detail.action.name){
             case 'Delete':
                 this.deleteClick = true; 
@@ -949,12 +967,19 @@ export default class Bl_dataTable extends LightningElement {
                 this.lineNotePopUp = true;
                 //TO SHOW NEW LINES IF THERE IS ONE ALREADY IN THE LINE NOTE WITOUT HTML TAGS 
                 if (this.dataRow.linenote != null){
+                    //EDITING HERE
+                    console.log('HTML TAGS');
+                    console.log(this.convertToPlain(this.dataRow.linenote));
+                    //no editing here
+                    /*
                     let text =  String(this.dataRow.linenote);
                     //console.log(text)
                     text = '<p>'+text;
+                    //cambiar para quitar todas las tags
                     text = text.replace(/\r\n|\n/g, '</p><p>');
-                    text = text+'</p>';
-                    this.lineNoteValue = text; 
+                    text = text+'</p>';*/
+                    
+                    this.lineNoteValue = this.dataRow.linenote; //text; 
                 } else {
                     this.lineNoteValue = '';
                 }

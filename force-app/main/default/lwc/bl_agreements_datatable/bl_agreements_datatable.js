@@ -2,7 +2,7 @@ import { LightningElement,api,wire,track } from 'lwc';
 import getDiscountScheduleInfo from '@salesforce/apex/BlAgreementsDSLookup.getDiscountScheduleInfo';
 import getUnitPrice from '@salesforce/apex/BlAgreementsDSLookup.getUnitPrice';
 import getCurrency from '@salesforce/apex/BlAgreementsDSLookup.getCurrency';
-import readerV2 from '@salesforce/apex/FixedPriceReader.readerV2';
+import readerV3 from '@salesforce/apex/FixedPriceReader.readerV3';
 /* import getFixedPrice from '@salesforce/apex/FixedPriceReader.reader';
  */import getAgreementDetails from '@salesforce/apex/BlAgreementsDSLookup.getAgreementDetails';
  import getAccountName from '@salesforce/apex/BlAgreementsDSLookup.getAccountName';
@@ -24,6 +24,13 @@ import CONTRACT_OBJECT from '@salesforce/schema/Contract';
 import { refreshApex } from '@salesforce/apex';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import saveSchedule from '@salesforce/apex/SaveController.saveSchedule';
+
+
+import getProductLevels from '@salesforce/apex/BlAgreementsDSLookup.getProductLevels';
+import getCustomerTier from '@salesforce/apex/BlAgreementsDSLookup.getCustomerTier';
+import getPttInfo from '@salesforce/apex/BlAgreementsDSLookup.getPttInfo';
+import getListPrice from '@salesforce/apex/BlAgreementsDSLookup.getListPrice';
+
 
 const fields = [CONTRACT_STATUS, CONTRACT_ID];
 
@@ -71,19 +78,27 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
      endUser;
      status;
      owner;
-     customer;
+     @api customer;
      endUserName;
      market;
      ownerName;
      salesPerson;
      competitor;
      uOM;
-
-
-
-
-
-
+     productLevel1;
+    productLevel2;
+    productLevel3;
+    productLevel4;
+    customerTier;
+    additionalDiscount;
+    unitPrice;
+    pptData;
+    prodQty;
+    additionalDiscount2;
+    unitPrice2;
+    qtyAdj2 ;
+    tierAdj2;
+    price2
 
     handleActivateContract(){
 
@@ -95,10 +110,7 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
             this.activateString = 'Decativate'
             console.log('shoud be DEAC : '+this.activateString)
             this.loadbuttons = true
-            
-           
-
-          
+                    
 
         }
         else{
@@ -169,12 +181,12 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
         {label: 'Product',initialWidth: 200, fieldName: 'productName', type: 'text'},
         {label: 'Description',initialWidth: 300,fieldName: 'description' , type: 'text'},
         {label: 'Min Qty',initialWidth: 80,fieldName: 'minimumQuantity', type: 'text'},
-        {label: 'UOM2',initialWidth: 80,fieldName: 'uOM', type: 'text',editable: true},
-        {label: 'UOM', initialWidth: 80,fieldName: 'uOM' ,type: "button",editable: true, typeAttributes: {  
+/*         {label: 'UOM2',initialWidth: 80,fieldName: 'uOM', type: 'text',editable: true},
+ */        {label: 'UOM', initialWidth: 90/* ,fieldName: 'uOM'  */,type: "button",editable: true, typeAttributes: {  
             label: { fieldName: 'uOM' },  
             name: 'uomChange',  
 /*             value: { fieldName: 'uOM' },  
- */            iconPosition: 'left'  
+ */           iconPosition: 'right', variant: 'base', iconName: 'utility:chevrondown',  
         }},  
         {label: 'Price',initialWidth: 80, fieldName: 'fixedPrice' , type: 'currency',
         typeAttributes: { currencyCode: {fieldName:'cur'}, step: '0.001' },},
@@ -183,7 +195,7 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
         {label: 'Adder',initialWidth: 80 ,fieldName: 'varPriceAdj', editable: true , type: 'currency',
         typeAttributes: { currencyCode: {fieldName:'cur'}, step: '0.001' },},
         {label: 'UOM',initialWidth: 80, fieldName:'uomAdder',editable: true , type: 'text'},
-        { label : 'Qty',type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:description', name: 'view' ,  variant:'brand', size:'xx-small'}},
+        { label : 'Qty',type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:description', name: 'view' ,  variant:'brand', size:'xx-small'},},
         { label : '' ,type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:delete', name: 'delete', variant:'border-filled', size:'xx-small'}},
         { label : '' ,initialWidth: 30,cellAttributes: { iconName: { fieldName: 'dynamicIcon' } } },
 
@@ -291,6 +303,7 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
 
                 getCurrency({accId : this.recordId }) 
                 .then(result => {
+                    
                     this.customer = result[0].Name;
                     this.currency = result[0].CurrencyIsoCode;
                     this.market = result[0].Customer_Class__c;
@@ -349,9 +362,12 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
     /* DELETE DISCOUNT SCHEDULE */
 
     deleteRow; 
+    
+    globalRow; //The global row for the functions  28/06/22
     handleRowActions(event) {
         let actionName = event.detail.action.name;
-        let row = event.detail.row;
+        this.globalRow = event.detail.row; //TO USE THE ROW IN OTHER FUNCTIONS LIKE UOM CHANGING  28/06/22
+        let row = event.detail.row; //THIS IS JUST GOIN TO WORK INSIDE THIS FUNCTION  28/06/22
         //this.recordId = row.Id; //Remember that you are using the recordId for the Account ID
         switch (actionName) {
             case 'delete':
@@ -361,6 +377,7 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
             case 'view':
 /*                 this.saveDiscountSchedule()
  */                this.discountNombre = row.discountName;
+                   this.producto = row.productId;
                     console.log('newDiscount'+JSON.stringify(this.newDiscount));
 /*                 setTimeout(()=>{this.isModalOpen = true;;},2000);
  */                this.isModalOpen = true;
@@ -369,16 +386,17 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
             /*   this.delDiscount(row); */
             break;
             case 'uomChange':
-                console.log( this.uomPopupOpen);
+             
+               
 
                 this.uomPopupOpen = true;
-                console.log( this.uomPopupOpen);
                 
             break;
 
         }
     }
-
+    
+    
     
     confirmDelete(){
         this.loadTable = false; 
@@ -417,16 +435,74 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
         console.log('Product ID'+this.selectedRecordId.id)
         console.log('Currency ID '+this.currencyContract)
 
-
+        console.log('MY FUCNTON CALLED')
         
+        console.log('MY FUCNTON YA')
 
-        readerV2({ AccountId:this.recordId, ProductId:this.selectedRecordId.id/* ,  DSCurrencyIsoCode:this.currencyContract */ }) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+        /* xxxxxxxxxxxxxxxxxxxxxxmxmxmxmmxmxmxmsxmsmxssxmxsmxsmxsmxmxsmsxmxsmxsmxs */
+
+
+        getListPrice({productId : this.selectedRecordId.id}) 
         .then(result => {
-            this.datalos = result
-            console.log('READER V2 DATA STRINGI ' + JSON.stringify(result));
-            console.log('READER V2 DATA  ' + result);
+             this.unitPrice2 = result[0].UnitPrice;
+             console.log('UNIT PRICE'+ this.unitPrice2)
+
+            })
+            .catch(error => {
+                console.log(error);
+            });
+
+        getProductLevels({productId : this.selectedRecordId.id})
+        .then(result => {
+            console.log('LEVEL '  + JSON.stringify(result))
+             this.productLevel1 = result[0].ProdLevel1__c;
+            this.productLevel2 = result[0].ProdLevel2__c;
+             this.productLevel3 = result[0].ProdLevel3__c;
+            this.productLevel4 = result[0].ProdLevel4__c;
+           
+            getCustomerTier( {AccountId:this.recordId ,  ProdLevel1:this.productLevel1 ,  ProdLevel2:this.productLevel2})
+            .then(resulta => {
+/*                 console.log('TIER INFO : ' +this.recordId + this.productLevel1 + this.productLevel2 )
+                console.log('TIER : '  + JSON.stringify(resulta))
+               this.customerTier = resulta[0].Tier__c
+                this.additionalDiscount2 = resulta[0].Additional_Discount__c
+                console.log('DISCOUNT : '  + this.additionalDiscount2)
+ */ 
+                getPttInfo( { Tier:this.customerTier ,  ProdLevel1:this.productLevel1 ,  ProdLevel2:this.productLevel2, ProdLevel3:this.productLevel3 ,  ProdLevel4:this.productLevel4 , qty:this.selectedRecordId.minimumQuantity})
+                .then(result => {
+
+                    /*
+                    console.log('PPT INFO : ' +this.customerTier + this.productLevel1 + this.productLevel2 +this.productLevel3 + this.productLevel4 )
+                    
+                  this.pptData =  result;
 
 
+                console.log('PPT    : '  + this.pptData)
+                console.log('PPT STR   : '  + JSON.stringify(this.pptData[0].Quantity_Adjustment__c)) 
+                console.log('PPT STR   : '  + JSON.stringify(this.pptData)[0].Quantity_Adjustment__c)
+                this.qtyAdj2 = JSON.stringify(this.pptData[0].Quantity_Adjustment__c);
+                this.tierAdj2 = JSON.stringify(this.pptData[0].Tier_Adjustment__c);
+               
+              this.price2 = this.qtyAdj2 * this.tierAdj2  * this.unitPrice2 * (1-this.additionalDiscount2)
+              console.log('PRICE 2 : ' + this.price2)
+              console.log('qtyAdj2 2 : ' + this.qtyAdj2)
+              console.log('tierAdj2 2 : ' + this.tierAdj2)
+              console.log('unitPrice2 2 : ' + this.unitPrice2)
+              console.log('additionalDiscount2 2 : ' + this.additionalDiscount2) 
+              */
              //Creating a mock ID since is not created in SF yet, and it's necesarry to keep track of the table changes or deletions 
              let mockRandomId = 'New-'+Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 10); 
              let mockRandomName = 'Schedule-'+Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 10);
@@ -440,7 +516,7 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
               varPriceAdj:null,
               fixedPriceAdj:null,
               uOM: this.selectedRecordId.primaryUom,
-              fixedPrice: this.datalos,
+              fixedPrice: this.price2,
               description: this.selectedRecordId.Description,
               minimumQuantity: this.selectedRecordId.minimumQuantity,
               contract: JSON.parse(this.agreementId), 
@@ -481,14 +557,56 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
           //Objects, variables and values that you have in the dataTable are Correct. 
           console.log('New Data' + JSON.stringify(this.data));
 
+          
 
 
+        })
+        
 
+
+            
+                .catch(error => {
+                    console.log(error);
+                });
+    
+                
+            })
+            .catch(error => {
+                console.log(error);
+            });
+            
         })
         .catch(error => {
             console.log(error);
         });
+        this.isLoading = false;
+    
 
+    
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+        /* xxxxxxxxxxxxxxxxxxxxxxmxmxmxmmxmxmxmsxmsmxssxmxsmxsmxsmxmxsmsxmxsmxsmxs */
+
+
+
+
+
+
+      
 
 
 
@@ -498,23 +616,16 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
 
     //The LWC datatable need to save the values and the 'SAVE/CANCEL' buttons are deafult when editing (onsave)
     handleSaveEdition(event){
-        //Not a good practice, but it helps to clone an object if it's just properties and values. 
         let discountAuxiliarEdit = JSON.parse(JSON.stringify(this.data));
-
-        //The edited values from the table just came Id and field edited with the new value (not all the row)
+        console.log(JSON.stringify(this.data))
         let rowsEditedValues = event.detail.draftValues; 
-        //console.log(JSON.stringify(rowsEditedValues));
         console.log(Object.getOwnPropertyNames(rowsEditedValues[0]));
         
-        //For each change in table here is looking the row and changing the value in the datatable variable
         for (let i=0;i<rowsEditedValues.length;i++){
             let index = discountAuxiliarEdit.findIndex(x => x.discountName == rowsEditedValues[i].discountName); 
-            //console.log('Properties edited: '+Object.getOwnPropertyNames(rowsEditedValues[i]));
             console.log('Index: '+index); 
             let prop = Object.getOwnPropertyNames(rowsEditedValues[i]);
             
-            //Is not a good practice to do nested loops but since inside there aren't complex function this is not
-            //Going to break the process. 
             for (let j = 0; j< prop.length; j++){
                 if (prop[j] != 'discountName'){ //To avoid editing the discId (that is the key of the datatable right now)
                     discountAuxiliarEdit[index][prop[j]] = rowsEditedValues[i][prop[j]]; 
@@ -523,7 +634,9 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
             }
         }
         this.data = discountAuxiliarEdit; 
-        this.template.querySelector("lightning-datatable").draftValues = []; //To close the save button 
+        this.template.querySelectorAll('lightning-datatable').forEach(each => {
+            each.draftValues = [];
+        });; //To close the save button 
         //console.log('Edited: '+JSON.stringify(discountAuxiliarEdit));
 
     }
@@ -725,13 +838,31 @@ getPrice(){
         )
         uomList;
 
+
+        
+
+        newUOM = ''; 
         uomHandler(event){
-            this.uOM = event.target.value;
-        }
+            this.newUOM = event.target.value; 
+            console.log('Data now : ' + JSON.stringify(this.data))
+            console.log('New UOM  : ' + JSON.stringify(this.newUOM))
+        }   
         saveUom(){
-            console.log('NEW DISCOUNT'+JSON.stringify(this.newDiscount))
-            this.uomPopupOpen=false;
+                this.loadTable = false;
+                let index = this.data.findIndex(x => x.discountName === this.globalRow.discountName);
+                this.data[index].uOM = this.newUOM; //NOTE THAT THE PROPERTY MUST BE uOM AND NOT UOM OR uom  28/06/22
+                //this.dispatchEvent(new CustomEvent('editedtable', { detail: JSON.stringify(this.data )}));
+                console.log('Data SAVED : ' + JSON.stringify(this.data));
+                setTimeout(()=>{this.loadTable = true;},250);
+            this.closeUomPopup();
         }
-     
-   
+
+
+
+
+
+/*  TEST  */
+
+
+
 }

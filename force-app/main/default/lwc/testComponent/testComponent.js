@@ -5,1329 +5,307 @@
 import { LightningElement, wire, api, track } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
-//APEX METHOD THAT SEARCH THE AGREEMENT IN TIER POP-UP (POP-UP DATATABLE)
-import searchAgreement from '@salesforce/apex/SearchAgreementLookupController.search'; 
+import printQuoteLineList from '@salesforce/apex/LinePrintersController.printQuoteLineList'; 
+import printQuoteLineString from '@salesforce/apex/LinePrintersController.printQuoteLineString'; 
+import upsertQuoteLineList from '@salesforce/apex/LinePrintersController.upsertQuoteLineList'; 
+import updateQuoteLineList from '@salesforce/apex/LinePrintersController.updateQuoteLineList'; 
 
-//APEX METHOD THAT RETRIEVE TIERS OF THE AGREEMENT SELECTED
-import discountPrinter from '@salesforce/apex/DiscountController.discountPrinter'; 
-
-//GETTING THE ACCOUNT OF THE QUOTE (POP-UP DATATABLE)
-import ACCOUNT_ID_FIELD from '@salesforce/schema/SBQQ__Quote__c.SBQQ__Account__c'; 
-import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
-
-//GETTING PICKLIST VALUES WITOUTH DEPENDENCIES OR APEX METHODS FOR TIERS FIELDS (UI)
-import { getPicklistValues, getObjectInfo } from 'lightning/uiObjectInfoApi';
-import QUOTE_LINE_OBJECT from '@salesforce/schema/SBQQ__QuoteLine__c';
-import OVERRIDE_REASON from '@salesforce/schema/SBQQ__Quote__c.Override_Reason__c';
-import OVERRIDE_TYPE from '@salesforce/schema/SBQQ__Quote__c.Override_Type__c';
-import quoteSaver from '@salesforce/apex/DiscountController.quoteSaver'; 
-
-//TIER COLUMNS FOR TABLE IN TIERS POP-UP (POP-UP DATATABLE)
-const TIER_COLUMNS = [
-    { label: 'Tier Name', fieldName: 'name', initialWidth: 100, },
-    { label: 'Number', fieldName: 'tierNumber', type: 'number', initialWidth: 100,},
-    { label: 'Discount', fieldName: 'discount', type: 'number', initialWidth: 100, },
-];
 
 export default class TestComponent extends LightningElement {
 
-    //TIERS VARIBALES (POP-UP DATATABLE)
-    tiers = []; 
-    tiersColumns = TIER_COLUMNS; 
-    popUpTiers = false;
-    showTiersList = false;
-    uomOfQuoteline = '';
-    QuoteName = '';
-    accountId; 
-    @api recordId; 
-    @track selectedName;
-    @track recordsTiers;
-    @track blurTimeout;
-    @track searchTermTier;
-    showTiers = false;
-
-    //CSS VARIABLES (POP-UP DATATABLE)
-    @track boxClass = 'slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click slds-has-focus';
-    @track inputClass = 'slds-align_absolute-center';
-    
-    connectedCallback(){ //(POP-UP DATATABLE)
-        //!!!!!!!CHANGES HERE
-        this.popUpTiers = true; //DELETE WHEN IS CONNECTED TO UI 
-        this.showTiersList = true; //DELETE WHEN IS CONNECTED TO UI
-
-        this.uomOfQuoteline = 'UOM of quote line here'; //CHANGE THIS TO THE ORIGINAL QUOTE LINE UOM 
-        this.QuoteName = 'Quote Name here'; //CHANGE THIS TO THE ORIGINAL QUOTE LINE NAME
-    }
+	@api recordId; 
+	quoteLines;
+	//DATA TABLE COLUMNS FOR EACH TAB USED
+	QUOTE_LINE_COLUMNS = [
+    { label: 'Product', fieldName: 'Quote_Line_Name__c', editable: false ,sortable: true, wrapText: false, initialWidth: 250,},
+    { label: 'Description', fieldName: 'SBQQ__Description__c', editable: true ,sortable: true, wrapText: false, initialWidth: 100,},
+    { label: 'Quantity', fieldName: 'SBQQ__Quantity__c', editable: true ,sortable: true, wrapText: false,type: 'number',hideDefaultActions: true,  },
+    {label: 'UOM',sortable: true,fieldName: 'UOM__c' ,type: "button", typeAttributes: 
+    { label: { fieldName: 'UOM__c' }, name: 'uomChange',value: { fieldName: 'UOM__c' }, iconPosition: 'right', variant: 'base', iconName: 'utility:chevrondown',}, },
+    //{ label: 'UOM', fieldName: 'uom', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true , },
+    { label: 'Length', fieldName: 'Length__c', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true,  },
+    //{ label: 'Length UOM', fieldName: 'lengthuom', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true,  },
+    {label: 'Length UOM',sortable: true,fieldName: 'Length_UOM__c' ,type: "button", typeAttributes: 
+    { label: { fieldName: 'Length_UOM__c' }, name: 'lengthUomChange',value: { fieldName: 'Length_UOM__c' }, iconPosition: 'right', variant: 'base', iconName: 'utility:chevrondown',},},
+    { label: 'Discount (%)', fieldName: 'SBQQ__Discount__c', editable: true ,sortable: true, wrapText: false,type: 'number', hideDefaultActions: true },
+    { label: 'Net Unit Price', fieldName: 'SBQQ__NetPrice__c', editable: false ,sortable: true, wrapText: false,type: 'number',  hideDefaultActions: true },
+    { label: 'List Unit Price', fieldName: 'SBQQ__ListPrice__c', editable: false ,sortable: true, wrapText: false,type: 'number',  hideDefaultActions: true },
+    { label: 'Net Total', fieldName: 'SBQQ__NetTotal__c', editable: false ,sortable: true, wrapText: false,type: 'number',  hideDefaultActions: true },
+    { label: 'NSP', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:google_news', name: 'NSP', variant:'brand', size:'xxx-small'}},
+    { label: 'Tiers', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:adjust_value', name: 'Tiers', variant:'brand', size:'xxx-small'}},
+    { label: 'Line Notes', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:new_note', name: 'Linenote', variant:'brand', size:'xxx-small'}},
+    { label: '', type: 'button-icon',initialWidth: 20,typeAttributes:{iconName: 'action:delete', name: 'Delete', variant:'border-filled', size:'xxx-small'}}
+	];
 
 
-    //WIRE METHODS TO GET QUOTE OVERRIDE REASON  INFO (UI)
-    @wire(getObjectInfo, { objectApiName: QUOTE_LINE_OBJECT })
-    quotelineMetadata;
-    @wire(getPicklistValues,{ recordTypeId: '$quotelineMetadata.data.defaultRecordTypeId', 
-            fieldApiName: OVERRIDE_REASON})
-    overrideReasonsList;
+	connectedCallback(){
+		console.log('RECORD '+this.recordId);
 
-    //WIRE METHODS TO GET QUOTE OVERRIDE TYPE  INFO (UI)
-    @wire(getPicklistValues,{ recordTypeId: '$quotelineMetadata.data.defaultRecordTypeId', 
-            fieldApiName: OVERRIDE_TYPE})
-    overrideTypeList;
+		/*
+		printQuoteLineString({quoteId: this.recordId})
+		.then((data)=>{
+			console.log('printQuoteLineString');
+			console.log(data);
+		})
+		.catch((error)=>{
+			console.log('printQuoteLineString ERROR');
+			console.log(error);
+		})	
+		*/
+		let startTime = window.performance.now();
 
-    //WIRE METHOD TO GET ACCOUNT INFO (POP-UP DATATABLE)
-    @wire(getRecord, { recordId: '$recordId', fields: ACCOUNT_ID_FIELD})
-    quoteData({error, data}){
-        if (data){
-            let account = data;
-            this.accountId = getFieldValue(account, ACCOUNT_ID_FIELD ); }
-        else {
-            this.accountId = 'NO ACCOUNT'; 
-        }
-    }
-    
-    /*
-    handleProductSelected(event) {
-        this.productSelected = event.detail.value;
-    }*/
+		printQuoteLineList({quoteId: this.recordId})
+		.then((data)=>{
+			let endTime = window.performance.now();
+            console.log(`printQuoteLinesList method took ${endTime - startTime} milliseconds`);
+
+			//console.log('printQuoteLineList');
+			//console.log(data);
+			this.quoteLines = data; 
+
+		})
+		.catch((error)=>{
+			console.log('printQuoteLineList ERROR');
+			console.log(error);
+		})
+
+	}
 
 
-    //CHANGE CSS (POP-UP DATATABLE)
-    handleClick() {
-        this.searchTermTier = '';
-        this.inputClass = 'slds-align_absolute-center slds-has-focus';
-        this.boxClass = 'slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click slds-has-focus slds-is-open';
-    }
-    onBlur() {
-        this.blurTimeout = setTimeout(() => {
-            this.boxClass = 'slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click slds-has-focus'
-        }, 300);
-    }
+	rowUOMErrors = [];
+	minimumQuantityErrors = [];
+	minimumQuantityMultipleErrors = []; 
+	nonProductLevel2 = [];
+	quoteLinesEdit = []; 
 
-    //WHEN SELECTING AN AGREEMENT FROM THE LIST  (POP-UP DATATABLE)
-    onSelect(event) {
-        let selectedId = event.currentTarget.dataset.id;
-        let selectedName = event.currentTarget.dataset.name;
-        console.log('Selected:' + selectedId+', '+selectedName);
-        this.template.querySelectorAll("[id*='inputAgreement']").forEach(each => { each.value = undefined; });
-        if(!(selectedId == 'norecords')){
-            //selectedId 
-            discountPrinter({agreementId: '8002h000000engBAAQ' /*selectedId*/, prodId: '01t2h000004Rvu1AAC' })
-            .then((data)=>{
-                console.log('discount Tiers GOOD'); 
-                console.log(data);
-                this.tiers = JSON.parse(data); 
-            })
-            .catch((error)=>{
-                console.log('discount Tiers BAD'); 
-                console.log(error);
-            })
-            //put this.showTiers = true; when this.tiers are recived. 
-            /*
-            const valueSelectedEvent = new CustomEvent('lookupselected', {detail:  selectedId });
-            this.dispatchEvent(valueSelectedEvent);
-            this.isValueSelected = true;
-            this.selectedName = selectedName;
-            */
-            if(this.blurTimeout) {
-                clearTimeout(this.blurTimeout);
-            }
-            this.boxClass = 'slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click slds-has-focus';
-        }
-        
-    }
-
-    //WHEN CHANGING THE TERM TO LOOK UP THE AGREEMENT (POP-UP DATATABLE)
-    onChange(event) {
-        this.searchTermTier = event.target.value;
-        //console.log('search Term : '+ this.searchTermTier);
-        //IF NOT RELATED ACCOUNT 
-        if(this.accountId == 'NO ACCOUNT'){
-            const evt = new ShowToastEvent({
-                title: 'No Account available',
-                message: 'This quote has no associated account',
-                variant: 'error',
-                mode: 'dismissable'
-            });
-            this.dispatchEvent(evt);
-        } else {
-            searchAgreement( {accId : this.accountId, searchTerm: this.searchTermTier})
-            .then((data)=>{
-                    this.recordsTiers = data;
-                    if (this.recordsTiers.length == 0){
-                        this.recordsTiers = [{"Id":"norecords","Agreement_Name__c":"NO RECORDS",}];
-                    } 
-            })
-            .catch((error)=>{
-                console.log('Lookup ERROR: '); 
-                console.log(error);
-                const evt = new ShowToastEvent({
-                    title: 'No agreements found',
-                    message: 'This quote has no associated agreements',
-                    variant: 'warning',
-                    mode: 'dismissable'
+	handleSaveEdition(event){
+        //this.valuesUOMString = []; 
+        this.rowUOMErrors = [];
+        this.minimumQuantityErrors = [];
+        this.minimumQuantityMultipleErrors = []; 
+        this.nonProductLevel2 = [];
+        this.quoteLinesEdit = event.detail.draftValues; 
+        if(this.quoteLinesEdit.length != undefined){
+            this.uomMessageError = '';
+            this.showUOMValues = false;
+            this.lengthUomMessageError = '';
+            for (let i =0; i< this.quoteLinesEdit.length; i++){
+                //console.log('Id editada: '+this.quoteLinesEdit[i].id);
+                let index = this.quoteLines.findIndex(x => x.Id === this.quoteLinesEdit[i].Id);
+                //console.log('Index en quoteLines '+index); 
+                //GETTING THE FIELDS EDITED IN THE TABLE
+                let inputsItems = this.quoteLinesEdit.slice().map(draft => {
+                    let fields = Object.assign({}, draft);
+                    return { fields };
                 });
-                this.dispatchEvent(evt);
-            });
-        }
-        
-    }
+                let prop = Object.getOwnPropertyNames(inputsItems[i].fields); 
+                
+                //console.log(this.quoteLinesEdit[0]);
+                //VALIDATION RULES TO AVOID ERRORS FROM THE USER BEFORE SAVING IN EACH EDITED QUOTE LINE
+                //SPECIAL CASE, PLEASE NOTE THESE ARE FRAGILE BEHAVIORS IN THE UI 
+                for(let j= 0; j<prop.length-1; j++){
+                    if(prop[j]=='Length__c'){
+                        if (!(this.quoteLines[index].QLE_Variable_Price__c == 'Cable Length' && 
+                        (this.quoteLines[index].is_NSP__c == false || this.quoteLines[index].is_NSP__c == null)))
+                        {   
+                            inputsItems[i].fields[prop[j]] = 'NA';
+                        } 
+                    }
+                    if(prop[j]=='Length_UOM__c'){
+                        //console.log(this.quoteLines[index].qlevariableprice);
+                        //console.log(this.quoteLines[index].isNSP);
+                        if (this.quoteLines[index].QLE_Variable_Price__c == 'Cable Length' && 
+                        (this.quoteLines[index].is_NSP__c == false || this.quoteLines[index].is_NSP__c == null)){
+                            if(this.lengthUom.data.values){
+                                let values = [];
+                                for (let picklist of this.lengthUom.data.values){
+                                    values.push(picklist.value);
+                                }
+                                values = values.map(element => { return element.toLowerCase(); });
+                                let indexL = values.findIndex(x => x == inputsItems[i].fields[prop[j]].toLowerCase()); 
+                                if (indexL == -1){
+                                    let list = this.lengthUom.data.values[0].value;
+                                    for(let i=1; i< this.lengthUom.data.values.length; i++){
+                                        if(i == this.lengthUom.data.values.length-1){
+                                            list = list + ' and '+this.lengthUom.data.values[i].value;
+                                        } else {
+                                            list = list + ', '+this.lengthUom.data.values[i].value;
+                                        }
+                                    }
+                                    this.lengthUomMessageError = 'For Length UOM, available values are: '+list; 
+                                    //console.log(this.lengthUomMessageError); 
+                                    inputsItems[i].fields[prop[j]] = null;
+                                } else if (values[indexL].toLowerCase() == inputsItems[i].fields[prop[j]].toLowerCase() ){
+                                    let str = inputsItems[i].fields[prop[j]];
+                                    str = str.toLowerCase();
+                                    inputsItems[i].fields[prop[j]] = str.charAt(0).toUpperCase() + str.slice(1);
+                                    //console.log('Value: '+ values[indexL]);
+                                    //console.log('Input: '+inputsItems[i].fields[prop[j]] );
+                                }
+                            }
+                        } else {
+                            inputsItems[i].fields[prop[j]] = 'NA'; 
+                            this.quoteLines[index].Length__c = 'NA';  //The length is NA
+                        }
+                    }
+                    if(prop[j]=='UOM__c'){
+                        let prodLevel2 = this.quoteLines[index].ProdLevel2__c; 
+                        if(prodLevel2 == null){
+                            this.nonProductLevel2.push(index+1); 
+                            inputsItems[i].fields[prop[j]] = null; 
+                            //console.log('It does not have product level 2');
+                        } else {
+                            let level2 = prodLevel2.toLowerCase();
+                            let restictedIndex = -1;
+                            for(let k =0; k< this.level2Dependencies.length; k++){
+                                if(this.level2Dependencies[k].level2 == level2) {
+                                    restictedIndex = k; 
+                                }
+                            }
+                            if (restictedIndex == -1) {
+                                //console.log('It is not in the product level 2 list');
+                                this.nonProductLevel2.push(index+1); 
+                                inputsItems[i].fields[prop[j]] = null; 
+                            } else {
+                                let isInRestrictedArray = this.level2Dependencies[restictedIndex].dependencies.find(uom => uom == inputsItems[i].fields[prop[j]].toLowerCase());
+                                if (isInRestrictedArray == undefined){
+                                    this.showUOMValues = true;
+                                    //console.log('It is not available for this product level 2');
+                                    this.rowUOMErrors.push(inputsItems[i].fields[prop[j]]+' is not available for line '+(index+1));
+                                    let str = this.level2Dependencies[restictedIndex].dependencies[0];
+                                    str = str.toLowerCase();
+                                    inputsItems[i].fields[prop[j]] = str.charAt(0).toUpperCase() + str.slice(1);
+                                } else {
+                                    //console.log('It is available and it is save');
+                                    let str = inputsItems[i].fields[prop[j]];
+                                    str = str.toLowerCase();
+                                    inputsItems[i].fields[prop[j]] = str.charAt(0).toUpperCase() + str.slice(1);
+                                }
+                            }
+                        }
+                    }
+                    if(prop[j]=='SBQQ__Quantity__c'){
+                        let minQuote = 1; 
+                        //console.log('Min Q ' + this.quoteLines[index].minimumorderqty);
+                        //console.log('Quantity '+ inputsItems[i].fields[prop[j]]);
+                        Number.isInteger(this.quoteLines[index].Minimum_Order_Qty__c) ? minQuote = this.quoteLines[index].Minimum_Order_Qty__c : minQuote = parseInt(this.quoteLines[index].Minimum_Order_Qty__c) ;
+                       
+                        //CONDITION OF MINIMUM QUANTITY
+                        let minQMult = 0;
+                        this.quoteLines[index].Minimum_Order_Multiple__c == null ? minQMult = 0 : minQMult = this.quoteLines[index].Minimum_Order_Multiple__c.valueOf(); 
+                                                if (inputsItems[i].fields[prop[j]].valueOf() < minQuote.valueOf() ){
+                            this.minimumQuantityErrors.push(index+1); 
+                            this.quoteLines[index].Minimum_Order_Qty__c == null ?  inputsItems[i].fields[prop[j]] = 1 :  inputsItems[i].fields[prop[j]] =  this.quoteLines[index].Minimum_Order_Qty__c;
+                        } 
+                        //CONDITION OF MULTIPLE QUANTITY IF THERE IS A VALUE THERE
+                        else if (parseInt(minQMult) != 0 && !isNaN(minQMult)){
+                            if (inputsItems[i].fields[prop[j]].valueOf() % parseInt(this.quoteLines[index].Minimum_Order_Multiple__c) != 0){
+                                this.minimumQuantityMultipleErrors.push('Line '+ (index+1) + ' multiple of '+ parseInt(this.quoteLines[index].Minimum_Order_Multiple__c));
+                                this.quoteLines[index].Minimum_Order_Qty__c == null ?  inputsItems[i].fields[prop[j]] = 1 :  inputsItems[i].fields[prop[j]] =  this.quoteLines[index].Minimum_Order_Qty__c;
+                            }
+                            
+                        }
+                    }
+                    this.quoteLines[index][prop[j]] = inputsItems[i].fields[prop[j]];
+                }         
 
-    //CLOSE TIERS POP UP (ALREADY IN UI)
-    closeTiers(){
-        this.popUpTiers = false;
-    }
+                //CHECKING DEPENDENCIES OF EMPTY PRODUCT LEVELS VALUES
+                if(this.quoteLines[index].ProdLevel1__c == null || this.quoteLines[index].ProdLevel1__c == undefined){
+                    this.quoteLines[index].ProdLevel2__c = null; 
+                    this.quoteLines[index].ProdLevel3__c =	null;
+                    this.quoteLines[index].ProdLevel4__c =	null;
+                    this.quoteLines[index].uom = null;
+                }
+                if(this.quoteLines[index].ProdLevel2__c == null || this.quoteLines[index].ProdLevel2__c == undefined){
+                    this.quoteLines[index].uom = null;
+                    this.quoteLines[index].ProdLevel3__c =	null;
+                    this.quoteLines[index].ProdLevel4__c =	null;
+                }
+                if(this.quoteLines[index].ProdLevel3__c == null || this.quoteLines[index].ProdLevel3__c == undefined){
+                    this.quoteLines[index].ProdLevel4__c =	null;
+                }
+                if(this.quoteLines[index].SBQQ__NetPrice__c == null || this.quoteLines[index].SBQQ__NetPrice__c == undefined){
+                    this.quoteLines[index].SBQQ__NetPrice__c = 1;
+                }
+                this.quoteLines[0]['clone'] = true;
+            }   
 
-    //WHEN CHANGING CUSTOMER TIER VALUE (POP-UP DATATABLE)
-    customerTier; 
-    handleCustomerChange(event){
-        console.log('customer change');
-        this.customerTier = event.target.value; 
-    }
+                //SHOW ERROR MESSAGES
+                if(this.rowUOMErrors.length >0){
+                    this.rowUOMErrors = this.rowUOMErrors.join();
+                    const evt01 = new ShowToastEvent({ title: 'Warning Fields', message: this.rowUOMErrors,
+                    variant: 'warning', mode: 'sticky' });
+                    this.dispatchEvent(evt01);
+                }
+                if(this.showUOMValues){
+                    let values = [];
+                    for (let picklist of this.uom.data.values){
+                        values.push(picklist.value);
+                    }
+                    const evt1 = new ShowToastEvent({ title: 'Values Available for UOM field', 
+                    message: 'They have some constrains depending on the Level 2 of the product: '+ values.join(),
+                    variant: 'warning', mode: 'sticky' });
+                    this.dispatchEvent(evt1);
+                    this.showUOMValues = false; 
+                }
+                if(this.lengthUomMessageError.length > 0){
+                    const evt1 = new ShowToastEvent({ title: 'Warning Fields', message: this.lengthUomMessageError,
+                    variant: 'warning', mode: 'sticky' });
+                    this.dispatchEvent(evt1);
+                }
+                if(this.minimumQuantityErrors.length > 0){
+                    const evt1 = new ShowToastEvent({ title: 'Warning Fields', 
+                    message: 'The minimum quantity required has not been reached for line(s): '+this.minimumQuantityErrors,
+                    variant: 'warning', mode: 'sticky' });
+                    this.dispatchEvent(evt1);
+                }
+                if(this.minimumQuantityMultipleErrors.length > 0){
+                    const evt1 = new ShowToastEvent({ title: 'Warning Fields', 
+                    message: 'The quantity must be for: '+this.minimumQuantityMultipleErrors,
+                    variant: 'warning', mode: 'sticky' });
+                    this.dispatchEvent(evt1);
+                }
+                
+                //SHOW SUCCESS MESSAGE!
+                if(this.rowUOMErrors.length == 0 && !this.showUOMValues && this.lengthUomMessageError.length == 0 
+                    && this.minimumQuantityErrors.length == 0 && this.minimumQuantityMultipleErrors.length == 0){
+                    const evt = new ShowToastEvent({
+                        title: 'Edits in Table saved',
+                        message: 'Changes are sucessfully saved',
+                        variant: 'success',
+                        mode: 'dismissable'
+                    });
+                    this.dispatchEvent(evt);
+                    console.log('quoteLines before');
+					console.log(this.quoteLines); 
 
-    //WHEN CHANGING THE BASE PRICE VALUE (POP-UP DATATABLE)
-    basePrice; 
-    handleBasePriceChange(event){
-        console.log('base price');
-        this.basePrice = event.target.value; 
-    }
-    
-
-    //WHEN CLICK IN CHANGE VALUE (POP-UP DATATABLE) - SEND MESSAGE TO UI FROM DATATABLE COMPONENT 
-    changeTiers(){
-        
-        //ASK WHICH VALUES CAN CHANGE, TO SEE IF THEY ARE REQUIRED ALL OF THEM OR HOW THEY WORK. 
-        //UNCOMMENT THIS WHEN CODE IN DATA TABLE TO ACTIVE THE Override Reason THING
-        //this.dispatchEvent(new CustomEvent('overridereason'));
-        //HERE CALLS THE SAVING METHOD OF THE QUOTE LINE, AND RETRIEVE THE INFO THAT CAHNGES WHEN SAVING
-        this.activeOverrideReasonFields(); 
-        console.log('change clicked')
-
-    }
-
-
-    //---------------------------------------------------------------------
-    //THIS SECTION SHOULD BE IN THE UI COMPONENT 
-    //OVERRIDE VARIABLES
-    activeOverrideReason = false; 
-    overrideReason;
-    overrideComment;
-    overrideType;
-    optionsOverride = []; 
-
-    //ACTIVE OVERRIDE VIEW 
-    activeOverrideReasonFields(){
-        //FLAG THAT ALLOWS THE UI SEE IF IT CHANGE SOMETHING SO WRITE THE OVERWRITE REASON FILDS
-        this.activeOverrideReason = true; 
-        //!!!!!! change this to be active when reciving the message 'overridereason'
-
-    }
-
-    //WHEN CHANGING THE OVERRIDE REASON CHANGE
-    handleChangeOverrideReason(event){
-        console.log('Override Reason');
-        this.overrideReason = event.target.value; 
-    }
-
-    //WHEN CHANGING THE OVERRIDE COMMENT  
-    handleOverrideComment(event){
-        console.log('Comment Here');
-        this.overrideComment = event.target.value;
-    }
-
-    //WHEN CHANGING THE OVERRIDE TYPE  
-    handleOverrideType(event){
-        console.log('Type Here');
-        this.overrideType = event.target.value;
-    }
-
-    //WHEN CLICKING IN THE UPDATE QUOTE TO CHANGE THE REASON 
-    updateQuote(){
-        console.log('Update quote');
-        //TO SEE THE REQUIRED FIELD TO OVERRIDE
-        if (this.overrideReason == '' || this.overrideReason == null){
-            const evt = new ShowToastEvent({
-                title: 'Please, select an Override Reason',
-                message: 'Select an override reason to save the quote',
-                variant: 'error',
-                mode: 'dismissable'
-            });
-            this.dispatchEvent(evt);
-        } else {
-            console.log('Update quote');
-            let quoteWrap = {id: this.recordId,
-                overridereason: this.overrideReason,
-                overridecomments: this.overrideComment,
-                overridetype: this.overrideType, }
-            quoteSaver({quote: JSON.stringify(quoteWrap)})
-            .then(()=>{
-                console.log('QUOTE UPDATED');
-                const evt = new ShowToastEvent({
-                    title: 'Quote Updated',
-                    message: 'The values are saved in Salesforce',
-                    variant: 'success',
-                    mode: 'dismissable'
-                });
-                this.dispatchEvent(evt);
-            })
-            .catch((error)=>{
-                console.log('QUOTE NOT UPDATED');
-                console.log(error);
-                const evt = new ShowToastEvent({
-                    title: 'Cannot update the quote',
-                    message: 'There is an error updating the quote, please wait and try again.',
-                    variant: 'error',
-                    mode: 'dismissable'
-                });
-                this.dispatchEvent(evt);
-            })
-            //CALL THE APEX METHOD THAT SAVES THE INFO INTO THE QUOTE
+					let startTime = window.performance.now();
+					upsertQuoteLineList({quoteId: this.recordId, lineList: this.quoteLines})
+					.then((data)=>{
+						
+						let endTime = window.performance.now();
+           				console.log(`upsertQuoteLineList method took ${endTime - startTime} milliseconds`);
+						console.log('UPDATED');
+						console.log(data);
+						this.quoteLines = data; 
+					})
+					.catch((error)=>{
+						console.log('UPDATED error');
+						console.log(error);
+					})
+                }
+               
+                //this.quotelinesString = JSON.stringify(this.quoteLines); 
+                //console.log(this.quoteLinesString);
+                //this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
+                
+                this.quoteLinesEdit = [];
+                
+                this.template.querySelector("lightning-datatable").draftValues = [];
+                //this.firstHandler();
+                //this.updateTable();
+           
         }
     }
 } 
 
-//----------------------------------------------------------
-console.log("QCP firing");
-/*---=============================================================================
----                              AFL 
----
----       Program Name          : QuoteCalculatorScript.js
----
----       Program Description   : This JavaScript contains custom code and is called by 
----                               Salesforce CPQ. 
----                               
----                          
----       Date Written          : 01-Dec-2021
----
----       Story Number          : 
----
---------------------------------------------------------------------------------
----       Development And Modification History:
----
---- Story       Ver# DATE      Developer      DESCRIPTION
---- ----------- ---- --------- -------------  ------------------------------
----             1.0  01-Dec-21 SIMONDA        Intial changes for Approvals
----             1.1  20-Dec-21 BHATNJA        changes for customer tier application
---- STRY0033888 1.2  29-Mar-22 BHATNJA        changes related to Cable Assembly name and pricing
---- STRY0036352 1.3  09-May-22 SIMONDA        changes related to lead time changes per STRY0036352										   
---- STRY0034623 1.4  08-Jun-22 BHATNJA        changes related to Bus Conductor pricing	
---- STRY0034623 1.5  20-Jun-22 BHATNJA        changes related to Patch Panel Stubbed name and pricing	
----
----       Copyright 2021 AFL 
----=============================================================================*/
-//Global Variables
-var uomConvertMap = {};
-var lineProdLeadTimeCat = '';
-var prodLTtier = {};
-var End_User = '';
-var custLeadTimeTier = '';
-var prodLeadTimeTierMap;
-var leadTimeTier = '';
-var ascendPackagingList = [];
-var debugFlag = false;
-/*****************************************************************************************************************************************************************/
-function log (message) {
-	if (debugFlag) {
-		console.log(message);
-	}
-}
-/*****************************************************************************************************************************************************************/
-function setBusConductorPrice (line, conn) {
-	var Region = line.record['Region_Code__c'];
-	var RegionAdder = 0;
-	var QuotedQty = line.record['SBQQ__Quantity__c'];
-	var CountFactor = line.record['Count_Factor__c'];
-	var PieceCount = 0;	
-	var keyFieldText = line.record['Product_Name_Key_Field_Text__c'];
-	var basePrice = line.record['SBQQ__OriginalPrice__c'];
-	var BusMarginValueLow = line.record['Bus_Margin_Low_Value__c'];
-	var BusMarginValueHigh = line.record['Bus_Margin_High_Value__c'];
-	var MarginChangeValue = line.record['Margin_Change_Value__c'];
-	var CalcPrice1 = 0;
-	var CalcPrice2 = 0;
-	var FinalPrice = 0;
-	var WtLbsPerFt = line.record['Weight_lbs_per_foot__c'];                  //need to add twin field
-	
-	log('keyFieldText: ' + keyFieldText);
-	
-	//when keyFieldText is blank that indicates that the product was just added to the line
-	if (!keyFieldText) {
-		//backup the list price to the original price field. so it can be used to recalculate if the user changes qty 
-		line.record['SBQQ__OriginalPrice__c'] = line.record['SBQQ__ListPrice__c'];
-	}
-	
-	if (QuotedQty && (!keyFieldText || (keyFieldText && keyFieldText != (QuotedQty + "~" + Region)))) {
-	
-		if (Region == 'East') {
-			RegionAdder = line.record['Region_Adder_East__c'];                           
-		}
-		else if (Region == 'West') {
-			RegionAdder = line.record['Region_Adder_West__c'];         
-		}
-		else if (Region == 'Central') {
-			RegionAdder = line.record['Region_Adder_Central__c'];        
-		}
-		else if (Region == 'Northwest') {
-			RegionAdder = line.record['Region_Adder_Northwest__c'];        
-		}
-		
-		log('Region / Region Adder: ' + Region + ' / ' + RegionAdder);
-		
-		PieceCount = CountFactor/QuotedQty;
-		
-		log('CountFactor / PieceCount: ' + CountFactor + ' / ' + PieceCount);
-		
-		var FinalCost = (WtLbsPerFt * (RegionAdder + basePrice)) + PieceCount;
-		
-		log('FinalCost / WtLbsPerFt / basePrice: ' + FinalCost + ' / ' + WtLbsPerFt + ' / ' + basePrice);
-		
-		if (BusMarginValueLow != 0) {
-			CalcPrice1 = FinalCost/BusMarginValueLow;
-		}
-		if (BusMarginValueHigh != 0) {
-			CalcPrice2 = FinalCost/BusMarginValueHigh;
-		}
-
-		if ((CalcPrice1 * QuotedQty) < MarginChangeValue) {
-			FinalPrice = CalcPrice1;                     
-		}
-		else {
-			FinalPrice = CalcPrice2;
-		}	
-		
-		log('CalcPrice1 / CalcPrice2 / FinalPrice: ' + CalcPrice1 + '/' + CalcPrice2 + ' / ' + FinalPrice);
-		
-		line.record['Product_Name_Key_Field_Text__c'] = QuotedQty + "~" + Region;
-		line.record['SBQQ__ListPrice__c'] = FinalPrice;
-	}
-}
-/*****************************************************************************************************************************************************************/
-function buildAscendPackagingMap(conn) {
-	var ascendPackagingQuery = 'SELECT Count_Factor__c, Length_Maximum__c, Price__c FROM Ascend_Packaging_Adder__mdt ORDER BY Length_Maximum__c ASC';
-	
-	log('ascendPackagingList length at start = ' + ascendPackagingList.length);
-	
-	if (ascendPackagingList.length == 0) {
-		return conn.query(ascendPackagingQuery)
-			.then(function(results){
-				if (results.totalSize){				
-					results.records.forEach(function(record){
-						ascendPackagingList.push(record);
-					});
-					
-					log('ascendPackagingList length = ' + ascendPackagingList.length);
-				}
-				
-				return ascendPackagingList;
-			});
-	}
-	else {
-		return ascendPackagingList;
-	}
-	
-}
-/*****************************************************************************************************************************************************************/
-function setCableAssemblyName (line, conn) {
-	var uomSuffix = "";
-	var ConvFactor = 1;
-	var AttUomSuffix = "";
-	var AttUomDescSuffix = "";
-	
-	var UomUI = line.record['Length_UOM__c'];
-	var LengthUI = line.record['Length__c'];
-	var itemName = line.record['SBQQ__ProductName__c'];
-	var itemDesc;
-	var ItemDescPartA = line.record['Quote_Item_Description_Part_A__c'];
-	var ItemDescPartB = line.record['Quote_Item_Description_Part_B__c'];
-	var Customer = line.record['Customer__c'];
-	var ProductType = line.record['Product_Type__c'];
-	var FiberCount = line.record['Fiber_Count__c'];
-	var BaseDesignCode = line.record['Base_Design_Code__c'];
-	var keyFieldText = line.record['Product_Name_Key_Field_Text__c'];
-	
-	//when keyFieldText is blank that indicates that the product was just added to the line
-	if (!keyFieldText) {
-		//backup the list price to the original price field. so it can be used to recalculate if the user changes qty 
-		line.record['SBQQ__OriginalPrice__c'] = line.record['SBQQ__ListPrice__c'];
-	}
-
-	if (LengthUI && UomUI && (!keyFieldText || (keyFieldText && keyFieldText != (LengthUI + "~" + UomUI)))) {
-		
-		log('Name change required for line number: '+ line.record['SBQQ__Number__c']);
-		
-		if (UomUI == 'Feet' || UomUI == 'FT') {
-			uomSuffix = 'FT';
-			AttUomSuffix = 'F';
-			AttUomDescSuffix = 'FT';
-			ConvFactor = 3.281;
-		}
-		else {
-			AttUomSuffix = 'M';
-			AttUomDescSuffix = 'M';
-		}
-
-		var lengthSuffix = String("0000" + LengthUI).slice(-4);
-		log('lengthSuffix: ' + lengthSuffix);
-
-		//alert('item/base design code = '+itemrowName+' -- '+BaseDesignCode);
-
-		var FinalItem = itemName +"-"+String(lengthSuffix)+uomSuffix;
-		
-
-		if(ItemDescPartB !== null && ItemDescPartB.includes("ASCEND")) {
-			log('Ascend Product');
-			var suffixString = String(lengthSuffix)+uomSuffix;
-			var DescPartBNew = ItemDescPartB.replace("XXXX", suffixString);
-			itemDesc = ItemDescPartA + " "+LengthUI+UomUI+","+DescPartBNew;
-		}
-		else {
-			log('Other Product');
-			itemDesc = ItemDescPartA + " "+LengthUI+UomUI+","+ItemDescPartB+"-"+String(lengthSuffix)+uomSuffix;
-		}
-		//alert('Customer = '+Customer);
-
-		if (Customer == 'ATT' && ProductType == 'HFC Cable') {
-			FinalItem = BaseDesignCode +String(lengthSuffix)+AttUomSuffix;
-			itemDesc = "Tip to Tip Length : "+LengthUI+AttUomDescSuffix+" "+ItemDescPartA;
-		}
-
-		if (Customer == 'ATT' && ProductType == 'HFC Cable' && BaseDesignCode) {
-			itemDesc = ItemDescPartA + " " + LengthUI+AttUomDescSuffix;
-		}
-
-		if (Customer == 'ATT' && ProductType == 'Interconnect Cable' && BaseDesignCode) {
-			FinalItem = BaseDesignCode +"-" +String(lengthSuffix)+uomSuffix;
-		}
-
-		if (Customer == 'Standard' && BaseDesignCode) {
-			FinalItem = BaseDesignCode +"-" +String(lengthSuffix)+uomSuffix;
-		}
-		
-		line.record['SBQQ__PackageProductCode__c'] = FinalItem;
-		line.record['SBQQ__PackageProductDescription__c'] = itemDesc;
-		line.record['SBQQ__Description__c'] = itemDesc;
-		//line.record['Product_Name_Change_Required__c'] = false;
-		line.record['Product_Name_Key_Field_Text__c'] = LengthUI + "~" + UomUI;
-		
-		log('FinalItem: ' + FinalItem);
-		
-		//Set price
-		var convFactor = 1;
-		var fixedPrice = line.record['SBQQ__OriginalPrice__c'];
-		var varPrice = line.record['Variable_Price_1__c'];
-		if (UomUI == 'Feet' || UomUI == 'Foot' || UomUI == 'FT') {
-			convFactor = 3.281;
-        }
-		var listPrice = (fixedPrice + (varPrice * LengthUI / convFactor));
-		
-		console.log('list price updated to = '+ listPrice);
-		
-		line.record['SBQQ__ListPrice__c'] = listPrice;
-		
-		if (line.record['Fixed_Cost__c'] != null && line.record['CableCostPerMeter__c'] != null) {
-			line.record['Unit_Cost__c'] = (line.record['Fixed_Cost__c'] + (line.record['CableCostPerMeter__c'] * LengthUI / convFactor));
-		}
-		
-		//if the product is ASCEND, we need to add a packaging cost
-		if (ProductType.toUpperCase().includes('ASCEND')) {
-			log('++++++++++++++++++Adding Ascend Package Adder++++++++++++++++++');
-			log('Price before Ascend Packaging adder = ' + listPrice);
-			log('Length before = ' + LengthUI);
-			//convert the length before looping
-			var qpLength = LengthUI / convFactor;
-			log('Length after = ' + qpLength);			
-											
-			//loop through each pricing 
-			for (let i=0; i < ascendPackagingList.length; i++) {
-				//log('count factor from table / FiberCount from Quote Line = '+ ascendPackagingList[i].Count_Factor__c.toString() + ' / ' +FiberCount);
-				if (ascendPackagingList[i].Count_Factor__c.toString() == FiberCount) {        //FiberCount is a text hence need to convert count factor to text for comparison
-					if (qpLength <= ascendPackagingList[i].Length_Maximum__c) {
-						log('Length max = ' + ascendPackagingList[i].Length_Maximum__c);
-						listPrice += ascendPackagingList[i].Price__c;
-						log('Price adder = ' + ascendPackagingList[i].Price__c);
-						break;   // jump out of the loop
-					}
-				}
-			}
-			log('Price after = ' + listPrice);
-			log('++++++++++++++++++Adding Ascend Package Adder++++++++++++++++++');
-			
-			line.record['SBQQ__ListPrice__c'] = listPrice;		
-			
-		}
-	}
-	
-	//return line;
-}
-
-/*****************************************************************************************************************************************************************/
-function setPatchPanelStubbedPrice (line, conn) {
-	var UomUI = line.record['Length_UOM__c'];
-	var LengthUI = line.record['Length__c'];
-	var itemName = line.record['SBQQ__ProductName__c'];
-	var itemDesc;
-	var ItemDescPartA = line.record['Quote_Item_Description_Part_A__c'];
-	var ItemDescPartB = line.record['Quote_Item_Description_Part_B__c'];
-	var Color = line.record['Color__c'];
-	var ProductType = line.record['Product_Type__c'];
-	//var FiberCount = line.record['Fiber_Count__c'];
-	//var BaseDesignCode = line.record['Base_Design_Code__c'];
-	var keyFieldText = line.record['Product_Name_Key_Field_Text__c'];
-	
-	//when keyFieldText is blank that indicates that the product was just added to the line
-	if (!keyFieldText) {
-		//backup the list price to the original price field. so it can be used to recalculate if the user changes qty 
-		line.record['SBQQ__OriginalPrice__c'] = line.record['SBQQ__ListPrice__c'];
-	}
-
-	if (LengthUI && UomUI && (!keyFieldText || (keyFieldText && keyFieldText != (LengthUI + "~" + UomUI)))) {
-		
-		log('Name change required for line number: '+ line.record['SBQQ__Number__c']);
-		
-		var lengthSuffix = String("0000" + LengthUI).slice(-4);
-		log('lengthSuffix: ' + lengthSuffix);
-
-		var FinalItem = itemName +"-"+String(lengthSuffix);
-		itemDesc = ItemDescPartA + ", "+LengthUI+" meters, "+ItemDescPartB+", "+Color;
-		
-		line.record['SBQQ__PackageProductCode__c'] = FinalItem;
-		line.record['SBQQ__PackageProductDescription__c'] = itemDesc;
-		line.record['SBQQ__Description__c'] = itemDesc;
-		line.record['Product_Name_Key_Field_Text__c'] = LengthUI + "~" + UomUI;
-		
-		log('FinalItem: ' + FinalItem);
-		
-		//Set price
-		var convFactor = 1;
-		var fixedPrice = line.record['SBQQ__OriginalPrice__c'];
-		var varPrice = line.record['Variable_Price_1__c'];
-		var pricingCost = line.record['Pricing_Cost__c'];
-		var numCables = line.record['NumCables__c'];
-		var numConnector = line.record['NumConnector__c'];
-		var numAdapter = line.record['NumAdapter__c'];
-		var connCostA = line.record['ConnCost_A__c'];
-		var connCostB = line.record['ConnCost_B__c'];
-		var resourceCostA = line.record['ResourceCost_A__c'];
-		
-		var listPrice = (pricingCost
-						+ (parseInt(numCables) * (varPrice * LengthUI)) 
-						+ (parseInt(numConnector) * connCostA) 
-						+ (parseInt(numAdapter) * connCostB) 
-						+ (parseInt(numCables) * resourceCostA)) ;
-		
-		console.log('list price updated to = '+ listPrice);
-		
-		line.record['SBQQ__ListPrice__c'] = listPrice;
-
-	}
-	
-	//return line;
-}
-/*****************************************************************************************************************************************************************/
-function finalizeQuotedItems (quoteLines, conn) {
-	
-	//need to build the Ascend Packaging adder list first because it requires an async query to custom metadatatype
-	//before we calculate adders for the Ascend cable assemblies
-	return buildAscendPackagingMap (conn)
-			.then(function(results){
-				/*
-				quoteLines.forEach(function(line) {		
-					//if filtered grouping is cable assembly
-					if (line.record['Filtered_Grouping__c'] == 'Cable Assemblies') {
-						log('calling setCableAssemblyName');							
-						setCableAssemblyName (line, conn);							
-					}
-				});
-				//return quoteLines;
-				*/
-			});
-}
-/*****************************************************************************************************************************************************************/
-function buildUOMConvertMap(conn) {
-	//var uomConvertMap = {};
-	var uomConvQuery = 'select Id, Name, Product__c, From_UOM__c, To_UOM__c, Product_Level_1__c, Product_Level_2__c, Conversion_Factor__c from UOM_Conversion__c';
-	
-	return conn.query(uomConvQuery)
-		.then(function(results){
-			if (results.totalSize){
-				
-				var uomList = [];
-				
-				results.records.forEach(function(record){
-					uomList.push(record);
-					if (record.Product__c) {
-						uomConvertMap[record.Product__c+'~'+record.From_UOM__c+'~'+record.To_UOM__c] = record.Conversion_Factor__c;
-					}
-					else {
-						uomConvertMap[record.Product_Level_1__c+'~'+record.Product_Level_2__c+'~'+record.From_UOM__c+'~'+record.To_UOM__c] = record.Conversion_Factor__c;
-					}
-				});
-				
-				//enter the reverse conversions in the map
-				for (let i=0; i < uomList.length; i++) {
-				
-					if (uomList[i].Product__c != null) {
-						if (!uomConvertMap[uomList[i].Product__c+'~'+uomList[i].To_UOM__c+'~'+uomList[i].From_UOM__c]) {
-							uomConvertMap[uomList[i].Product__c+'~'+uomList[i].To_UOM__c+'~'+uomList[i].From_UOM__c] = (1/uomList[i].Conversion_Factor__c);
-						}
-					}
-					else {
-						if (!uomConvertMap[uomList[i].Product_Level_1__c+'~'+uomList[i].Product_Level_2__c+'~'+uomList[i].To_UOM__c+'~'+uomList[i].From_UOM__c]) {
-							uomConvertMap[uomList[i].Product_Level_1__c+'~'+uomList[i].Product_Level_2__c+'~'+uomList[i].To_UOM__c+'~'+uomList[i].From_UOM__c] = (1/uomList[i].Conversion_Factor__c);
-						}                
-					}
-				}
-				
-				log('uomList length = ' + uomList.length);
-				//console.table(uomConvertMap);
-				//return uomConvertMap;
-			}
-			
-			return uomConvertMap;
-		});
-	
-	
-}
-/*****************************************************************************************************************************************************************/
-function convertUOM(numToConvert, fromUOM, toUOM, productId, productLevel1, productLevel2, conn) {
-	
-	log('numToConvert/fromUOM/toUOM: ' + numToConvert+"/"+fromUOM+"/"+toUOM);
-	log('productId/productLevel1/productLevel2: ' + productId+"/"+productLevel1+"/"+productLevel2);
-	
-	if (numToConvert != null) {
-		if (fromUOM == toUOM) {
-			return numToConvert;
-		}
-		else {
-			
-			//if (UOMConvertMap = {}) {
-			//	UOMConvertMap = buildUOMConvertMap(conn)
-			//		.then(function(results){											
-						log ('using global UOM Convert Map');
-						
-						var convFactor = 0;
-			
-						//console.table(uomConvertMap);
-						
-						if (productId != null) {
-							convFactor = uomConvertMap[productId+'~'+fromUOM+'~'+toUOM];
-							
-							log('product specific conv factor = ' + convFactor);
-						}
-						if ((!convFactor) && productLevel1 && productLevel2) {
-							convFactor = uomConvertMap[productLevel1+'~'+productLevel2+'~'+fromUOM+'~'+toUOM];
-							
-							log('product class conv factor = ' + convFactor);
-						}
-						
-						log('ConvFactor: ' + convFactor);
-						
-						if (!convFactor) {
-							return 0;
-						}
-						
-						return (numToConvert * convFactor);
-											
-			//		});
-			//}
-			
-			
-		}
-		
-		//return Number_to_Convert;
-	}	
-	else {
-		return null;
-	}
-}
-/*****************************************************************************************************************************************************************/
-/*
-function approvalWorkflow (quoteModel, quoteLines, conn) {
-	// quoteApprRules structure: "quote model field to test" : [["quote line field to test","Acceptance Criteria"],"quote line reason text string"]
-	//var quoteApprRules = {"ACA_gt_50k__c":[["ProdLevel1__c","ACA"],"ACA gt eq 50k"],"Bus_Conductor_gt_20k__c":[["ProdLevel2__c","Bus Conductor"],"Bus Cond gt 20k"]};
-	//quoteModel.record["SBQQ__BillingName__c"] = "SimonTest";
-
-	var approvalReasons = 'SELECT ProdLevel1__c, ProdLevel2__c, ProdLevel3__c, ProdLevel4__c, Quote_Reason__c, Quote_Line_Reason__c, Name FROM Approval_Reason__c';
-	var ProdLevel_Used_For_Approval = "";
-	//log('approvalReasons ===> ' + approvalReasons);
-	return conn.query(approvalReasons)
-		.then(function(results){
-			console.table('approvalReasons ===> ' + results);
-			var quoteApprRules = "";
-			var quoteLineApprRules = "";
-			if (results.totalSize){
-				results.records.forEach(function(record){
-					var logic = "";
-					var ProdLevel_Used_For_Approval = "";
-					if (record.ProdLevel4__c != null){
-						logic = logic + '[["ProdLevel4__c","' + record.ProdLevel1__c + '|' + record.ProdLevel2__c + '|' +  record.ProdLevel3__c + '|' +  record.ProdLevel4__c + '"],"' + record.Name + '"]';
-						//ProdLevel_Used_For_Approval = "ProdLevel4__c";
-					}
-					else if(record.ProdLevel3__c != null){
-						logic = logic + '[["ProdLevel3__c","' + record.ProdLevel1__c + '|' + record.ProdLevel2__c + '|' +  record.ProdLevel3__c + '"],"' + record.Name + '"]';
-						//ProdLevel_Used_For_Approval = "ProdLevel3__c";
-					}
-					else if(record.ProdLevel2__c != null){
-						logic = logic + '[["ProdLevel2__c","' + record.ProdLevel1__c + '|' + record.ProdLevel2__c + '"],"' + record.Name + '"]';
-						//ProdLevel_Used_For_Approval = "ProdLevel2__c";
-					}
-					else {
-						logic = logic + '[["ProdLevel1__c","' + record.ProdLevel1__c + '"],"' + record.Name + '"]';
-						//ProdLevel_Used_For_Approval = "ProdLevel1__c";
-					}
-					log("logic ==> " + logic);
-					if (record.Quote_Reason__c != null){  //It is a quote level rule
-						if (quoteApprRules == ""){
-							quoteApprRules = '"' + record.Quote_Reason__c + '":' + logic;
-						}else{
-							quoteApprRules = quoteApprRules + ',"' + record.Quote_Reason__c + '":' + logic;
-						}
-						
-					}else if (record.Quote_Line_Reason__c != null){  //It is a quote line level rule
-						if (quoteLineApprRules == ""){
-							quoteLineApprRules = '"' + record.Quote_Line_Reason__c + '":' + logic;
-						}else{
-							quoteLineApprRules = quoteLineApprRules + ',"' + record.Quote_Line_Reason__c + '":' + logic;
-						}
-					}
-								
-					
-					log("string quoteApprRules ==> " + quoteApprRules);
-					log("string quoteLineApprRules ==> " + quoteLineApprRules);
-					
-					
-				});
-				quoteApprRules = "{" + quoteApprRules + "}";
-				quoteApprRules = JSON.parse(quoteApprRules);
-				log("object quoteApprRules ==> " + quoteApprRules);
-				
-				quoteLineApprRules = "{" + quoteLineApprRules + "}";
-				quoteLineApprRules = JSON.parse(quoteLineApprRules);
-				log("object quoteLineApprRules ==> " + quoteLineApprRules);
-			}
-			//Handle Quote Rules First
-			Object.keys(quoteApprRules).forEach(function(key){
-			log("key = " + key);
-			/*log("quoteApprRules[key] = " + quoteApprRules[key]);
-			log("quoteApprRules[key][0][0] = " + quoteApprRules[key][0][0]);
-			log("quoteApprRules[key][0][1] = " + quoteApprRules[key][0][1]);
-			log("quoteApprRules[key][1] = " + quoteApprRules[key][1]);
-			log("eval(quoteModel.record.key) = " + eval("quoteModel.record." + key));
-			*/
-			/*
-			
-			if(quoteModel.record[key] == true){
-				log("in the right place..sees that ACA is gt 50k");
-				quoteLines.forEach(function (line){
-					log("line data = " + line.record["ProdLevel1__c"]);
-					var linePLstr = "";
-					if(quoteApprRules[key][0][0] == "ProdLevel4__c"){
-						linePLstr = line.record["ProdLevel1__c"] + '|' + line.record["ProdLevel2__c"] + '|' + line.record["ProdLevel3__c"] + '|' + line.record["ProdLevel4__c"];
-					}else if(quoteApprRules[key][0][0] == "ProdLevel3__c"){
-						linePLstr = line.record["ProdLevel1__c"] + '|' + line.record["ProdLevel2__c"] + '|' + line.record["ProdLevel3__c"];
-					}else if(quoteApprRules[key][0][0] == "ProdLevel2__c"){
-						linePLstr = line.record["ProdLevel1__c"] + '|' + line.record["ProdLevel2__c"];
-					}else if(quoteApprRules[key][0][0] == "ProdLevel1__c"){
-						linePLstr = line.record["ProdLevel1__c"];
-					}
-					log("this line linePLstr = " + linePLstr);
-
-					//if(line.record[quoteApprRules[key][0][0]] == quoteApprRules[key][0][1]){
-					//if(quoteApprRules[key][0][1] == linePLstr){
-					if(quoteApprRules[key][0][1].includes(linePLstr)){
-						var currApprReasons = line.record.Approval_Reasons__c;
-						var thisApprReason = quoteApprRules[key][1];
-						if(currApprReasons == undefined || currApprReasons.indexOf(thisApprReason)== -1){
-							if(currApprReasons == undefined || currApprReasons.length == 0){
-								line.record.Approval_Reasons__c = thisApprReason;
-								//line.record.ProdLevel_Used_For_Approval__c = ProdLevel_Used_For_Approval;
-							}else{
-								line.record.Approval_Reasons__c = currApprReasons + '; ' + thisApprReason;
-								//line.record.ProdLevel_Used_For_Approval__c = ProdLevel_Used_For_Approval;
-							}
-						}
-						
-					}
-				});
-			}else{
-				log("in the right place..sees that ACA is less than 50k");
-				quoteLines.forEach(function (line){
-					
-					var linePLstr = "";
-					if(quoteApprRules[key][0][0] == "ProdLevel4__c"){
-						linePLstr = line.record["ProdLevel1__c"] + '|' + line.record["ProdLevel2__c"] + '|' + line.record["ProdLevel3__c"] + '|' + line.record["ProdLevel4__c"];
-					}else if(quoteApprRules[key][0][0] == "ProdLevel3__c"){
-						linePLstr = line.record["ProdLevel1__c"] + '|' + line.record["ProdLevel2__c"] + '|' + line.record["ProdLevel3__c"];
-					}else if(quoteApprRules[key][0][0] == "ProdLevel2__c"){
-						linePLstr = line.record["ProdLevel1__c"] + '|' + line.record["ProdLevel2__c"];
-					}else if(quoteApprRules[key][0][0] == "ProdLevel1__c"){
-						linePLstr = line.record["ProdLevel1__c"];
-					}
-					
-					if(quoteApprRules[key][0][1] == linePLstr){
-						var currApprReasons = line.record.Approval_Reasons__c;
-						var thisApprReason = quoteApprRules[key][1];
-						if(currApprReasons != undefined && currApprReasons.indexOf(thisApprReason)!= -1){
-							if(currApprReasons.indexOf("; " + thisApprReason)!= -1){
-								line.record.Approval_Reasons__c = line.record.Approval_Reasons__c.replace("; " + thisApprReason,"");
-								//line.record.ProdLevel_Used_For_Approval__c = "";
-							}else if(currApprReasons.indexOf(thisApprReason + "; ")!= -1){
-								line.record.Approval_Reasons__c = line.record.Approval_Reasons__c.replace(thisApprReason + "; ","");
-								//line.record.ProdLevel_Used_For_Approval__c = "";
-							}else{
-								line.record.Approval_Reasons__c = line.record.Approval_Reasons__c.replace(thisApprReason,"");
-								//line.record.ProdLevel_Used_For_Approval__c = "";
-							}
-						}
-					}
-				});			
-			}
-			
-		});
-		//Handle Quote Line Rules Second
-		log("typeof quoteLineApprRules ==> " + typeof(quoteLineApprRules));
-		log("qyoteLineApprRules.length ==> " + Object.keys(quoteLineApprRules).length);
-		var quoteLineApprRulesSize = Object.keys(quoteLineApprRules).length;
-		if (quoteLineApprRulesSize >0){
-						
-			Object.keys(quoteLineApprRules).forEach(function(key){
-				log("key = " + key);
-				log("I am here");
-				log("quoteLines.length ==> " + quoteLines.length);
-				quoteLines.forEach(function (line){
-					//console.table(line.record);
-					log(line.record.Name);
-					//log(key);
-					//log(line.record.Id);
-					if(line.record[key]== true){
-
-						var linePLstr = "";
-						if(quoteLineApprRules[key][0][0] == "ProdLevel4__c"){
-							linePLstr = line.record["ProdLevel1__c"] + '|' + line.record["ProdLevel2__c"] + '|' + line.record["ProdLevel3__c"] + '|' + line.record["ProdLevel4__c"];
-						}else if(quoteLineApprRules[key][0][0] == "ProdLevel3__c"){
-							linePLstr = line.record["ProdLevel1__c"] + '|' + line.record["ProdLevel2__c"] + '|' + line.record["ProdLevel3__c"];
-						}else if(quoteLineApprRules[key][0][0] == "ProdLevel2__c"){
-							linePLstr = line.record["ProdLevel1__c"] + '|' + line.record["ProdLevel2__c"];
-						}else if(quoteLineApprRules[key][0][0] == "ProdLevel1__c"){
-							linePLstr = line.record["ProdLevel1__c"];
-						}
-					
-						if(quoteLineApprRules[key][0][1] == linePLstr){
-							log("Not getting here");
-							var currApprReasons = line.record.Approval_Reasons__c;
-							var thisApprReason = quoteLineApprRules[key][1];
-							log("currApprReasons ==> " + currApprReasons);
-							log("thisApprReason ==> " + thisApprReason);
-							log(" the quote line num ==> " + line.record.Name);
-							if(currApprReasons == undefined || currApprReasons.indexOf(thisApprReason)== -1){
-								if(currApprReasons == undefined || currApprReasons.length == 0){
-									line.record.Approval_Reasons__c = thisApprReason;
-									//line.record.ProdLevel_Used_For_Approval__c = ProdLevel_Used_For_Approval;
-								}else{
-									line.record.Approval_Reasons__c = currApprReasons + '; ' + thisApprReason;
-									//line.record.ProdLevel_Used_For_Approval__c = ProdLevel_Used_For_Approval;
-								}
-							}
-							log("line.record.Approval_Reasons__c ==> " + line.record.Approval_Reasons__c);
-							
-						}
-					}else{
-						
-						var linePLstr = "";
-						if(quoteLineApprRules[key][0][0] == "ProdLevel4__c"){
-							linePLstr = line.record["ProdLevel1__c"] + '|' + line.record["ProdLevel2__c"] + '|' + line.record["ProdLevel3__c"] + '|' + line.record["ProdLevel4__c"];
-						}else if(quoteLineApprRules[key][0][0] == "ProdLevel3__c"){
-							linePLstr = line.record["ProdLevel1__c"] + '|' + line.record["ProdLevel2__c"] + '|' + line.record["ProdLevel3__c"];
-						}else if(quoteLineApprRules[key][0][0] == "ProdLevel2__c"){
-							linePLstr = line.record["ProdLevel1__c"] + '|' + line.record["ProdLevel2__c"];
-						}else if(quoteLineApprRules[key][0][0] == "ProdLevel1__c"){
-							linePLstr = line.record["ProdLevel1__c"];
-						}
-						
-						if(quoteLineApprRules[key][0][1] == linePLstr){
-							var currApprReasons = line.record.Approval_Reasons__c;
-							var thisApprReason = quoteLineApprRules[key][1];
-							if(currApprReasons != undefined && currApprReasons.indexOf(thisApprReason)!= -1){
-								if(currApprReasons.indexOf("; " + thisApprReason)!= -1){
-									line.record.Approval_Reasons__c = line.record.Approval_Reasons__c.replace("; " + thisApprReason,"");
-									//line.record.ProdLevel_Used_For_Approval__c = "";
-								}else if(currApprReasons.indexOf(thisApprReason + "; ")!= -1){
-									line.record.Approval_Reasons__c = line.record.Approval_Reasons__c.replace(thisApprReason + "; ","");
-									//line.record.ProdLevel_Used_For_Approval__c = "";
-								}else{
-									line.record.Approval_Reasons__c = line.record.Approval_Reasons__c.replace(thisApprReason,"");
-									//line.record.ProdLevel_Used_For_Approval__c = "";
-								}
-							}
-						}
-							
-					}
-				});
-				
-			});
-		}	
-		
-	});
-	log('final quoteApprRules ==> ' + quoteApprRules);
-	
-	return quoteLines;
-}
-*/
-/*****************************************************************************************************************************************************************/
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-function getEndUser(line, conn){
-	
-	var quoteQry = "SELECT End_User__c from SBQQ__Quote__c where ID = '" + line.record['SBQQ__Quote__c'] + "'";
-	log("line.record[SBQQ__Quote__c] ==> " + line.record['SBQQ__Quote__c']);
-	//get End_User from quote
-	return conn.query(quoteQry)
-		.then(function(results){
-			if(results.totalSize){
-				results.records.forEach(function(record){
-					log('record ==> ' + record.End_User__c);
-					End_User = record.End_User__c;
-				});
-			}
-			return End_User;
-		});
-}
-
-function getCustLeadTimeTier(End_User, line, conn, lineProdLeadTimeCat){
-		
-		var custLTtier = {};
-		var custLTtierKey = '';
-		var customerLeadTimeTier = "SELECT Customer_Lead_Time_Tier__c, Product_Lead_Time_Category__c FROM Customer_Lead_Time_Tier__c WHERE Account_End_User__c = '" + End_User + "' and Product_Lead_Time_Category__c = '" + lineProdLeadTimeCat + "'";
-		log('customerLeadTimeTier query ' + customerLeadTimeTier);
-		return conn.query(customerLeadTimeTier)
-			.then(function(results){
-				if(results.totalSize){
-					results.records.forEach(function(record){
-						custLeadTimeTier = record.Customer_Lead_Time_Tier__c;
-						
-					});
-				}else{
-					custLeadTimeTier = '';
-				}
-				return custLeadTimeTier;
-			});
-		
-}
-
-function getProdLeadTimeTier(prodLtCat, LeadTimeTier, conn){
-				
-		var prodLeadTimeTierQry = "Select Product_Lead_Time_Category__c,Quoted_Lead_Time__c,Minimum_Quantity__c,Maximum_Quantity__c,Lead_Time_Tier__c FROM Product_Lead_Time__c where Lead_Time_Tier__c='" + LeadTimeTier + "' and Product_Lead_Time_Category__c = '" + prodLtCat + "'";
-		log('prodLeadTimeTierQry ==> ' + prodLeadTimeTierQry);
-		return conn.query(prodLeadTimeTierQry).then(function(results){
-			if(results.totalSize){
-				results.records.forEach(function(record){
-					var prodLeadTimeTierKey = record.Product_Lead_Time_Category__c + '~' + record.Lead_Time_Tier__c + '~' + record.Minimum_Quantity__c + '~' + record.Maximum_Quantity__c;
-					prodLeadTimeTierMap[prodLeadTimeTierKey] = record.Quoted_Lead_Time__c;
-					log('prodLeadTimeTierMap ==> ' + JSON.stringify(prodLeadTimeTierMap));
-				});
-			
-			}
-				
-		});
-	
-}
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function setLeadTimeTier(line,conn,lineProdLeadTimeCat){
-	
-	End_User = getEndUser(line,conn).then(function(results){
-	
-		//Try to find a customer lead time
-		custLeadTimeTier = getCustLeadTimeTier(End_User, line, conn,lineProdLeadTimeCat).then(function(results){
-			if(custLeadTimeTier==''){
-				log('No customer tier for this end user');
-				custLeadTimeTier = 'Standard Lead Time';
-			}
-			var prodLtCat = line.record['Product_Lead_Time_Category__c'];
-			log('prodLtCat ==> ' + prodLtCat);
-			log('prodLeadTimeTierMap BEFORE calling function');
-			prodLeadTimeTierMap = getProdLeadTimeTier(prodLtCat, custLeadTimeTier, conn).then(function(results){
-				var keyToUse = '';
-				var prodLeadTimeTierMapKeys = Object.keys(prodLeadTimeTierMap);
-				prodLeadTimeTierMapKeys.forEach(function(key){
-					if(key.includes("_")){
-						delete prodLeadTimeTierMap[key];
-					}
-				});
-				var prodLeadTimeTierMapKeys = Object.keys(prodLeadTimeTierMap);
-				log('638 prodLeadTimeTierMapKeys ==> ' + prodLeadTimeTierMapKeys);
-				prodLeadTimeTierMapKeys.forEach(function(key){
-					var splitKey = key.split('~');
-					var splitKeyMin = splitKey[2];
-					var splitKeyMax = splitKey[3];
-					if(line.record.SBQQ__Quantity__c >= parseInt(splitKeyMin) && line.record.SBQQ__Quantity__c <= parseInt(splitKeyMax)){
-						keyToUse = key;	
-					}
-				});
-				log('the keyToUse is ==> ' + keyToUse);
-				var thisTier = prodLeadTimeTierMap[keyToUse];
-				line.record.Quoted_Lead_Time__c = thisTier;
-			
-			});
-		});
-	});	
-}
-
-/*****************************************************************************************************************************************************************/
-//export function onAfterPriceRules (quoteModel, quoteLines, conn) {
-export function onBeforePriceRules (quoteModel, quoteLines, conn) {
-	
-	debugFlag = quoteModel.record['AFL_Debug_Enabled__c'];
-	
-	if (quoteLines.length > 0) {
-		
-		//The finalizeQuotedItems function will set the correct Quoted Item Name. For e.g. in the case of Cable Assemblies will update the Name and Description to reflect the quoted length.
-		//This function will also update the base price by adding any adders. For e.g. in the case of Cable Assemblies will update the List Price with the variable price adder based on the length.
-		//This needs to happen and stop tier pricing updates from happening until it completes because the list price could change due to the variable price adders.
-		//All product family specific pricing adder logic should be put in finalizeQuotedItems
-		return finalizeQuotedItems (quoteLines, conn)
-			.then(function(results){
-				//console.table(results);
-				//console.table(quoteLines);
-				quoteLines.forEach(function(line) {		
-					//if filtered grouping is cable assembly
-					if (line.record['Filtered_Grouping__c'] == 'Cable Assemblies') {
-						log('calling setCableAssemblyName');							
-						setCableAssemblyName (line, conn);							
-					}
-					
-					//if product type is Patch Panel - Stubbed
-					if (line.record['Product_Type__c'] == 'Patch Panel - Stubbed') {
-						log('calling setPatchPanelStubbedPrice');							
-						setPatchPanelStubbedPrice (line, conn);							
-					}
-					
-					//if filtered grouping is Bus Conductor
-					if (line.record['Filtered_Grouping__c'] && line.record['Filtered_Grouping__c'].indexOf('Bus Conductor') >= 0) {
-						log('calling Bus Conductor pricing');
-						setBusConductorPrice (line, conn);
-					}
-					
-					if (line.record['Product_Lead_Time_Category__c'] != undefined){
-						log('calling setLeadTimeTier');
-						lineProdLeadTimeCat = line.record['Product_Lead_Time_Category__c'];
-						setLeadTimeTier (line,conn,lineProdLeadTimeCat);
-					}
-				
-				});
-				
-				log('Begin Tier Script');				
-					/*
-					// if account is changed then Tier update will be needed
-							do we prevent update of Account on quote?
-							we need to re-evaluate tiers if they clone a quote and the Account is different. Distributor Clone process.
-					// if qty, uom is changed then product pricing tiers would have to be evaluated again
-					*/
-					
-					var customerTierQuery = 'SELECT  Account__c, Additional_Discount__c, Id, Name ,Prod_Level_1__c ,Prod_Level_2__c, Tier__c, Unique_Key__c FROM CustomerTier__c where account__c = ';
-					
-					var prodPricingTierQuery = 'select Id, Name, Prod_Level_1__c, Prod_Level_2__c, Prod_Level_3__c, Prod_Level_4__c, Minimum_Quantity__c, Maximum_Quantity__c, Stock__c, Customer_Tier__c, Quantity_UOM__c,'
-									+ 'Quantity_Adjustment__c, Tier_Adjustment__c, Price_Breaks__c, Minimum_Quantity_Num__c, Maximum_Quantity_Num__c '
-									+ 'from Product_Pricing_Tier__c '
-									+ 'where stock__c = ' + "'" + "NA" + "'"
-									+ ' and Prod_Level_1__c in '
-					
-					var prodPricingTierOrderBy = ' order by  Customer_Tier__c, Prod_Level_1__c, Prod_Level_2__c, Prod_Level_3__c, Prod_Level_4__c, Minimum_Quantity_Num__c, Maximum_Quantity_Num__c';
-									
-					var accountId = "";
-					var prodLevel1Arr = [];
-					
-					//get account id
-					
-					if(quoteModel.record['SBQQ__Account__c']){
-						accountId = quoteModel.record['SBQQ__Account__c'];
-					}		
-					
-					log('AccountId = ' + accountId);
-					
-					// if AccountId is populated then run query to get all Customer Tiers
-					if (accountId) {
-						
-						return conn.query(customerTierQuery + "'" + accountId + "'" )
-							.then(function(results) {
-									var customerTierObj = {};
-									var custTierKey = '';
-									
-									// if the query returned rows then build the keys else we still need to set all lines to List.
-									if (results.totalSize) {
-										results.records.forEach(function(record) {
-											//store the customer tier records in js object with custTierKey as the key and tier as the value
-											custTierKey = record.Account__c + '~' + record.Prod_Level_1__c + '~' + record.Prod_Level_2__c;
-											//customerTierObj[custTierKey] = record.Tier__c;
-											customerTierObj[custTierKey] = record;
-										});
-									}
-									
-									//console.table(customerTierObj);
-									
-									//now loop through lines and first try to get the prod level 1 and prod level 2 specific , if not try to get prod level 1 specific , if not then List
-									
-									quoteLines.forEach(function(line) {
-										
-										//collect product level 1 values to be used later in product pricing tier query
-										prodLevel1Arr.push(line.record['ProdLevel1__c']);
-										
-										line.record['Tier__c'] = 'List';
-										
-										if (line.record['ProdLevel1__c']) {
-											
-											if (customerTierObj[accountId + '~' + line.record['ProdLevel1__c'] + '~' + line.record['ProdLevel2__c']]) {
-											
-												line.record['Tier__c'] = customerTierObj[accountId + '~' + line.record['ProdLevel1__c'] + '~' + line.record['ProdLevel2__c']].Tier__c;
-												line.record['Customer_Tier_Additional_Discount__c'] = customerTierObj[accountId + '~' + line.record['ProdLevel1__c'] + '~' + line.record['ProdLevel2__c']].Additional_Discount__c;
-											}
-											else if (customerTierObj[accountId + '~' + line.record['ProdLevel1__c'] + '~' + 'Any Value']) {
-											
-												line.record['Tier__c'] = customerTierObj[accountId + '~' + line.record['ProdLevel1__c'] + '~' + 'Any Value'].Tier__c;
-												line.record['Customer_Tier_Additional_Discount__c'] = customerTierObj[accountId + '~' + line.record['ProdLevel1__c'] + '~' + 'Any Value'].Additional_Discount__c;
-											}
-										}
-									});
-									
-									// start product pricing tier work
-									log('begin product pricing tier script');
-									
-									var prodLevel1List = "('" + prodLevel1Arr.join("', '") + "')";
-									
-									// our query has been restricted to product level 1 on the quote lines to improve speed
-									return conn.query(prodPricingTierQuery +  prodLevel1List + prodPricingTierOrderBy)
-											.then(function(results) {
-												if (results.totalSize) {
-													
-													//this object will contain the key and a list of records that match that key
-													//need to do this because of the quantity ranges. Cust tier, prodlevel combinations are not unique
-													var pricingTierMap = {};										
-													
-													results.records.forEach(function(record) {
-														var pricingTierMapRecs = [];
-														
-														//if the key does not exist add it
-														if (!pricingTierMap[record.Customer_Tier__c+'~'+record.Prod_Level_1__c+'~'+record.Prod_Level_2__c+'~'+record.Prod_Level_3__c+'~'+record.Prod_Level_4__c]) {
-															
-															pricingTierMapRecs.push(record);
-															
-															pricingTierMap[record.Customer_Tier__c+'~'+record.Prod_Level_1__c+'~'+record.Prod_Level_2__c+'~'+record.Prod_Level_3__c+'~'+record.Prod_Level_4__c] = pricingTierMapRecs;
-														}
-														//if key exists
-														else {
-															//get existing records 
-															pricingTierMapRecs = pricingTierMap[record.Customer_Tier__c+'~'+record.Prod_Level_1__c+'~'+record.Prod_Level_2__c+'~'+record.Prod_Level_3__c+'~'+record.Prod_Level_4__c];
-															//push new record in
-															pricingTierMapRecs.push(record);
-															//put all records in the object
-															pricingTierMap[record.Customer_Tier__c+'~'+record.Prod_Level_1__c+'~'+record.Prod_Level_2__c+'~'+record.Prod_Level_3__c+'~'+record.Prod_Level_4__c] = pricingTierMapRecs;											
-														}
-													});
-													
-													log('num of records from product pricing tier query = ' +Object.keys(pricingTierMap).length);
-													
-													//console.table(pricingTierMap);
-													//var UOMConvertMap = {};
-													//if (UOMConvertMap = {}) {
-														return buildUOMConvertMap(conn)
-															.then(function(results){											
-																log ('completed building uom convert map in main code');
-																
-																//loop through the quoteLines and get all the quantity range recs from the Map
-																quoteLines.forEach(function(line) {
-																	var pricingTierMapQtyRecs = [];
-																	
-																	if (line.record['ProdLevel1__c'] && line.record['Tier__c']) {
-																		
-																		if (pricingTierMap[line.record['Tier__c']+'~'+line.record['ProdLevel1__c']+'~'+line.record['ProdLevel2__c']+'~'+line.record['ProdLevel3__c']+'~'+line.record['ProdLevel4__c']]) {
-																			pricingTierMapQtyRecs = pricingTierMap[line.record['Tier__c']+'~'+line.record['ProdLevel1__c']+'~'+line.record['ProdLevel2__c']+'~'+line.record['ProdLevel3__c']+'~'+line.record['ProdLevel4__c']];
-																		}
-																		else if (pricingTierMap[line.record['Tier__c']+'~'+line.record['ProdLevel1__c']+'~'+line.record['ProdLevel2__c']+'~'+line.record['ProdLevel3__c']+'~Any Value']) {
-																			pricingTierMapQtyRecs = pricingTierMap[line.record['Tier__c']+'~'+line.record['ProdLevel1__c']+'~'+line.record['ProdLevel2__c']+'~'+line.record['ProdLevel3__c']+'~Any Value'];
-																		}
-																		else if (pricingTierMap[line.record['Tier__c']+'~'+line.record['ProdLevel1__c']+'~'+line.record['ProdLevel2__c']+'~Any Value~Any Value']) {
-																			pricingTierMapQtyRecs = pricingTierMap[line.record['Tier__c']+'~'+line.record['ProdLevel1__c']+'~'+line.record['ProdLevel2__c']+'~Any Value~Any Value'];
-																		}
-																		else if (pricingTierMap[line.record['Tier__c']+'~'+line.record['ProdLevel1__c']+'~Any Value~Any Value~Any Value']) {
-																			pricingTierMapQtyRecs = pricingTierMap[line.record['Tier__c']+'~'+line.record['ProdLevel1__c']+'~Any Value~Any Value~Any Value'];
-																		}
-																		
-																		log('pricing tier recs match = ' + pricingTierMapQtyRecs.length);
-																		
-																		//did we find any records
-																		if (pricingTierMapQtyRecs.length > 0) {
-																			
-																			//convert the line qty into pricing tier UOM for comparison later to find the right tier
-																			var qtyForPricingTier = 0;
-																			var uom = line.record['UOM__c'];
-																			
-																			if (!uom) { uom = line.record['Primary_UOM__c'];}
-																			
-																			log('uom/UOM__c/Primary_UOM__c = ' + uom+"/"+line.record['UOM__c']+"/"+line.record['Primary_UOM__c']);
-																			
-																			qtyForPricingTier = convertUOM(line.record['SBQQ__Quantity__c'], uom, pricingTierMapQtyRecs[0].Quantity_UOM__c, line.record['SBQQ__Product__c'], line.record['ProdLevel1__c'], line.record['ProdLevel2__c'], conn);
-																			
-																			log('qtyForPricingTier = ' + qtyForPricingTier);
-																			
-																			//now loop through and compare quote line qty to tier min and max qty
-																			//assuming that quote line qty has been converted to same UOM for comparison
-																			for(let i = 0; i < pricingTierMapQtyRecs.length; i++){
-																				//log('Min qty = ' + pricingTierMapQtyRecs[i].Minimum_Quantity_Num__c);
-																				
-																				if (qtyForPricingTier && qtyForPricingTier >= pricingTierMapQtyRecs[i].Minimum_Quantity_Num__c && qtyForPricingTier <= pricingTierMapQtyRecs[i].Maximum_Quantity_Num__c) {
-																					
-																						log('list price | cust tier addl disc = ' + line.record['SBQQ__ListPrice__c']+' | '+line.record['Customer_Tier_Additional_Discount__c']);
-																						log('tier adj | qty adj = ' + pricingTierMapQtyRecs[i].Tier_Adjustment__c +' | '+ pricingTierMapQtyRecs[i].Quantity_Adjustment__c);
-																						
-																						var custTierAddlDisc = line.record['Customer_Tier_Additional_Discount__c'];
-																						
-																						if (!custTierAddlDisc) { custTierAddlDisc = 0;}
-																					
-																						line.record['SBQQ__SpecialPrice__c'] = line.record['SBQQ__ListPrice__c'] * pricingTierMapQtyRecs[i].Tier_Adjustment__c * pricingTierMapQtyRecs[i].Quantity_Adjustment__c *  (1 - (custTierAddlDisc/100));
-																						line.record['SBQQ__SpecialPriceType__c'] = "Custom";
-																						line.record['SBQQ__SpecialPriceDescription__c'] = "Tier Adj="+pricingTierMapQtyRecs[i].Tier_Adjustment__c
-																																		+" Qty Adj="+pricingTierMapQtyRecs[i].Quantity_Adjustment__c
-																																		+" Addl Disc%="+custTierAddlDisc;          // can be upto 80 chars
-																						log('special price = ' + line.record['SBQQ__SpecialPrice__c']);
-																						log('list price = ' + line.record['SBQQ__ListPrice__c']);
-																						
-																						//line.record['SBQQ__ListPrice__c'] = line.record['SBQQ__ListPrice__c'] * pricingTierMapQtyRecs[i].Tier_Adjustment__c * pricingTierMapQtyRecs[i].Quantity_Adjustment__c *  (1 - (custTierAddlDisc/100));
-																						
-																						//log('new list price = ' + line.record['SBQQ__ListPrice__c']);
-																						
-																						break;
-																				}
-																			}
-																			
-																		}
-																	}
-																});
-																
-																/*
-																return quoteLines = approvalWorkflow (quoteModel, quoteLines, conn)
-																	.then(function(results){											
-																		log ('completed calling approvals, should be the last step in onAfterPriceRules');
-																	});
-																*/
-																
-															});
-													//}										
-													
-
-												}
-												
-												
-											});
-								//}
-								
-							});
-						
-					}
-					
-
-				//}
-			});
-	}
-
-	
-	
-	return Promise.resolve();
-};
-/*****************************************************************************************************************************************************************/

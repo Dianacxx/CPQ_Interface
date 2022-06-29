@@ -51,7 +51,7 @@
                     </lightning-combobox>
                 </template>
                 <!--PRICE NUMBER-->
-                <lightning-input required type="number" label="Price" onchange={handleChange} value={Price}></lightning-input>
+                <lightning-input required type="number" label="Price" step=".001" onchange={handleChange} value={Price}></lightning-input>
                 <!--LINE NOTE TEXT-->
                 <p>Press enter to save the Line Note field.</p>
                 <lightning-input-rich-text label-visible type="text" label="Line Note" onchange={handleChange} value={LineNote}

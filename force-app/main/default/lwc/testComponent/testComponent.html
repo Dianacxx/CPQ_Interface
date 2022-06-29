@@ -1,96 +1,11 @@
 <template>
-    <!--POP UP TIERS START-->
-    <template if:true={popUpTiers}>
-        <section aria-modal="true" class="slds-modal slds-fade-in-open slds-align_absolute-center" >
-            <div class="slds-modal__container slds-var-m-left_small  slds-var-m-right_small">
-                <header class="slds-modal__header slds-var-m-left_small  slds-var-m-right_small">
-                    <h1>TEMPORARY WORK HERE, PLEASE CLOSE THIS POP-UP, Brick Lane - {recordId} </h1>
-                    <h2 class="slds-text-heading_medium slds-hyphenate">Manage Pricing: {QuoteName}</h2>
-                    <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeTiers}></lightning-icon>
-                </header>
-                <div class="slds-modal__content slds-var-m-left_small  slds-var-m-right_small">
-                    <div class="slds-var-p-around_small slds-align_absolute-center slds-grid slds-grid_vertical">
-                        <div class="slds-col">
-                            <h1 class="slds-align_absolute-center slds-var-m-top_small slds-var-m-bottom_small">{uomOfQuoteline}</h1>
-                            <!--CUSTOMER TIER PICKLIST-->
-                            <lightning-combobox style="width: 60%;" class="slds-align_absolute-center" name="customerTier" label="Customer Tier" value={CustomerTier}
-                            placeholder="Select Tier" options={optionsCustomer} onchange={handleCustomerChange} ></lightning-combobox>
-                            
-                            <!--BASE PRICE INPUT-->
-                            <lightning-input  style="width: 40%;" class="slds-align_absolute-center" type="number" name="BasePriceOverride" label="Base Price Override"
-                             placeholder="$" onchange={handleBasePriceChange} ></lightning-input>
-                    
-                            <!--AGREEMENT LOOK UP FIELD START-->
-                            <div>
-                                <div class="slds-form-element slds-var-m-left_small slds-var-m-right_small">
-                                    <div class="slds-form-element__control">
-                                        <div class="slds-combobox_container">
-                                            <div id="box" class={boxClass} aria-expanded="true" aria-haspopup="listbox" role="combobox">
-                                                <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right" role="none">
-                                                <div class="slds-p-top_none">
-                                                    <lightning-input  style="width: 50%;"  class={inputClass} type="search" id="inputAgreement" value={agreementSearchTearm}
-                                                            onclick={handleClick} onblur={onBlur} onchange={onChange} label="Agreement">
-                                                    </lightning-input>
-                                                </div>
-                                                </div>
-                                                <div id="listbox-id-1" class="slds-dropdown slds-dropdown_length-with-icon-7" role="listbox">
-                                                    <ul  style="width: 50%;"  class="slds-listbox slds-listbox_vertical" role="presentation">
-                                                        <template for:each={recordsTiers} for:item="record">
-                                                            <li  style="width: 50%;"  key={record.Id} onclick={onSelect} data-id={record.Id} role="presentation" data-name={record.Agreement_Name__c}>
-                                                                <span role="option">
-                                                                <!--    
-                                                                    <lightning-icon class="slds-icon slds-icon--small slds-icon-text-default slds-var-m-right_xx-small" icon-name="standard:contract" size="small"></lightning-icon>
-                                                                -->
-                                                                    <span class="slds-truncate">{record.Agreement_Name__c}</span>
-                                                                </span>
-                                                            </li>
-                                                        </template>
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <!--AGREEMENT LOOK UP FIELD END-->
-                            
-                            <!--TIERS TABLE-->
-                            <template if:true={showTiersList}>
-                                <div class="slds-var-m-top_small">
-                                    <p>Price Breaks</p>
-                                    <!--column-widths-mode="auto"-->
-                                    <lightning-datatable key-field="id" data={tiers} columns={tiersColumns} hide-checkbox-column	
-                                    ></lightning-datatable>
-                                </div>
-                                
-                            </template>
-                        </div>
-                        
-                        <div class="slds-col">
-                            <!--OVERRIDE REASON SECTION-->
-                            <template if:true={activeOverrideReason}>
-                                THIS GOES IN THE UI, OUTSIDE POP UP, ALONG WITH THE APPLY DISCOUNT VALUES. ajust sizes!!!
-                                <lightning-combobox  label="Deviation Reason" value={overrideReason} required
-                                placeholder="Select Reason" options={overrideReasonsList.data.values} onchange={handleChangeOverrideReason} ></lightning-combobox>
-                                <lightning-input type="text" label="Override Comment" placeholder="Comment here" onchange={handleOverrideComment}></lightning-input>
-                                <lightning-combobox  label="Override Type" value={overrideType} 
-                                placeholder="Select Type" options={overrideTypeList.data.values} onchange={handleOverrideType} ></lightning-combobox>
-                                <lightning-button  variant="success" label="Update" onclick={updateQuote} class="slds-var-p-around_x-small slds-var-m-left_small"></lightning-button>
 
-                            </template> 
-                             <!--OVERRIDE REASON SECTION-->
-                        </div>
-                        
-                    </div>
-                </div>
-                <footer class="slds-modal__footer slds-var-m-left_small  slds-var-m-right_small">
-                    <lightning-button  variant="brand-outline" label="Change" onclick={changeTiers} class="slds-var-p-around_x-small slds-var-m-right_small"></lightning-button>
-                    <lightning-button  variant="destructive-text" label="Cancel" onclick={closeTiers} class="slds-var-p-around_x-small slds-var-m-right_small"></lightning-button>
-                </footer>
-            </div>
-        </section>
-        <div class="slds-backdrop slds-backdrop_open"></div>
-    </template>
-    <!--POP UP TIERS END-->
+<p>Caro is working here!</p>
+
+<lightning-datatable column-widths-mode="auto" style="width:100%;" key-field="Id" draft-values={draftValues} 
+        data={quoteLines} columns={QUOTE_LINE_COLUMNS} 
+        onrowaction={handleRowAction} onrowselection={handleRowSelection} onsave={handleSaveEdition}
+        sorted-by={sortBy} sorted-direction={sortDirection} onsort={handleSortData} ></lightning-datatable>
     
+    <!--suppress-bottom-bar-->
 </template>

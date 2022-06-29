@@ -5,13 +5,29 @@ export default class Bl_lineNotes extends LightningElement {
     @api quotelines = [];
     @track columns = [];
 
+    convertToPlain(html){
+        // Create a new div element
+        var tempDivElement = document.createElement("div");
+        // Set the HTML content with the given value
+        tempDivElement.innerHTML = html;
+        // Retrieve the text property of the element 
+        return tempDivElement.textContent || tempDivElement.innerText || "";
+    } 
+
+    lineNotesShow = []; 
     connectedCallback(){
         if(this.quoteNotesString=='[]'){
             //console.log('THERE IS NO LINE NOTES');
         } else {
+            
             this.quotelines = JSON.parse(this.quotelinesString); 
             this.quotelines.forEach((quoteline)=>{ 
+                //this.lineNotesShow = this.convertToPlain(quoteline.linenote);
                 //GETTING THE QUOTES OUT OF THE PRODUCTS NAMES FIELDS. 
+                if(quoteline.linenote != null){
+                    quoteline.linenote = this.convertToPlain(quoteline.linenote);
+                }
+               
                 if(quoteline.product.includes('"')){
                 quoteline.product = quoteline.product.replace(/['"]+/g, '');
             }});

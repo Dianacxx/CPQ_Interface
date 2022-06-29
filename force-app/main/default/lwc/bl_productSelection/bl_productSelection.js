@@ -408,7 +408,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                         if(error.body.exceptionType != undefined){
                             errorMessage = error.body.exceptionType.message;
                         } else 
-                        if (error.body.pageErrors[0]!= undefined){
+                        if (error.body.pageErrors != undefined){
                             if(error.body.pageErrors[0].message != undefined){
                                 errorMessage = error.body.pageErrors[0].message; 
                             } else if (error.body.pageErrors[0].statusCode != undefined){

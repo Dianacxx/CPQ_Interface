@@ -13,6 +13,7 @@
                 </div>
                 <div class="slds-col">
                   <span>
+                      {recordId}
                     <p><b>       Agreement Name : </b> {name}</p>
                     <p><b>       Quoted Customer : </b>{customer}</p>
                     <p><b>       End Customer :  </b>{endUserName}</p>
@@ -162,7 +163,7 @@
                     </lightning-tab>
                     <lightning-tab label="Secondary Tab" value="Line Note" onactive={handleActive}>
                         <template if:true={loadTable}>
-                            <lightning-datatable 
+                            <lightning-datatable
                             key-field="discountName"
                             onrowaction={handleRowActions}
                             data={data} 
@@ -211,7 +212,7 @@
                 <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
                    
                    
-                    <c-bl_agreements_tiers_table currency-contract={currencyContract} discount-id={discountId} discount-nombre={discountNombre} is-modal-open={isModalOpen} ></c-bl_agreements_tiers_table>
+                    <c-bl_agreements_tiers_table currency-contract={currencyContract} customer={customer} discount-id={discountId} producto={producto} record-id={recordId} discount-nombre={discountNombre} is-modal-open={isModalOpen} ></c-bl_agreements_tiers_table>
                 
                 
                 </div>
@@ -269,7 +270,7 @@
                         <span class="slds-assistive-text">Close</span>
                     </button>
                 </header>
-                <div class="slds-modal__content slds-p-around_medium" id="modal--id-1">
+                <div style="overflow: initial;" class="slds-modal__content slds-p-around_medium slds-var-m-left_small  slds-var-m-right_small">
                    
                     <lightning-combobox style="width:80%"
                     name="uom"

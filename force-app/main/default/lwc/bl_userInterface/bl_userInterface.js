@@ -34,6 +34,9 @@ import OVERRIDE_TYPE from '@salesforce/schema/SBQQ__Quote__c.Override_Type__c';
 import quoteSaver from '@salesforce/apex/DiscountController.quoteSaver'; 
 */
 
+const DELAY_CALLING_INFO = 15000;//15000; //Miliseconds
+const DELAY_CALLING_TOTAL = 2000;//8000; //Miliseconds Not Necessery
+
 export default class UserInterface extends NavigationMixin(LightningElement) {
     @api recordId; //Quote Record Id that opens the UI
     @api quotelinesString; //Quotelines information in string
@@ -196,6 +199,8 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             });
             this.dispatchEvent(evt);
             this.spinnerLoadingUI = false;
+            this.notGoodToGoBundle[0] = false;
+            this.notGoodToGoBundle[1] = false;
         } else {
             if(this.goodCreating && this.goodEditing){
                 this.goodCreating = false;
@@ -246,7 +251,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                                 console.log(error);
                                 this.spinnerLoadingUI = false;
                             }); 
-                        }, 8000);
+                        }, DELAY_CALLING_TOTAL);
                     })
                     .catch(error =>{
                         if (error){
@@ -305,7 +310,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                             this.dispatchEvent(evt);
                         }
                     })    
-                }, 15000);     //This value has to change depending on the size of quotelines
+                }, DELAY_CALLING_INFO);     //This value has to change depending on the size of quotelines
             }
             
         }
@@ -416,7 +421,8 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             this.spinnerLoadingUI = true;
             this.notSaveYet = false; 
             let quoteEdition = JSON.parse(this.quotelinesString);
-            
+            this.notGoodToGoBundle[0] = false;
+            this.notGoodToGoBundle[1] = false;
             
             let quotesToFill = []; 
             //TO GET ERROR IF THE USER SAVES WITOURH FILLING REQUIRED FIELDS IN TABLE
@@ -503,7 +509,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 }               
             }
             this.quotelinesString = JSON.stringify(quoteEdition);
-            console.log('Before Editing but with quantity and nup: '+this.quotelinesString);
+            //console.log('Before Editing but with quantity and nup: '+this.quotelinesString);
             let startTime = window.performance.now();
             //APEX METHOD TO EDIT OR DELETE QUOTE LINES FROM SF
             editAndDeleteQuotes({quoteId: this.recordId, quoteLines: this.quotelinesString})
@@ -583,7 +589,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     async callCreateMethod(){
         return new Promise((resolve) => {
             //console.log('Record ID: '+this.recordId);
-            console.log('Before Creating New: '+this.quotelinesString);
+            //console.log('Before Creating New: '+this.quotelinesString);
             let startTime = window.performance.now();
             //APEX METHOD TO CREATE NEW QUOTELINES
             quoteLineCreator({quoteId: this.recordId, quoteLines: this.quotelinesString})
@@ -625,7 +631,9 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 
                 if(error != undefined){
                     if(error.body != undefined){
-                        if (error.body.pageErrors[0]!= undefined){
+                        if (error.body.message != undefined){
+                            errorMessage = error.body.message; 
+                        } else if (error.body.pageErrors!= undefined){
                             if(error.body.pageErrors[0].message != undefined){
                                 errorMessage = error.body.pageErrors[0].message; 
                             } else if (error.body.pageErrors[0].statusCode != undefined){
