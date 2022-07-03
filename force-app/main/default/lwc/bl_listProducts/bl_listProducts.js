@@ -538,7 +538,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             console.log(`getProductFilteringv2 method took ${endTime - startTime} milliseconds`);
 
             //console.log('SECOND PRODUCT TYPE');
-            //console.log(data);
+            console.log(data);
             let temporalList = JSON.parse(data);
 
             //This line is to check if it is ADSS Cable to allow convertion in feet
@@ -1057,26 +1057,40 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                     if(this.listNSP[this.firstNSP-1].hasOwnProperty(dataParse[i].apiName)){
                         //console.log('No property');
                         let ind = this.listNspValuesToDisplay.findIndex(element => element.property ==  dataParse[i].label);
-                        //console.log('Properties: '+ Object.getOwnPropertyNames(this.listNSP[this.firstNSP-1]));
+                        console.log('Properties: '+ Object.getOwnPropertyNames(this.listNSP[this.firstNSP-1]));
                         if(ind == -1){
+                            //FIX FOR THE 3DR TIME THE VALUE SELCTED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                             if (!(dataParse[i].action == 'DISPLAY')){
                                 this.listNspValuesToDisplay.push({property: dataParse[i].label, value: this.listNSP[this.firstNSP-1][dataParse[i].apiName]});
+                                console.log('1. '+ this.listNSP[this.firstNSP-1][dataParse[i].apiName]);
                             }
                         } else {
                             this.listNspValuesToDisplay[ind].value =   this.listNSP[this.firstNSP-1][dataParse[i].apiName]; 
+                            console.log('2. '+ this.listNSP[this.firstNSP-1][dataParse[i].apiName]);
                         }
                     } else {
                         if(dataParse[i].action == 'DISPLAY'){
                             this.listNSP[this.firstNSP-1][dataParse[i].apiName] = dataParse[i].options;
+                            console.log('3. '+ this.listNSP[this.firstNSP-1][dataParse[i].apiName]);
                         } else {
                             this.listNSP[this.firstNSP-1][dataParse[i].apiName] = '';
+                            console.log('4. '+ this.listNSP[this.firstNSP-1][dataParse[i].apiName]);
                         }
                     }
                     //console.log('New Prop: '+  this.listNSP[this.firstNSP-1][dataParse[i].apiName]);
                     if (dataParse[i].type == 'PICKLIST'){
                         //console.log('PickList Field');
                         dataParse[i].options = JSON.parse(dataParse[i].options);
-                        dataParse[i].value = dataParse[i].options[0].value; 
+                        
+                        if (auxiliarClose != undefined) { 
+                            console.log('SEGUNDA VEZ, YA NO DEBERIA CAMBIAR VALOR'); 
+                            dataParse[i].value = this.listNSP[this.firstNSP-1][dataParse[i].apiName]; 
+                        } else {
+                            dataParse[i].value = dataParse[i].options[0].value; 
+                            console.log('5. '+ this.listNSP[this.firstNSP-1][dataParse[i].apiName]);
+                        }
+
                         this.listNSP[this.firstNSP-1][dataParse[i].apiName] = dataParse[i].options[0].value; 
                         this.nspPicklist.push(dataParse[i]);
                     } else if(dataParse[i].action == 'INPUT') {
@@ -1086,6 +1100,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
                     } else if(dataParse[i].action == 'DISPLAY'){
                         //console.log('Display Only');
                         this.nspDisplayOnly.push({label: dataParse[i].label, value: dataParse[i].options}); 
+                        console.log('6. '+ this.listNSP[this.firstNSP-1][dataParse[i].apiName]);
                     }
                 }
                 

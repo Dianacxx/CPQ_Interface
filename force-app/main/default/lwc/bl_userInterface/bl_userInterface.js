@@ -37,6 +37,15 @@ import quoteSaver from '@salesforce/apex/DiscountController.quoteSaver';
 const DELAY_CALLING_INFO = 15000;//15000; //Miliseconds
 const DELAY_CALLING_TOTAL = 2000;//8000; //Miliseconds Not Necessery
 
+
+//----------FALG TO AVOID DELAY TEST START------------------
+import GettingFlag from '@salesforce/apex/TestFlagQCPCustomQLE.GettingFlag';
+import turnOffFlag from '@salesforce/apex/TestFlagQCPCustomQLE.turnOffFlag';
+import { refreshApex } from '@salesforce/apex';
+import { getRecord } from 'lightning/uiRecordApi';
+
+//----------FALG TO AVOID DELAY TEST END------------------
+
 export default class UserInterface extends NavigationMixin(LightningElement) {
     @api recordId; //Quote Record Id that opens the UI
     @api quotelinesString; //Quotelines information in string
@@ -185,9 +194,18 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 this.dispatchEvent(evt);
             }
         })
-    }
 
+        turnOffFlag({quoteId: this.recordId})
+        .then(()=>{
+            console.log('Turning of the falg off from begining');
+        })
+        .catch((error)=>{
+            console.log('Error turning off the flag');
+            console.log(error);
+        })
+    }
     //CALL DATA ONCE AGAIN FROM SF WHEN SAVE BUTTON CLICKED (UPDATE DATA IN UI WITH ID'S FROM SF)
+    startTimeProcess = 0;
     callData(){
         //IF THERE IS AN ERROR TO AVOID DELETING WHAT IS IN THE UI 
         if (this.notGoodToGoBundle[0] || this.notGoodToGoBundle[1]){
@@ -208,6 +226,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 this.spinnerLoadingUI = true;
                 this.totalValueLoading = true;
                 //ALL THE SET TIMEOUT IS A DELAY WHILE SF DO THE CALCULATIONS AND SAVES THE INFO, THIS CAN CHANGE IN THE FUTURE
+                /*
                 setTimeout(()=>{
     
                     let startTime = window.performance.now();
@@ -311,11 +330,241 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                         }
                     })    
                 }, DELAY_CALLING_INFO);     //This value has to change depending on the size of quotelines
+                */
+            //----------FALG TO AVOID DELAY TEST START------------------
+            let flag = false;
+            console.log('Inside no loop waiting');
+            this.startTimeProcess = window.performance.now();
+            this.processRelatedObjects();
+            /*
+            GettingFlag({quoteId: this.recordId})
+            .then((data)=>{
+               
+                if (data === 'YES'){
+                    flag = true;
+                    console.log('YES');
+                }
+                else if (data === 'NOT'){
+                    flag = false;
+                    console.log('NOT');
+                    this.processRelatedObjects();
+                }
+            })
+            .catch((error)=>{
+                flag = false;
+                console.log('Error');
+                console.log(error); 
+            })
+*/
+
+
+            /*
+            let startTime = window.performance.now();
+                        printQuoteLines({ quoteId: this.recordId})
+                        .then(data =>{
+                        let endTime = window.performance.now();
+                        console.log(`printQuoteLines method took ${endTime - startTime} milliseconds`);
+                        if (data){
+                            this.quotelinesString = data;
+                            this.originalquotelinesString = this.quotelinesString;
+                            this.error = undefined;
+                            this.isLoading = true; 
+                            //console.log('quoteLines String SUCCESS: '+ this.quotelinesString);
+                            const payload = { 
+                                dataString: this.quotelinesString,
+                                auxiliar: 'newtable'
+                            };
+                            publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
+                        }
+                            let startTime = window.performance.now();
+                            getQuoteTotal({quoteId: this.recordId})
+                            .then((data)=>{
+                                let endTime = window.performance.now();
+                                console.log(`getQuoteTotal method took ${endTime - startTime} milliseconds`);
+                                //console.log('NEW QUOTE TOTAL data');
+                                //console.log(data);
+                                this.totalValue = data;
+                                this.totalValueLoading = false;
+                                setTimeout(()=>{this.spinnerLoadingUI = false;}, 100);
+                            })
+                            .catch((error)=>{
+                                console.log('NEW QUOTE TOTAL error');
+                                console.log(error);
+                                this.spinnerLoadingUI = false;
+                            }); 
+                        })
+                        .catch(error =>{
+                        if (error){
+                            this.quotelinesString = undefined; 
+                            //console.log('quoteLines String ERROR:');
+                            //console.log(this.error);
+                            let messageError; 
+                            if (error.hasOwnProperty('body')){
+                                if(error.body.hasOwnProperty('pageErrors')){
+                                    if(error.body.pageErrors[0].hasOwnProperty('message')){
+                                        messageError = error.body.pageErrors[0].message; 
+                                    }
+                                }
+                                
+                            } else {
+                                messageError = 'Unexpected error using UI - QUOTELINES'; 
+                            }
+                            const evt = new ShowToastEvent({
+                                title: 'UI QUOTELINES Error',
+                                message: messageError,
+                                variant: 'error',
+                                mode: 'sticky'
+                            });
+                            this.dispatchEvent(evt);
+                        }
+                        }) */
+
+
+
+            //----------FALG TO AVOID DELAY TEST END------------------
+            
+            
+            
             }
+
             
         }
     }
 
+    @track quoteCheck = false;
+    @track wiredAccountList = [];
+
+    /*
+    @wire(getRecord, { recordId: '$recordId', fields: [ 'SBQQ__Quote__c.Flag_Done_QCP__c' ] })
+    getquoteRecord(value) {
+        this.wiredActivities = value;
+        let {data, error} = value;
+        console.log('getquoteRecord => ', data, error);
+        if (data) {
+            this.quoteCheck = data; 
+            this.processRelatedObjects();
+        } else if (error) {
+            console.error('ERROR => ', JSON.stringify(error)); // handle error properly
+        }
+    }
+    */
+
+    processRelatedObjects() {
+        //console.log(Object.getOwnPropertyNames(this.quoteCheck.fields));
+        if(this.quoteCheck){
+            console.log('YESSSSS');
+            this.quoteCheck = false;
+            let one = window.performance.now();
+            turnOffFlag({quoteId: this.recordId})
+            .then(()=>{
+                console.log('FINALLY!');
+                //this.spinnerLoadingUI = false;
+                let endTime = window.performance.now();
+                 
+                console.log(`Turning FLAG off took ${endTime - one} milliseconds`);
+                console.log(`QCP CHECKING FLAG took ${endTime - this.startTimeProcess} milliseconds`);
+                console.log(`TOTAL TIME took ${endTime - this.timeWhenclicked} milliseconds`);
+                this.callDataOnceFinished();
+            })
+            .catch(()=>{
+                console.log('Error putting flag off');
+            })
+           
+        } else {
+            let warningTime = window.performance.now();
+            //console.log(`Time is taking: ${warningTime - this.startTimeProcess} milliseconds`);
+            if((warningTime - this.startTimeProcess) > 60000){
+                alert('This process is taking a lot of time, take actions here'); 
+            } else {
+                console.log('Calling Again....');
+                this.callingRefreshApex();
+            }
+        }
+
+    }
+    callingRefreshApex(){
+        GettingFlag({quoteId: this.recordId})
+            .then((data)=>{
+                if (data === 'YES'){
+                    this.quoteCheck = true;
+                    console.log('YES, Checked');
+                    this.processRelatedObjects();
+                }
+                else if (data === 'NOT'){
+                    this.quoteCheck = false;
+                    console.log('NOT YET');
+                    this.processRelatedObjects();
+                }
+            })
+            .catch((error)=>{
+                flag = false;
+                console.log('Error');
+                console.log(error); 
+            })
+    }
+    callDataOnceFinished(){
+        console.log('Start Printing Quote Lines Info Calling'); 
+        let startTime = window.performance.now();
+        printQuoteLines({ quoteId: this.recordId})
+        .then(data =>{
+        let endTime = window.performance.now();
+        console.log(`printQuoteLines method took ${endTime - startTime} milliseconds`);
+        if (data){
+            this.quotelinesString = data;
+            this.originalquotelinesString = this.quotelinesString;
+            this.error = undefined;
+            this.isLoading = true; 
+            //console.log('quoteLines String SUCCESS: '+ this.quotelinesString);
+            const payload = { 
+                dataString: this.quotelinesString,
+                auxiliar: 'newtable'
+            };
+            publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
+        }
+            let startTime2 = window.performance.now();
+            getQuoteTotal({quoteId: this.recordId})
+            .then((data)=>{
+                let endTime = window.performance.now();
+                console.log(`getQuoteTotal method took ${endTime - startTime2} milliseconds`);
+                //console.log('NEW QUOTE TOTAL data');
+                //console.log(data);
+                this.totalValue = data;
+                this.totalValueLoading = false;
+                setTimeout(()=>{this.spinnerLoadingUI = false;}, 100);
+            })
+            .catch((error)=>{
+                console.log('NEW QUOTE TOTAL error');
+                console.log(error);
+                this.spinnerLoadingUI = false;
+            }); 
+        })
+        .catch(error =>{
+        if (error){
+            this.quotelinesString = undefined; 
+            //console.log('quoteLines String ERROR:');
+            //console.log(this.error);
+            let messageError; 
+            if (error.hasOwnProperty('body')){
+                if(error.body.hasOwnProperty('pageErrors')){
+                    if(error.body.pageErrors[0].hasOwnProperty('message')){
+                        messageError = error.body.pageErrors[0].message; 
+                    }
+                }
+                
+            } else {
+                messageError = 'Unexpected error using UI - QUOTELINES'; 
+            }
+            const evt = new ShowToastEvent({
+                title: 'UI QUOTELINES Error',
+                message: messageError,
+                variant: 'error',
+                mode: 'sticky'
+            });
+            this.dispatchEvent(evt);
+        }
+        })
+    }
+   
     //Connect channel
     @wire(MessageContext)
     messageContext;
@@ -406,8 +655,18 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
 
     @api labelButtonSave;
     @track notSaveYet = false; 
+
+    timeWhenclicked = 0; 
     //WHEN CLICK SAVE AND CALCULATE
     async handleSaveAndCalculate(event){
+        turnOffFlag({quoteId: this.recordId})
+        .then(()=>{
+            console.log('Turning Flag Off before anything else');
+        })
+        .catch(()=>{
+            console.log('Error putting flag off');
+        }); 
+        this.timeWhenclicked = window.performance.now();
         //CALL APEX METHOD TO SAVE QUOTELINES AND NOTES
         //this.labelButtonSave =  event.target.label;
         //console.log('Label '+ label);
