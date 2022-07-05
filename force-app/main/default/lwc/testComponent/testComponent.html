@@ -1,11 +1,35 @@
 <template>
 
 <p>Caro is working here!</p>
+<div class="slds-m-around_medium">
+    <p>
+        Use the buttons below to subscribe and unsubscribe to a
+        streaming channel!
+    </p>
+    <lightning-input
+        label="Channel Name"
+        value={channelName}
+        onchange={handleChannelName}
+    ></lightning-input>
+    <lightning-button
+        variant="success"
+        label="Subscribe"
+        title="Subscribe"
+        onclick={handleSubscribe}
+        disabled={isSubscribeDisabled}
+        class="slds-m-left_x-small"
+    ></lightning-button>
+    <lightning-button
+                label="Fetch Quote"
+                title="Fetch Quote"
+                onclick={handleFetch}
+                class="slds-m-left_x-small"
+        ></lightning-button>
+</div>
+<template if:true={showTable}>
+    <c-bl_data-table-qle record-id={recordId} tab-selected="Home" quote-lines={quoteLines} quotelines-string={quotelinesString}
+    oneditedtable={handleSaveFromTable}></c-bl_data-table-qle>
 
-<lightning-datatable column-widths-mode="auto" style="width:100%;" key-field="Id" draft-values={draftValues} 
-        data={quoteLines} columns={QUOTE_LINE_COLUMNS} 
-        onrowaction={handleRowAction} onrowselection={handleRowSelection} onsave={handleSaveEdition}
-        sorted-by={sortBy} sorted-direction={sortDirection} onsort={handleSortData} ></lightning-datatable>
-    
-    <!--suppress-bottom-bar-->
+</template>
+
 </template>
