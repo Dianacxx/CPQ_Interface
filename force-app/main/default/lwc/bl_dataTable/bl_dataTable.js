@@ -10,13 +10,14 @@ import addQuoteLine from '@salesforce/apex/QuoteController.addQuoteLine';
 //APEX METHOD TO SHOW NSP FIELDS IN POP UP
 import NSPAdditionalFields from '@salesforce/apex/QuoteController.NSPAdditionalFields'; 
 
-/*
+
 //APEX METHOD THAT SEARCH THE AGREEMENT IN TIER POP-UP (POP-UP DATATABLE)
 import searchAgreement from '@salesforce/apex/SearchAgreementLookupController.search'; 
 
 //APEX METHOD THAT RETRIEVE TIERS OF THE AGREEMENT SELECTED
 import discountPrinter from '@salesforce/apex/DiscountController.discountPrinter'; 
-*/
+import initialDiscountPrinter from '@salesforce/apex/DiscountController.initialDiscountPrinter'; 
+import lineSaver from '@salesforce/apex/DiscountController.lineSaver';
 
 //GETTING THE ACCOUNT OF THE QUOTE (POP-UP DATATABLE)
 import ACCOUNT_ID_FIELD from '@salesforce/schema/SBQQ__Quote__c.SBQQ__Account__c'; 
@@ -29,6 +30,8 @@ import QUOTELINE_OBJECT from '@salesforce/schema/SBQQ__QuoteLine__c';
 import { getObjectInfo } from 'lightning/uiObjectInfoApi';
 import { getPicklistValues } from 'lightning/uiObjectInfoApi';
 import LENGTH_UOM_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.Length_UOM__c';
+import TIER_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.Tier__c';
+
 //import LEVEL2_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.ProdLevel2__c';
 //import UOM_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.UOM__c';
 
@@ -41,9 +44,9 @@ import UPDATE_INTERFACE_CHANNEL from '@salesforce/messageChannel/update_Interfac
 
 //TIER COLUMNS FOR TABLE IN TIERS POP-UP (POP-UP DATATABLE)
 const TIER_COLUMNS = [
-    { label: 'Tier Name', fieldName: 'name', initialWidth: 100, },
-    { label: 'Number', fieldName: 'tierNumber', type: 'number', initialWidth: 100,},
-    { label: 'Discount', fieldName: 'discount', type: 'number', initialWidth: 100, },
+    { label: 'Tier Name', fieldName: 'Tier_Name__c', initialWidth: 100, },
+    { label: 'Number', fieldName: 'SBQQ__Number__c', type: 'number', initialWidth: 100,},
+    { label: 'Discount', fieldName: 'SBQQ__Discount__c', type: 'number', initialWidth: 100, },
 ];
 
 //DATA TABLE COLUMNS FOR EACH TAB USED
@@ -158,70 +161,9 @@ export default class Bl_dataTable extends LightningElement {
     @wire(getPicklistValues, { recordTypeId: '$objectInfo.data.defaultRecordTypeId', fieldApiName: LENGTH_UOM_FIELD})
     lengthUom;
 
-    /*
-    level2Dependencies = [];
-    goodDependencies = false;
-
+    @wire(getPicklistValues, { recordTypeId: '$objectInfo.data.defaultRecordTypeId', fieldApiName: TIER_FIELD})
+    tierValues;
     
-    @wire(getPicklistValues, { recordTypeId: '$objectInfo.data.defaultRecordTypeId', fieldApiName: LEVEL2_FIELD})
-    level2Picklist({ error, data }) {
-        if (data) {
-            //
-            console.log('WIRE LIST');
-            //console.log(JSON.stringify(data));
-            let prodL2 = []; 
-            data.values.forEach( element => { prodL2.push(element.label);}); 
-
-            let startTime = window.performance.now();
-            uomDependencyLevel2List({productLevel2 : prodL2})
-            .then((data)=>{
-                this.goodDependencies = true; 
-                let endTime = window.performance.now();
-                console.log(`uomDependencyLevel2List method took ${endTime - startTime} milliseconds`);
-                //console.log(data);
-                let dependency = JSON.parse(data); 
-                let levelsNames = Object.getOwnPropertyNames(dependency); 
-                for (let i=0; i< levelsNames.length; i++){
-                    let prop = dependency[levelsNames[i]]; 
-                    let values = [];
-                    for(let j=0;j<prop.length;j++){
-                        values.push((prop[j].label).toLowerCase());
-                    }
-                    this.level2Dependencies.push({level2: levelsNames[i].toLowerCase(), dependencies: values}); 
-                }
-                //console.log('Level 2 Array of dependencies');
-                //console.log(this.level2Dependencies); 
-                
-            })
-            .catch((error)=>{
-                console.log(error);
-                if (!this.goodDependencies){
-                    const evt = new ShowToastEvent({
-                        title: '2. There is a problem loading the Error Checker for the UOM value', 
-                        message: 'Please, do not edit UOM values now or reload the UI to correct this mistake.',
-                        variant: 'warning', mode: 'dismissable'
-                    });
-                    this.dispatchEvent(evt);
-                }
-                
-            })
-            
-        } else if (error) {
-            console.log('WIRE LIST ERROR');
-            const evt = new ShowToastEvent({
-                title: '1. There is a problem loading the Error Checker for the UOM value', 
-                message: 'Please, do not edit UOM values now or reload the UI to correct this mistake.',
-                variant: 'warning', mode: 'dismissable'
-            });
-            this.dispatchEvent(evt);
-            console.log(error); 
-        }
-    }
-
-    @wire(getPicklistValues, { recordTypeId: '$objectInfo.data.defaultRecordTypeId', fieldApiName: UOM_FIELD})
-    uom;
-    */
-
     //WIRE METHOD TO GET ACCOUNT INFO (POP-UP DATATABLE)
     @wire(getRecord, { recordId: '$recordId', fields: ACCOUNT_ID_FIELD})
     quoteData({error, data}){
@@ -340,6 +282,7 @@ export default class Bl_dataTable extends LightningElement {
             }
         }
         //WHEN A DISCOUNT VALUES IS ADDED AND APPLY
+        //HERE THE ERROR MESSAGE IS SHOWN TWICE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         else if (message.auxiliar == 'applydiscount'){
             this.discount = message.dataString;
             if (this.selectedRows != undefined && this.selectedRows !=  null && this.selectedRows.length > 0 ){
@@ -373,6 +316,12 @@ export default class Bl_dataTable extends LightningElement {
             this.selectedRows = [];
             this.dispatchEvent(new CustomEvent('notselected'));
             this.firstHandler();
+            
+            const payload = { 
+                dataString: null,
+                auxiliar: ''
+              };
+            publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
         }
         this.spinnerLoading = false;
     }
@@ -940,8 +889,6 @@ export default class Bl_dataTable extends LightningElement {
         return tempDivElement.textContent || tempDivElement.innerText || "";
     } 
 
-    @track richtext = '<br><p>carp</p><br><ul><li class=\'msgSuccess\'>1 item(s) added to cart successfully</li><li class=\'msgErr\'>3 item(s) were not added to the cart</li><li class=\'msgWarn\'>Invalid SKU: 710-900007</li><li class=\'msgWarn\'>Invalid SKU: ABC</li><li class=\'msgWarn\'>Invalid SKU: XYZ</li></ul>';
-
     handleRowAction(event){
         this.dataRow = event.detail.row;
        //console.log(Object.getOwnPropertyNames(event.detail));
@@ -950,8 +897,28 @@ export default class Bl_dataTable extends LightningElement {
                 this.deleteClick = true; 
             break;
             case 'Tiers':
-                //this.popUpTiers = true; //UNCOMMENT THIS WHEN CR OF AGREEMENT
-                alert('THIS IS NOT DONE YET');
+                //alert('THIS PROCESS IS NOT FINISHED YET, PLEASE DO NOT TEST HERE');
+
+                if (this.dataRow.id.startsWith('new')){
+                    const evt = new ShowToastEvent({
+                        title: 'Unable to change Tiers', 
+                        message: 'Please, save the quote line first to do this action.',
+                        variant: 'warning', mode: 'dismissable'
+                    });
+                    this.dispatchEvent(evt);
+                } else {
+                    this.popUpTiers = true; 
+                    this.loadingInitianTiers();
+                    this.customerTier = 'not';
+                    this.basePrice = 'not';
+                    this.changeAgreement = false;
+                    this.dataRow.newCustomerTier == null ? this.showLineCustomertier = this.dataRow.CustomerTier : this.showLineCustomertier = this.dataRow.newCustomerTier;
+                    //this.dataRow.newCustomerTier == null ? this.customerTier = this.dataRow.CustomerTier : this.customerTier = this.dataRow.newCustomerTier;
+                    //Maybe here add in customerTier variable the dataRow.[tier field Diana send] to show the value of the new or original value
+                    //Maybe here add in basePrice variable the dataRow.[basePrice field Diana send] to show the value of the new or original value
+                    //
+                    //here goes the other code
+                }
             break;
             case 'NSP':
                 this.nspProduct = true; 
@@ -1005,8 +972,9 @@ export default class Bl_dataTable extends LightningElement {
 
     //UOM POP UP
     uomList = [];
-
+    uomDone = false;
     searchUomValuesForProduct2(){
+        this.uomDone = true; 
         if(this.dataRow.prodLevel2 != null && this.dataRow.prodLevel2 != ''){
             uomDependencyLevel2List({productLevel2 : this.dataRow.prodLevel2})
             .then((data)=>{
@@ -1015,8 +983,10 @@ export default class Bl_dataTable extends LightningElement {
                 let list = JSON.parse(data);
                 let prodLevel2 = Object.getOwnPropertyNames(list);
                 this.uomList = list[prodLevel2[0]];
+                this.uomDone = false; 
             })
             .catch((error)=>{
+                this.uomDone = false; 
                 console.log(error);
                 const evt = new ShowToastEvent({
                     title: 'There is a problem loading the possible values for the UOM value', 
@@ -1032,6 +1002,7 @@ export default class Bl_dataTable extends LightningElement {
                 variant: 'warning', mode: 'dismissable'
             });
             this.dispatchEvent(evt);
+            this.uomDone = false; 
             this.closeUomPopup();
         }
        
@@ -1115,10 +1086,12 @@ export default class Bl_dataTable extends LightningElement {
         this.quotelinesString = JSON.stringify(this.quoteLines); 
         this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
     }
+
     //Tiers Pop Up 
     @track popUpTiers = false;
     closeTiers(){
         this.popUpTiers = false;
+        this.showTiersList = false;
     }
     //CHANGE CSS (POP-UP DATATABLE)
     handleClick() {
@@ -1131,21 +1104,58 @@ export default class Bl_dataTable extends LightningElement {
             this.boxClass = 'slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click slds-has-focus'
         }, 300);
     }
+    thereAreTiers = false;
+    discountScheduleUom; 
+    loadingInitianTiers(){
+        console.log(JSON.stringify(this.dataRow));
+        console.log('Searching Tiers By quote line Id');
+        initialDiscountPrinter({lineId: JSON.stringify(this.dataRow)}) 
+        .then((data)=>{
+            console.log('initial discount Tiers GOOD'); 
+            console.log(JSON.stringify(data));
+            this.tiers = data; 
+            if(data.length > 0){
+                this.thereAreTiers = true;
+                this.showTiersList = true;
+                this.tiers[0].UOM__c != undefined ? this.discountScheduleUom = this.tiers[0].UOM__c 
+                :  this.discountScheduleUom = '';
+            } else {
+                this.thereAreTiers = false;
+                this.discountScheduleUom = '';
+            }
 
+        })
+        .catch((error)=>{
+            console.log('initial discount Tiers BAD'); 
+            console.log(error);
+        })
+    }
+
+    changeAgreement = false; 
     //WHEN SELECTING AN AGREEMENT FROM THE LIST  (POP-UP DATATABLE)
     onSelect(event) {
+        this.changeAgreement = true; 
         let selectedId = event.currentTarget.dataset.id;
         let selectedName = event.currentTarget.dataset.name;
         console.log('Selected:' + selectedId+', '+selectedName);
         this.template.querySelectorAll("[id*='inputAgreement']").forEach(each => { each.value = undefined; });
         if(!(selectedId == 'norecords')){
             //selectedId 
-            //this.showTiers = false; 
-            discountPrinter({agreementId: '8002h000000engBAAQ' /*selectedId*/, prodId: '01t2h000004Rvu1AAC' })
+            //this.showTiers = false;
+            discountPrinter({agreementId: selectedId /* 8002h000000engBAAQ*/, prodId: this.dataRow.productid /*'01t2h000004Rvu1AAC'*/ })
             .then((data)=>{
                 console.log('discount Tiers GOOD'); 
                 console.log(data);
-                this.tiers = JSON.parse(data); 
+                this.tiers = data; 
+                if(this.tiers.length > 0){
+                    this.tiers[0].UOM__c != undefined ? this.discountScheduleUom = this.tiers[0].UOM__c 
+                    :  this.discountScheduleUom = '';
+                    this.thereAreTiers = true;
+                } else {
+                    this.discountScheduleUom = '';
+                    this.thereAreTiers = false;
+                }
+               
                 this.showTiers = true; 
                 this.showTiersList = true;
             })
@@ -1168,7 +1178,7 @@ export default class Bl_dataTable extends LightningElement {
     }
 
     //WHEN CHANGING THE TERM TO LOOK UP THE AGREEMENT (POP-UP DATATABLE)
-    /* UNCOMMENT WHE CR OF AGREEMENT
+
     onChange(event) {
         this.searchTermTier = event.target.value;
         //console.log('search Term : '+ this.searchTermTier);
@@ -1184,6 +1194,7 @@ export default class Bl_dataTable extends LightningElement {
         } else {
             searchAgreement( {accId : this.accountId, searchTerm: this.searchTermTier})
             .then((data)=>{
+                    //console.log(data);
                     this.recordsTiers = data;
                     if (this.recordsTiers.length == 0){
                         this.recordsTiers = [{"Id":"norecords","Agreement_Name__c":"NO RECORDS",}];
@@ -1203,17 +1214,17 @@ export default class Bl_dataTable extends LightningElement {
         }
         
     }
-    */
 
     //WHEN CHANGING CUSTOMER TIER VALUE (POP-UP DATATABLE)
-    customerTier; 
+    customerTier = 'not';
+    showLineCustomertier;
     handleCustomerChange(event){
         console.log('customer change');
         this.customerTier = event.target.value; 
     }
 
     //WHEN CHANGING THE BASE PRICE VALUE (POP-UP DATATABLE)
-    basePrice; 
+    basePrice = 'not'; 
     handleBasePriceChange(event){
         console.log('base price');
         this.basePrice = event.target.value; 
@@ -1222,13 +1233,63 @@ export default class Bl_dataTable extends LightningElement {
 
     //WHEN CLICK IN CHANGE VALUE (POP-UP DATATABLE) - SEND MESSAGE TO UI FROM DATATABLE COMPONENT 
     changeTiers(){
-        //CHANGE HERE VALUES OF BASE PRICE, AGREEMENT AND CUSTOMER ONCE CLICKED
-        //ASK WHICH VALUES CAN CHANGE, TO SEE IF THEY ARE REQUIRED ALL OF THEM OR HOW THEY WORK. 
-        //UNCOMMENT THIS WHEN CODE IN DATA TABLE TO ACTIVE THE Override Reason THING
-        this.dispatchEvent(new CustomEvent('overridereason'));
+        let sendOverride = false;
+        if(!(this.basePrice == 'not')){
+            let index = this.quoteLines.findIndex(x => x.id === this.dataRow.id);
+            if(index != -1){
+                this.quoteLines[index].basepriceoverride = this.basePrice; 
+            } else {
+                alert('The row cannot change, MEGA ERROR');
+            }
+            sendOverride = true; 
+            console.log('base');
+            console.log(this.basePrice);
+        }
+        if(!(this.customerTier == 'not')){
+            let index = this.quoteLines.findIndex(x => x.id === this.dataRow.id);
+            if(index != -1){
+                this.quoteLines[index].lastCustomerTier = this.quoteLines[index].newCustomerTier;
+                this.quoteLines[index].newCustomerTier = this.customerTier; 
+
+            } else {
+                alert('The row cannot change, MEGA ERROR');
+            }
+            sendOverride = true;  
+            console.log('tier');
+            console.log(this.customerTier);
+        }
+        if (this.changeAgreement && this.tiers.length > 0){
+            console.log('agree');
+            console.log(this.tiers);
+            sendOverride = true; 
+            lineSaver({line: JSON.stringify(this.dataRow), discTiers: this.tiers})
+            .then((data)=>{
+                console.log('New line');
+                console.log(data);
+                let index = this.quoteLines.findIndex(x => x.id === this.dataRow.id);
+                if(index != -1){
+                this.quoteLines[index] = JSON.parse(data);
+                this.quotelinesString = JSON.stringify(this.quoteLines); 
+                this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
+                } else {
+                alert('The row cannot change, MEGA ERROR');
+                }
+            })
+            .catch((error)=>{
+                console.log('New Tiers ERROR');
+                console.log(error);
+            })
+
+        }
+        
+        if(sendOverride){
+            this.quotelinesString = JSON.stringify(this.quoteLines); 
+            this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
+            setTimeout(()=>{ this.dispatchEvent(new CustomEvent('overridereason')); }, 200);
+            console.log(this.quotelinesString);
+        }
         //HERE CALLS THE SAVING METHOD OF THE QUOTE LINE, AND RETRIEVE THE INFO THAT CAHNGES WHEN SAVING
         //this.activeOverrideReasonFields(); 
-        console.log('change clicked');
         this.closeTiers();
     }
 
@@ -1241,7 +1302,7 @@ export default class Bl_dataTable extends LightningElement {
     properties = [];
     showNSPValues(){
         this.showNSP = false;
-        console.log(this.dataRow);
+        //console.log(this.dataRow);
 
         let startTime = window.performance.now();
         NSPAdditionalFields({productId: this.dataRow.productid })

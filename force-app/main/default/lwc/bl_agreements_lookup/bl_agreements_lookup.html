@@ -30,8 +30,8 @@
                                     <ul class="" role="">
                                         <template for:each={productList} for:item="prod">
                                             <li class="slds-p-around_x-small" style="cursor: pointer;" key={prod.Id}
-                                                onclick={handleParentSelection} data-value={prod.Id} data-primaryuom={prod.Primary_UOM__c}
-                                                data-label={prod.Name}>
+                                                onclick={handleParentSelection} data-value={prod.Id} data-primaryuom={prod.Primary_UOM__c} data-description={prod.Description} data-minimumquantity={prod.Minimum_Order_Qty__c}
+                                                data-label={prod.Name} data-prodlevel2={prod.ProdLevel2__c}>
                                                 {prod.Name}
                                             </li>
                                         </template>

@@ -41,6 +41,7 @@
                         <h2 class="slds-text-heading_medium slds-hyphenate">Changing UOM: {dataRow.UOM__c}</h2>
                         <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeUomPopup}></lightning-icon>
                     </header>
+                    <lightning-spinner if:true={uomDone} alternative-text="Loading" variant="inverse" size="small"></lightning-spinner>
                     <div style="overflow: initial;" class="slds-modal__content slds-p-around_medium slds-var-m-left_small  slds-var-m-right_small">
                         <lightning-combobox class="slds-align_absolute-center" style="width:80%" name="uom" label="UOM" value={newUOM}
                         options={uomList} onchange={uomHandler}>
@@ -109,13 +110,13 @@
                                     <div class="slds-col slds-size_1-of-2">
                                         <template if:true={nspOptions}>
                                             <template for:each={nspOptions} for:item="nspChange">
-                                                <lightning-combobox key={nspChange.label} name={nspChange.label} label={nspChange.label}
+                                                <lightning-combobox key={nspChange.label} name={nspChange.name} label={nspChange.label}
                                                     options={nspChange.options} onchange={changingNSP}></lightning-combobox>
                                             </template>
                                         </template> 
                                         <template if:true={nspInputs}>
                                             <template for:each={nspInputs} for:item="nspChangeInputs">
-                                                <lightning-input key={nspChangeInputs}  type="number" name={nspChangeInputs.label} label={nspChangeInputs.label}
+                                                <lightning-input key={nspChangeInputs}  type="number" name={nspChangeInputs.name} label={nspChangeInputs.label}
                                                     onchange={changingNSP} ></lightning-input>
                                             </template>
                                         </template>
@@ -162,21 +163,24 @@
             <section aria-modal="true" class="slds-modal slds-fade-in-open slds-align_absolute-center">
                 <div class="slds-modal__container slds-var-m-left_small  slds-var-m-right_small">
                     <header class="slds-modal__header slds-var-m-left_small  slds-var-m-right_small">
-                        <h2 class="slds-text-heading_medium slds-hyphenate">PLEASE DO NOT WORK HERE - IN PROCESS, BRICK LANE</h2>
                         <h2 class="slds-text-heading_medium slds-hyphenate">Manage Pricing: {dataRow.Quote_Line_Name__c}</h2>
                         <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeTiers}></lightning-icon>
                     </header>
-                    <div class="slds-modal__content slds-var-m-left_small  slds-var-m-right_small">
+                    <div style="overflow: initial;" class="slds-modal__content slds-var-m-left_small  slds-var-m-right_small">
                         <div class="slds-var-p-around_small slds-align_absolute-center">
                             <div class="slds-col">
-                                <h1 class="slds-align_absolute-center slds-var-m-top_small"><b>UOM: {dataRow.UOM__c}</b></h1>
-                                <!--CUSTOMER TIER PICKLIST-->
-                                <lightning-combobox style="width: 60%;" class="slds-align_absolute-center" name="customerTier" label="Customer Tier" value={customerTier}
-                                placeholder="Select Tier" options={optionsCustomer} onchange={handleCustomerChange} ></lightning-combobox>
+                                <h1 class="slds-align_absolute-center slds-var-m-top_small"><b>Quote Line UOM:</b>&nbsp;{dataRow.UOM__c}</h1>
                                 
+                                <!--CUSTOMER TIER PICKLIST-->
+                                <template if:true={tierValues.data.values}>
+                                    <h1 class="slds-align_absolute-center slds-var-m-top_small"><b>Actual Customer Tier:</b>&nbsp;{showLineCustomertier}</h1>
+                                    <h1 class="slds-align_absolute-center slds-var-m-top_small"><b>Actual Base Price:</b>&nbsp;{dataRow.Base_Price_Override__c}</h1>
+                                    <lightning-combobox style="width: 40%;" class="slds-align_absolute-center" name="customerTier" label="Customer Tier" value={customerTier}
+                                    placeholder="Select Tier" options={tierValues.data.values} onchange={handleCustomerChange} ></lightning-combobox>    
+                                </template>
                                 <!--BASE PRICE INPUT-->
                                 <lightning-input  style="width: 40%;" class="slds-align_absolute-center" type="number" name="BasePriceOverride" label="Base Price Override"
-                                 value={dataRow.Base_Price_Override__c} placeholder="$" onchange={handleBasePriceChange} ></lightning-input>
+                                 value={basePrice} placeholder="$" onchange={handleBasePriceChange} ></lightning-input>
                         
                                 <!--AGREEMENT LOOK UP FIELD START-->
                                 <div>
@@ -192,14 +196,19 @@
                                                     </div>
                                                     </div>
                                                     <div id="listbox-id-1" class="slds-dropdown slds-dropdown_length-with-icon-7" role="listbox">
-                                                        <ul  style="width: 50%;"  class="slds-listbox slds-listbox_vertical" role="presentation">
+                                                        <ul class="slds-listbox slds-listbox_vertical" role="presentation">
                                                             <template for:each={recordsTiers} for:item="record">
-                                                                <li  style="width: 50%;"  key={record.Id} onclick={onSelect} data-id={record.Id} role="presentation" data-name={record.Agreement_Name__c}>
-                                                                    <span role="option">
-                                                                    <!--    
-                                                                        <lightning-icon class="slds-icon slds-icon--small slds-icon-text-default slds-var-m-right_xx-small" icon-name="standard:contract" size="small"></lightning-icon>
-                                                                    -->
+                                                                <li key={record.Id} onclick={onSelect} data-id={record.Id} role="presentation" data-name={record.Name}>
+                                                                    <span class="slds-lookup__item-action slds-lookup__item-action--label" role="option">
+                                                                        <lightning-icon class="slds-icon slds-icon--small slds-icon-text-default" icon-name="standard:contract" alternative-text='Agreement' size="small"></lightning-icon>
                                                                         <span class="slds-truncate">{record.Agreement_Name__c}</span>
+                                                                 <!--     <li  style="width: 90%;"  key={record.Id} onclick={onSelect} data-id={record.Id} role="presentation" data-name={record.Agreement_Name__c}>
+                                                                    <span role="option">
+                                                                  
+                                                                        <lightning-icon class="slds-icon slds-icon--small slds-icon-text-default slds-var-m-right_xx-small" icon-name="standard:contract" size="small"></lightning-icon>
+                                                                   
+                                                                        <span class="slds-truncate">{record.Agreement_Name__c}</span>
+                                                                         -->
                                                                     </span>
                                                                 </li>
                                                             </template>
@@ -215,6 +224,8 @@
                                 <!--TIERS TABLE-->
                                 <template if:true={showTiersList}>
                                     <p class="slds-align_absolute-center slds-var-m-top_small">Price Breaks</p>
+                                    <h1 class="slds-align_absolute-center slds-var-m-top_small"><b>Discount Schedule UOM:</b>&nbsp;{discountScheduleUom}</h1>
+
                                     <div class="slds-align_absolute-center slds-var-m-top_small">
                                         
                                         <!--column-widths-mode="auto"-->

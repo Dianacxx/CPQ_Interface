@@ -250,6 +250,8 @@ public with sharing class QuoteController {
                 }
             }
             delete linesToDelete;
+            //QCP_Flag__e myEvent = new QCP_Flag__e();
+            //EventBus.publish(myEvent);
         }catch (Exception e) {
             throw new AuraHandledException('Something went wrong: ' + e.getMessage() + 'cause: ' + e.getCause());
         }
@@ -298,7 +300,7 @@ public with sharing class QuoteController {
             List<SBQQ__QuoteLine__c> quoteLineRecordsToUpdate = new List <SBQQ__QuoteLine__c>();
 
             for(QuoteLineModel line:quote.getLineItems()){
-                System.debug('new quote quantities - ' + line.record.SBQQ__Quantity__c);
+                // System.debug('new quote quantities - ' + line.record.SBQQ__Quantity__c);
                 
                 if(line.record.id != null){
                     String stringID = String.valueOf(line.record.id);
@@ -309,20 +311,23 @@ public with sharing class QuoteController {
                 }
                 
             }
-            for(SBQQ__QuoteLine__c q : quoteLineRecordsToUpdate){
-                system.debug('new price : ' +  q.SBQQ__NetPrice__c);
-                System.debug('new quote discount - ' + q.SBQQ__Discount__c);
-            }
+            // for(SBQQ__QuoteLine__c q : quoteLineRecordsToUpdate){
+            //     system.debug('new price : ' +  q.SBQQ__NetPrice__c);
+            //     System.debug('new quote discount - ' + q.SBQQ__Discount__c);
+            // }
 
             update quoteLineRecordsToUpdate; 
                         
             //Deletes the quote lines from salesforce that are not in the UI
             String deletion = deleteQuoteLines(existingQuoteLines, untypedQuoteLines);
-            
+           
+            // System.debug('CPU Time ---- ' + Limits.getCPUTime());
     }
     @AuraEnabled
     public static void quoteLineCreator(String quoteId, String quoteLines){ //This method creates new quote lines in salesforce based on the values in the QLE
-        
+        datetime qryStart = datetime.now();
+
+
         //Get all the fields from the quote line object
         Map<String, Schema.SObjectField> fieldMap = SBQQ__QuoteLine__c.sObjectType.getDescribe().fields.getMap();
         Set<String> setFieldNames = fieldMap.keySet();
@@ -341,7 +346,7 @@ public with sharing class QuoteController {
         for(AFL_Lookups__c lookup :lengthLookupList){
             lengthCodes.add(lookup.Lookup_Code__c);
         }
-        System.debug(lengthCodes);
+        // System.debug(lengthCodes);
 
         List<QuoteLineModel> quoteLinesToInsert = new List<QuoteLineModel>();
         
@@ -352,16 +357,16 @@ public with sharing class QuoteController {
 
         //Gets all the products related to the quote that are configured and puts it in a map, then gets it's configuration in order to create the lines
         Map<Id,Product2> prodMap  = new Map<Id,Product2>([SELECT Id,Filtered_Grouping__c,Product_Type__c FROM Product2 WHERE QLE_Search_Method__c = 'FILTERED']);
-        System.debug('prodMap '+prodMap);
+        // System.debug('prodMap '+prodMap);
         Map<String, SBQQ__QuoteLine__c> existentLinesMap = new Map<String, SBQQ__QuoteLine__c>();
         Map<String, List<SBQQ__QuoteLine__c>> linesWithParentsMap = new Map<String, List<SBQQ__QuoteLine__c>>();
         List<SBQQ__QuoteLine__c> optionLines = Database.query('SELECT SBQQ__RequiredBy__r.SBQQ__Product__r.Name, SBQQ__RequiredBy__r.Name, ' + String.join(lstFieldNames, ',') + ' FROM SBQQ__QuoteLine__c WHERE SBQQ__RequiredBy__c != null AND  SBQQ__Quote__c =: quoteId');
-        System.debug('query option lines: ' + optionLines.size());
+        // System.debug('query option lines: ' + optionLines.size());
         //Populate map with existent records
         for (SBQQ__QuoteLine__c line : existingQuoteLines) {
             existentLinesMap.put(line.id,line);
         }
-        System.debug('existent lines map '+existentLinesMap);
+        // System.debug('existent lines map '+existentLinesMap);
         //Populaate map with the existent configured quote lines and a list of their options
         for(SBQQ__QuoteLine__c line : optionLines ){
             if(linesWithParentsMap.containsKey(line.SBQQ__RequiredBy__r.Name)){
@@ -384,10 +389,14 @@ public with sharing class QuoteController {
         quoteLinerecordsToInsert =  QuoteControllerMethodsHandler.wrapperToQuote (untypedQuoteLines, prodMap, lengthCodes, existentLinesMap, parentWithClone, getQuote);
 
         insert quoteLinerecordsToInsert;
+        // QCP_Flag__e myEvent = new QCP_Flag__e();
+        // myEvent.quoteLines__c = 'HELLO ITS ME';
+
+
         quoteLinerecordsToInsert.clear();
-        System.debug('number of parents ' + parentWithClone.keySet());
+        // System.debug('number of parents ' + parentWithClone.keySet());
         for(SBQQ__QuoteLine__c parent : parentWithClone.keySet()){
-            System.debug('quantity of clones '+parentWithClone.get(parent).size());
+            // System.debug('quantity of clones '+parentWithClone.get(parent).size());
             
             if(linesWithParentsMap.containsKey(parent.Name)){
                 if(parentWithClone.get(parent).size()>1){
@@ -396,26 +405,31 @@ public with sharing class QuoteController {
                             SBQQ__QuoteLine__c newOpLine = l.clone(false, false, false, false);
                             newOpLine.id = null;
                             newOpLine.SBQQ__RequiredBy__c = parentWithClone.get(parent)[i].id;                        
-                            System.debug('required by ' + newOpLine.SBQQ__RequiredBy__c);
+                            // System.debug('required by ' + newOpLine.SBQQ__RequiredBy__c);
                             quoteLinerecordsToInsert.add(newOpLine);
-                            System.debug('to insert size : '+quoteLinerecordsToInsert.size());
+                            // System.debug('to insert size : '+quoteLinerecordsToInsert.size());
                         }
                     }
                 }else{
-                    System.debug('should not enter here');
+                    // System.debug('should not enter here');
                     for(SBQQ__QuoteLine__c l :linesWithParentsMap.get(parent.Name)){
                         SBQQ__QuoteLine__c newOpLine = l.clone(false, false, false, false);
                         newOpLine.id = null;
                         newOpLine.SBQQ__RequiredBy__c = parentWithClone.get(parent)[0].id;                        
-                        System.debug('required by ' + newOpLine.SBQQ__RequiredBy__c);
+                        // System.debug('required by ' + newOpLine.SBQQ__RequiredBy__c);
                         quoteLinerecordsToInsert.add(newOpLine);
-                        System.debug('to insert size : '+quoteLinerecordsToInsert.size());
+                        // System.debug('to insert size : '+quoteLinerecordsToInsert.size());
                     }
                 }
             }
         }
         parentWithClone.clear();
         insert quoteLinerecordsToInsert;
+        datetime qryEnd = datetime.now();
+        system.debug('RUNTIME ---- ' + (qryEnd.getTime() - qryStart.getTime()));
+        System.debug('CPU Time ---- ' + Limits.getCPUTime());
+
+        // EventBus.publish(myEvent);
     }
    
 
@@ -491,6 +505,7 @@ public with sharing class QuoteController {
             wrapper.type = fieldsTypeMap.get(filter);
             filtersWrapperToShow.add(wrapper);
         }
+        System.debug('CPU Time ---- ' + Limits.getCPUTime());
 
         return JSON.serialize(filtersWrapperToShow);
 
@@ -634,8 +649,10 @@ public with sharing class QuoteController {
         }
 
         // System.debug(JSON.serialize(filtersWrapperToShow));
-        
+        System.debug('CPU Time ---- ' + Limits.getCPUTime());
         return JSON.serialize(filtersWrapperToShow);
+        
+
     }
 
     @AuraEnabled
@@ -693,6 +710,7 @@ public with sharing class QuoteController {
         }
 
         String filtersToAdd = JSON.serialize(filtersWrapperToShow);
+        System.debug('CPU Time ---- ' + Limits.getCPUTime());
 
         return filtersToAdd;
     }
@@ -1031,6 +1049,8 @@ public with sharing class QuoteController {
 
         List<Product2> lookUpList = database.query(myQuery);
         System.debug('products : ' + lookUpList.size());
+        System.debug('CPU Time ---- ' + Limits.getCPUTime());
+
         return lookUpList;
     }
     //This controls the fields that willl need to be filled from the NSP products depending on which one it is 

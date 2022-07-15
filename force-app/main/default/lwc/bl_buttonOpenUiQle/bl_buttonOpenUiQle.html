@@ -1,0 +1,11 @@
+<template>
+    <lightning-card>
+        <template if:true={isLoading}>
+            <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+        </template>
+        <template if:false={isLoading}>
+            <lightning-button variant="destructive" label="DO NOT USE THIS BUTTON" title="Open UI" 
+                onclick={handleNavigateUi} class="slds-align_absolute-center" disabled={disableButton} ></lightning-button>
+        </template>
+    </lightning-card>
+</template>

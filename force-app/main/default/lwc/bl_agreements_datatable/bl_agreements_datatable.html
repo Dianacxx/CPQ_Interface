@@ -22,6 +22,7 @@
                     <p><b>       End Date : </b>{endDate}</p>
                     <p><b>       Review Period : </b>{schedule}</p>
                     <p><b>       Rise/Fall Cadence : </b>{cadence}</p>
+                    <p><b>       dates : </b>{caseDates}</p>
                
                 </span>
                 </div>
@@ -61,8 +62,8 @@
             <lightning-layout-item size="12" small-device-size="6" padding="around-small">
                 <template if:true={loadApplyInput}>
                 <div class="slds-align_absolute-center slds slds-m-around_small">
-                        <button class="stretchButton slds-m-right_small" disabled={disableReorder} onclick={getPrice}>Refresh sPrices</button>
-                        <button class="stretchButton slds-m-right_small"  onclick={handlePreviousScreen}>Previous Screen</button>
+                        <button class="stretchButton slds-m-right_small" disabled={disableReorder} onclick={refreshPrice}>Reset Prices</button>
+                        <!--<button class="stretchButton slds-m-right_small"  onclick={handlePreviousScreen}>Refresh Price 2</button>-->
                         <button class="stretchButton "  onclick={handleCancel}>Cancel</button>
                 </div>
                 <div class="slds-align_absolute-center slds-m-around_small">
@@ -102,7 +103,6 @@
             </template>
         <div class="slds-col">
             <button class="ApplyButton slds-m-top_large slds-m-right_small" disabled={disableDiscount} onclick={handleApplyDiscount}>Apply</button>
-            <button class="stretchButton slds-m-right_small slds-hidden" disabled={disableReorder} data-id="getPrice" onclick={getPrice}>get Price</button>
 
             </div>
             <div class="slds-col">
@@ -145,6 +145,7 @@
                             <lightning-datatable 
                             key-field="discountName"
                             onrowaction={handleRowActions}
+                            onrowselection={handleRowSelection}
                             data={data} 
                             columns={columns} 
                             onsave={handleSaveEdition}
@@ -212,7 +213,7 @@
                 <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
                    
                    
-                    <c-bl_agreements_tiers_table currency-contract={currencyContract} customer={customer} discount-id={discountId} producto={producto} record-id={recordId} discount-nombre={discountNombre} is-modal-open={isModalOpen} ></c-bl_agreements_tiers_table>
+                    <c-bl_agreements_tiers_table currency-contract={currencyContract} customer={customer} discount-id={discountId} factoro ={factoro} conversion-factor={conversionFactor} producto={producto} record-id={recordId} discount-nombre={discountNombre} is-modal-open={isModalOpen} ></c-bl_agreements_tiers_table>
                 
                 
                 </div>
@@ -260,8 +261,8 @@
         <!-- UOM POPUP -->
      <template if:true={uomPopupOpen}>
         <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
-            <div class="slds-modal__container slds-modal__container_uom">
-                <header class="slds-modal__header">
+            <div class="slds-modal__container modal__container_uom">
+                <header class="slds-modal__header slds-var-m-left_small  slds-var-m-right_small">
                     <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={closeUomPopup}>
                         <lightning-icon icon-name="utility:close"
                             alternative-text="close"
@@ -270,29 +271,25 @@
                         <span class="slds-assistive-text">Close</span>
                     </button>
                 </header>
-                <div style="overflow: initial;" class="slds-modal__content slds-p-around_medium slds-var-m-left_small  slds-var-m-right_small">
-                   
-                    <lightning-combobox style="width:80%"
+                <div style="overflow: initial;" class="slds-modal__content slds-var-p-around_medium slds-var-m-left_small  slds-var-m-right_small">
+                
+                    <lightning-combobox class="slds-align_absolute-center" style="width:80%"
                     name="uom"
-                    label="UOM"
+                    label="Unit Of Measure"
                     value=""
-                    
-                    placeholder=""
-                    options={uomList.data.values}
+                    placeholder="Select a UOM"
+                    options={uomList}
                     onchange={uomHandler}>
 
                    
         </lightning-combobox>
                 
-        <footer class="slds-modal__footer">
-            <button class="slds-button slds-button_neutral" onclick={closeUomPopup} title="Cancel">Cancel</button>
-            <button class="slds-button slds-button_brand" onclick={saveUom} title="OK">OK</button>
-        </footer>
+
                 </div>
-               <!--  <footer class="slds-modal__footer">
-                    <button class="slds-button slds-button_neutral" onclick={closeModal} title="Cancel">Cancel</button>
-                    <button class="slds-button slds-button_brand" onclick={submitDetails} title="OK">OK</button>
-                </footer> -->
+                <footer class="slds-modal__footer slds-var-m-left_small  slds-var-m-right_small">
+                    <button class="slds-button slds-button_neutral" onclick={closeUomPopup} title="Cancel">Cancel</button>
+                    <button class="slds-button slds-button_brand" onclick={saveUom} title="OK">OK</button>
+                </footer>
             </div>
         </section>
         <div class="slds-backdrop slds-backdrop_open"></div>

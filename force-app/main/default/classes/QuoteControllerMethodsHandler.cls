@@ -146,7 +146,6 @@ public with sharing class QuoteControllerMethodsHandler {
             wrapper.displayPrice=line.Display_Price__c;
             wrapper.railgt150pc=line.Rail_gt_150_pc__c;
             wrapper.featureName=line.Feature_Name__c;
-            wrapper.tiers=line.Tier__c;
             wrapper.customerTierAdditionalDiscount=line.Customer_Tier_Additional_Discount__c;
             wrapper.lineQuantitygt50k=line.Line_Quantity_gt_50k__c;
             wrapper.adapterQuantity=line.Adapter_Quantity__c;
@@ -167,7 +166,18 @@ public with sharing class QuoteControllerMethodsHandler {
             wrapper.minOrderQtyMet=line.Min_Order_Qty_Met__c;
             wrapper.patchPanelStubbedLengthMultipleMet=line.Patch_Panel_Stubbed_Length_Multiple_Met__c;
             wrapper.billableTolerance=line.Billable_Tolerance__c;
-
+            //Fields that are filled from the custom pop up
+            wrapper.basepriceoverride = line.Base_Price_Override__c;
+            wrapper.newdiscountSchedule = line.New_Discount_Schedule__c; 
+            wrapper.lastdiscountSchedule = line.Last_Discount_Schedule__c; 
+            wrapper.lastCustomerTier = line.Last_Customer_Tier__c; 
+            wrapper.CustomerTier = line.Tier__c;
+            wrapper.newCustomerTier = line.New_Customer_Tier__c; 
+            wrapper.specialPriceType = line.SBQQ__SpecialPriceType__c;
+            wrapper.specialPrice = line.SBQQ__SpecialPrice__c;
+            wrapper.lastRegularPrice = line.Last_Regular_Price__c;
+            wrapper.overrideByUI = line.Override_By_UI__c;
+            
             //NSP Fields 
 
             if(line.is_NSP__c == true){
@@ -545,7 +555,7 @@ public with sharing class QuoteControllerMethodsHandler {
             QuoteLineWrapper wrapper = new QuoteLineWrapper();
             
             //Quoteline Fields 
-            //Revisar
+            
             String description = newlyAddedLine.record.SBQQ__Description__c;
             if(description!= null){
                 wrapper.description = description.replaceAll('<[^>]*>','');
@@ -1174,9 +1184,7 @@ public with sharing class QuoteControllerMethodsHandler {
                 newModel.record.SBQQ__SegmentKey__c=relatedQuoteLine.segmentKey;
                 newModel.record.SBQQ__SegmentLabel__c=relatedQuoteLine.segmentLabel;
                 newModel.record.BL_Source__c=relatedQuoteLine.source;
-                newModel.record.SBQQ__SpecialPriceDescription__c=relatedQuoteLine.specialPriceDescription;
-                newModel.record.SBQQ__SpecialPriceType__c=relatedQuoteLine.specialPriceType;
-                newModel.record.SBQQ__SpecialPrice__c=relatedQuoteLine.specialPrice;
+                newModel.record.SBQQ__SpecialPriceDescription__c=relatedQuoteLine.specialPriceDescription;               
                 newModel.record.SBQQ__StartDate__c=relatedQuoteLine.startDate;
                 newModel.record.SBQQ__SubscribedAssetIds__c=relatedQuoteLine.subscribedAssetIDs;
                 newModel.record.SBQQ__SubscriptionPercent__c=relatedQuoteLine.subscriptionPercent;
@@ -1216,6 +1224,21 @@ public with sharing class QuoteControllerMethodsHandler {
                 newModel.record.Product_Name_Key_Field_Text__c=relatedQuoteLine.productNameKeyFieldText;
                 newModel.record.SBQQ__UnitCost__c=relatedQuoteLine.unitCost;
                 newModel.record.Billable_Tolerance__c=relatedQuoteLine.billableTolerance;
+                newModel.record.Length__c=relatedQuoteLine.length;
+                //Fields that are filled from the custom pop up
+                newModel.record.Base_Price_Override__c=relatedQuoteLine.basepriceoverride;
+                newModel.record.New_Discount_Schedule__c = relatedQuoteLine.newdiscountSchedule;
+                newModel.record.Last_Discount_Schedule__c = relatedQuoteLine.lastdiscountSchedule;
+                newModel.record.Last_Customer_Tier__c = relatedQuoteLine.lastCustomerTier;
+                newModel.record.New_Customer_Tier__c = relatedQuoteLine.newCustomerTier;
+                newModel.record.SBQQ__SpecialPriceType__c=relatedQuoteLine.specialPriceType;
+                newModel.record.SBQQ__SpecialPrice__c=relatedQuoteLine.specialPrice;                
+                newModel.record.Last_Regular_Price__c=relatedQuoteLine.lastRegularPrice;                
+                newModel.record.Override_By_UI__c=relatedQuoteLine.overrideByUI;                
+                // if(relatedQuoteLine.basepriceoverride != null){
+                //     // newModel.record.Special_Price_Picklist__c='Custom';
+                // }
+                newModel.record.Billable_Tolerance__c=relatedQuoteLine.billableTolerance;
                 
                 
                 //NSP Fields 
@@ -1233,81 +1256,80 @@ public with sharing class QuoteControllerMethodsHandler {
                     newModel.record.Region_Code__c=relatedQuoteLine.regionCode;
                 }
 
-                //Fields that come from the product Twined Fields
+                // //Fields that come from the product Twined Fields
 
-                newModel.record.SBQQ__Product__r.SBQQ__BatchQuantity__c=relatedQuoteLine.batchQuantity;
-                newModel.record.SBQQ__Product__r.SBQQ__BillingFrequency__c=relatedQuoteLine.billingfrequency;
-                newModel.record.SBQQ__Product__r.SBQQ__BillingType__c=relatedQuoteLine.billingType;
-                newModel.record.SBQQ__Product__r.SBQQ__ChargeType__c=relatedQuoteLine.chargeType;
-                newModel.record.SBQQ__Product__r.SBQQ__CompoundDiscountRate__c=relatedQuoteLine.compoundDiscountRate;
-                newModel.record.SBQQ__Product__r.SBQQ__CostEditable__c=relatedQuoteLine.costEditable;
-                newModel.record.SBQQ__Product__r.SBQQ__DiscountSchedule__c=relatedQuoteLine.discountSchedule;
-                newModel.record.SBQQ__Product__r.SBQQ__GenerateContractedPrice__c=relatedQuoteLine.generateContractedPrice;
-                newModel.record.SBQQ__Product__r.SBQQ__HasConsumptionSchedule__c=relatedQuoteLine.hasConsumptionSchedules;
-                newModel.record.SBQQ__Product__r.SBQQ__Hidden__c=relatedQuoteLine.hidden;
-                newModel.record.SBQQ__Product__r.SBQQ__NonDiscountable__c=relatedQuoteLine.nonDiscountable;
-                newModel.record.SBQQ__Product__r.SBQQ__NonPartnerDiscountable__c=relatedQuoteLine.nonPartnerDiscountable;
-                newModel.record.SBQQ__Product__r.SBQQ__Optional__c=relatedQuoteLine.optional;
-                newModel.record.SBQQ__Product__r.SBQQ__PriceEditable__c=relatedQuoteLine.priceEditable;
-                newModel.record.SBQQ__Product__r.SBQQ__PricingMethodEditable__c=relatedQuoteLine.pricingMethodEditable;
-                newModel.record.SBQQ__Product__r.SBQQ__PricingMethod__c=relatedQuoteLine.pricingMethod;
-                newModel.record.SBQQ__Product__r.ProductCode=relatedQuoteLine.productCode;
-                newModel.record.SBQQ__Product__r.Family=relatedQuoteLine.productFamily;
-                newModel.record.SBQQ__Product__r.SBQQ__SubscriptionBase__c=relatedQuoteLine.percentofTotalBase;
-                newModel.record.SBQQ__Product__r.SBQQ__SubscriptionCategory__c=relatedQuoteLine.percentOfTotalCategory;
-                newModel.record.SBQQ__Product__r.SBQQ__SubscriptionPricing__c=relatedQuoteLine.subscriptionPricing;
-                newModel.record.SBQQ__Product__r.SBQQ__SubscriptionTerm__c=relatedQuoteLine.subscriptionTerm;
-                newModel.record.SBQQ__Product__r.SBQQ__SubscriptionType__c=relatedQuoteLine.subscriptionType;
-                newModel.record.SBQQ__Product__r.SBQQ__TaxCode__c=relatedQuoteLine.taxcode;
-                newModel.record.SBQQ__Product__r.SBQQ__Taxable__c=relatedQuoteLine.taxable;
-                newModel.record.SBQQ__Product__r.SBQQ__TermDiscountSchedule__c=relatedQuoteLine.termDiscountSchedule;
-                newModel.record.SBQQ__Product__r.Unit_Cost__c=relatedQuoteLine.unitcost;
-                newModel.record.SBQQ__Product__r.Length__c=relatedQuoteLine.length;
-                newModel.record.SBQQ__Product__r.Product_Type__c=relatedQuoteLine.productType;
-                newModel.record.SBQQ__Product__r.Fiber_Count__c=relatedQuoteLine.fiberCount;
-                newModel.record.SBQQ__Product__r.Jacket_Color__c=relatedQuoteLine.jacketColor;
-                newModel.record.SBQQ__Product__r.ProdLevel1__c=relatedQuoteLine.prodLevel1;
-                newModel.record.SBQQ__Product__r.ProdLevel2__c=relatedQuoteLine.prodLevel2;
-                newModel.record.SBQQ__Product__r.Rollup_Component_Prices__c=relatedQuoteLine.rollupComponentPrices;
-                newModel.record.SBQQ__Product__r.Copperclad_Pricing_Review__c=relatedQuoteLine.coppercladPricingReview;
-                newModel.record.SBQQ__Product__r.HiTemp_Pricing_Review__c=relatedQuoteLine.hiTempPricingReview;
-                newModel.record.SBQQ__Product__r.Margin__c=relatedQuoteLine.margin;
-                newModel.record.SBQQ__Product__r.Price_Multiplier__c=relatedQuoteLine.priceMultiplier;
-                newModel.record.SBQQ__Product__r.ProdLevel3__c=relatedQuoteLine.prodLevel3;
-                newModel.record.SBQQ__Product__r.ProdLevel4__c=relatedQuoteLine.prodLevel4;
-                newModel.record.SBQQ__Product__r.Primary_UOM__c=relatedQuoteLine.primaryUOM;
-                newModel.record.SBQQ__Product__r.BL_Billing_Tolerance__c=relatedQuoteLine.billingTolerance;                
-                newModel.record.SBQQ__Product__r.Max_Length_Steel__c=relatedQuoteLine.maxlengthonsteel;
-                newModel.record.SBQQ__Product__r.Max_Length_Wood__c=relatedQuoteLine.maxlengthonwood;
-                newModel.record.SBQQ__Product__r.Base_Design_Code__c=relatedQuoteLine.basedesigncode;
-                newModel.record.SBQQ__Product__r.CableCostPerMeter__c=relatedQuoteLine.cablecostpermeter;
-                newModel.record.SBQQ__Product__r.Customer__c=relatedQuoteLine.customer;
-                newModel.record.SBQQ__Product__r.Fixed_Cost__c=relatedQuoteLine.fixedcost;
-                newModel.record.SBQQ__Product__r.Quote_Item_Description_Part_A__c=relatedQuoteLine.quoteitemdescriptiona;
-                newModel.record.SBQQ__Product__r.Quote_Item_Description_Part_B__c=relatedQuoteLine.quoteitemdescriptionb;
-                newModel.record.SBQQ__Product__r.Variable_Price_1__c=relatedQuoteLine.variableprice1;
-                newModel.record.SBQQ__Product__r.Filtered_Grouping__c=relatedQuoteLine.filteredGrouping;
-                newModel.record.SBQQ__Product__r.Minimum_Order_Qty__c=relatedQuoteLine.minimumorderqty;
-                newModel.record.SBQQ__Product__r.Bus_Margin_High_Value__c=relatedQuoteLine.busmarginhighvalue;
-                newModel.record.SBQQ__Product__r.Bus_Margin_Low_Value__c=relatedQuoteLine.busmarginlowvalue;
-                newModel.record.SBQQ__Product__r.ConnCost_A__c=relatedQuoteLine.conncostA;
-                newModel.record.SBQQ__Product__r.ConnCost_B__c=relatedQuoteLine.conncostB;
-                newModel.record.SBQQ__Product__r.Count_Factor__c=relatedQuoteLine.countfactor;
-                newModel.record.SBQQ__Product__r.Margin_Change_Value__c=relatedQuoteLine.marginchangevalue;
-                newModel.record.SBQQ__Product__r.NumAdapter__c=relatedQuoteLine.numadapter;
-                newModel.record.SBQQ__Product__r.NumCables__c=relatedQuoteLine.numcables;
-                newModel.record.SBQQ__Product__r.NumConnector__c=relatedQuoteLine.numconnector;
-                newModel.record.SBQQ__Product__r.Pricing_Cost__c=relatedQuoteLine.pricingcost;
-                newModel.record.SBQQ__Product__r.Region_Adder_Central__c=relatedQuoteLine.regionaddercentral;
-                newModel.record.SBQQ__Product__r.Region_Adder_East__c=relatedQuoteLine.regionaddereast;
-                newModel.record.SBQQ__Product__r.Region_Adder_West__c=relatedQuoteLine.regionadderwest;
-                newModel.record.SBQQ__Product__r.Region_Adder_Northwest__c=relatedQuoteLine.regionaddernorthwest;
-                newModel.record.SBQQ__Product__r.ResourceCost_A__c=relatedQuoteLine.resourcecosta;
-                newModel.record.SBQQ__Product__r.Minimum_Order_Multiple__c=relatedQuoteLine.minimumordermultiple;
-                newModel.record.SBQQ__Product__r.Jacket_Type__c=relatedQuoteLine.jacketType;
-                newModel.record.SBQQ__Product__r.Jacket_Configuration__c=relatedQuoteLine.jacketConfiguration;
+                // newModel.record.SBQQ__Product__r.SBQQ__BatchQuantity__c=relatedQuoteLine.batchQuantity;
+                // newModel.record.SBQQ__Product__r.SBQQ__BillingFrequency__c=relatedQuoteLine.billingfrequency;
+                // newModel.record.SBQQ__Product__r.SBQQ__BillingType__c=relatedQuoteLine.billingType;
+                // newModel.record.SBQQ__Product__r.SBQQ__ChargeType__c=relatedQuoteLine.chargeType;
+                // newModel.record.SBQQ__Product__r.SBQQ__CompoundDiscountRate__c=relatedQuoteLine.compoundDiscountRate;
+                // newModel.record.SBQQ__Product__r.SBQQ__CostEditable__c=relatedQuoteLine.costEditable;
+                // newModel.record.SBQQ__Product__r.SBQQ__DiscountSchedule__c=relatedQuoteLine.discountSchedule;
+                // newModel.record.SBQQ__Product__r.SBQQ__GenerateContractedPrice__c=relatedQuoteLine.generateContractedPrice;
+                // newModel.record.SBQQ__Product__r.SBQQ__HasConsumptionSchedule__c=relatedQuoteLine.hasConsumptionSchedules;
+                // newModel.record.SBQQ__Product__r.SBQQ__Hidden__c=relatedQuoteLine.hidden;
+                // newModel.record.SBQQ__Product__r.SBQQ__NonDiscountable__c=relatedQuoteLine.nonDiscountable;
+                // newModel.record.SBQQ__Product__r.SBQQ__NonPartnerDiscountable__c=relatedQuoteLine.nonPartnerDiscountable;
+                // newModel.record.SBQQ__Product__r.SBQQ__Optional__c=relatedQuoteLine.optional;
+                // newModel.record.SBQQ__Product__r.SBQQ__PriceEditable__c=relatedQuoteLine.priceEditable;
+                // newModel.record.SBQQ__Product__r.SBQQ__PricingMethodEditable__c=relatedQuoteLine.pricingMethodEditable;
+                // newModel.record.SBQQ__Product__r.SBQQ__PricingMethod__c=relatedQuoteLine.pricingMethod;
+                // newModel.record.SBQQ__Product__r.ProductCode=relatedQuoteLine.productCode;
+                // newModel.record.SBQQ__Product__r.Family=relatedQuoteLine.productFamily;
+                // newModel.record.SBQQ__Product__r.SBQQ__SubscriptionBase__c=relatedQuoteLine.percentofTotalBase;
+                // newModel.record.SBQQ__Product__r.SBQQ__SubscriptionCategory__c=relatedQuoteLine.percentOfTotalCategory;
+                // newModel.record.SBQQ__Product__r.SBQQ__SubscriptionPricing__c=relatedQuoteLine.subscriptionPricing;
+                // newModel.record.SBQQ__Product__r.SBQQ__SubscriptionTerm__c=relatedQuoteLine.subscriptionTerm;
+                // newModel.record.SBQQ__Product__r.SBQQ__SubscriptionType__c=relatedQuoteLine.subscriptionType;
+                // newModel.record.SBQQ__Product__r.SBQQ__TaxCode__c=relatedQuoteLine.taxcode;
+                // newModel.record.SBQQ__Product__r.SBQQ__Taxable__c=relatedQuoteLine.taxable;
+                // newModel.record.SBQQ__Product__r.SBQQ__TermDiscountSchedule__c=relatedQuoteLine.termDiscountSchedule;
+                // newModel.record.SBQQ__Product__r.Unit_Cost__c=relatedQuoteLine.unitcost;
+                // newModel.record.SBQQ__Product__r.Product_Type__c=relatedQuoteLine.productType;
+                // newModel.record.SBQQ__Product__r.Fiber_Count__c=relatedQuoteLine.fiberCount;
+                // newModel.record.SBQQ__Product__r.Jacket_Color__c=relatedQuoteLine.jacketColor;
+                // newModel.record.SBQQ__Product__r.ProdLevel1__c=relatedQuoteLine.prodLevel1;
+                // newModel.record.SBQQ__Product__r.ProdLevel2__c=relatedQuoteLine.prodLevel2;
+                // newModel.record.SBQQ__Product__r.Rollup_Component_Prices__c=relatedQuoteLine.rollupComponentPrices;
+                // newModel.record.SBQQ__Product__r.Copperclad_Pricing_Review__c=relatedQuoteLine.coppercladPricingReview;
+                // newModel.record.SBQQ__Product__r.HiTemp_Pricing_Review__c=relatedQuoteLine.hiTempPricingReview;
+                // newModel.record.SBQQ__Product__r.Margin__c=relatedQuoteLine.margin;
+                // newModel.record.SBQQ__Product__r.Price_Multiplier__c=relatedQuoteLine.priceMultiplier;
+                // newModel.record.SBQQ__Product__r.ProdLevel3__c=relatedQuoteLine.prodLevel3;
+                // newModel.record.SBQQ__Product__r.ProdLevel4__c=relatedQuoteLine.prodLevel4;
+                // newModel.record.SBQQ__Product__r.Primary_UOM__c=relatedQuoteLine.primaryUOM;
+                // newModel.record.SBQQ__Product__r.BL_Billing_Tolerance__c=relatedQuoteLine.billingTolerance;                
+                // newModel.record.SBQQ__Product__r.Max_Length_Steel__c=relatedQuoteLine.maxlengthonsteel;
+                // newModel.record.SBQQ__Product__r.Max_Length_Wood__c=relatedQuoteLine.maxlengthonwood;
+                // newModel.record.SBQQ__Product__r.Base_Design_Code__c=relatedQuoteLine.basedesigncode;
+                // newModel.record.SBQQ__Product__r.CableCostPerMeter__c=relatedQuoteLine.cablecostpermeter;
+                // newModel.record.SBQQ__Product__r.Customer__c=relatedQuoteLine.customer;
+                // newModel.record.SBQQ__Product__r.Fixed_Cost__c=relatedQuoteLine.fixedcost;
+                // newModel.record.SBQQ__Product__r.Quote_Item_Description_Part_A__c=relatedQuoteLine.quoteitemdescriptiona;
+                // newModel.record.SBQQ__Product__r.Quote_Item_Description_Part_B__c=relatedQuoteLine.quoteitemdescriptionb;
+                // newModel.record.SBQQ__Product__r.Variable_Price_1__c=relatedQuoteLine.variableprice1;
+                // newModel.record.SBQQ__Product__r.Filtered_Grouping__c=relatedQuoteLine.filteredGrouping;
+                // newModel.record.SBQQ__Product__r.Minimum_Order_Qty__c=relatedQuoteLine.minimumorderqty;
+                // newModel.record.SBQQ__Product__r.Bus_Margin_High_Value__c=relatedQuoteLine.busmarginhighvalue;
+                // newModel.record.SBQQ__Product__r.Bus_Margin_Low_Value__c=relatedQuoteLine.busmarginlowvalue;
+                // newModel.record.SBQQ__Product__r.ConnCost_A__c=relatedQuoteLine.conncostA;
+                // newModel.record.SBQQ__Product__r.ConnCost_B__c=relatedQuoteLine.conncostB;
+                // newModel.record.SBQQ__Product__r.Count_Factor__c=relatedQuoteLine.countfactor;
+                // newModel.record.SBQQ__Product__r.Margin_Change_Value__c=relatedQuoteLine.marginchangevalue;
+                // newModel.record.SBQQ__Product__r.NumAdapter__c=relatedQuoteLine.numadapter;
+                // newModel.record.SBQQ__Product__r.NumCables__c=relatedQuoteLine.numcables;
+                // newModel.record.SBQQ__Product__r.NumConnector__c=relatedQuoteLine.numconnector;
+                // newModel.record.SBQQ__Product__r.Pricing_Cost__c=relatedQuoteLine.pricingcost;
+                // newModel.record.SBQQ__Product__r.Region_Adder_Central__c=relatedQuoteLine.regionaddercentral;
+                // newModel.record.SBQQ__Product__r.Region_Adder_East__c=relatedQuoteLine.regionaddereast;
+                // newModel.record.SBQQ__Product__r.Region_Adder_West__c=relatedQuoteLine.regionadderwest;
+                // newModel.record.SBQQ__Product__r.Region_Adder_Northwest__c=relatedQuoteLine.regionaddernorthwest;
+                // newModel.record.SBQQ__Product__r.ResourceCost_A__c=relatedQuoteLine.resourcecosta;
+                // newModel.record.SBQQ__Product__r.Minimum_Order_Multiple__c=relatedQuoteLine.minimumordermultiple;
+                // newModel.record.SBQQ__Product__r.Jacket_Type__c=relatedQuoteLine.jacketType;
+                // newModel.record.SBQQ__Product__r.Jacket_Configuration__c=relatedQuoteLine.jacketConfiguration;
 
-               
+                
 
                 quoteLinesToInsert.add(newModel);
             } 
@@ -1554,7 +1576,7 @@ public with sharing class QuoteControllerMethodsHandler {
                 SBQQ__QuoteLine__c clonedParent = parentLine.clone(false, false, false, false);
                 clonedParent.SBQQ__Quantity__c = line.quantity;
                 clonedParent.UOM__c = line.uom;
-                clonedParent.SBQQ__Discount__c = line.additionaldiscount;
+                clonedParent.SBQQ__Discount__c = line.discount;
                 clonedParent.SBQQ__NetPrice__c = line.netunitprice;
 
                 if(parentWithClone.containsKey(parentLine)){

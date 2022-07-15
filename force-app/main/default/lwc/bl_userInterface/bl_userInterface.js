@@ -27,24 +27,30 @@ import deletingRecordId from '@salesforce/apex/blMockData.deletingRecordId';
 import { getPicklistValues, getObjectInfo } from 'lightning/uiObjectInfoApi';
 import QUOTE_LINE_OBJECT from '@salesforce/schema/SBQQ__QuoteLine__c';
 import OVERRIDE_REASON from '@salesforce/schema/SBQQ__Quote__c.Override_Reason__c';
-import OVERRIDE_TYPE from '@salesforce/schema/SBQQ__Quote__c.Override_Type__c';
 
-/*
 //APEX METHOD TO UPDAT QUOTE 
 import quoteSaver from '@salesforce/apex/DiscountController.quoteSaver'; 
-*/
 
-const DELAY_CALLING_INFO = 15000;//15000; //Miliseconds
-const DELAY_CALLING_TOTAL = 2000;//8000; //Miliseconds Not Necessery
+
+const DELAY_CALLING_INFO = 500;//15000; //Miliseconds
+const DELAY_CALLING_TOTAL = 500;//8000; //Miliseconds Not Necessery
+
 
 
 //----------FALG TO AVOID DELAY TEST START------------------
-import GettingFlag from '@salesforce/apex/TestFlagQCPCustomQLE.GettingFlag';
-import turnOffFlag from '@salesforce/apex/TestFlagQCPCustomQLE.turnOffFlag';
-import { refreshApex } from '@salesforce/apex';
-import { getRecord } from 'lightning/uiRecordApi';
-
+// import GettingFlag from '@salesforce/apex/TestFlagQCPCustomQLE.GettingFlag';
+// import turnOffFlag from '@salesforce/apex/TestFlagQCPCustomQLE.turnOffFlag';
+// import { refreshApex } from '@salesforce/apex';
+// import { getRecord } from 'lightning/uiRecordApi';
+import {
+    subscribe,
+    unsubscribe,
+    onError,
+    setDebugFlag,
+    isEmpEnabled,
+} from 'lightning/empApi';
 //----------FALG TO AVOID DELAY TEST END------------------
+
 
 export default class UserInterface extends NavigationMixin(LightningElement) {
     @api recordId; //Quote Record Id that opens the UI
@@ -61,6 +67,9 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     @track totalValueLoading = false; //loagind bar boolean for quote total
     @track errorInQuotes = false; //To show error message when something goes really wrong
 
+    channelName = '/event/QCP_Flag__e';
+
+
     //Initialize UI
     connectedCallback(){
 
@@ -70,139 +79,144 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         //console.log('Record Id: '+this.recordId);
         this.desactiveCloneButton();
 
-        //Calling the methods to print the information
-        //Note: not replace with callData() because there we can make more changes when update data
-        console.log('Method printQuoteLines quoteId: '+ this.recordId);
+        this.handleSubscribe();
+
         let startTime = window.performance.now();
-        printQuoteLines({ quoteId: this.recordId})
-        .then(data =>{
-            let endTime = window.performance.now();
-            console.log(`printQuoteLines method took ${endTime - startTime} milliseconds`);
-            if (data){
-                this.quotelinesString = data; 
-                this.originalquotelinesString = data; 
-                this.error = undefined;
-                this.isLoading = true; 
-                //console.log('quoteLines String SUCCESS ');
-                //console.log('quoteLines String SUCCESS: '+ this.quotelinesString);
-                //If there are not quote lines in quote (to avoid errors in child components)
-                if (this.quoteLinesString == '[]'){ 
-                    this.quoteLinesString = '[id: \"none\"]';
-                    //console.log(this.quoteLinesString);
-                    //console.log('No quotelines yet');
+            console.log('STARTING HERE');
+            //console.log('Method printQuoteLines quoteId: '+ this.recordId);
+            printQuoteLines({ quoteId: this.recordId})
+            .then(data =>{
+                let endTime = window.performance.now();
+                console.log(`printQuoteLines method took ${endTime - startTime} milliseconds`);
+                if (data){
+                    this.quotelinesString = data; 
+                    this.originalquotelinesString = data; 
+                    this.error = undefined;
+                    this.isLoading = true; 
+                    //console.log('quoteLines String SUCCESS ');
+                    //console.log('quoteLines String SUCCESS: '+ this.quotelinesString);
+                    //If there are not quote lines in quote (to avoid errors in child components)
+                    if (this.quotelinesString == '[]'){ 
+                        this.quotelinesString = '[id: \"none\"]';
+                        //console.log(this.quoteLinesString);
+                        //console.log('No quotelines yet');
+                    }
+                    const payload = { 
+                        dataString: this.quotelinesString,
+                        auxiliar: 'newtable'
+                        };
+                    publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
+                    //let quoteLines = JSON.parse(this.quotelinesString);
+                    //console.log(JSON.stringify(quoteLines[0]));
+    
+                    //Apex method to print quote total at the beggining
+                    let startTime = window.performance.now(); 
+                    getQuoteTotal({quoteId: this.recordId})
+                    .then((data)=>{
+                            let endTime = window.performance.now();
+                            console.log(`getQuoteTotal method took ${endTime - startTime} milliseconds`);
+                            //console.log('NEW QUOTE TOTAL data');
+                            //console.log(data);
+                            this.totalValue = data;
+                            this.totalValueLoading = false;
+                            this.spinnerLoadingUI = false;
+                    })
+                    .catch((error)=>{
+                            console.log('NEW QUOTE TOTAL error');
+                            console.log(error);
+                            this.spinnerLoadingUI = false;
+                    }); 
                 }
-                const payload = { 
-                    dataString: this.quotelinesString,
-                    auxiliar: 'newtable'
-                  };
-                publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
-                //let quoteLines = JSON.parse(this.quotelinesString);
-                //console.log(JSON.stringify(quoteLines[0]));
-
-                //Apex method to print quote total at the beggining
-                let startTime = window.performance.now(); 
-                getQuoteTotal({quoteId: this.recordId})
-                .then((data)=>{
-                        let endTime = window.performance.now();
-                        console.log(`getQuoteTotal method took ${endTime - startTime} milliseconds`);
-                        //console.log('NEW QUOTE TOTAL data');
-                        //console.log(data);
-                        this.totalValue = data;
-                        this.spinnerLoadingUI = false;
-                })
-                .catch((error)=>{
-                        console.log('NEW QUOTE TOTAL error');
-                        console.log(error);
-                        this.spinnerLoadingUI = false;
-                }); 
-            }
-        })
-        .catch(error =>{
-            if (error){
-                this.quotelinesString = undefined; 
-                console.log('quoteLines String ERROR:');
-                console.log(error);
-                let messageError; 
-
-                //THESE CONDITIONALS ARE TO SHOW THE USER THE EXACT ERROR MESSAGE
-                if (error.hasOwnProperty('body')){
-                    if(error.body.hasOwnProperty('pageErrors')){
-                        if(error.body.pageErrors[0].hasOwnProperty('message')){
-                            messageError = error.body.pageErrors[0].message; 
+            })
+            .catch(error =>{
+                if (error){
+                    this.quotelinesString = undefined; 
+                    console.log('quoteLines String ERROR:');
+                    console.log(error);
+                    let messageError; 
+    
+                    //THESE CONDITIONALS ARE TO SHOW THE USER THE EXACT ERROR MESSAGE
+                    if (error.hasOwnProperty('body')){
+                        if(error.body.hasOwnProperty('pageErrors')){
+                            if(error.body.pageErrors[0].hasOwnProperty('message')){
+                                messageError = error.body.pageErrors[0].message; 
+                            }
+                            else if (error.body.hasOwnProperty('message')){
+                                messageError = error.body.message; 
+                            }
                         }
-                        else if (error.body.hasOwnProperty('message')){
+                        
+                    } else {
+                        messageError = 'Unexpected error using UI - QUOTELINES'; 
+                    }
+                    const evt = new ShowToastEvent({
+                        title: 'UI QUOTELINES Error',
+                        message: messageError,
+                        variant: 'error',
+                        mode: 'sticky'
+                    });
+                    this.dispatchEvent(evt);
+                    this.errorInQuotes = true; 
+                }
+            })
+            
+            let startTime1 = window.performance.now();
+            //console.log('Method printNotes quoteId: '+ this.recordId);
+            printNotes({ quoteId: this.recordId })
+            .then(data =>{
+                let endTime2 = window.performance.now();
+                //console.log(`printNotes method took ${endTime2 - startTime1} milliseconds`);
+                if (data){
+                    this.quoteNotesString = data; 
+                    //console.log('notes string SUCCESS: '+ this.quoteNotesString);
+                    if (this.quoteNotesString == '[]'){
+                        this.quoteNotesString = '[name: \"none\"]';
+                        //console.log(this.quoteNotesString);
+                        //console.log('No quotes Notes yet');
+                    }
+                }    
+            })
+            .catch(error =>{
+                    if (error){
+                    this.quoteNotesString = undefined; 
+                    this.disableButton = true;
+                    this.quoteNotesString = '[name: \"none\"]';
+                    console.log('notes string ERROR: ');
+                    console.log(error);
+                    let messageError; 
+                    if (error.hasOwnProperty('body')){
+                        if(error.body.hasOwnProperty('pageErrors')){
+                            if(error.body.pageErrors[0].hasOwnProperty('message')){
+                                messageError = error.body.pageErrors[0].message; 
+                            }
+                        } else if (error.body.hasOwnProperty('message')){
                             messageError = error.body.message; 
                         }
+                        
+                    } else {
+                        messageError = 'Unexpected error using UI - QUOTELINES'; 
                     }
-                    
-                } else {
-                    messageError = 'Unexpected error using UI - QUOTELINES'; 
+                    const evt = new ShowToastEvent({
+                        title: 'Product Notes Warning:',
+                        message: messageError,
+                        variant: 'warning',
+                        mode: 'sticky'
+                    });
+                    this.dispatchEvent(evt);
                 }
-                const evt = new ShowToastEvent({
-                    title: 'UI QUOTELINES Error',
-                    message: messageError,
-                    variant: 'error',
-                    mode: 'sticky'
-                });
-                this.dispatchEvent(evt);
-                this.errorInQuotes = true; 
-            }
-        })
+            })
+        //Calling the methods to print the information
+        //Note: not replace with callData() because there we can make more changes when update data
         
-        let startTime1 = window.performance.now();
-        console.log('Method printNotes quoteId: '+ this.recordId);
-        printNotes({ quoteId: this.recordId })
-        .then(data =>{
-            let endTime2 = window.performance.now();
-            console.log(`printNotes method took ${endTime2 - startTime1} milliseconds`);
-            if (data){
-                this.quoteNotesString = data; 
-                //console.log('notes string SUCCESS: '+ this.quoteNotesString);
-                if (this.quoteNotesString == '[]'){
-                    this.quoteNotesString = '[name: \"none\"]';
-                    //console.log(this.quoteNotesString);
-                    //console.log('No quotes Notes yet');
-                }
-            }    
-        })
-        .catch(error =>{
-             if (error){
-                this.quoteNotesString = undefined; 
-                this.disableButton = true;
-                this.quoteNotesString = '[name: \"none\"]';
-                console.log('notes string ERROR: ');
+        /*
+            turnOffFlag({quoteId: this.recordId})
+            .then(()=>{
+                console.log('Turning of the falg off from begining');
+            })
+            .catch((error)=>{
+                console.log('Error turning off the flag');
                 console.log(error);
-                let messageError; 
-                if (error.hasOwnProperty('body')){
-                    if(error.body.hasOwnProperty('pageErrors')){
-                        if(error.body.pageErrors[0].hasOwnProperty('message')){
-                            messageError = error.body.pageErrors[0].message; 
-                        }
-                    } else if (error.body.hasOwnProperty('message')){
-                        messageError = error.body.message; 
-                    }
-                    
-                } else {
-                    messageError = 'Unexpected error using UI - QUOTELINES'; 
-                }
-                const evt = new ShowToastEvent({
-                    title: 'Product Notes Warning:',
-                    message: messageError,
-                    variant: 'warning',
-                    mode: 'sticky'
-                });
-                this.dispatchEvent(evt);
-            }
-        })
-
-        turnOffFlag({quoteId: this.recordId})
-        .then(()=>{
-            console.log('Turning of the falg off from begining');
-        })
-        .catch((error)=>{
-            console.log('Error turning off the flag');
-            console.log(error);
-        })
+            })*/
     }
     //CALL DATA ONCE AGAIN FROM SF WHEN SAVE BUTTON CLICKED (UPDATE DATA IN UI WITH ID'S FROM SF)
     startTimeProcess = 0;
@@ -332,10 +346,12 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 }, DELAY_CALLING_INFO);     //This value has to change depending on the size of quotelines
                 */
             //----------FALG TO AVOID DELAY TEST START------------------
-            let flag = false;
-            console.log('Inside no loop waiting');
-            this.startTimeProcess = window.performance.now();
-            this.processRelatedObjects();
+
+            console.log('HERE THE DATA MUST BE CALLED BY THE CHANNEL');
+            //let flag = false;
+            //console.log('Inside no loop waiting');
+            //this.startTimeProcess = window.performance.now();
+            //this.processRelatedObjects();
             /*
             GettingFlag({quoteId: this.recordId})
             .then((data)=>{
@@ -449,6 +465,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     }
     */
 
+    /*
     processRelatedObjects() {
         //console.log(Object.getOwnPropertyNames(this.quoteCheck.fields));
         if(this.quoteCheck){
@@ -564,7 +581,339 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         }
         })
     }
+    */
    
+
+//-----------------------------------------------------------------------------------------
+// channelName = '/event/QCP_Flag__e';
+
+// isSubscribeDisabled = false;
+// isUnsubscribeDisabled = !this.isSubscribeDisabled;
+
+// handleFetch() {
+//     console.log('Fetching');
+//     let startTime = window.performance.now();
+//     this.showTable = false; 
+//     printQuoteLineList({quoteId: this.recordId})
+//     .then((data)=>{
+//         let endTime = window.performance.now();
+//         console.log(`printQuoteLinesList method took ${endTime - startTime} milliseconds`);
+//         //quoteLines;
+//         //console.log('printQuoteLineList');
+//         //console.log(data);
+//         this.quoteLines = data; 
+//         this.showTable = true; 
+//         this.quotelinesString = JSON.stringify(this.quoteLines); 
+//     })
+//     .catch((error)=>{
+//         console.log('printQuoteLineList ERROR');
+//         console.log(error);
+//     })
+
+//     /*
+//     read({quoteId: this.recordId})
+//     .then(quote => {this.quoteLinesChannel = quote;
+//         console.log('NEW QUOTES: '+ JSON.stringify(this.quoteLinesChannel))})
+//     .catch(error => console.log(error));
+// */
+
+// }
+
+// handleChannelName(event) {
+//     this.channelName = event.target.value;
+// }
+
+// handleSubscribe() {
+//     // Callback invoked whenever a new event message is received
+//     const messageCallback = (response) => {
+//         console.log(response.data.payload);
+//         let startTime = window.performance.now();
+//         console.log('Channel Here');
+//         this.showTable = false; 
+//         printQuoteLineList({quoteId: this.recordId})
+//         .then((data)=>{
+//             let endTime = window.performance.now();
+//             console.log(`printQuoteLinesList method took ${endTime - startTime} milliseconds`);
+//             //quoteLines;
+//             //console.log('printQuoteLineList');
+//             //console.log(data);
+//             this.quoteLines = data; 
+//             this.showTable = true; 
+//             this.quotelinesString = JSON.stringify(this.quoteLines); 
+//         })
+//         .catch((error)=>{
+//             console.log('printQuoteLineList ERROR');
+//             console.log(error);
+//         })
+//     };
+
+//     // Invoke subscribe method of empApi. Pass reference to messageCallback
+//     subscribe(this.channelName, -1, messageCallback).then((response) => {
+//         // Response contains the subscription information on subscribe call
+//         console.log(
+//             'Subscription request sent to: ',
+//             JSON.stringify(response.channel)
+//         );
+//         this.subscription = response;
+//         this.toggleSubscribeButton(true);
+//     });
+// }
+
+// handleUnsubscribe() {
+//     this.toggleSubscribeButton(false);
+
+//     // Invoke unsubscribe method of empApi
+//     unsubscribe(this.subscription, (response) => {
+//         console.log('unsubscribe() response: ', JSON.stringify(response));
+//         // Response is true for successful unsubscribe
+//     });
+// }
+
+// toggleSubscribeButton(enableSubscribe) {
+//     this.isSubscribeDisabled = enableSubscribe;
+//     this.isUnsubscribeDisabled = !enableSubscribe;
+// }
+
+//-----------------------------------------------------------------------------------------
+    handleFetch() {
+        console.log('Fetching');
+        let startTime = window.performance.now();
+        console.log('Channel Here');
+        console.log('Method printQuoteLines quoteId: '+ this.recordId);
+        printQuoteLines({ quoteId: this.recordId})
+        .then(data =>{
+            let endTime = window.performance.now();
+            console.log(`printQuoteLines method took ${endTime - startTime} milliseconds`);
+            if (data){
+                this.quotelinesString = data; 
+                this.originalquotelinesString = data; 
+                this.error = undefined;
+                this.isLoading = true; 
+                //console.log('quoteLines String SUCCESS ');
+                //console.log('quoteLines String SUCCESS: '+ this.quotelinesString);
+                //If there are not quote lines in quote (to avoid errors in child components)
+                if (this.quotelinesString == '[]'){ 
+                    this.quotelinesString = '[id: \"none\"]';
+                    //console.log(this.quoteLinesString);
+                    //console.log('No quotelines yet');
+                }
+                const payload = { 
+                    dataString: this.quotelinesString,
+                    auxiliar: 'newtable'
+                    };
+                publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
+                //let quoteLines = JSON.parse(this.quotelinesString);
+                //console.log(JSON.stringify(quoteLines[0]));
+
+                //Apex method to print quote total at the beggining
+                let startTime = window.performance.now(); 
+                getQuoteTotal({quoteId: this.recordId})
+                .then((data)=>{
+                        let endTime = window.performance.now();
+                        console.log(`getQuoteTotal method took ${endTime - startTime} milliseconds`);
+                        //console.log('NEW QUOTE TOTAL data');
+                        //console.log(data);
+                        this.totalValueLoading = false;
+                        this.totalValue = data;
+                        this.spinnerLoadingUI = false;
+                })
+                .catch((error)=>{
+                        console.log('NEW QUOTE TOTAL error');
+                        console.log(error);
+                        this.spinnerLoadingUI = false;
+                }); 
+            }
+        })
+        .catch(error =>{
+            if (error){
+                this.quotelinesString = undefined; 
+                console.log('quoteLines String ERROR:');
+                console.log(error);
+                let messageError; 
+
+                //THESE CONDITIONALS ARE TO SHOW THE USER THE EXACT ERROR MESSAGE
+                if (error.hasOwnProperty('body')){
+                    if(error.body.hasOwnProperty('pageErrors')){
+                        if(error.body.pageErrors[0].hasOwnProperty('message')){
+                            messageError = error.body.pageErrors[0].message; 
+                        }
+                        else if (error.body.hasOwnProperty('message')){
+                            messageError = error.body.message; 
+                        }
+                    }
+                    
+                } else {
+                    messageError = 'Unexpected error using UI - QUOTELINES'; 
+                }
+                const evt = new ShowToastEvent({
+                    title: 'UI QUOTELINES Error',
+                    message: messageError,
+                    variant: 'error',
+                    mode: 'sticky'
+                });
+                this.dispatchEvent(evt);
+                this.errorInQuotes = true; 
+            }
+        })
+    }
+    handleUnsubscribe() {
+        //this.toggleSubscribeButton(false);
+
+        // Invoke unsubscribe method of empApi
+        unsubscribe(this.subscription, (response) => {
+            console.log('unsubscribe() response: ', JSON.stringify(response));
+            // Response is true for successful unsubscribe
+        });
+    }
+    
+    timeAfterQCP = 0;
+    handleSubscribe() {
+        // Callback invoked whenever a new event message is received
+        const messageCallback = (response) => {
+            this.timeAfterQCP = window.performance.now();
+            console.log(this.timeAfterQCP, this.timeWhenclicked);
+            console.log(`Script took + ${this.timeAfterQCP - this.timeWhenclicked} ms to execute.`);
+            console.log('2 Channel Here');
+            let startTime  = window.performance.now();
+            console.log('Method printQuoteLines quoteId: '+ this.recordId);
+            if(response.data.payload.quoteLines__c == this.recordId){
+                printQuoteLines({ quoteId: this.recordId})
+                .then(data =>{
+                    let endTime = window.performance.now();
+                    console.log(`printQuoteLines method took ${endTime - startTime} milliseconds`);
+                    if (data){
+                        this.quotelinesString = data; 
+                        this.originalquotelinesString = data; 
+                        this.error = undefined;
+                        this.isLoading = true; 
+                        //console.log('quoteLines String SUCCESS ');
+                        //console.log('quoteLines String SUCCESS: '+ this.quotelinesString);
+                        //If there are not quote lines in quote (to avoid errors in child components)
+                        if (this.quotelinesString == '[]'){ 
+                            this.quotelinesString = '[id: \"none\"]';
+                            //console.log(this.quoteLinesString);
+                            //console.log('No quotelines yet');
+                        }
+                        const payload = { 
+                            dataString: this.quotelinesString,
+                            auxiliar: 'newtable'
+                            };
+                        publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
+                        //let quoteLines = JSON.parse(this.quotelinesString);
+                        //console.log(JSON.stringify(quoteLines[0]));
+        
+                        //Apex method to print quote total at the beggining
+                        let startTime = window.performance.now(); 
+                        getQuoteTotal({quoteId: this.recordId})
+                        .then((data)=>{
+                                let endTime = window.performance.now();
+                                console.log(`getQuoteTotal method took ${endTime - startTime} milliseconds`);
+                                //console.log('NEW QUOTE TOTAL data');
+                                //console.log(data);
+                                this.totalValue = data;
+                                this.totalValueLoading = false;
+                                this.spinnerLoadingUI = false;
+                        })
+                        .catch((error)=>{
+                                console.log('NEW QUOTE TOTAL error');
+                                console.log(error);
+                                this.spinnerLoadingUI = false;
+                        }); 
+                    }
+                })
+                .catch(error =>{
+                    if (error){
+                        this.quotelinesString = undefined; 
+                        console.log('quoteLines String ERROR:');
+                        console.log(error);
+                        let messageError; 
+        
+                        //THESE CONDITIONALS ARE TO SHOW THE USER THE EXACT ERROR MESSAGE
+                        if (error.hasOwnProperty('body')){
+                            if(error.body.hasOwnProperty('pageErrors')){
+                                if(error.body.pageErrors[0].hasOwnProperty('message')){
+                                    messageError = error.body.pageErrors[0].message; 
+                                }
+                                else if (error.body.hasOwnProperty('message')){
+                                    messageError = error.body.message; 
+                                }
+                            }
+                            
+                        } else {
+                            messageError = 'Unexpected error using UI - QUOTELINES'; 
+                        }
+                        const evt = new ShowToastEvent({
+                            title: 'UI QUOTELINES Error',
+                            message: messageError,
+                            variant: 'error',
+                            mode: 'sticky'
+                        });
+                        this.dispatchEvent(evt);
+                        this.errorInQuotes = true; 
+                    }
+                })
+                
+                let startTime1 = window.performance.now();
+                //console.log('Method printNotes quoteId: '+ this.recordId);
+                printNotes({ quoteId: this.recordId })
+                .then(data =>{
+                    let endTime2 = window.performance.now();
+                    //console.log(`printNotes method took ${endTime2 - startTime1} milliseconds`);
+                    if (data){
+                        this.quoteNotesString = data; 
+                        //console.log('notes string SUCCESS: '+ this.quoteNotesString);
+                        if (this.quoteNotesString == '[]'){
+                            this.quoteNotesString = '[name: \"none\"]';
+                            //console.log(this.quoteNotesString);
+                            //console.log('No quotes Notes yet');
+                        }
+                    }    
+                })
+                .catch(error =>{
+                        if (error){
+                        this.quoteNotesString = undefined; 
+                        this.disableButton = true;
+                        this.quoteNotesString = '[name: \"none\"]';
+                        console.log('notes string ERROR: ');
+                        console.log(error);
+                        let messageError; 
+                        if (error.hasOwnProperty('body')){
+                            if(error.body.hasOwnProperty('pageErrors')){
+                                if(error.body.pageErrors[0].hasOwnProperty('message')){
+                                    messageError = error.body.pageErrors[0].message; 
+                                }
+                            } else if (error.body.hasOwnProperty('message')){
+                                messageError = error.body.message; 
+                            }
+                            
+                        } else {
+                            messageError = 'Unexpected error using UI - QUOTELINES'; 
+                        }
+                        const evt = new ShowToastEvent({
+                            title: 'Product Notes Warning:',
+                            message: messageError,
+                            variant: 'warning',
+                            mode: 'sticky'
+                        });
+                        this.dispatchEvent(evt);
+                    }
+                })
+            }
+        };
+
+        // Invoke subscribe method of empApi. Pass reference to messageCallback
+        subscribe(this.channelName, -1, messageCallback).then((response) => {
+            // Response contains the subscription information on subscribe call
+            console.log(
+                'Subscription request sent to: ',
+                JSON.stringify(response.channel)
+            );
+            this.subscription = response;
+            //this.toggleSubscribeButton(true);
+        });
+    }
+//------------------------------------------------------------------------------------
+
     //Connect channel
     @wire(MessageContext)
     messageContext;
@@ -659,24 +1008,54 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     timeWhenclicked = 0; 
     //WHEN CLICK SAVE AND CALCULATE
     async handleSaveAndCalculate(event){
-        turnOffFlag({quoteId: this.recordId})
-        .then(()=>{
-            console.log('Turning Flag Off before anything else');
-        })
-        .catch(()=>{
-            console.log('Error putting flag off');
-        }); 
         this.timeWhenclicked = window.performance.now();
         //CALL APEX METHOD TO SAVE QUOTELINES AND NOTES
         //this.labelButtonSave =  event.target.label;
         //console.log('Label '+ label);
-        if(this.activeOverrideReason){
+        if (this.activeOverrideReason && (this.overrideReason == '' || this.overrideReason == null)){
             const evt = new ShowToastEvent({
-                title: 'Required Deviation Reason Fields before saving',
-                message: 'The Deviation Reason field should be update before saving',
+                title: 'Required Override Reason Fields before saving',
+                message: 'The Override Reason field should be selected before saving',
                 variant: 'error', mode: 'sticky' });
             this.dispatchEvent(evt);
         } else {
+            if(this.activeOverrideReason){
+                console.log('Update quote');
+
+                let quoteWrap = {id: this.recordId,
+                    overridereason: this.overrideReason,
+                    overridecomments: this.overrideComment,
+                }
+
+                let startTime = window.performance.now();
+                quoteSaver({quote: JSON.stringify(quoteWrap)})
+                .then(()=>{
+                    let endTime = window.performance.now();
+                    console.log(`quoteSaver method took ${endTime - startTime} milliseconds`);
+                    const evt = new ShowToastEvent({
+                        title: 'Quote Updated',
+                        message: 'The quote is updated',
+                        variant: 'success',
+                        mode: 'dismissable'
+                    });
+                    this.dispatchEvent(evt);
+                    this.activeOverrideReason = false; 
+                    this.overrideReason = null;
+                    this.overrideComment = '';
+                })
+                .catch((error)=>{
+                    console.log('QUOTE NOT UPDATED');
+                    console.log(error);
+                    const evt = new ShowToastEvent({
+                        title: 'Cannot update the quote',
+                        message: 'There is an error updating the quote, please wait and try again.',
+                        variant: 'error',
+                        mode: 'dismissable'
+                    });
+                    this.dispatchEvent(evt);
+                })
+            }
+
             this.spinnerLoadingUI = true;
             this.notSaveYet = false; 
             let quoteEdition = JSON.parse(this.quotelinesString);
@@ -777,15 +1156,95 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 console.log('A. Quote lines updated');
                 console.log(`editAndDeleteQuotes method took ${endTime - startTime} milliseconds`);
                 this.goodEditing = true; 
+                this.notGoodToGoBundle[0] = false; 
+                quoteLineCreator({quoteId: this.recordId, quoteLines: this.quotelinesString})
+                .then(()=>{
+                    let endTime = window.performance.now();
+                    this.goodCreating = true; 
+                    console.log('B. New quote lines created');
+                    console.log(`quoteLineCreator method took ${endTime - startTime} milliseconds`);
+                    
+                    const payload = { 
+                        dataString: this.quotelinesString,
+                        auxiliar: 'updatetable'
+                    };
+                    publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
+
+                    this.notGoodToGoBundle[1] = false;
+                    this.callData();
+                    // setTimeout(() => {
+                    //     //console.log('TOTAL SUCCESS');
+                    //     //HERE TO AVOID CALLING THE METHOD TO UPDATE TABLE TO SEE ERRORS!
+                    //     this.callData();
+                    //     this.notGoodToGoBundle[1] = false;
+                    //     //this.spinnerLoadingUI = false;
+                    // }, 5000);
+                    
+                })
+                .catch((error)=>{
+                    if(this.toPS){
+                        this.showPSTab = false; 
+                        this.activeTab = 'UI';
+                        this.toPS = false;
+                    }
+                    console.log('quoteLineCreator ERROR');
+                    console.log(error);
+                    this.notGoodToGoBundle[1] = true;
+                    this.spinnerLoadingUI = false;
+
+                    let errorMessage;
+                    
+                    if(error != undefined){
+                        if(error.body != undefined){
+                            if (error.body.message != undefined){
+                                errorMessage = error.body.message; 
+                            } else if (error.body.pageErrors!= undefined){
+                                if(error.body.pageErrors[0].message != undefined){
+                                    errorMessage = error.body.pageErrors[0].message; 
+                                } else if (error.body.pageErrors[0].statusCode != undefined){
+                                    errorMessage = error.body.pageErrors[0].statusCode; 
+                                }
+                            }
+                            else if (error.body.fieldErrors!= undefined){
+                                let prop = Object.getOwnPropertyNames(error.body.fieldErrors);
+                                //errorMessage = JSON.stringify(error.body.fieldErrors[prop[0]]);
+                                errorMessage = 'There is a Field Error problem, please make sure the values are correct';
+                                console.log('Field Error');
+                            } else if (error.body.stackTrace != undefined) {
+                                errorMessage = JSON.stringify(error.body.stackTrace);
+                            }
+                            else {
+                                errorMessage = 'Developer: Open console to see error message';
+                            }
+                        } else {
+                            errorMessage = 'Developer: Open console to see error message'
+                        }
+                    } else {
+                        errorMessage = 'Undefined Error'; 
+                    }
+
+
+                    const evt = new ShowToastEvent({
+                        title: 'Creating new quotelines ERROR',
+                        message: errorMessage,
+                        variant: 'error',
+                        mode: 'dismissable'
+                    });
+                    this.dispatchEvent(evt);
+                });
+
+                /*
                 const payload = { 
                     dataString: this.quotelinesString,
                     auxiliar: 'updatetable'
                 };
+                
                
-                publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload);   
+                publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload);  
+                */ 
                
-                this.notGoodToGoBundle[0] = false; 
-                this.callData();
+
+                //this.callData();
             })
             .catch((error)=>{
                 if(this.toPS){
@@ -851,6 +1310,8 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             //console.log('Before Creating New: '+this.quotelinesString);
             let startTime = window.performance.now();
             //APEX METHOD TO CREATE NEW QUOTELINES
+            console.log('Nothing Here Creating');
+            /*
             quoteLineCreator({quoteId: this.recordId, quoteLines: this.quotelinesString})
             .then(()=>{
                 let endTime = window.performance.now();
@@ -926,6 +1387,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 });
                 this.dispatchEvent(evt);
             });
+            */
         resolve();
         });   
     }
@@ -934,11 +1396,11 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     async exitToRecordPage(){
         //DELETING THE RECORD WITH THE QUOTE ID TO AVOID USING SF MEMORY
         let startTime = window.performance.now();
-        console.log('Method deletingRecordId quoteId: '+ this.recordId);
+        //console.log('Method deletingRecordId quoteId: '+ this.recordId);
         deletingRecordId({quoteId: this.recordId})
         .then(()=>{
             let endTime = window.performance.now();
-            console.log(`deletingRecordId method took ${endTime - startTime} milliseconds`);
+            //console.log(`deletingRecordId method took ${endTime - startTime} milliseconds`);
             console.log('Quote Id Record for this user was delete'); 
         })
         .catch((error)=>{
@@ -989,14 +1451,55 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             this.dispatchEvent(evt);
             this.spinnerLoadingUI = false;
         } else {
-            if (!(this.originalquotelinesString == this.quotelinesString)){
-                await this.callEditAnDeleteMethod();
-                await this.callCreateMethod();
-                //this.spinnerLoadingUI = false;
-                await this.exitToRecordPage();
+            if (this.activeOverrideReason && (this.overrideReason == '' || this.overrideReason == null)){
+                const evt = new ShowToastEvent({
+                    title: 'Required Override Reason Fields before saving',
+                    message: 'The Override Reason field should be selected before saving',
+                    variant: 'error', mode: 'sticky' });
+                this.dispatchEvent(evt);
             } else {
+                if(this.activeOverrideReason){
+                    console.log('Update quote');
+                    let quoteWrap = {id: this.recordId,
+                        overridereason: this.overrideReason,
+                        overridecomments: this.overrideComment,
+                    }
+    
+                    let startTime = window.performance.now();
+                    quoteSaver({quote: JSON.stringify(quoteWrap)})
+                    .then(()=>{
+                        let endTime = window.performance.now();
+                        console.log(`quoteSaver method took ${endTime - startTime} milliseconds`);
+                        const evt = new ShowToastEvent({
+                            title: 'Quote Updated',
+                            message: 'The quote is updated',
+                            variant: 'success',
+                            mode: 'dismissable'
+                        });
+                        this.dispatchEvent(evt);
+                        this.activeOverrideReason = false; 
+                    })
+                    .catch((error)=>{
+                        console.log('QUOTE NOT UPDATED');
+                        console.log(error);
+                        const evt = new ShowToastEvent({
+                            title: 'Cannot update the quote',
+                            message: 'There is an error updating the quote, please wait and try again.',
+                            variant: 'error',
+                            mode: 'dismissable'
+                        });
+                        this.dispatchEvent(evt);
+                    })
+                }
+                if (!(this.originalquotelinesString == this.quotelinesString)){
+                    await this.callEditAnDeleteMethod();
+                    await this.callCreateMethod();
+                    //this.spinnerLoadingUI = false;
                     await this.exitToRecordPage();
-            }
+                } else {
+                        await this.exitToRecordPage();
+                }
+                }
             }
         }
 
@@ -1138,11 +1641,6 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             fieldApiName: OVERRIDE_REASON})
     overrideReasonsList;
 
-    //WIRE METHODS TO GET QUOTE OVERRIDE TYPE  INFO (UI)
-    @wire(getPicklistValues,{ recordTypeId: '$quotelineMetadata.data.defaultRecordTypeId', 
-            fieldApiName: OVERRIDE_TYPE})
-    overrideTypeList;
-
     activeOverrideReason = false;
     activeOverrideReasonFields(){
         console.log('Activate reason window');
@@ -1160,11 +1658,6 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         this.overrideComment = event.target.value;
     }
 
-    //WHEN CHANGING THE OVERRIDE TYPE  
-    handleOverrideType(event){
-        console.log('Type Here');
-        this.overrideType = event.target.value;
-    }
 
     //WHEN CLICKING IN THE UPDATE QUOTE TO CHANGE THE REASON 
     updateQuote(){
@@ -1183,13 +1676,14 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             let quoteWrap = {id: this.recordId,
                 overridereason: this.overrideReason,
                 overridecomments: this.overrideComment,
-                overridetype: this.overrideType, }
+            }
 
             let startTime = window.performance.now();
-            /*
+            this.spinnerLoadingUI = true; 
             console.log('Method quoteSaver quote: '+ JSON.stringify(quoteWrap));
             quoteSaver({quote: JSON.stringify(quoteWrap)})
             .then(()=>{
+                this.spinnerLoadingUI = false; 
                 let endTime = window.performance.now();
                 console.log(`quoteSaver method took ${endTime - startTime} milliseconds`);
                 console.log('QUOTE UPDATED');
@@ -1213,7 +1707,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 });
                 this.dispatchEvent(evt);
             })
-            */
+            
             //CALL THE APEX METHOD THAT SAVES THE INFO INTO THE QUOTE
         }
     }

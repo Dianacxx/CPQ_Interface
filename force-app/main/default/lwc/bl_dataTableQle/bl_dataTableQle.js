@@ -3,20 +3,25 @@ import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 
 //APEX METHOD TO CREATE QUOTE LINES FROM LOOUP FIELD 
-import addQuoteLine from '@salesforce/apex/QuoteController.addQuoteLine';
+//import addQuoteLine from '@salesforce/apex/QuoteController.addQuoteLine';
+import addQuoteLine from '@salesforce/apex/TestFlagQCPCustomQLE.addQuoteLine';
+import testconverter from '@salesforce/apex/TestFlagQCPCustomQLE.testconverter';
+import editRecordsupdated from '@salesforce/apex/TestFlagQCPCustomQLE.editRecordsupdated';
+
+//
 //APEX METHOD TO CREATE NSP FROM LOOKUP
 //import addNSPProducts from '@salesforce/apex/QuoteController.addNSPProducts';
 
 //APEX METHOD TO SHOW NSP FIELDS IN POP UP
 import NSPAdditionalFields from '@salesforce/apex/QuoteController.NSPAdditionalFields'; 
 
-/*
 //APEX METHOD THAT SEARCH THE AGREEMENT IN TIER POP-UP (POP-UP DATATABLE)
 import searchAgreement from '@salesforce/apex/SearchAgreementLookupController.search'; 
 
 //APEX METHOD THAT RETRIEVE TIERS OF THE AGREEMENT SELECTED
 import discountPrinter from '@salesforce/apex/DiscountController.discountPrinter'; 
-*/
+import initialDiscountPrinter from '@salesforce/apex/DiscountController.initialDiscountPrinter'; 
+import lineSaver from '@salesforce/apex/DiscountController.lineSaver';
 
 //GETTING THE ACCOUNT OF THE QUOTE (POP-UP DATATABLE)
 import ACCOUNT_ID_FIELD from '@salesforce/schema/SBQQ__Quote__c.SBQQ__Account__c'; 
@@ -29,8 +34,8 @@ import QUOTELINE_OBJECT from '@salesforce/schema/SBQQ__QuoteLine__c';
 import { getObjectInfo } from 'lightning/uiObjectInfoApi';
 import { getPicklistValues } from 'lightning/uiObjectInfoApi';
 import LENGTH_UOM_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.Length_UOM__c';
-//import LEVEL2_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.ProdLevel2__c';
-//import UOM_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.UOM__c';
+import TIER_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.Tier__c';
+
 
 //TO SHOW DEPENDENCIES VALUES FOR UOM FIELD IF PRODUCT 2 
 import uomDependencyLevel2List from '@salesforce/apex/blMockData.uomDependencyLevel2List'; 
@@ -41,10 +46,11 @@ import UPDATE_INTERFACE_CHANNEL from '@salesforce/messageChannel/update_Interfac
 
 //TIER COLUMNS FOR TABLE IN TIERS POP-UP (POP-UP DATATABLE)
 const TIER_COLUMNS = [
-    { label: 'Tier Name', fieldName: 'name', initialWidth: 100, },
-    { label: 'Number', fieldName: 'tierNumber', type: 'number', initialWidth: 100,},
-    { label: 'Discount', fieldName: 'discount', type: 'number', initialWidth: 100, },
+    { label: 'Tier Name', fieldName: 'Tier_Name__c', initialWidth: 100, },
+    { label: 'Number', fieldName: 'SBQQ__Number__c', type: 'number', initialWidth: 100,},
+    { label: 'Discount', fieldName: 'SBQQ__Discount__c', type: 'number', initialWidth: 100, },
 ];
+
 
 //DATA TABLE COLUMNS FOR EACH TAB USED
 const QUOTE_LINE_COLUMNS = [
@@ -142,7 +148,7 @@ export default class Bl_dataTableQle extends LightningElement {
                 //console.log('is here!!!');
                 //console.log('No double quotes: '+ this.quoteLines[i].product);
             }
-            this.quoteLinesString = JSON.stringify(this.quoteLines);
+            this.quotelinesString = JSON.stringify(this.quoteLines);
             this.updateTable();
         }
         //Make available the look up field
@@ -159,70 +165,9 @@ export default class Bl_dataTableQle extends LightningElement {
     @wire(getPicklistValues, { recordTypeId: '$objectInfo.data.defaultRecordTypeId', fieldApiName: LENGTH_UOM_FIELD})
     lengthUom;
 
-    /*
-    level2Dependencies = [];
-    goodDependencies = false;
-
+    @wire(getPicklistValues, { recordTypeId: '$objectInfo.data.defaultRecordTypeId', fieldApiName: TIER_FIELD})
+    tierValues; 
     
-    @wire(getPicklistValues, { recordTypeId: '$objectInfo.data.defaultRecordTypeId', fieldApiName: LEVEL2_FIELD})
-    level2Picklist({ error, data }) {
-        if (data) {
-            //
-            console.log('WIRE LIST');
-            //console.log(JSON.stringify(data));
-            let prodL2 = []; 
-            data.values.forEach( element => { prodL2.push(element.label);}); 
-
-            let startTime = window.performance.now();
-            uomDependencyLevel2List({productLevel2 : prodL2})
-            .then((data)=>{
-                this.goodDependencies = true; 
-                let endTime = window.performance.now();
-                console.log(`uomDependencyLevel2List method took ${endTime - startTime} milliseconds`);
-                //console.log(data);
-                let dependency = JSON.parse(data); 
-                let levelsNames = Object.getOwnPropertyNames(dependency); 
-                for (let i=0; i< levelsNames.length; i++){
-                    let prop = dependency[levelsNames[i]]; 
-                    let values = [];
-                    for(let j=0;j<prop.length;j++){
-                        values.push((prop[j].label).toLowerCase());
-                    }
-                    this.level2Dependencies.push({level2: levelsNames[i].toLowerCase(), dependencies: values}); 
-                }
-                //console.log('Level 2 Array of dependencies');
-                //console.log(this.level2Dependencies); 
-                
-            })
-            .catch((error)=>{
-                console.log(error);
-                if (!this.goodDependencies){
-                    const evt = new ShowToastEvent({
-                        title: '2. There is a problem loading the Error Checker for the UOM value', 
-                        message: 'Please, do not edit UOM values now or reload the UI to correct this mistake.',
-                        variant: 'warning', mode: 'dismissable'
-                    });
-                    this.dispatchEvent(evt);
-                }
-                
-            })
-            
-        } else if (error) {
-            console.log('WIRE LIST ERROR');
-            const evt = new ShowToastEvent({
-                title: '1. There is a problem loading the Error Checker for the UOM value', 
-                message: 'Please, do not edit UOM values now or reload the UI to correct this mistake.',
-                variant: 'warning', mode: 'dismissable'
-            });
-            this.dispatchEvent(evt);
-            console.log(error); 
-        }
-    }
-
-    @wire(getPicklistValues, { recordTypeId: '$objectInfo.data.defaultRecordTypeId', fieldApiName: UOM_FIELD})
-    uom;
-    */
-
     //WIRE METHOD TO GET ACCOUNT INFO (POP-UP DATATABLE)
     @wire(getRecord, { recordId: '$recordId', fields: ACCOUNT_ID_FIELD})
     quoteData({error, data}){
@@ -262,7 +207,7 @@ export default class Bl_dataTableQle extends LightningElement {
                     //console.log('No double quotes: '+ this.quoteLines[i].product);
                     }
                 }
-                this.quoteLinesString = JSON.stringify(this.quoteLines);
+                this.quotelinesString = JSON.stringify(this.quoteLines);
                 this.updateTable();
             }
         }
@@ -295,8 +240,8 @@ export default class Bl_dataTableQle extends LightningElement {
                     last4Name = cloneRows[i].Quote_Line_Name__c.substr(cloneRows[i].Quote_Line_Name__c.length - 4);
                     //CREATE A NEW ID BUT MAKE SURE IT HAS THE CLONED ID (IF IT IS ALREADY IN SF)
                     //Remember to make null the Id too upsert!!!!
-                    cloneRows[i].id =  'new'+randomId;
-                    cloneRows[i].name = 'Clone QL-'+last4Name+'-'+randomName; 
+                    cloneRows[i].Id =  'new'+randomId;
+                    cloneRows[i].Name = 'Clone QL-'+last4Name+'-'+randomName; 
                     if(this.selectedRows[i].Id.startsWith('new')){
                         cloneRows[i].Cloned_From__c = this.selectedRows[i].Cloned_From__c;
                         //console.log('Clone from new one');
@@ -307,7 +252,8 @@ export default class Bl_dataTableQle extends LightningElement {
                     this.quoteLines = [...this.quoteLines, cloneRows[i]];
                 }
                 this.updateTable();
-
+                //console.log('cloned:');
+                //console.log(this.quoteLines);
                 this.quotelinesString = JSON.stringify(this.quoteLines); 
                 this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
                 this.spinnerLoading = false;
@@ -454,11 +400,16 @@ export default class Bl_dataTableQle extends LightningElement {
                 let startTime = window.performance.now();
                 addQuoteLine({quoteId: this.recordId, productId: productId})
                 .then((data) => {
+                    let newQuotelines = [];
                     let endTime = window.performance.now();
-                    console.log(`addQuoteLine method took ${endTime - startTime} milliseconds`);
+                    //console.log(`addQuoteLine method took ${endTime - startTime} milliseconds`);
                     //console.log('SUCCESS TURNING NSP QUOTELINES');
                     //console.log(data);
-                    let newQuotelines = JSON.parse(data); 
+                    
+                    let a = data; 
+                    let b = JSON.parse(a);
+    
+                    newQuotelines.push(b); 
                     for (let i=0; i< newQuotelines.length; i++){
                         //To create auxiliar ID and Name
                         let randomId = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 10);
@@ -487,7 +438,7 @@ export default class Bl_dataTableQle extends LightningElement {
                         }
                         
                         //NSP CHECK BOX VALUE
-                        newQuotelines[i].isNSP = true; 
+                        newQuotelines[i].is_NSP__c = true; 
                         if (newQuotelines[i].ProdLevel1__c == undefined){
                             newQuotelines[i].ProdLevel2__c = null;
                         }
@@ -495,6 +446,7 @@ export default class Bl_dataTableQle extends LightningElement {
                             newQuotelines[i].UOM__c = null;
                         }
                         this.quoteLines = [...this.quoteLines, newQuotelines[i]];
+                        //console.log(newQuotelines[i]);
                     }
     
                     this.updateTable();
@@ -532,7 +484,7 @@ export default class Bl_dataTableQle extends LightningElement {
                 })
         } else {
             //let productId = event.detail.Id; 
-            let newQuotelines; //New quoteline
+            let newQuotelines = []; //New quoteline
             let randomId;     //Random Id for new quoteline
             let randomName;   //Random Name for new quoteline
 
@@ -540,9 +492,13 @@ export default class Bl_dataTableQle extends LightningElement {
             addQuoteLine({quoteId: this.recordId, productId: productId})
             .then((data) => {
                 let endTime = window.performance.now();
-                console.log(`addQuoteLine method took ${endTime - startTime} milliseconds`);
-                //console.log('Add Product DATA: '+ data); 
-                newQuotelines = JSON.parse(data); 
+                //console.log(`addQuoteLine method took ${endTime - startTime} milliseconds`);
+                //console.log('Add Product DATA: '+ typeof(data)); 
+                //console.log(data);
+                let a = data; 
+                let b = JSON.parse(a);
+                
+                newQuotelines.push(b); 
                 for (let i=0; i< newQuotelines.length; i++){
                     //To create auxiliar ID and Name
                     randomId = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 10);
@@ -555,7 +511,7 @@ export default class Bl_dataTableQle extends LightningElement {
                     newQuotelines[i].BL_Alternative_Indicator__c = false;
                     newQuotelines[i].dynamicIcon = 'utility:close';
                     
-                    newQuotelines[i].quotelinename = newQuotelines[i].SBQQ__Product__r.Name;
+                    newQuotelines[i].Quote_Line_Name__c = newQuotelines[i].SBQQ__Product__r.Name;
                     //SPECIAL BEHAVIOR TO ADD LENGTH BASE VALUES 
                     if (newQuotelines[i].Filtered_Grouping__c == 'Cable Assemblies' || newQuotelines[i].Product_Type__c == 'Patch Panel - Stubbed'){
                         newQuotelines[i].QLE_Variable_Price__c = 'Cable Length'; 
@@ -576,7 +532,10 @@ export default class Bl_dataTableQle extends LightningElement {
                         newQuotelines[i].UOM__c = null;
                     }
                     this.quoteLines = [...this.quoteLines, newQuotelines[i]];
+                    //console.log(newQuotelines[i]);
+                    //console.log('HERE!');
                 }
+                
                 this.updateTable();
                 this.quotelinesString = JSON.stringify(this.quoteLines); 
                 this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
@@ -604,64 +563,6 @@ export default class Bl_dataTableQle extends LightningElement {
                 this.dispatchEvent(evt);
             }) 
         }
-        /*
-        let productId = event.detail; 
-        let newQuotelines; //New quoteline
-        let randomId;     //Random Id for new quoteline
-        let randomName;   //Random Name for new quoteline
-        addQuoteLine({quoteId: this.recordId, productId: productId})
-        .then((data) => {
-            //console.log('Add Product DATA: '+ data); 
-            newQuotelines = JSON.parse(data); 
-            for (let i=0; i< newQuotelines.length; i++){
-                //To create auxiliar ID and Name
-                randomId = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 10);
-                randomName = Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 10);//Math.random().toFixed(36).substring(0, 7)); 
-                newQuotelines[i].id = 'new'+randomId; 
-                newQuotelines[i].name = 'New QL-'+randomName; 
-                newQuotelines[i].minimumorderqty == null ? newQuotelines[i].quantity = 1 : newQuotelines[i].quantity = newQuotelines[i].minimumorderqty;
-                newQuotelines[i].netunitprice = 1;
-                newQuotelines[i].alternativeindicator = false;
-                 newQuotelines[i].alternative = false;
-                newQuotelines[i].quotelinename = newQuotelines[i].product;
-                newQuotelines[i].length = 'NA';
-                newQuotelines[i].lengthuom = 'NA';
-                if (newQuotelines[i].prodLevel1 == null){
-                    newQuotelines[i].prodLevel2 = null;
-                }
-                if (newQuotelines[i].prodLevel2 == null){
-                    newQuotelines[i].uom = null;
-                }
-                this.quoteLines = [...this.quoteLines, newQuotelines[i]];
-            }
-
-            this.updateTable();
-            this.quotelinesString = JSON.stringify(this.quoteLines); 
-            this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
-            this.spinnerLoading = false;
-            setTimeout(()=>{
-                const evt = new ShowToastEvent({
-                    title: 'Product added in the table',
-                    message: 'The product you searched was added',
-                    variant: 'success',
-                    mode: 'dismissable'
-                });
-                this.dispatchEvent(evt);
-            },250);
-        })
-        .catch((error) =>{
-            console.log('Add Product ERROR: ');
-            console.log(error);
-            this.spinnerLoading = false;
-            const evt = new ShowToastEvent({
-                title: 'Error creating QuoteLine',
-                message: 'The product selected cannot turn into a quoteline',
-                variant: 'error',
-                mode: 'sticky'
-            });
-            this.dispatchEvent(evt);
-        }) 
-        */
     }
 
     @track quoteLinesEdit;
@@ -878,7 +779,7 @@ export default class Bl_dataTableQle extends LightningElement {
                 }
                 this.quoteLines = allQuotelinesEdititng;
                 this.quotelinesString = JSON.stringify(this.quoteLines); 
-                console.log(this.quoteLinesString);
+                //console.log(this.quotelinesString);
                 this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
                 
                 this.quoteLinesEdit = [];
@@ -945,8 +846,6 @@ export default class Bl_dataTableQle extends LightningElement {
         return tempDivElement.textContent || tempDivElement.innerText || "";
     } 
 
-    @track richtext = '<br><p>carp</p><br><ul><li class=\'msgSuccess\'>1 item(s) added to cart successfully</li><li class=\'msgErr\'>3 item(s) were not added to the cart</li><li class=\'msgWarn\'>Invalid SKU: 710-900007</li><li class=\'msgWarn\'>Invalid SKU: ABC</li><li class=\'msgWarn\'>Invalid SKU: XYZ</li></ul>';
-
     handleRowAction(event){
         this.dataRow = event.detail.row;
        //console.log(Object.getOwnPropertyNames(event.detail));
@@ -955,12 +854,26 @@ export default class Bl_dataTableQle extends LightningElement {
                 this.deleteClick = true; 
             break;
             case 'Tiers':
-                //this.popUpTiers = true; //UNCOMMENT THIS WHEN CR OF AGREEMENT
-                alert('THIS IS NOT DONE YET');
+                if (this.dataRow.Id.startsWith('new')){
+                    const evt = new ShowToastEvent({
+                        title: 'Unable to change Tiers', 
+                        message: 'Please, save the quote line first to do this action.',
+                        variant: 'warning', mode: 'dismissable'
+                    });
+                    this.dispatchEvent(evt);
+                } else {
+                    this.popUpTiers = true; 
+                    this.loadingInitianTiers();
+                    this.customerTier = 'not';
+                    this.basePrice = 'not';
+                    this.changeAgreement = false;
+                    this.dataRow.New_Customer_Tier__c == null ? this.showLineCustomertier = this.dataRow.Tier__c : this.showLineCustomertier = this.dataRow.New_Customer_Tier__c;
+                }
+
             break;
             case 'NSP':
                 this.nspProduct = true; 
-                if(this.dataRow.is_NSP__c != undefined || this.dataRow.is_NSP__c != false ){
+                if(this.dataRow.is_NSP__c != undefined && this.dataRow.is_NSP__c != false ){
                     this.nspShowMessage = true;
                     this.showNSPValues();
                 } else {
@@ -972,18 +885,7 @@ export default class Bl_dataTableQle extends LightningElement {
                 this.lineNotePopUp = true;
                 //TO SHOW NEW LINES IF THERE IS ONE ALREADY IN THE LINE NOTE WITOUT HTML TAGS 
                 if (this.dataRow.Line_Note__c != undefined){
-                    //EDITING HERE
-                    console.log('HTML TAGS');
                     console.log(this.convertToPlain(this.dataRow.Line_Note__c));
-                    //no editing here
-                    /*
-                    let text =  String(this.dataRow.linenote);
-                    //console.log(text)
-                    text = '<p>'+text;
-                    //cambiar para quitar todas las tags
-                    text = text.replace(/\r\n|\n/g, '</p><p>');
-                    text = text+'</p>';*/
-                    
                     this.lineNoteValue = this.dataRow.Line_Note__c; //text; 
                 } else {
                     this.lineNoteValue = '';
@@ -1010,8 +912,10 @@ export default class Bl_dataTableQle extends LightningElement {
 
     //UOM POP UP
     uomList = [];
+    uomDone = false;
 
     searchUomValuesForProduct2(){
+        this.uomDone = true; 
         if(this.dataRow.ProdLevel2__c != null && this.dataRow.ProdLevel2__c != ''){
             uomDependencyLevel2List({productLevel2 : this.dataRow.ProdLevel2__c})
             .then((data)=>{
@@ -1020,8 +924,10 @@ export default class Bl_dataTableQle extends LightningElement {
                 let list = JSON.parse(data);
                 let prodLevel2 = Object.getOwnPropertyNames(list);
                 this.uomList = list[prodLevel2[0]];
+                this.uomDone = false; 
             })
             .catch((error)=>{
+                this.uomDone = false; 
                 console.log(error);
                 const evt = new ShowToastEvent({
                     title: 'There is a problem loading the possible values for the UOM value', 
@@ -1037,6 +943,7 @@ export default class Bl_dataTableQle extends LightningElement {
                 variant: 'warning', mode: 'dismissable'
             });
             this.dispatchEvent(evt);
+            this.uomDone = false; 
             this.closeUomPopup();
         }
        
@@ -1088,11 +995,7 @@ export default class Bl_dataTableQle extends LightningElement {
     }   
     saveLengthUom(){
         //SPECIAL BEHAVIOR TO ADD LENGTH BASE VALUES 
-        // if (this.dataRow.filteredGrouping == 'Cable Assemblies' || this.dataRow.productType == 'Patch Panel - Stubbed'){
-        //     this.dataRow.qlevariableprice = 'Cable Length'; 
-        // } else {
-        //     newQuotelines[i].qlevariableprice = null ; 
-        // }
+
         if (!(this.dataRow.QLE_Variable_Price__c == 'Cable Length')){
             this.newLengthUOM = 'NA';
         } 
@@ -1120,10 +1023,12 @@ export default class Bl_dataTableQle extends LightningElement {
         this.quotelinesString = JSON.stringify(this.quoteLines); 
         this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
     }
+
     //Tiers Pop Up 
     @track popUpTiers = false;
     closeTiers(){
         this.popUpTiers = false;
+        this.showTiersList = false;
     }
     //CHANGE CSS (POP-UP DATATABLE)
     handleClick() {
@@ -1137,20 +1042,53 @@ export default class Bl_dataTableQle extends LightningElement {
         }, 300);
     }
 
+    discountScheduleUom; 
+    loadingInitianTiers(){
+        //console.log(Object.getOwnPropertyNames(this.dataRow));
+        //console.log('Searching Tiers By quote line Id');
+        initialDiscountPrinter({lineId: this.dataRow.Id}) 
+        .then((data)=>{
+            //console.log('initial discount Tiers GOOD'); 
+            //console.log(JSON.stringify(data));
+            this.tiers = data; 
+            if(data.length > 0){
+                this.showTiersList = true;
+                this.tiers[0].UOM__c != undefined ? this.discountScheduleUom = this.tiers[0].UOM__c 
+                :  this.discountScheduleUom = '';
+            } else {
+                this.discountScheduleUom = '';
+            }
+
+        })
+        .catch((error)=>{
+            console.log('initial discount Tiers BAD'); 
+            console.log(error);
+        })
+    }
+
+    changeAgreement = false; 
     //WHEN SELECTING AN AGREEMENT FROM THE LIST  (POP-UP DATATABLE)
     onSelect(event) {
+        this.changeAgreement = true; 
         let selectedId = event.currentTarget.dataset.id;
         let selectedName = event.currentTarget.dataset.name;
-        console.log('Selected:' + selectedId+', '+selectedName);
+        //console.log('Selected:' + selectedId+', '+selectedName);
         this.template.querySelectorAll("[id*='inputAgreement']").forEach(each => { each.value = undefined; });
         if(!(selectedId == 'norecords')){
             //selectedId 
-            //this.showTiers = false; 
-            discountPrinter({agreementId: '8002h000000engBAAQ' /*selectedId*/, prodId: '01t2h000004Rvu1AAC' })
+            //this.showTiers = false;
+            discountPrinter({agreementId: selectedId /* 8002h000000engBAAQ*/, prodId: this.dataRow.SBQQ__Product__r.Id /*'01t2h000004Rvu1AAC'*/ })
             .then((data)=>{
-                console.log('discount Tiers GOOD'); 
-                console.log(data);
-                this.tiers = JSON.parse(data); 
+                //console.log('discount Tiers GOOD'); 
+                //console.log(data);
+                this.tiers = data; 
+                if(this.tiers.length > 0){
+                    this.tiers[0].UOM__c != undefined ? this.discountScheduleUom = this.tiers[0].UOM__c 
+                    :  this.discountScheduleUom = '';
+                } else {
+                    this.discountScheduleUom = '';
+                }
+               
                 this.showTiers = true; 
                 this.showTiersList = true;
             })
@@ -1158,12 +1096,7 @@ export default class Bl_dataTableQle extends LightningElement {
                 console.log('discount Tiers BAD'); 
                 console.log(error);
             })
-            /*
-            const valueSelectedEvent = new CustomEvent('lookupselected', {detail:  selectedId });
-            this.dispatchEvent(valueSelectedEvent);
-            this.isValueSelected = true;
-            this.selectedName = selectedName;
-            */
+
             if(this.blurTimeout) {
                 clearTimeout(this.blurTimeout);
             }
@@ -1173,7 +1106,7 @@ export default class Bl_dataTableQle extends LightningElement {
     }
 
     //WHEN CHANGING THE TERM TO LOOK UP THE AGREEMENT (POP-UP DATATABLE)
-    /* UNCOMMENT WHE CR OF AGREEMENT
+
     onChange(event) {
         this.searchTermTier = event.target.value;
         //console.log('search Term : '+ this.searchTermTier);
@@ -1189,6 +1122,7 @@ export default class Bl_dataTableQle extends LightningElement {
         } else {
             searchAgreement( {accId : this.accountId, searchTerm: this.searchTermTier})
             .then((data)=>{
+                    //console.log(data);
                     this.recordsTiers = data;
                     if (this.recordsTiers.length == 0){
                         this.recordsTiers = [{"Id":"norecords","Agreement_Name__c":"NO RECORDS",}];
@@ -1208,32 +1142,78 @@ export default class Bl_dataTableQle extends LightningElement {
         }
         
     }
-    */
 
     //WHEN CHANGING CUSTOMER TIER VALUE (POP-UP DATATABLE)
-    customerTier; 
+    customerTier = 'not';
+    showLineCustomertier;
     handleCustomerChange(event){
-        console.log('customer change');
+        //console.log('customer change');
         this.customerTier = event.target.value; 
     }
 
     //WHEN CHANGING THE BASE PRICE VALUE (POP-UP DATATABLE)
-    basePrice; 
+    basePrice = 'not'; 
     handleBasePriceChange(event){
-        console.log('base price');
+        //console.log('base price');
         this.basePrice = event.target.value; 
     }
     
 
     //WHEN CLICK IN CHANGE VALUE (POP-UP DATATABLE) - SEND MESSAGE TO UI FROM DATATABLE COMPONENT 
     changeTiers(){
-        //CHANGE HERE VALUES OF BASE PRICE, AGREEMENT AND CUSTOMER ONCE CLICKED
-        //ASK WHICH VALUES CAN CHANGE, TO SEE IF THEY ARE REQUIRED ALL OF THEM OR HOW THEY WORK. 
-        //UNCOMMENT THIS WHEN CODE IN DATA TABLE TO ACTIVE THE Override Reason THING
-        this.dispatchEvent(new CustomEvent('overridereason'));
+        let sendOverride = false;
+        if(!(this.basePrice == 'not')){
+            let index = this.quoteLines.findIndex(x => x.Id === this.dataRow.Id);
+            if(index != -1){
+                this.quoteLines[index].Base_Price_Override__c = this.basePrice; 
+            } else {
+                alert('The row cannot change, MEGA ERROR');
+            }
+            sendOverride = true; 
+            //console.log('base');
+            //console.log(this.basePrice);
+        }
+        if(!(this.customerTier == 'not')){
+            let index = this.quoteLines.findIndex(x => x.Id === this.dataRow.Id);
+            if(index != -1){
+                this.quoteLines[index].Last_Customer_Tier__c = this.quoteLines[index].New_Customer_Tier__c;
+                this.quoteLines[index].New_Customer_Tier__c = this.customerTier; 
+
+            } else {
+                alert('The row cannot change, MEGA ERROR');
+            }
+            sendOverride = true;  
+            //console.log('tier');
+            //console.log(this.customerTier);
+        }
+        if (this.changeAgreement){
+            lineSaver({line: JSON.stringify(this.dataRow), discTiers: this.tiers})
+            .then((data)=>{
+                sendOverride = true; 
+                //console.log(data);
+                let index = this.quoteLines.findIndex(x => x.Id === this.dataRow.Id);
+                if(index != -1){
+                this.quoteLines[index] = JSON.parse(data);
+                this.quotelinesString = JSON.stringify(this.quoteLines); 
+                this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
+                } else {
+                alert('The row cannot change, MEGA ERROR');
+                }
+            })
+            .catch((error)=>{
+                console.log('New Tiers ERROR');
+                console.log(error);
+            })
+        }
+        
+        if(sendOverride){
+            this.quotelinesString = JSON.stringify(this.quoteLines); 
+            this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
+            setTimeout(()=>{ this.dispatchEvent(new CustomEvent('overridereason')); }, 200);
+            //console.log(this.quotelinesString);
+        }
         //HERE CALLS THE SAVING METHOD OF THE QUOTE LINE, AND RETRIEVE THE INFO THAT CAHNGES WHEN SAVING
         //this.activeOverrideReasonFields(); 
-        console.log('change clicked');
         this.closeTiers();
     }
 
@@ -1246,14 +1226,13 @@ export default class Bl_dataTableQle extends LightningElement {
     properties = [];
     showNSPValues(){
         this.showNSP = false;
-        console.log(this.dataRow);
+        //console.log(this.dataRow);
 
         let startTime = window.performance.now();
         NSPAdditionalFields({productId: this.dataRow.SBQQ__Product__r.Id })
         .then((data)=>{  
             let endTime = window.performance.now();
-            console.log(`NSPAdditionalFields method took ${endTime - startTime} milliseconds`);
-            //console.log('NSP VALUES');
+            //console.log(`NSPAdditionalFields method took ${endTime - startTime} milliseconds`);
             //console.log(data);
             let nspVal = JSON.parse(data); 
             let values = [];
@@ -1263,7 +1242,7 @@ export default class Bl_dataTableQle extends LightningElement {
             for(let nsp of nspVal){
                 //console.log('LABEL '+nsp.label); 
                 //console.log('LABEL BETTER '+(nsp.label.toLowerCase()).replaceAll(/\s/g,'')); 
-                values.push({value: (nsp.label.toLowerCase()).replaceAll(/\s/g,''), label: nsp.label});
+                values.push({value: nsp.apiName, label: nsp.label});
                 labels.push(nsp.label); 
                 types.push(nsp.type); 
                 optionsP.push(JSON.parse(nsp.options));
@@ -1271,22 +1250,21 @@ export default class Bl_dataTableQle extends LightningElement {
             //console.log(values);
             let prop = Object.getOwnPropertyNames(this.dataRow); 
             this.properties = []; 
-            for(let i=0; i<prop.length; i++){
-                let ind = (values.findIndex(z => z.value == prop[i].toLowerCase()));
-                if(ind !== -1 ){
-                    this.properties.push({value: prop[i].toLowerCase(), property: prop[i], label: values[ind].label});
-                }   
+            for(let i=0; i<values.length; i++){
+                this.properties.push({value: values[i].value, property: values[i].value, label: values[i].label});
             }
             //console.log(properties);
             for(let i =0; i<this.properties.length; i++){
                 this.nspValues.push({label: this.properties[i].label, value: this.dataRow[this.properties[i].property]});
                 this.nspValues.sort((a, b) => (a.label > b.label) ? 1 : -1);
                 if(types[i] == 'PICKLIST'){
-                    this.nspOptions.push({label:labels[i], options: optionsP[i],}); 
+                    this.nspOptions.push({label:labels[i], options: optionsP[i], name: values[i].value}); 
                     this.nspOptions.sort((a, b) => (a.label > b.label) ? 1 : -1);
+                    console.log('picklist');
                 } else {
-                    this.nspInputs.push({label: labels[i],}); 
+                    this.nspInputs.push({label: labels[i], name: values[i].value}); 
                     this.nspInputs.sort((a, b) => (a.label > b.label) ? 1 : -1);
+                    console.log('input');
                 }
                 
                 //console.log('Showing: '+ JSON.stringify(this.nspValues[this.nspValues.length-1]));
@@ -1303,7 +1281,7 @@ export default class Bl_dataTableQle extends LightningElement {
     //WHEN USER CHANGES A NSP VALUE IN QUOTE, AUTO SAVES IN QUOITE LINE
     changingNSP(event){
         this.showNSP = false;
-        let prop = ((event.target.label).toLowerCase()).replaceAll(/\s/g,''); 
+        let prop = event.target.name; 
         let indProp = this.properties.findIndex(x => x.value === prop);
         let value = event.target.value;
         let index = this.quoteLines.findIndex(x => x.Id === this.dataRow.Id);

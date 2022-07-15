@@ -3,6 +3,7 @@ import getDiscountScheduleInfo from '@salesforce/apex/BlAgreementsDSLookup.getDi
 import getUnitPrice from '@salesforce/apex/BlAgreementsDSLookup.getUnitPrice';
 import getCurrency from '@salesforce/apex/BlAgreementsDSLookup.getCurrency';
 import readerV3 from '@salesforce/apex/FixedPriceReader.readerV3';
+
 /* import getFixedPrice from '@salesforce/apex/FixedPriceReader.reader';
  */import getAgreementDetails from '@salesforce/apex/BlAgreementsDSLookup.getAgreementDetails';
  import getAccountName from '@salesforce/apex/BlAgreementsDSLookup.getAccountName';
@@ -10,8 +11,9 @@ import readerV3 from '@salesforce/apex/FixedPriceReader.readerV3';
 import FIXEDPRICE_FIELD from '@salesforce/schema/SBQQ__DiscountSchedule__c.Fixed_Price_Adj__c';
 import myUOM from '@salesforce/apex/BlAgreementsDSLookup.myUOM';
 import { getObjectInfo,getPicklistValues } from 'lightning/uiObjectInfoApi';
+import getConvFact from '@salesforce/apex/BlAgreementsDSLookup.getConvFact'; 
 import { NavigationMixin } from 'lightning/navigation';
-import { getRecord, getFieldValue, updateRecord } from 'lightning/uiRecordApi';
+import { getRecord, getFieldValue,createRecord, updateRecord } from 'lightning/uiRecordApi';
 import CONTRACT_STATUS from '@salesforce/schema/Contract.Status'
 import CONTRACT_ID from '@salesforce/schema/Contract.Id'
 import DS_OBJECT from '@salesforce/schema/SBQQ__DiscountSchedule__c'
@@ -32,11 +34,25 @@ import getPttInfo from '@salesforce/apex/BlAgreementsDSLookup.getPttInfo';
 import getListPrice from '@salesforce/apex/BlAgreementsDSLookup.getListPrice';
 
 
+
+import CASE_OBJECT from '@salesforce/schema/Case';
+import CONTRACT_CASE_FIELD from '@salesforce/schema/Case.Contract__c';
+import RECORD_TYPE_FIELD from '@salesforce/schema/Case.RecordTypeId';
+import ACCOUNT_FIELD from '@salesforce/schema/Case.AccountId';
+import REVIEW_DATE_FIELD from '@salesforce/schema/Case.review_date__c';
+import CURRENCY_CASE_FIELD from '@salesforce/schema/Case.CurrencyIsoCode';
+import OWNER_FIELD from '@salesforce/schema/Case.OwnerId';
+import COMPETITOR_CASE_FIELD from '@salesforce/schema/Case.Competitor__c';
+
 const fields = [CONTRACT_STATUS, CONTRACT_ID];
+
+//TO SHOW DEPENDENCIES VALUES FOR UOM FIELD IF PRODUCT 2 
+import uomDependencyLevel2List from '@salesforce/apex/blMockData.uomDependencyLevel2List'; 
 
 export default class Bl_agreements_datatable extends NavigationMixin(LightningElement) {
     @api recordId
      currency; 
+     currentDate;
      maxValue;
      agreementDetails;
     @api currency;
@@ -45,6 +61,7 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
     @track data;
     @api discountId
     @api discountNombre
+    @api factoro
     maxDiscount;
     refreshTable ;
     @track uomPopupOpen = false;
@@ -98,7 +115,16 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
     unitPrice2;
     qtyAdj2 ;
     tierAdj2;
-    price2
+    price2;
+    caseDatesSplited=[];
+    
+    startMonth;
+    startYear;
+    endMonth;
+    endYear;
+    totalMonths;
+    monthAdder;
+    holahola=[]
 
     handleActivateContract(){
 
@@ -120,8 +146,155 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
             console.log('shoud be Act : '+this.activateString)
             this.loadbuttons = true
         }
- 
+        var dateVar = new Date();
+        this.currentDate = new Date(dateVar.getTime() + dateVar.getTimezoneOffset()*60000).toISOString().slice(0,10);
+        
+    this.startMonth = this.currentDate.slice(5,7);
+    this.endMonth = this.endDate.slice(5,7)
+    this.startYear = this.currentDate.slice(0,4);
+    this.endYear = this.endDate.slice(0,4)
+    this.totalMonths = (((parseInt(this.endYear) - parseInt(this.startYear )) *12 )  + (parseInt(this.endMonth) - parseInt(this.startMonth ) ))
+console.log('start Year : ' + this.startYear)
+console.log('End Year : ' + this.endYear)
+console.log('End month : ' + this.endMonth)
+console.log('End motnh : ' + this.startMonth)
+console.log('TOTAL MONTHS  : ' + this.totalMonths)
+console.log('TOTAL MONTHS parinst : ' + parseInt(this.totalMonths))
+console.log('TOTAL MONTHS  : ' +(1 + this.totalMonths))
+
+           function addMonths(date, months) {
+            var d = date.getDate();
+            date.setMonth(date.getMonth() + +months);
+            if (date.getDate() != d) {
+              date.setDate(0);
+            }
+            return date;
+        }
+        if (this.schedule =="Custom"){
+            console.log('CUSTOM SELECTED')
+
+        this.caseDatesSplited = JSON.parse(this.caseDates.split(','));
+        
+
+
+        console.log(' monthly dates : ' + (this.caseDatesSplited))
+           
+        console.log('L: ' + (this.caseDatesSplited).length)
+        console.log('pso 2: ' + (this.caseDatesSplited[0]))
+    
+        }
+
+        else if (this.schedule =="Monthly") {
+            console.log('Monthly SELECTED')
+
+            for (let k = 0;k<this.totalMonths ;k++){
+                
+                console.log(addMonths(new Date(this.currentDate),k).toISOString().slice(0,10));
+                this.caseDatesSplited.push(addMonths(new Date(this.currentDate),k).toISOString().slice(0,10))
+            }
+   
+        }
+        else if (this.schedule =="Quarterly") {
+           console.log('Quartely SELECTED')
+            for (let k = 0;k<parseInt(this.totalMonths) ;k+=3){
+                console.log('k'+k)
+                console.log(addMonths(new Date(this.currentDate),k).toISOString().slice(0,10));
+                this.caseDatesSplited.push(addMonths(new Date(this.currentDate),k).toISOString().slice(0,10))
+            }
+   
+        }
+        else if (this.schedule =="Bi-annually") {
+            console.log('Bi-annually SELECTED')
+
+            for (let k = 0;k<this.totalMonths ;k+=6){
+                
+                console.log(addMonths(new Date(this.currentDate),k).toISOString().slice(0,10));
+                this.caseDatesSplited.push(addMonths(new Date(this.currentDate),k).toISOString().slice(0,10))
+            }
+   
+        }
+        else if (this.schedule =="Annually") {
+            console.log('-annually SELECTED')
+
+            for (let k = 0;k<this.totalMonths ;k+=12){
+                
+                console.log(addMonths(new Date(this.currentDate),k).toISOString().slice(0,10));
+                this.caseDatesSplited.push(addMonths(new Date(this.currentDate),k).toISOString().slice(0,10))
+            }
+   
+        }
+
+        for (let j = 0 ; j<this.caseDatesSplited.length;j++){
+
+            let caseCreationDate = this.caseDatesSplited[j].replace('[','').replace(']','');
+
+           
+
+           if(caseCreationDate.length !==0 && caseCreationDate<= this.endDate ){
+
+           const fields = {};
+
+           fields[ACCOUNT_FIELD.fieldApiName] = this.recordId;
+           fields[OWNER_FIELD.fieldApiName] = this.owner;
+           fields[CONTRACT_CASE_FIELD.fieldApiName] = JSON.parse(this.agreementId)
+           fields[COMPETITOR_CASE_FIELD.fieldApiName] = this.competitor;
+           fields[RECORD_TYPE_FIELD.fieldApiName] = '0122h000000BLz5AAG';
+           fields[CURRENCY_CASE_FIELD.fieldApiName] = this.currencyContract;
+           fields[REVIEW_DATE_FIELD.fieldApiName] = caseCreationDate;
+               
+           const recordInput = {
+             apiName: CASE_OBJECT.objectApiName,
+             fields: fields
+           };
+               
+           createRecord(recordInput).then((record) => {
+            console.log(record);
+          });
+
+          
+
+         
+        }
     }
+
+      /*   for (let j = 0 ; j<JSON.parse(this.caseDatesSplited).length;j++){
+            console.log('STARTED ')
+            let caseCreationDate = JSON.parse(this.caseDatesSplited[j].replace('[','').replace(']',''));
+            console.log('KEEP GOINGs ')
+
+           
+
+           if(caseCreationDate.length !==0 && caseCreationDate<= this.endDate ){
+
+           const fields = {};
+
+           fields[ACCOUNT_FIELD.fieldApiName] = this.recordId;
+           fields[OWNER_FIELD.fieldApiName] = this.owner;
+           fields[CONTRACT_CASE_FIELD.fieldApiName] = JSON.parse(this.agreementId)
+           fields[COMPETITOR_CASE_FIELD.fieldApiName] = this.competitor;
+           fields[RECORD_TYPE_FIELD.fieldApiName] = '0122h000000BLz5AAG';
+           fields[CURRENCY_CASE_FIELD.fieldApiName] = this.currencyContract;
+           fields[REVIEW_DATE_FIELD.fieldApiName] = caseCreationDate;
+               
+           const recordInput = {
+             apiName: CASE_OBJECT.objectApiName,
+             fields: fields
+           };
+               
+           setTimeout(()=>{ createRecord(recordInput).then((record) => {
+            console.log(record);
+          });;;},250);
+          
+         
+        }
+    }
+        
+ */
+        console.log('CASES CREATION TRIGGERED')
+    }
+
+
+    
     applyToChild = false;
     handleApplyToChild(){
         //console.log('Apply to child');
@@ -179,7 +352,7 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
     //define columns for the data table, make sure the 'fieldName' is similar to what is in wrapper class
     columns = [
         {label: 'Product',initialWidth: 200, fieldName: 'productName', type: 'text'},
-        {label: 'Description',initialWidth: 300,fieldName: 'description' , type: 'text'},
+        {label: 'Description',initialWidth: 250,fieldName: 'description' , type: 'text'},
         {label: 'Min Qty',initialWidth: 80,fieldName: 'minimumQuantity', type: 'text'},
 /*         {label: 'UOM2',initialWidth: 80,fieldName: 'uOM', type: 'text',editable: true},
  */        {label: 'UOM', initialWidth: 90/* ,fieldName: 'uOM'  */,type: "button",editable: true, typeAttributes: {  
@@ -188,11 +361,13 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
 /*             value: { fieldName: 'uOM' },  
  */           iconPosition: 'right', variant: 'base', iconName: 'utility:chevrondown',  
         }},  
-        {label: 'Price',initialWidth: 80, fieldName: 'fixedPrice' , type: 'currency',
+        {label: 'Price',initialWidth: 100, fieldName: 'fixedPrice' , type: 'currency',
         typeAttributes: { currencyCode: {fieldName:'cur'}, step: '0.001' },},
-        {label: 'Price Adj', initialWidth: 80,fieldName: 'fixedPriceAdj', editable: true , type: 'currency',
+/*         {label: 'P2',initialWidth: 80, fieldName: 'fixedPrice2' , type: 'currency',
         typeAttributes: { currencyCode: {fieldName:'cur'}, step: '0.001' },},
-        {label: 'Adder',initialWidth: 80 ,fieldName: 'varPriceAdj', editable: true , type: 'currency',
+ */        {label: 'SA Price', initialWidth: 120,fieldName: 'fixedPriceAdj', editable: true , type: 'currency',
+        typeAttributes: { currencyCode: {fieldName:'cur'}, step: '0.001' },},
+        {label: 'Adder',initialWidth: 120 ,fieldName: 'varPriceAdj', editable: true , type: 'currency',
         typeAttributes: { currencyCode: {fieldName:'cur'}, step: '0.001' },},
         {label: 'UOM',initialWidth: 80, fieldName:'uomAdder',editable: true , type: 'text'},
         { label : 'Qty',type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:description', name: 'view' ,  variant:'brand', size:'xx-small'},},
@@ -204,8 +379,12 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
         columnsDetails = [
             {label: 'Product',initialWidth: 200, fieldName: 'productName', type: 'text'},
             {label: 'Description',initialWidth: 300,fieldName: 'description' , type: 'text'},
-            {label: 'Freight',initialWidth: 85,fieldName: 'freight', type: 'text',editable:true},
-            {label: 'Reels', initialWidth: 80,fieldName: 'reels' , type: 'text',editable:true},
+            {label: 'Reels', initialWidth: 90,fieldName: 'reels',type: "button",editable: true, typeAttributes: {  
+                label: { fieldName: 'reels' },  
+                name: 'reels' ,  variant: 'base'}},
+            {label: 'Freight', initialWidth: 90,fieldName: 'freight',type: "button",editable: true, typeAttributes: {  
+                label: { fieldName: 'freight' },  
+                name: 'freight' ,  variant: 'base'}},
             {label: 'Line Note',initialWidth: 500,fieldName: 'lineNote'  , type: 'text',editable:true},
             { label : '' ,type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:delete', name: 'delete', variant:'border-filled', size:'xx-small'}},
         ]
@@ -264,6 +443,7 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
                 this.status = this.agreementDetails[0].Status;
                 this.owner = this.agreementDetails[0].CreatedById;
                 this.competitor = this.agreementDetails[0].Competitor__c;
+                this.caseDates = this.agreementDetails[0].custom_cadence__c;
                 
             
                 getAccountName({cuentaId : this.endUser}) 
@@ -317,6 +497,8 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
                 .catch(error => {
                     console.log(error);
                 });
+
+                  
            
             })
             .catch(error => {
@@ -377,6 +559,7 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
             case 'view':
 /*                 this.saveDiscountSchedule()
  */                this.discountNombre = row.discountName;
+                  this.factoro = row.conv;
                    this.producto = row.productId;
                     console.log('newDiscount'+JSON.stringify(this.newDiscount));
 /*                 setTimeout(()=>{this.isModalOpen = true;;},2000);
@@ -386,17 +569,59 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
             /*   this.delDiscount(row); */
             break;
             case 'uomChange':
-             
-               
-
+                this.uomAvailableValues(); //FUNCTION TO CALL UOM VALUES DEPENDING ON PRODUCT LEVEL 2
                 this.uomPopupOpen = true;
-                
+                break;
+
+            case 'reels':
+                this.reelsChange();
+            break;
+            case 'freight':
+                this.freightChange();
             break;
 
         }
     }
-    
-    
+    reelsDefault = false ;
+    freightDefault = false ;
+    reelsChange(){
+        
+        this.loadTable = false;
+        this.reelsDefault = !this.reelsDefault;
+        let index = this.data.findIndex(x => x.discountName === this.globalRow.discountName);
+
+        if (this.reelsDefault == false){
+
+            this.data[index].reels = 'No';
+        }
+        else if (this.reelsDefault == true){
+
+            this.data[index].reels = 'Yes';
+        }
+       /*  console.log(this.reelsDefault)
+        console.log(this.data[index].reels) */
+        setTimeout(()=>{this.loadTable= true;},50);
+
+    }
+    freightChange(){
+        
+        this.loadTable = false;
+        this.freightDefault = !this.freightDefault;
+        let index = this.data.findIndex(x => x.discountName === this.globalRow.discountName);
+
+        if (this.freightDefault == false){
+
+            this.data[index].freight = 'No';
+        }
+        else if (this.freightDefault == true){
+
+            this.data[index].freight = 'Yes';
+        }
+       /*  console.log(this.reelsDefault)
+        console.log(this.data[index].reels) */
+        setTimeout(()=>{this.loadTable= true;},50);
+
+    }
     
     confirmDelete(){
         this.loadTable = false; 
@@ -422,7 +647,38 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
     closeDeleteModal() {
         this.isDeleteModalOpen = false;}
 
-
+    //UOM PICKLIST VALUES DEPENDING ON PRODUCT LEVEL 2 VALUE OF THE ROW SELECTED. 
+    uomList = [];
+    uomAvailableValues(){
+        this.uomList = [];
+        if(this.globalRow.productLevel2 != null && this.globalRow.productLevel2 != ''){
+            //METHOD FROM CUSTOM QLE PROJECT USED TO GET UOM VALUES DEPENDING ON PRODUCT LEVEL 2 VALUES
+            uomDependencyLevel2List({productLevel2 : this.globalRow.productLevel2})
+            .then((data)=>{
+                let list = JSON.parse(data);
+                let prodLevel2 = Object.getOwnPropertyNames(list);
+                this.uomList = list[prodLevel2[0]];
+            })
+            .catch((error)=>{
+                console.log(error);
+                const evt = new ShowToastEvent({
+                    title: 'There is a problem loading the possible values for the UOM value', 
+                    message: 'Please, do not edit UOM values now or reload the UI to correct this mistake.',
+                    variant: 'error', mode: 'dismissable'
+                });
+                this.dispatchEvent(evt);
+            })
+        } else {
+            const evt = new ShowToastEvent({
+                title: 'There is not Product level 2 for this product', 
+                message: 'The Product Level 2 is empty, the UOM value is not avialable',
+                variant: 'warning', mode: 'dismissable'
+            });
+            this.dispatchEvent(evt);
+            this.closeUomPopup();
+        }
+        
+    }
 
     selectedRecordId;
 
@@ -465,7 +721,7 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
                 console.log(error);
             });
 
-        getProductLevels({productId : this.selectedRecordId.id})
+         getProductLevels({productId : this.selectedRecordId.id})
         .then(result => {
             console.log('LEVEL '  + JSON.stringify(result))
              this.productLevel1 = result[0].ProdLevel1__c;
@@ -475,16 +731,26 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
            
             getCustomerTier( {AccountId:this.recordId ,  ProdLevel1:this.productLevel1 ,  ProdLevel2:this.productLevel2})
             .then(resulta => {
-/*                 console.log('TIER INFO : ' +this.recordId + this.productLevel1 + this.productLevel2 )
+                console.log('TIER INFO : ' +this.recordId + this.productLevel1 + this.productLevel2 )
                 console.log('TIER : '  + JSON.stringify(resulta))
-               this.customerTier = resulta[0].Tier__c
-                this.additionalDiscount2 = resulta[0].Additional_Discount__c
+                if(resulta.length > 0){
+                    this.customerTier = resulta[0].Tier__c
+                     this.additionalDiscount2 = resulta[0].Additional_Discount__c
+
+                }
+                else{
+                    this.customerTier = 'List'
+                     this.additionalDiscount2 = 0
+
+                }
+                
+                console.log('TIER : '  + this.customerTier)
                 console.log('DISCOUNT : '  + this.additionalDiscount2)
- */ 
+ 
                 getPttInfo( { Tier:this.customerTier ,  ProdLevel1:this.productLevel1 ,  ProdLevel2:this.productLevel2, ProdLevel3:this.productLevel3 ,  ProdLevel4:this.productLevel4 , qty:this.selectedRecordId.minimumQuantity})
                 .then(result => {
 
-                    /*
+                    
                     console.log('PPT INFO : ' +this.customerTier + this.productLevel1 + this.productLevel2 +this.productLevel3 + this.productLevel4 )
                     
                   this.pptData =  result;
@@ -502,7 +768,7 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
               console.log('tierAdj2 2 : ' + this.tierAdj2)
               console.log('unitPrice2 2 : ' + this.unitPrice2)
               console.log('additionalDiscount2 2 : ' + this.additionalDiscount2) 
-              */
+             
              //Creating a mock ID since is not created in SF yet, and it's necesarry to keep track of the table changes or deletions 
              let mockRandomId = 'New-'+Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 10); 
              let mockRandomName = 'Schedule-'+Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 10);
@@ -517,6 +783,7 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
               fixedPriceAdj:null,
               uOM: this.selectedRecordId.primaryUom,
               fixedPrice: this.price2,
+              fixedPrice2:this.price2,
               description: this.selectedRecordId.Description,
               minimumQuantity: this.selectedRecordId.minimumQuantity,
               contract: JSON.parse(this.agreementId), 
@@ -525,11 +792,15 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
               reels :'No' ,
               lineNote : null,
               uomAdder : null,
+              uom2 : this.selectedRecordId.primaryUom,
+              conv : this.conversionFactor,
+
               
               
               /*  Fixed_Price_Adj__c:this.selectedRecordId.Fixed_Price_Adj__c, */
               productCode: this.selectedRecordId.productName, /*the product code is not being sended from the lookup code - if is necessary it should be sent or called from apex with productId*/
               productId: this.selectedRecordId.id,/* accountId: this.recordId, */
+              productLevel2: this.selectedRecordId.prodLevel2,
               //Name:mockRandomName,
               discountUnit:'Price',
               //SBQQ__Product__c:this.selectedRecordId.id, 
@@ -647,7 +918,7 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
     /* BUTTONS */
 
     handlePreviousScreen(){
-        console.log(this.recordId);
+      /*   console.log(this.recordId);
         var compDefinition = {
             componentDef: "c:bl_agreements_ui_1",
             attributes: {
@@ -662,7 +933,32 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
 
                 url: '/one/one.app#' + encodedCompDef
             }
-        });
+        }); */
+
+
+
+
+        this.loadTable = false;
+        /*    let index = this.data.findIndex(x => x.discountName === this.globalRow.discountName);
+         */   
+        for (let i=0;i<this.data.length;i++){
+        
+            this.data[i].uOM = this.data[i].uom2;
+            this.data[i].varPriceAdj = null;
+            this.data[i].fixedPriceAdj = null;
+            this.data[i].uomAdder = null;
+            /* this.data[i].uOM = this.data[i].uOM;
+            this.data[i].fixedPrice = this.data[i].fixedPrice2
+            this.data[i].varPriceAdj = null;
+            this.data[i].fixedPriceAdj = null;
+            this.data[i].uomAdder = null; */
+        
+        
+        }
+           
+           setTimeout(()=>{this.loadTable = true;},250);
+        /*     getFixedPrice({contractId :JSON.parse(this.agreementId)}) 
+         */      
     }
 
     /* Cancel button */
@@ -708,7 +1004,7 @@ export default class Bl_agreements_datatable extends NavigationMixin(LightningEl
                         console.log('my function triggered');
                     },2000); 
 
-                    setTimeout(()=>{  console.log("arrived here");this.template.querySelector('[data-id="getPrice"]').click();
+                    setTimeout(()=>{  console.log("arrived here")/* ;this.template.querySelector('[data-id="getPrice"]').click() */;
                 ;this.loadTable=true},2000)
         
         
@@ -773,14 +1069,57 @@ handleDiscount(event){
 
 }
  
+selectedRows = []; //THE ROWS SELECTED WITH THE CHECKBOX IN DATATABLE ONLY IN TAB 1
+handleRowSelection(event){
+    if(event.detail.selectedRows.length == 0){
+        this.selectedRows = [];
+    } else {
+        this.selectedRows = event.detail.selectedRows;
+    }   
+    console.log('Selected rows length '+ this.selectedRows.length);
+}
 
-getPrice(){
-   console.log('Im clicked ')
-/*     getFixedPrice({contractId :JSON.parse(this.agreementId)}) 
- */      
-     
-     
+refreshPrice(){
+    this.loadTable = false;
+    //RESET PRICES FOR ONLY SELECTED ROWS. 
+    if (this.selectedRows.length > 0){
+        for (let i=0;i<this.selectedRows.length;i++){
+            let index = this.data.findIndex(x => x.discountName === this.selectedRows[i].discountName);
+            this.data[index].uOM = this.data[index].uom2;
+            this.data[index].fixedPrice = this.data[index].fixedPrice2;
+            this.data[index].conv = 1;
+            this.data[index].fixedPriceAdj = null;
+            this.data[index].varPriceAdj = null;
         }
+    } else {
+        const evt = new ShowToastEvent({
+            title: 'No rows selected', message: 'Please, select the rows you want to reset',
+            variant: 'warning', mode: 'dismissable'
+        });
+        this.dispatchEvent(evt);
+    }
+    setTimeout(()=>{this.loadTable = true;},250);
+    /*    let index = this.data.findIndex(x => x.discountName === this.globalRow.discountName);
+    */   
+    /*
+     for (let i=0;i<this.data.length;i++){
+
+        this.data[i].uOM = this.data[i].uom2;
+        this.data[i].fixedPrice = this.data[i].fixedPrice2;
+        this.data[i].conv = 1;
+        this.data[i].fixedPriceAdj = null;
+        this.data[i].varPriceAdj = null;
+
+         this.data[i].uOM = this.data[i].uOM;
+        this.data[i].fixedPrice = this.data[i].fixedPrice2
+        this.data[i].uomAdder = null; 
+    } 
+    */
+   
+    
+    /*     getFixedPrice({contractId :JSON.parse(this.agreementId)}) 
+    */     
+}
 
 
         dsUom=[];
@@ -827,8 +1166,13 @@ getPrice(){
 
         /* UOM PICKLIST */
 
+
+        //UOM DEPENDS ON PRODUCT LEVEL 2 SO THIS CANNOT BE USED. 
+        /*
         @wire(getObjectInfo, { objectApiName: PRODUCT_OBJECT })
         uomMetadata;
+
+        
         @wire(getPicklistValues,
             {
                 recordTypeId: '$uomMetadata.data.defaultRecordTypeId', 
@@ -837,22 +1181,109 @@ getPrice(){
     
         )
         uomList;
-
+        */
 
         
-
-        newUOM = ''; 
+        oldUOM; 
+        newUOM; 
+        prodLevel1Conv ;
+        prodLevel2Conv ;
+        prodIdConv;
+        @api conversionFactor = 1;
         uomHandler(event){
             this.newUOM = event.target.value; 
-            console.log('Data now : ' + JSON.stringify(this.data))
-            console.log('New UOM  : ' + JSON.stringify(this.newUOM))
+            let index = this.data.findIndex(x => x.discountName === this.globalRow.discountName);
+            this.prodIdConv =  this.data[index].productId
+            this.oldUOM = this.data[index].uOM ;
+            console.log('new UOM : ' + this.newUOM)
+            console.log('old UOM : ' + this.oldUOM)
+/*             console.log('Prod ID: ' +this.prodIdConv)
+ */
+         getProductLevels({productId : this.prodIdConv})
+         .then(resultado => {
+/*              console.log('LEVEL '  + JSON.stringify(resultado))
+ */              this.prodLevel1Conv = resultado[0].ProdLevel1__c;
+             this.prodLevel2Conv = resultado[0].ProdLevel2__c;
+           
+
+
+            getConvFact({productId : this.prodIdConv , uomIn:this.oldUOM,uomOut:this.newUOM, ProdLevel1:this.prodLevel1Conv,ProdLevel2:this.prodLevel2Conv}) 
+            .then(result => {
+/*                 this.uomList = result;
+ */          /*        console.log('ID: ' + this.prodIdConv)
+                 console.log('UOM IN : ' + this.oldUOM)
+                 console.log('UOM OUT : ' + this.newUOM)
+                 console.log('prod L 1 : ' + this.prodLevel1Conv)
+                 console.log('prod L 2 : ' + this.prodLevel2Conv)
+                 console.log('CONV FACT '+ JSON.stringify(result))
+                 console.log('CONV L '+ result.length) */
+/*                  console.log('fact alone  '+ result[0].Conversion_Factor__c +1)
+                 console.log('facc parse string  '+ JSON.parse(JSON.stringify(result[0].Conversion_Factor__c)+1))
+                 console.log('fact parse '+ JSON.parse(result[0].Conversion_Factor__c)+1)
+                 console.log('fact string  '+ JSON.stringify(result[0].Conversion_Factor__c)+1)
+                 console.log('Name  '+ JSON.stringify(result[0].Name))
+                 
+ */
+                 console.log('CONV FACT '+ JSON.stringify(result))     
+/*                  console.log('fact string  '+ JSON.stringify(result[0].Conversion_Factor__c)+1)
+ */                 console.log('CONV L '+ result.length)
+/*                     console.log('NAME '+ JSON.stringify(result[0].Name))
+ */               
+                 if(result.length>0 && result[0].Name !== undefined){
+
+                    this.conversionFactor = result[0].Conversion_Factor__c
+                    console.log(' Direct : ' +this.conversionFactor)
+
+                }
+                else if(result.length>0 && result[0].Name == undefined){
+
+                    this.conversionFactor = 1/result[0].Conversion_Factor__c
+                    console.log(' Inverse : ' +this.conversionFactor)
+
+                }
+                else{
+                    this.conversionFactor = 0;
+                    console.log('0 : ' +this.conversionFactor)
+                }
+                 
+                })
+                .catch(error => {
+                    console.log(error);
+                });
+            
+
+                     });
+                     
+/*             console.log('Data now : ' + JSON.stringify(this.data))
+
+
+ */           
+ 
+            
+           
+
         }   
         saveUom(){
                 this.loadTable = false;
                 let index = this.data.findIndex(x => x.discountName === this.globalRow.discountName);
-                this.data[index].uOM = this.newUOM; //NOTE THAT THE PROPERTY MUST BE uOM AND NOT UOM OR uom  28/06/22
+                this.data[index].uOM = this.newUOM;
+                this.data[index].conv = this.conversionFactor //NOTE THAT THE PROPERTY MUST BE uOM AND NOT UOM OR uom  28/06/22
                 //this.dispatchEvent(new CustomEvent('editedtable', { detail: JSON.stringify(this.data )}));
                 console.log('Data SAVED : ' + JSON.stringify(this.data));
+
+                console.log('newHom : ' + this.newUOM)
+                console.log('primary : ' + this.selectedRecordId.primaryUom)
+
+                if(this.newUOM === this.selectedRecordId.primaryUom){
+                    this.data[index].fixedPrice = this.data[index].fixedPrice2
+
+                }
+                else {
+
+                    this.data[index].fixedPrice = this.data[index].fixedPrice2 * this.conversionFactor ;
+                    
+                }
+                
                 setTimeout(()=>{this.loadTable = true;},250);
             this.closeUomPopup();
         }
@@ -861,8 +1292,27 @@ getPrice(){
 
 
 
-/*  TEST  */
+/*  CASES CREATION  */
+createCases(){
+    const fields = {};
 
+    fields[ACCOUNT_FIELD.fieldApiName] = this.recordId;
+    fields[OWNER_FIELD.fieldApiName] = this.owner;
+    fields[CONTRACT_CASE_FIELD.fieldApiName] =this.agreementId
+    fields[COMPETITOR_CASE_FIELD.fieldApiName] = this.competitor;
+    fields[RECORD_TYPE_FIELD.fieldApiName] = '0122h000000BLz5AAG';
+    fields[CURRENCY_CASE_FIELD.fieldApiName] = this.currencyContract;
+    fields[DATE_CREATED_FIELD.fieldApiName] = '';
+        
+    const recordInput = {
+      apiName: CASE_OBJECT.objectApiName,
+      fields: fields
+    };
+        
+    createRecord(recordInput).then((record) => {
+      console.log(record);
+    });
+  }
 
 
 }

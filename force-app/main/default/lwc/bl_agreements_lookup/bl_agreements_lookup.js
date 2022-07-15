@@ -90,6 +90,8 @@ export default class Bl_agreements_lookup extends LightningElement {
     @track productList = [];     
     @track productId;
     @track primaryUom; 
+    @track minimumQuantity; 
+    @track Description; 
     @track isshow=false;
     @track messageResult=false;
     @track isShowResult = true;   
@@ -116,6 +118,8 @@ export default class Bl_agreements_lookup extends LightningElement {
            // TODO: Data handling
            this.productId =  '';
            this.primaryUom = '';
+           this.minimumQuantity = '';
+           this.Description = '';
            this.productName =  '';
            this.productList=[];           
            this.showSearchedValues = false;
@@ -141,15 +145,20 @@ export default class Bl_agreements_lookup extends LightningElement {
     //Set the parent calendar id
     this.productId =  event.target.dataset.value;
     this.primaryUom =  event.target.dataset.primaryuom;
-
+    this.minimumQuantity =  event.target.dataset.minimumquantity;
+    this.Description =  event.target.dataset.description;
+    let productLevel2 = event.target.dataset.prodlevel2;
     //Set the parent calendar label
     console.log('Product selected primary UOM : '+this.primaryUom )
+    console.log('Product selected Description : '+this.Description )
     this.productName =  event.target.dataset.label;      
-    const selectedEvent = new CustomEvent('valueselected', { detail: {id: this.productId, productName: this.productName,primaryUom:this.primaryUom} });
+    const selectedEvent = new CustomEvent('valueselected', { detail: 
+        {id: this.productId, productName: this.productName,primaryUom:this.primaryUom,
+            minimumQuantity:this.minimumQuantity,Description:this.Description, prodLevel2: productLevel2} });
         // Dispatches the event.
         
     this.dispatchEvent(selectedEvent);   
-    this.productName = undefined;
+    this.productName = undefined; 
     this.template.querySelectorAll('lightning-input').forEach(each => {each.value = undefined;}); 
 }
 handleOpenModal(event){

@@ -1,5 +1,5 @@
 //---------------------------------------------------------------------
-    //THIS SECTIOND SHOULD BE IN THE DATATABLE COMPONENT 
+    //THIS SECTIOND SHOULD BE IN THE UI COMPONENT 
 
 
 import { LightningElement, wire, api, track } from 'lwc';

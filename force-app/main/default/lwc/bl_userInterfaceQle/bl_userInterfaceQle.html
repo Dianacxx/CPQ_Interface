@@ -33,6 +33,16 @@
                                 <lightning-button class="stretchButton slds-var-m-right_x-small" variant="brand-outline" label="Clone Selected" disabled={disableButton} onclick={handleClone}></lightning-button>
                                 <lightning-button class="stretchButton" variant="brand-outline" label="Reorder Lines" disabled={disableReorder} onclick={handleReorder}></lightning-button>
                             </div>
+                            <!--OVERRIDE REASON SECTION-->
+                            <template if:true={activeOverrideReason}>
+                                <lightning-combobox  label="Deviation Reason" value={overrideReason} required
+                                placeholder="Select Reason" options={overrideReasonsList.data.values} onchange={handleChangeOverrideReason} ></lightning-combobox>
+                                <lightning-input type="text" label="Override Comment" placeholder="Comment here" onchange={handleOverrideComment}></lightning-input>
+                                <lightning-combobox  label="Override Type" value={overrideType} 
+                                placeholder="Select Type" options={overrideTypeList.data.values} onchange={handleOverrideType} ></lightning-combobox>
+                                <!--<lightning-button  variant="success" label="Update" onclick={updateQuote} class="slds-var-p-around_x-small slds-var-m-left_small"></lightning-button>-->
+                            </template> 
+                            <!--OVERRIDE REASON SECTION-->
                         </lightning-layout-item>
                         <!--FUCTIONALITY BUTTONS END-->
                         <!--SAVE & DISCOUNT  BUTTONS START-->
@@ -73,7 +83,7 @@
                                     </lightning-tab>
                                     <template if:true={updateLineNoteTab}>
                                         <lightning-tab label="Line Notes" value="Line" onactive={handleActive}>
-                                            <c-bl_line-notes quotelines-string={quotelinesString} ></c-bl_line-notes>
+                                            <c-bl_line-notes-qle quotelines-string={quotelinesString} ></c-bl_line-notes-qle>
                                         </lightning-tab>
                                     </template>
                                     
@@ -94,13 +104,13 @@
                         <c-bl_header record-id={recordId}></c-bl_header>
                     </div>
                     <!--HEADER END-->
-                    <c-bl_product-selection record-id={recordId} quotelines-string={quotelinesString} 
+                    <c-bl_product-selection-qle record-id={recordId} quotelines-string={quotelinesString} 
                     quote-notes-string={quoteNotesString} oncancelps={returnToUiCancel}
                     onsaveandexitps={returnToUiSave} 
                     gird-data-foc-tab-add={girdDataFocTabAdd} gird-data-aca-tab-add={girdDataAcaTabAdd}
                     gird-data-conn-tab-add={girdDataConnTabAdd} gird-data-cable-tab-add={girdDataCableTabAdd}
                     gird-data-t-and-i-tab-add={girdDataTandITabAdd}>
-                    </c-bl_product-selection>
+                    </c-bl_product-selection-qle>
                 </lightning-tab>
             </template>
             <!--PRODUCT SELECTION TAB END-->

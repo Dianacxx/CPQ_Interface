@@ -103,4 +103,94 @@ public with sharing class TestFlagQCPCustomQLE {
         return linesToUp;
     }
 
+     //---------------------------------------------------------- PRODUCT ADDERS -------------------------------------------------------------------------------------------
+     @AuraEnabled(cacheable=true)
+     public static String addQuoteLine(String quoteId, String productId) { //This method transforms a product added in the QLE into a Quote Line
+        
+        QuoteReader quoteReader = new QuoteReader();
+         ProductModel product = new ProductModel();
+         System.debug('product id: '+productId +' quoe id: ' +quoteId);
+ 
+         QuoteModel quote = quoteReader.read(quoteId);
+         ProductReader productReader = new ProductReader();
+         Pricebook2 prodPriceBook = [SELECT Id FROM Pricebook2 WHERE Id IN (SELECT SBQQ__PriceBook__c FROM SBQQ__Quote__c WHERE Id =: quoteId) LIMIT 1];
+         if(prodPriceBook != null){
+             product = productReader.read(productId,prodPriceBook.Id,'USD');
+         }else{
+             product = productReader.read(productId,'01sA0000000TiZnIAK','USD');
+ 
+         }
+ 
+         
+         Map<String, Schema.SObjectField> fieldMap = Product2.sObjectType.getDescribe().fields.getMap();
+         Set<String> setFieldNames = fieldMap.keySet();
+         list<String> lstFieldNames = new List<String>(setFieldNames);
+         
+         Product2 prodRecord = Database.query('SELECT ' + String.join(lstFieldNames, ',') + ' FROM Product2 WHERE Id =: productId');
+ 
+         List<QuoteLineModel> newlyAddedLines = new List<QuoteLineModel>();
+         List<QuoteLineModel> previousLines = quote.getLineItems();
+ 
+         List<ProductModel> productModels = new List<ProductModel>();
+         productModels.add(product);
+         ProductAdder adder = new ProductAdder(); 
+         QuoteModel quoteWithProducts = adder.add(quote, productModels, 0);
+         List<QuoteLineModel> newLines = quoteWithProducts.getLineItems();
+         System.debug('previous lines -- ' + previousLines.size());
+         System.debug('new lines -- ' + newLines);
+         
+         Map<String, Product2> prodMap = new Map<String, Product2> ();
+ 
+         for (QuoteLineModel newLine : newLines) {
+             if (newLine.record.id == null) {
+                 newlyAddedLines.add(newLine);
+                 prodMap.put(newLine.record.SBQQ__Product__c,newLine.record.SBQQ__Product__r);
+             }
+         }
+
+         List<SBQQ__QuoteLine__c> toSend = new List<SBQQ__QuoteLine__c>();
+         toSend.add(newlyAddedLines[0].record); 
+         SBQQ__QuoteLine__c addedLineRecord= newlyAddedLines[0].record;
+        //  System.debug(newlyAddedLines[0].record);
+
+        //  /*
+        //  List<QuoteLineWrapper> linesToPrint = new List<QuoteLineWrapper>();
+        //  linesToPrint = QuoteControllerMethodsHandler.modelToWrapper(newlyAddedLines, prodRecord);
+ 
+ 
+        //  System.debug('List of new lines '+ newlyAddedLines.size());
+         
+        //  System.debug('lines to print '+ linesToPrint.size());
+        //  */
+        // String C =  JSON.serialize(newlyAddedLines[0].record);
+        // SBQQ__QuoteLine__c B = (SBQQ__QuoteLine__c)JSON.deserialize(C, SBQQ__QuoteLine__c.class);
+        //  String A =  JSON.serialize(B);
+        //  return A;
+
+        return JSON.serialize(addedLineRecord);
+
+     }
+
+    @AuraEnabled
+    public static String editRecordsupdated(String quoteline){
+        try{
+            List <SBQQ__QuoteLine__c> editRedsLst = (List<SBQQ__QuoteLine__c>) System.JSON.deserialize(quoteline, List<SBQQ__QuoteLine__c>.Class);
+            System.debug('beforce editRecords..'+editRedsLst);
+            return JSON.serialize(editRedsLst);
+        }catch(Exception e){
+            System.debug('e.'+e);
+            return 'Sorry';
+        }
+    }
+
+    
+
+     @AuraEnabled(cacheable=true)
+     public static List<SBQQ__QuoteLine__c> testconverter(List<sObject> notlines) {
+        List<SBQQ__QuoteLine__c> lines = (List<SBQQ__QuoteLine__c>)notlines;
+
+        return lines;
+
+     }
+
 }
