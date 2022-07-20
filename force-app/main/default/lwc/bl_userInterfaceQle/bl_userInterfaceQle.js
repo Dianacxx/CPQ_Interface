@@ -214,6 +214,7 @@ export default class Bl_userInterfaceQle extends NavigationMixin(LightningElemen
     //CALL DATA ONCE AGAIN FROM SF WHEN SAVE BUTTON CLICKED (UPDATE DATA IN UI WITH ID'S FROM SF)
     startTimeProcess = 0;
     callData(){
+        console.log('Here the flag must be called');
         //IF THERE IS AN ERROR TO AVOID DELETING WHAT IS IN THE UI 
         if (this.notGoodToGoBundle[0] || this.notGoodToGoBundle[1]){
             const evt = new ShowToastEvent({
@@ -778,7 +779,7 @@ export default class Bl_userInterfaceQle extends NavigationMixin(LightningElemen
             .then((data)=>{
                 
                 let endTime = window.performance.now();
-                //console.log(`upsertQuoteLineList method took ${endTime - startTime} milliseconds`);
+                console.log(`upsertQuoteLineList method took ${endTime - startTime} milliseconds`);
 
                 //console.log(data);
                 //this.quoteLines = data; 

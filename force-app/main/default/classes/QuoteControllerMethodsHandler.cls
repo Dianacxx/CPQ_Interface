@@ -153,7 +153,7 @@ public with sharing class QuoteControllerMethodsHandler {
             wrapper.pigtailQuantity=line.Pigtail_Quantity__c;
             wrapper.source = line.BL_Source__c;
             wrapper.destination=line.BL_Destination__c;
-            wrapper.alternativeindicator=line.BL_Alternative_Indicator__c;
+            wrapper.alternativeindicator=line.SBQQ__Optional__c;
             wrapper.nspofferingdetails=line.BL_NSP_Offering_Details__c;
             wrapper.linenote=line.Line_Note__c;
             wrapper.customerpart=line.Customer_Part__c;
@@ -176,7 +176,9 @@ public with sharing class QuoteControllerMethodsHandler {
             wrapper.specialPriceType = line.SBQQ__SpecialPriceType__c;
             wrapper.specialPrice = line.SBQQ__SpecialPrice__c;
             wrapper.lastRegularPrice = line.Last_Regular_Price__c;
-            wrapper.overrideByUI = line.Override_By_UI__c;
+            wrapper.overrideByUI = line.Overriden_By_UI__c;
+            wrapper.overridereason = line.Override_Reason__c;
+            wrapper.overridecomments = line.Override_Comments__c;
             
             //NSP Fields 
 
@@ -422,7 +424,7 @@ public with sharing class QuoteControllerMethodsHandler {
             wrapper.displayPrice=newlyAddedLine.record.Display_Price__c;
             wrapper.railgt150pc=newlyAddedLine.record.Rail_gt_150_pc__c;
             wrapper.featureName=newlyAddedLine.record.Feature_Name__c;
-            wrapper.tiers=newlyAddedLine.record.Tier__c;
+            // // wrapper.tiers=newlyAddedLine.record.Tier__c;
             wrapper.customerTierAdditionalDiscount=newlyAddedLine.record.Customer_Tier_Additional_Discount__c;
             wrapper.lineQuantitygt50k=newlyAddedLine.record.Line_Quantity_gt_50k__c;
             wrapper.adapterQuantity=newlyAddedLine.record.Adapter_Quantity__c;
@@ -431,7 +433,7 @@ public with sharing class QuoteControllerMethodsHandler {
             wrapper.uom=newlyAddedLine.record.Primary_UOM__c;
             wrapper.source=newlyAddedLine.record.BL_Source__c;
             wrapper.destination=newlyAddedLine.record.BL_Destination__c;
-            wrapper.alternativeindicator=newlyAddedLine.record.BL_Alternative_Indicator__c;
+            wrapper.alternativeindicator=newlyAddedLine.record.SBQQ__Optional__c;
             wrapper.nspofferingdetails=newlyAddedLine.record.BL_NSP_Offering_Details__c;
             wrapper.linenote=newlyAddedLine.record.Line_Note__c;
             wrapper.customerpart=newlyAddedLine.record.Customer_Part__c;
@@ -688,7 +690,7 @@ public with sharing class QuoteControllerMethodsHandler {
             wrapper.displayPrice=newlyAddedLine.record.Display_Price__c;
             wrapper.railgt150pc=newlyAddedLine.record.Rail_gt_150_pc__c;
             wrapper.featureName=newlyAddedLine.record.Feature_Name__c;
-            wrapper.tiers=newlyAddedLine.record.Tier__c;
+            // wrapper.tiers=newlyAddedLine.record.Tier__c;
             wrapper.customerTierAdditionalDiscount=newlyAddedLine.record.Customer_Tier_Additional_Discount__c;
             wrapper.lineQuantitygt50k=newlyAddedLine.record.Line_Quantity_gt_50k__c;
             wrapper.adapterQuantity=newlyAddedLine.record.Adapter_Quantity__c;
@@ -696,7 +698,7 @@ public with sharing class QuoteControllerMethodsHandler {
             wrapper.pigtailQuantity=newlyAddedLine.record.Pigtail_Quantity__c;
             wrapper.source=newlyAddedLine.record.BL_Source__c;
             wrapper.destination=newlyAddedLine.record.BL_Destination__c;
-            wrapper.alternativeindicator=newlyAddedLine.record.BL_Alternative_Indicator__c;
+            wrapper.alternativeindicator=newlyAddedLine.record.SBQQ__Optional__c;
             wrapper.nspofferingdetails=newlyAddedLine.record.BL_NSP_Offering_Details__c;
             wrapper.linenote=newlyAddedLine.record.Line_Note__c;
             wrapper.customerpart=newlyAddedLine.record.Customer_Part__c;
@@ -990,7 +992,7 @@ public with sharing class QuoteControllerMethodsHandler {
             wrapper.uom = (String)prodMap.get('Primary_UOM__c');
             wrapper.source=(String)prodMap.get('BL_Source__c');
             wrapper.destination=(String)prodMap.get('BL_Destination__c');
-            wrapper.alternativeindicator=(Boolean)prodMap.get('BL_Alternative_Indicator__c');
+            wrapper.alternativeindicator=(Boolean)prodMap.get('SBQQ__Optional__c');
             wrapper.nspofferingdetails=(String)prodMap.get('BL_NSP_Offering_Details__c');
             wrapper.linenote=(String)prodMap.get('Line_Note__c');
             wrapper.customerpart=(String)prodMap.get('Customer_Part__c');
@@ -1209,13 +1211,13 @@ public with sharing class QuoteControllerMethodsHandler {
                 newModel.record.Approval_Reasons__c=relatedQuoteLine.approvalReasons;
                 newModel.record.Reason_for_Deviation__c=relatedQuoteLine.reasonforDeviation;
                 newModel.record.Rail_gt_150_pc__c=relatedQuoteLine.railgt150pc;
-                newModel.record.Tier__c=relatedQuoteLine.tiers;
+                // newModel.record.Tier__c=relatedQuoteLine.tiers;
                 newModel.record.Customer_Tier_Additional_Discount__c=relatedQuoteLine.customerTierAdditionalDiscount;
                 newModel.record.Adapter_Quantity__c=relatedQuoteLine.adapterQuantity;
                 newModel.record.Pigtail_Quantity__c=relatedQuoteLine.pigtailQuantity;
                 newModel.record.UOM__c=relatedQuoteLine.uom;
                 newModel.record.BL_Destination__c=relatedQuoteLine.destination;
-                newModel.record.BL_Alternative_Indicator__c=relatedQuoteLine.alternativeindicator;
+                newModel.record.SBQQ__Optional__c=relatedQuoteLine.alternativeindicator;
                 newModel.record.BL_NSP_Offering_Details__c=relatedQuoteLine.nspofferingdetails;
                 newModel.record.Line_Note__c=relatedQuoteLine.linenote;
                 newModel.record.Customer_Part__c=relatedQuoteLine.customerpart;
@@ -1226,6 +1228,7 @@ public with sharing class QuoteControllerMethodsHandler {
                 newModel.record.Billable_Tolerance__c=relatedQuoteLine.billableTolerance;
                 newModel.record.Length__c=relatedQuoteLine.length;
                 //Fields that are filled from the custom pop up
+                newModel.record.Tier__c = relatedQuoteLine.CustomerTier;
                 newModel.record.Base_Price_Override__c=relatedQuoteLine.basepriceoverride;
                 newModel.record.New_Discount_Schedule__c = relatedQuoteLine.newdiscountSchedule;
                 newModel.record.Last_Discount_Schedule__c = relatedQuoteLine.lastdiscountSchedule;
@@ -1233,8 +1236,9 @@ public with sharing class QuoteControllerMethodsHandler {
                 newModel.record.New_Customer_Tier__c = relatedQuoteLine.newCustomerTier;
                 newModel.record.SBQQ__SpecialPriceType__c=relatedQuoteLine.specialPriceType;
                 newModel.record.SBQQ__SpecialPrice__c=relatedQuoteLine.specialPrice;                
-                newModel.record.Last_Regular_Price__c=relatedQuoteLine.lastRegularPrice;                
-                newModel.record.Override_By_UI__c=relatedQuoteLine.overrideByUI;                
+                newModel.record.Last_Regular_Price__c=relatedQuoteLine.lastRegularPrice;  
+                newModel.record.Override_Comments__c = relatedQuoteLine.overridecomments;              
+                newModel.record.Override_Reason__c = relatedQuoteLine.overridereason;              
                 // if(relatedQuoteLine.basepriceoverride != null){
                 //     // newModel.record.Special_Price_Picklist__c='Custom';
                 // }
@@ -1356,9 +1360,9 @@ public with sharing class QuoteControllerMethodsHandler {
                     //Quoteline Fields 
 
                     if(line.alternativeindicator == null){
-                        newQuoteLine.BL_Alternative_Indicator__c = false;                    
+                        newQuoteLine.SBQQ__Optional__c = false;                    
                     }else{
-                        newQuoteLine.BL_Alternative_Indicator__c = Boolean.valueOf(line.alternativeindicator);                    
+                        newQuoteLine.SBQQ__Optional__c = Boolean.valueOf(line.alternativeindicator);                    
                     }
                     newQuoteLine.SBQQ__Description__c=line.description; 
                     newQuoteLine.is_NSP__c=line.isNSP;
@@ -1452,7 +1456,7 @@ public with sharing class QuoteControllerMethodsHandler {
                     newQuoteLine.ApprovalStatus__c=line.approvalstatus;
                     newQuoteLine.Approval_Reasons__c=line.approvalReasons;
                     newQuoteLine.Reason_for_Deviation__c=line.reasonforDeviation;
-                    newQuoteLine.Tier__c=line.tiers;
+                    // newQuoteLine.Tier__c=line.tiers;
                     newQuoteLine.Customer_Tier_Additional_Discount__c=line.customerTierAdditionalDiscount;
                     newQuoteLine.Adapter_Quantity__c=line.adapterQuantity;
                     newQuoteLine.Pigtail_Quantity__c=line.pigtailQuantity;
@@ -1461,7 +1465,7 @@ public with sharing class QuoteControllerMethodsHandler {
                     newQuoteLine.BL_NSP_Offering_Details__c=line.nspofferingdetails;
                     newQuoteLine.Line_Note__c=line.linenote;
                     newQuoteLine.Customer_Part__c=line.customerpart;
-                    newQuoteLine.Alternative__c=line.alternative; //THIS OR BL_Alternative_Indicator__c?
+                    newQuoteLine.Alternative__c=line.alternative; //THIS OR SBQQ__Optional__c?
                     newQuoteLine.Stock__c=line.stock;
                     newQuoteLine.Product_Name_Key_Field_Text__c=line.productNameKeyFieldText;
                     newQuoteLine.SBQQ__UnitCost__c=line.unitCost;

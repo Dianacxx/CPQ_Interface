@@ -22,26 +22,12 @@ import editAndDeleteQuotes from '@salesforce/apex/QuoteController.editAndDeleteQ
 //APEX METHOD TO DELETE THE RECORD THAT SAVES THE QUOTE ID 
 import deletingRecordId from '@salesforce/apex/blMockData.deletingRecordId';
 
-//APEX METHODS FOR OVERRIDE REASON
-//GETTING PICKLIST VALUES WITOUTH DEPENDENCIES OR APEX METHODS FOR TIERS FIELDS
-import { getPicklistValues, getObjectInfo } from 'lightning/uiObjectInfoApi';
-import QUOTE_LINE_OBJECT from '@salesforce/schema/SBQQ__QuoteLine__c';
-import OVERRIDE_REASON from '@salesforce/schema/SBQQ__Quote__c.Override_Reason__c';
-
-//APEX METHOD TO UPDAT QUOTE 
-import quoteSaver from '@salesforce/apex/DiscountController.quoteSaver'; 
-
-
 const DELAY_CALLING_INFO = 500;//15000; //Miliseconds
 const DELAY_CALLING_TOTAL = 500;//8000; //Miliseconds Not Necessery
 
 
 
 //----------FALG TO AVOID DELAY TEST START------------------
-// import GettingFlag from '@salesforce/apex/TestFlagQCPCustomQLE.GettingFlag';
-// import turnOffFlag from '@salesforce/apex/TestFlagQCPCustomQLE.turnOffFlag';
-// import { refreshApex } from '@salesforce/apex';
-// import { getRecord } from 'lightning/uiRecordApi';
 import {
     subscribe,
     unsubscribe,
@@ -1012,50 +998,6 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         //CALL APEX METHOD TO SAVE QUOTELINES AND NOTES
         //this.labelButtonSave =  event.target.label;
         //console.log('Label '+ label);
-        if (this.activeOverrideReason && (this.overrideReason == '' || this.overrideReason == null)){
-            const evt = new ShowToastEvent({
-                title: 'Required Override Reason Fields before saving',
-                message: 'The Override Reason field should be selected before saving',
-                variant: 'error', mode: 'sticky' });
-            this.dispatchEvent(evt);
-        } else {
-            if(this.activeOverrideReason){
-                console.log('Update quote');
-
-                let quoteWrap = {id: this.recordId,
-                    overridereason: this.overrideReason,
-                    overridecomments: this.overrideComment,
-                }
-
-                let startTime = window.performance.now();
-                quoteSaver({quote: JSON.stringify(quoteWrap)})
-                .then(()=>{
-                    let endTime = window.performance.now();
-                    console.log(`quoteSaver method took ${endTime - startTime} milliseconds`);
-                    const evt = new ShowToastEvent({
-                        title: 'Quote Updated',
-                        message: 'The quote is updated',
-                        variant: 'success',
-                        mode: 'dismissable'
-                    });
-                    this.dispatchEvent(evt);
-                    this.activeOverrideReason = false; 
-                    this.overrideReason = null;
-                    this.overrideComment = '';
-                })
-                .catch((error)=>{
-                    console.log('QUOTE NOT UPDATED');
-                    console.log(error);
-                    const evt = new ShowToastEvent({
-                        title: 'Cannot update the quote',
-                        message: 'There is an error updating the quote, please wait and try again.',
-                        variant: 'error',
-                        mode: 'dismissable'
-                    });
-                    this.dispatchEvent(evt);
-                })
-            }
-
             this.spinnerLoadingUI = true;
             this.notSaveYet = false; 
             let quoteEdition = JSON.parse(this.quotelinesString);
@@ -1100,7 +1042,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 
                 this.desactiveCloneButton();
             }
-        }
+        
     }
 
     @api notGoodToGoBundle = [false, false]; 
@@ -1451,46 +1393,6 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             this.dispatchEvent(evt);
             this.spinnerLoadingUI = false;
         } else {
-            if (this.activeOverrideReason && (this.overrideReason == '' || this.overrideReason == null)){
-                const evt = new ShowToastEvent({
-                    title: 'Required Override Reason Fields before saving',
-                    message: 'The Override Reason field should be selected before saving',
-                    variant: 'error', mode: 'sticky' });
-                this.dispatchEvent(evt);
-            } else {
-                if(this.activeOverrideReason){
-                    console.log('Update quote');
-                    let quoteWrap = {id: this.recordId,
-                        overridereason: this.overrideReason,
-                        overridecomments: this.overrideComment,
-                    }
-    
-                    let startTime = window.performance.now();
-                    quoteSaver({quote: JSON.stringify(quoteWrap)})
-                    .then(()=>{
-                        let endTime = window.performance.now();
-                        console.log(`quoteSaver method took ${endTime - startTime} milliseconds`);
-                        const evt = new ShowToastEvent({
-                            title: 'Quote Updated',
-                            message: 'The quote is updated',
-                            variant: 'success',
-                            mode: 'dismissable'
-                        });
-                        this.dispatchEvent(evt);
-                        this.activeOverrideReason = false; 
-                    })
-                    .catch((error)=>{
-                        console.log('QUOTE NOT UPDATED');
-                        console.log(error);
-                        const evt = new ShowToastEvent({
-                            title: 'Cannot update the quote',
-                            message: 'There is an error updating the quote, please wait and try again.',
-                            variant: 'error',
-                            mode: 'dismissable'
-                        });
-                        this.dispatchEvent(evt);
-                    })
-                }
                 if (!(this.originalquotelinesString == this.quotelinesString)){
                     await this.callEditAnDeleteMethod();
                     await this.callCreateMethod();
@@ -1499,7 +1401,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 } else {
                         await this.exitToRecordPage();
                 }
-                }
+                
             }
         }
 
@@ -1632,83 +1534,4 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         })
     }
 
-
-    //OVERRIDE REASON FUNCTION
-    //WIRE METHODS TO GET QUOTE OVERRIDE REASON  INFO (UI)
-    @wire(getObjectInfo, { objectApiName: QUOTE_LINE_OBJECT })
-    quotelineMetadata;
-    @wire(getPicklistValues,{ recordTypeId: '$quotelineMetadata.data.defaultRecordTypeId', 
-            fieldApiName: OVERRIDE_REASON})
-    overrideReasonsList;
-
-    activeOverrideReason = false;
-    activeOverrideReasonFields(){
-        console.log('Activate reason window');
-        this.activeOverrideReason = true; 
-    }
-    //WHEN CHANGING THE OVERRIDE REASON CHANGE
-    handleChangeOverrideReason(event){
-        console.log('Override Reason');
-        this.overrideReason = event.target.value; 
-    }
-
-    //WHEN CHANGING THE OVERRIDE COMMENT  
-    handleOverrideComment(event){
-        console.log('Comment Here');
-        this.overrideComment = event.target.value;
-    }
-
-
-    //WHEN CLICKING IN THE UPDATE QUOTE TO CHANGE THE REASON 
-    updateQuote(){
-        console.log('Update quote');
-        //TO SEE THE REQUIRED FIELD TO OVERRIDE
-        if (this.overrideReason == '' || this.overrideReason == null){
-            const evt = new ShowToastEvent({
-                title: 'Please, select an Override Reason',
-                message: 'Select an override reason to save the quote',
-                variant: 'error',
-                mode: 'dismissable'
-            });
-            this.dispatchEvent(evt);
-        } else {
-            console.log('Update quote');
-            let quoteWrap = {id: this.recordId,
-                overridereason: this.overrideReason,
-                overridecomments: this.overrideComment,
-            }
-
-            let startTime = window.performance.now();
-            this.spinnerLoadingUI = true; 
-            console.log('Method quoteSaver quote: '+ JSON.stringify(quoteWrap));
-            quoteSaver({quote: JSON.stringify(quoteWrap)})
-            .then(()=>{
-                this.spinnerLoadingUI = false; 
-                let endTime = window.performance.now();
-                console.log(`quoteSaver method took ${endTime - startTime} milliseconds`);
-                console.log('QUOTE UPDATED');
-                const evt = new ShowToastEvent({
-                    title: 'Quote Updated',
-                    message: 'The values are saved in Salesforce',
-                    variant: 'success',
-                    mode: 'dismissable'
-                });
-                this.dispatchEvent(evt);
-                this.activeOverrideReason = false; 
-            })
-            .catch((error)=>{
-                console.log('QUOTE NOT UPDATED');
-                console.log(error);
-                const evt = new ShowToastEvent({
-                    title: 'Cannot update the quote',
-                    message: 'There is an error updating the quote, please wait and try again.',
-                    variant: 'error',
-                    mode: 'dismissable'
-                });
-                this.dispatchEvent(evt);
-            })
-            
-            //CALL THE APEX METHOD THAT SAVES THE INFO INTO THE QUOTE
-        }
-    }
 }

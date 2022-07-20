@@ -33,16 +33,6 @@
                                 <lightning-button class="stretchButton slds-var-m-right_x-small" variant="brand-outline" label="Clone Selected" disabled={disableButton} onclick={handleClone}></lightning-button>
                                 <lightning-button class="stretchButton" variant="brand-outline" label="Reorder Lines" disabled={disableReorder} onclick={handleReorder}></lightning-button>
                             </div>
-                            <!--OVERRIDE REASON SECTION-->
-                            <template if:true={activeOverrideReason}>
-                                <lightning-combobox  class="slds-var-m-top_x-small" label="Override Reason" value={overrideReason} required
-                                placeholder="Select Reason" options={overrideReasonsList.data.values} onchange={handleChangeOverrideReason} ></lightning-combobox>
-                                <lightning-input type="text" label="Override Comment" placeholder="Comment here" onchange={handleOverrideComment}></lightning-input>
-                                <!--<lightning-combobox  label="Override Type" value={overrideType} 
-                                placeholder="Select Type" options={overrideTypeList.data.values} onchange={handleOverrideType} class="slds-var-m-bottom_small"></lightning-combobox>
-                                <lightning-button  variant="success" label="Update" onclick={updateQuote} class="slds-var-p-around_x-small slds-var-m-left_small slds-var-m-top_x-small"></lightning-button>-->
-                            </template> 
-                            <!--OVERRIDE REASON SECTION-->
                         </lightning-layout-item>
                         <!--FUCTIONALITY BUTTONS END-->
                         <!--SAVE & DISCOUNT  BUTTONS START-->
