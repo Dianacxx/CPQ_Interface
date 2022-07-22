@@ -34,10 +34,6 @@ import QUOTE_LINE_OBJECT from '@salesforce/schema/SBQQ__QuoteLine__c';
 import OVERRIDE_REASON from '@salesforce/schema/SBQQ__Quote__c.Override_Reason__c';
 import OVERRIDE_TYPE from '@salesforce/schema/SBQQ__Quote__c.Override_Type__c';
 
-//APEX METHOD TO UPDAT QUOTE 
-import quoteSaver from '@salesforce/apex/DiscountController.quoteSaver'; 
-
-
 const DELAY_CALLING_INFO = 500;//15000; //Miliseconds
 const DELAY_CALLING_TOTAL = 500;//8000; //Miliseconds Not Necessery
 
@@ -398,18 +394,13 @@ export default class Bl_userInterfaceQle extends NavigationMixin(LightningElemen
                 console.log(`printQuoteLineList method took ${endTime - startTime} milliseconds`);
                 if (data){
                     this.quoteLines = data; 
-                    this.quotelinesString = JSON.stringify(data); 
-                    this.originalquotelinesString = JSON.stringify(data); 
+                    this.quoteLines.length > 0 ? this.quotelinesString = JSON.stringify(data) : this.quotelinesString = '[id: \"none\"]';
+                    this.quoteLines.length > 0 ? this.originalquotelinesString = JSON.stringify(data) : this.originalquotelinesString = '[id: \"none\"]';
                     this.error = undefined;
                     this.spinnerLoadingUI = false; 
                     //console.log('quoteLines String SUCCESS ');
                     console.log('quoteLines String SUCCESS: '+ this.quotelinesString);
                     //If there are not quote lines in quote (to avoid errors in child components)
-                    if (this.quotelinesString == '[]'){ 
-                        this.quotelinesString = '[id: \"none\"]';
-                        //console.log(this.quotelinesString);
-                        //console.log('No quotelines yet');
-                    }
                     const payload = { 
                         dataString: this.quotelinesString,
                         auxiliar: 'newtable'
@@ -636,43 +627,7 @@ export default class Bl_userInterfaceQle extends NavigationMixin(LightningElemen
                 variant: 'error', mode: 'sticky' });
             this.dispatchEvent(evt);
         } else {
-            if(this.activeOverrideReason){
-                console.log('Update quote');
-
-                let quoteWrap = {id: this.recordId,
-                    overridereason: this.overrideReason,
-                    overridecomments: this.overrideComment,
-                    overridetype: this.overrideType, }
-
-                let startTime = window.performance.now();
-                quoteSaver({quote: JSON.stringify(quoteWrap)})
-                .then(()=>{
-                    let endTime = window.performance.now();
-                    //console.log(`quoteSaver method took ${endTime - startTime} milliseconds`);
-                    const evt = new ShowToastEvent({
-                        title: 'Quote Updated',
-                        message: 'The quote is updated',
-                        variant: 'success',
-                        mode: 'dismissable'
-                    });
-                    this.dispatchEvent(evt);
-                    this.activeOverrideReason = false; 
-                    this.overrideReason = null;
-                    this.overrideComment = '';
-                    this.overrideType = null;
-                })
-                .catch((error)=>{
-                    console.log('QUOTE NOT UPDATED');
-                    console.log(error);
-                    const evt = new ShowToastEvent({
-                        title: 'Cannot update the quote',
-                        message: 'There is an error updating the quote, please wait and try again.',
-                        variant: 'error',
-                        mode: 'dismissable'
-                    });
-                    this.dispatchEvent(evt);
-                })
-            }
+            
             this.spinnerLoadingUI = true;
             this.notSaveYet = false; 
             let quoteEdition = JSON.parse(this.quotelinesString);
@@ -1002,39 +957,7 @@ export default class Bl_userInterfaceQle extends NavigationMixin(LightningElemen
                     variant: 'error', mode: 'sticky' });
                 this.dispatchEvent(evt);
             } else {
-                if(this.activeOverrideReason){
-                    console.log('Update quote');
-                    let quoteWrap = {id: this.recordId,
-                        overridereason: this.overrideReason,
-                        overridecomments: this.overrideComment,
-                        overridetype: this.overrideType, }
-    
-                    let startTime = window.performance.now();
-                    quoteSaver({quote: JSON.stringify(quoteWrap)})
-                    .then(()=>{
-                        let endTime = window.performance.now();
-                        //console.log(`quoteSaver method took ${endTime - startTime} milliseconds`);
-                        const evt = new ShowToastEvent({
-                            title: 'Quote Updated',
-                            message: 'The quote is updated',
-                            variant: 'success',
-                            mode: 'dismissable'
-                        });
-                        this.dispatchEvent(evt);
-                        this.activeOverrideReason = false; 
-                    })
-                    .catch((error)=>{
-                        console.log('QUOTE NOT UPDATED');
-                        console.log(error);
-                        const evt = new ShowToastEvent({
-                            title: 'Cannot update the quote',
-                            message: 'There is an error updating the quote, please wait and try again.',
-                            variant: 'error',
-                            mode: 'dismissable'
-                        });
-                        this.dispatchEvent(evt);
-                    })
-                }
+            
                 if (!(this.originalquotelinesString == this.quotelinesString)){
                     await this.callEditAnDeleteMethod();
                     await this.callCreateMethod();
@@ -1213,54 +1136,4 @@ export default class Bl_userInterfaceQle extends NavigationMixin(LightningElemen
         this.overrideType = event.target.value;
     }
 
-    //WHEN CLICKING IN THE UPDATE QUOTE TO CHANGE THE REASON 
-    updateQuote(){
-        //console.log('Update quote');
-        //TO SEE THE REQUIRED FIELD TO OVERRIDE
-        if (this.overrideReason == '' || this.overrideReason == null){
-            const evt = new ShowToastEvent({
-                title: 'Please, select an Override Reason',
-                message: 'Select an override reason to save the quote',
-                variant: 'error',
-                mode: 'dismissable'
-            });
-            this.dispatchEvent(evt);
-        } else {
-            //console.log('Update quote');
-            let quoteWrap = {id: this.recordId,
-                overridereason: this.overrideReason,
-                overridecomments: this.overrideComment,
-                overridetype: this.overrideType, }
-
-            let startTime = window.performance.now();
-            this.spinnerLoadingUI = true; 
-            //console.log('Method quoteSaver quote: '+ JSON.stringify(quoteWrap));
-            quoteSaver({quote: JSON.stringify(quoteWrap)})
-            .then(()=>{
-                this.spinnerLoadingUI = false; 
-                let endTime = window.performance.now();
-                //console.log(`quoteSaver method took ${endTime - startTime} milliseconds`);
-                console.log('QUOTE UPDATED');
-                const evt = new ShowToastEvent({
-                    title: 'Quote Updated',
-                    message: 'The values are saved in Salesforce',
-                    variant: 'success',
-                    mode: 'dismissable'
-                });
-                this.dispatchEvent(evt);
-                this.activeOverrideReason = false; 
-            })
-            .catch((error)=>{
-                console.log('QUOTE NOT UPDATED');
-                console.log(error);
-                const evt = new ShowToastEvent({
-                    title: 'Cannot update the quote',
-                    message: 'There is an error updating the quote, please wait and try again.',
-                    variant: 'error',
-                    mode: 'dismissable'
-                });
-                this.dispatchEvent(evt);
-            })            
-        }
-    }
 }

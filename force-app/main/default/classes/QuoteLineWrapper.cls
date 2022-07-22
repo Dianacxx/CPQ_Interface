@@ -87,6 +87,7 @@ public with sharing class QuoteLineWrapper {
     public Decimal proratedUnitPrice {get;set;}
     public Decimal quantity {get;set;}
     public Decimal regularUnitPrice {get;set;}
+    public Decimal lastRegularPrice {get;set;}
     public Decimal regularTotal {get;set;}
     public Boolean renewal {get;set;}
     public Id renewedAsset {get;set;}
@@ -166,6 +167,8 @@ public with sharing class QuoteLineWrapper {
     public Decimal compoundDiscountRate {get;set;}
     public Boolean costEditable {get;set;}
     public Id discountSchedule {get;set;}
+    public Id newdiscountSchedule {get;set;}
+    public Id lastdiscountSchedule {get;set;}
     public String generateContractedPrice {get;set;}
     public Boolean hasConsumptionSchedules {get;set;}
     public Boolean hidden {get;set;}
@@ -238,5 +241,18 @@ public with sharing class QuoteLineWrapper {
     public String minimumordermultiple {get;set;}
     public String jacketType {get;set;}
     public String jacketConfiguration {get;set;}
+    public Decimal weightLbsPerFoot {get;set;}
+
+    //-----------------------------------------------------------
+    public Decimal basepriceoverride {get;set;}
+    public String specialpricepicklist{get;set;}
+    public String newCustomerTier{get;set;}
+    public String lastCustomerTier{get;set;}
+    public String CustomerTier{get;set;}
+    public Boolean overrideByUI{get;set;}
+    public String overridereason{get;set;}
+    public String overridecomments{get;set;}
+    public String quotedleadtime{get;set;}
+    public String overridequotedleadtime{get;set;}
 
 }

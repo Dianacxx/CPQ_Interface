@@ -3,12 +3,12 @@
     <description>Message Channel to pass values</description>
     <isExposed>true</isExposed>
     <lightningMessageFields>
-        <description>string data</description>
         <fieldName>dataString</fieldName>
+        <description>string data</description>
     </lightningMessageFields>
     <lightningMessageFields>
-        <description>Auxiliar variable</description>
         <fieldName>auxiliar</fieldName>
+        <description>Auxiliar variable</description>
     </lightningMessageFields>
     <masterLabel>updateInterface</masterLabel>
 </LightningMessageChannel>

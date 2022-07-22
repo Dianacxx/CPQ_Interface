@@ -35,6 +35,8 @@ import { getObjectInfo } from 'lightning/uiObjectInfoApi';
 import { getPicklistValues } from 'lightning/uiObjectInfoApi';
 import LENGTH_UOM_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.Length_UOM__c';
 import TIER_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.Tier__c';
+import OVERRIDE_LEAD_TIME_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.Override_Quoted_Lead_Time__c';
+import OVERRIDE_REASON from '@salesforce/schema/SBQQ__Quote__c.Override_Reason__c';
 
 
 //TO SHOW DEPENDENCIES VALUES FOR UOM FIELD IF PRODUCT 2 
@@ -46,7 +48,7 @@ import UPDATE_INTERFACE_CHANNEL from '@salesforce/messageChannel/update_Interfac
 
 //TIER COLUMNS FOR TABLE IN TIERS POP-UP (POP-UP DATATABLE)
 const TIER_COLUMNS = [
-    { label: 'Tier Name', fieldName: 'Tier_Name__c', initialWidth: 100, },
+    { label: 'Quantity Breaks', fieldName: 'Tier_Name__c', initialWidth: 100, },
     { label: 'Number', fieldName: 'SBQQ__Number__c', type: 'number', initialWidth: 100,},
     { label: 'Discount', fieldName: 'SBQQ__Discount__c', type: 'number', initialWidth: 100, },
 ];
@@ -81,7 +83,7 @@ const DETAIL_COLUMNS = [
     { label: 'Source', fieldName: 'BL_Source__c', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true},
     { label: 'Destination', fieldName: 'BL_Destination__c', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true},
     {label: 'Alternative Indicator',sortable: true/*,fieldName: 'alternativeindicator'*/ ,type: "button", typeAttributes: 
-    { /*label: { fieldName: 'alternativeindicator' },*/ name: 'alternativeindicator',value: { fieldName: 'BL_Alternative_Indicator__c' }, iconPosition: 'right', variant: 'base', iconName: { fieldName: 'dynamicIcon' } /*'utility:sort'*/,},},
+    { /*label: { fieldName: 'alternativeindicator' },*/ name: 'alternativeindicator',value: { fieldName: 'SBQQ__Optional__c' }, iconPosition: 'right', variant: 'base', iconName: { fieldName: 'dynamicIcon' } /*'utility:sort'*/,},},
    
    // { label: 'Alternative Indicator', fieldName: 'alternativeindicator', editable: true ,sortable: true, wrapText: false,hideDefaultActions: true },
     { label: 'NSP', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:google_news', name: 'NSP', variant:'brand', size:'xxx-small'}},
@@ -202,7 +204,7 @@ export default class Bl_dataTableQle extends LightningElement {
                 for(let i=0;i<this.quoteLines.length;i++){
                     if(this.quoteLines[i].Quote_Line_Name__c.includes('"')){
                     this.quoteLines[i].Quote_Line_Name__c = this.quoteLines[i].Quote_Line_Name__c.replace(/['"]+/g, '');
-                    this.quoteLines[i].BL_Alternative_Indicator__c == true ? this.quoteLines[i]['dynamicIcon'] = 'utility:check':
+                    this.quoteLines[i].SBQQ__Optional__c == true ? this.quoteLines[i]['dynamicIcon'] = 'utility:check':
                     this.quoteLines[i]['dynamicIcon'] = 'utility:close'; 
                     //console.log('No double quotes: '+ this.quoteLines[i].product);
                     }
@@ -420,6 +422,8 @@ export default class Bl_dataTableQle extends LightningElement {
                         newQuotelines[i].SBQQ__NetPrice__c = 1;
                         newQuotelines[i].Alternative__c = false;
                         newQuotelines[i].BL_Alternative_Indicator__c = false;
+                        newQuotelines[i].SBQQ__Optional__c = false;
+                        
                         newQuotelines[i].dynamicIcon = 'utility:close';
                         newQuotelines[i].Quote_Line_Name__c = newQuotelines[i].SBQQ__Product__r.Name;
 //---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -509,6 +513,7 @@ export default class Bl_dataTableQle extends LightningElement {
                     newQuotelines[i].SBQQ__NetPrice__c = 1;
                     newQuotelines[i].Alternative__c = false;
                     newQuotelines[i].BL_Alternative_Indicator__c = false;
+                    newQuotelines[i].SBQQ__Optional__c = false;
                     newQuotelines[i].dynamicIcon = 'utility:close';
                     
                     newQuotelines[i].Quote_Line_Name__c = newQuotelines[i].SBQQ__Product__r.Name;
@@ -614,75 +619,20 @@ export default class Bl_dataTableQle extends LightningElement {
                         //console.log(this.quoteLines[index].qlevariableprice);
                         //console.log(this.quoteLines[index].isNSP);
                         if (allQuotelinesEdititng[index].QLE_Variable_Price__c == 'Cable Length' && 
-                        (allQuotelinesEdititng[index].is_NSP__c == false || allQuotelinesEdititng[index].isNSP == undefined)){
-                            if(this.lengthUom.data.values){
-                                let values = [];
-                                for (let picklist of this.lengthUom.data.values){
-                                    values.push(picklist.value);
-                                }
-                                values = values.map(element => { return element.toLowerCase(); });
-                                let indexL = values.findIndex(x => x == inputsItems[i].fields[prop[j]].toLowerCase()); 
-                                if (indexL == -1){
-                                    let list = this.lengthUom.data.values[0].value;
-                                    for(let i=1; i< this.lengthUom.data.values.length; i++){
-                                        if(i == this.lengthUom.data.values.length-1){
-                                            list = list + ' and '+this.lengthUom.data.values[i].value;
-                                        } else {
-                                            list = list + ', '+this.lengthUom.data.values[i].value;
-                                        }
-                                    }
-                                    this.lengthUomMessageError = 'For Length UOM, available values are: '+list; 
-                                    //console.log(this.lengthUomMessageError); 
-                                    inputsItems[i].fields[prop[j]] = null;
-                                } else if (values[indexL].toLowerCase() == inputsItems[i].fields[prop[j]].toLowerCase() ){
-                                    let str = inputsItems[i].fields[prop[j]];
-                                    str = str.toLowerCase();
-                                    inputsItems[i].fields[prop[j]] = str.charAt(0).toUpperCase() + str.slice(1);
-                                    //console.log('Value: '+ values[indexL]);
-                                    //console.log('Input: '+inputsItems[i].fields[prop[j]] );
-                                }
-                            }
+                        (allQuotelinesEdititng[index].is_NSP__c == false || allQuotelinesEdititng[index].is_NSP__c == undefined)){
+                            console.log('Is Cable Length Base');
                         } else {
                             inputsItems[i].fields[prop[j]] = 'NA'; 
                             allQuotelinesEdititng[index].Length__c = 'NA';  //The length is NA
+                            console.log('Is NA');
                         }
                     }
                     if(prop[j]=='UOM__c'){
-                       
                         if(allQuotelinesEdititng[index].ProdLevel2__c == undefined){
                             this.nonProductLevel2.push(index+1); 
                             inputsItems[i].fields[prop[j]] = null; 
-                            //console.log('It does not have product level 2');
-                        } else {
-                            var prodLevel2 = allQuotelinesEdititng[index].ProdLevel2__c; 
-                            let level2 = prodLevel2.toLowerCase();
-                            let restictedIndex = -1;
-                            for(let k =0; k< this.level2Dependencies.length; k++){
-                                if(this.level2Dependencies[k].level2 == level2) {
-                                    restictedIndex = k; 
-                                }
-                            }
-                            if (restictedIndex == -1) {
-                                //console.log('It is not in the product level 2 list');
-                                this.nonProductLevel2.push(index+1); 
-                                inputsItems[i].fields[prop[j]] = null; 
-                            } else {
-                                let isInRestrictedArray = this.level2Dependencies[restictedIndex].dependencies.find(uom => uom == inputsItems[i].fields[prop[j]].toLowerCase());
-                                if (isInRestrictedArray == undefined){
-                                    this.showUOMValues = true;
-                                    //console.log('It is not available for this product level 2');
-                                    this.rowUOMErrors.push(inputsItems[i].fields[prop[j]]+' is not available for line '+(index+1));
-                                    let str = this.level2Dependencies[restictedIndex].dependencies[0];
-                                    str = str.toLowerCase();
-                                    inputsItems[i].fields[prop[j]] = str.charAt(0).toUpperCase() + str.slice(1);
-                                } else {
-                                    //console.log('It is available and it is save');
-                                    let str = inputsItems[i].fields[prop[j]];
-                                    str = str.toLowerCase();
-                                    inputsItems[i].fields[prop[j]] = str.charAt(0).toUpperCase() + str.slice(1);
-                                }
-                            }
-                        }
+                            console.log('No UOM for it');
+                        } 
                     }
                     if(prop[j]=='SBQQ__Quantity__c'){
                         let minQuote = 1; 
@@ -847,6 +797,7 @@ export default class Bl_dataTableQle extends LightningElement {
     } 
 
     handleRowAction(event){
+        console.log('Button '+ event.detail.action.name);
         this.dataRow = event.detail.row;
        //console.log(Object.getOwnPropertyNames(event.detail));
         switch (event.detail.action.name){
@@ -854,10 +805,11 @@ export default class Bl_dataTableQle extends LightningElement {
                 this.deleteClick = true; 
             break;
             case 'Tiers':
+                //console.log(JSON.stringify(this.dataRow));
                 if (this.dataRow.Id.startsWith('new')){
                     const evt = new ShowToastEvent({
                         title: 'Unable to change Tiers', 
-                        message: 'Please, save the quote line first to do this action.',
+                        message: 'Please, save the Quote Line first to do this action.',
                         variant: 'warning', mode: 'dismissable'
                     });
                     this.dispatchEvent(evt);
@@ -865,9 +817,16 @@ export default class Bl_dataTableQle extends LightningElement {
                     this.popUpTiers = true; 
                     this.loadingInitianTiers();
                     this.customerTier = 'not';
+                    this.wasReset = false; 
                     this.basePrice = 'not';
+                    this.overrideLeadTime = 'not'; 
                     this.changeAgreement = false;
+                    this.activeOverrideReason = false;
+                    this.dataRow.New_Customer_Tier__c != null ? this.notShowBP = true : this.notShowBP = false; 
+                    this.dataRow.Base_Price_Override__c != null ? this.notShowCT = true : this.notShowCT = false;
                     this.dataRow.New_Customer_Tier__c == null ? this.showLineCustomertier = this.dataRow.Tier__c : this.showLineCustomertier = this.dataRow.New_Customer_Tier__c;
+                    this.dataRow.Base_Price_Override__c == null ? this.showBasePriceOverride = null : this.showBasePriceOverride = this.dataRow.Base_Price_Override__c;
+                    this.showLeadTime = this.dataRow.Override_Quoted_Lead_Time__c; 
                 }
 
             break;
@@ -964,7 +923,7 @@ export default class Bl_dataTableQle extends LightningElement {
             this.quotelinesString = JSON.stringify(this.quoteLines); 
             this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
         }
-        
+        console.log(this.quotelinesString);
         this.closeUomPopup();
     }
 
@@ -1008,7 +967,7 @@ export default class Bl_dataTableQle extends LightningElement {
             this.quotelinesString = JSON.stringify(this.quoteLines); 
             this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
         }
-        
+        console.log(this.quotelinesString);
         this.closeLengthUomPopup();
     }
 
@@ -1017,46 +976,58 @@ export default class Bl_dataTableQle extends LightningElement {
     changingAlternative(){
 
         let index = this.quoteLines.findIndex(x => x.Id === this.dataRow.Id);
-        this.quoteLines[index].BL_Alternative_Indicator__c =  !this.quoteLines[index].BL_Alternative_Indicator__c;
-        this.quoteLines[index].BL_Alternative_Indicator__c == true ? this.quoteLines[index].dynamicIcon = 'utility:check':
+       
+        this.quoteLines[index].SBQQ__Optional__c =  !this.quoteLines[index].SBQQ__Optional__c;
+        this.quoteLines[index].SBQQ__Optional__c == true ? this.quoteLines[index].dynamicIcon = 'utility:check':
                 this.quoteLines[index].dynamicIcon = 'utility:close'; 
         this.quotelinesString = JSON.stringify(this.quoteLines); 
         this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
     }
 
     //Tiers Pop Up 
+    //Tiers Pop Up 
     @track popUpTiers = false;
     closeTiers(){
         this.popUpTiers = false;
         this.showTiersList = false;
     }
+
     //CHANGE CSS (POP-UP DATATABLE)
     handleClick() {
         this.searchTermTier = '';
         this.inputClass = 'slds-align_absolute-center slds-has-focus';
         this.boxClass = 'slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click slds-has-focus slds-is-open';
     }
+
     onBlur() {
         this.blurTimeout = setTimeout(() => {
             this.boxClass = 'slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click slds-has-focus'
         }, 300);
     }
 
+    //INITIAL VALUE IN POP-UP TIERS/UPDATE SHOW PRINCIPAR DISCOUNT SCHEDULE
+    thereAreTiers = false;
     discountScheduleUom; 
+    agreementName;
     loadingInitianTiers(){
-        //console.log(Object.getOwnPropertyNames(this.dataRow));
-        //console.log('Searching Tiers By quote line Id');
-        initialDiscountPrinter({lineId: this.dataRow.Id}) 
+        //console.log(JSON.stringify(this.dataRow));
+        console.log('Searching Tiers By quote line Id');
+        initialDiscountPrinter({lineId: JSON.stringify(this.dataRow)}) 
         .then((data)=>{
-            //console.log('initial discount Tiers GOOD'); 
-            //console.log(JSON.stringify(data));
+            console.log('initial discount Tiers GOOD'); 
+            console.log(JSON.stringify(data));
             this.tiers = data; 
             if(data.length > 0){
+                this.thereAreTiers = true;
                 this.showTiersList = true;
                 this.tiers[0].UOM__c != undefined ? this.discountScheduleUom = this.tiers[0].UOM__c 
                 :  this.discountScheduleUom = '';
+                this.tiers[0].Agreement__c != undefined ? this.agreementName = this.tiers[0].Agreement__c 
+                :  this.agreementName = '';
             } else {
+                this.thereAreTiers = false;
                 this.discountScheduleUom = '';
+
             }
 
         })
@@ -1066,47 +1037,7 @@ export default class Bl_dataTableQle extends LightningElement {
         })
     }
 
-    changeAgreement = false; 
-    //WHEN SELECTING AN AGREEMENT FROM THE LIST  (POP-UP DATATABLE)
-    onSelect(event) {
-        this.changeAgreement = true; 
-        let selectedId = event.currentTarget.dataset.id;
-        let selectedName = event.currentTarget.dataset.name;
-        //console.log('Selected:' + selectedId+', '+selectedName);
-        this.template.querySelectorAll("[id*='inputAgreement']").forEach(each => { each.value = undefined; });
-        if(!(selectedId == 'norecords')){
-            //selectedId 
-            //this.showTiers = false;
-            discountPrinter({agreementId: selectedId /* 8002h000000engBAAQ*/, prodId: this.dataRow.SBQQ__Product__r.Id /*'01t2h000004Rvu1AAC'*/ })
-            .then((data)=>{
-                //console.log('discount Tiers GOOD'); 
-                //console.log(data);
-                this.tiers = data; 
-                if(this.tiers.length > 0){
-                    this.tiers[0].UOM__c != undefined ? this.discountScheduleUom = this.tiers[0].UOM__c 
-                    :  this.discountScheduleUom = '';
-                } else {
-                    this.discountScheduleUom = '';
-                }
-               
-                this.showTiers = true; 
-                this.showTiersList = true;
-            })
-            .catch((error)=>{
-                console.log('discount Tiers BAD'); 
-                console.log(error);
-            })
-
-            if(this.blurTimeout) {
-                clearTimeout(this.blurTimeout);
-            }
-            this.boxClass = 'slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click slds-has-focus';
-        }
-        
-    }
-
     //WHEN CHANGING THE TERM TO LOOK UP THE AGREEMENT (POP-UP DATATABLE)
-
     onChange(event) {
         this.searchTermTier = event.target.value;
         //console.log('search Term : '+ this.searchTermTier);
@@ -1143,79 +1074,230 @@ export default class Bl_dataTableQle extends LightningElement {
         
     }
 
+    changeAgreement = false; 
+     
+    //WHEN SELECTING AN AGREEMENT FROM THE LIST  (POP-UP DATATABLE)
+    onSelect(event) {
+        this.changeAgreement = true; 
+        let selectedId = event.currentTarget.dataset.id;
+        let selectedName = event.currentTarget.dataset.name;
+        console.log('Selected:' + selectedId+', '+selectedName);
+        this.template.querySelectorAll("[id*='inputAgreement']").forEach(each => { each.value = undefined; });
+        if(!(selectedId == 'norecords')){
+            //selectedId 
+            //this.showTiers = false;
+            discountPrinter({agreementId: selectedId /* 8002h000000engBAAQ*/, prodId: this.dataRow.SBQQ__Product__r.Id /*'01t2h000004Rvu1AAC'*/ })
+            .then((data)=>{
+                console.log('discount Tiers GOOD'); 
+                //console.log(data);
+                this.tiers = data; 
+                if(this.tiers.length > 0){
+                    this.activeOverrideReasonFields();
+                    this.tiers[0].UOM__c != undefined ? this.discountScheduleUom = this.tiers[0].UOM__c 
+                    :  this.discountScheduleUom = '';
+                    this.tiers[0].Agreement__c != undefined ? this.agreementName = this.tiers[0].Agreement__c 
+                    :  this.agreementName = '';
+                    this.thereAreTiers = true;
+                } else {
+                    this.discountScheduleUom = '';
+                    this.thereAreTiers = false;
+                }
+               
+                this.showTiers = true; 
+                this.showTiersList = true;
+            })
+            .catch((error)=>{
+                console.log('discount Tiers BAD'); 
+                console.log(error);
+            })
+            if(this.blurTimeout) {
+                clearTimeout(this.blurTimeout);
+            }
+            this.boxClass = 'slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click slds-has-focus';
+        }
+        
+    }
+
+    
     //WHEN CHANGING CUSTOMER TIER VALUE (POP-UP DATATABLE)
+    notShowCT= false;
+    notShowBP= false; 
     customerTier = 'not';
     showLineCustomertier;
+    showBasePriceOverride;
     handleCustomerChange(event){
-        //console.log('customer change');
+        console.log('customer change');
         this.customerTier = event.target.value; 
+        this.notShowBP = true; 
+        this.activeOverrideReasonFields();
+    }
+
+    //WHEN CHANGING THE OVERRIDE LEAD TIME VALUE (PICK-LIST)
+    overrideLeadTime = 'not'; 
+    handleLeadTime(event){
+        console.log('LEAD TIME change');
+        this.overrideLeadTime = event.target.value; 
+        this.activeOverrideReasonFields();
     }
 
     //WHEN CHANGING THE BASE PRICE VALUE (POP-UP DATATABLE)
     basePrice = 'not'; 
     handleBasePriceChange(event){
-        //console.log('base price');
+        console.log('base price');
         this.basePrice = event.target.value; 
+        this.notShowCT= true;
+        this.activeOverrideReasonFields();
     }
+
+    //OVERRIDE REASON FUNCTION
+    //WIRE METHODS TO GET QUOTE OVERRIDE REASON  INFO 
+    @wire(getObjectInfo, { objectApiName: QUOTELINE_OBJECT })
+    quotelineMetadata;
+    @wire(getPicklistValues,{ recordTypeId: '$quotelineMetadata.data.defaultRecordTypeId', 
+            fieldApiName: OVERRIDE_REASON})
+    overrideReasonsList;
+
+    //ACTIVE OVERRIDE REASON WHEN CHANGIN SOME VALUE
+    activeOverrideReason = false;
+    activeOverrideReasonFields(){
+        this.wasReset = false;
+        this.activeOverrideReason = true; 
+        this.overrideReason = '';
+    }
+
+    //WHEN CHANGING THE OVERRIDE REASON CHANGE
+    overrideReason = '';
+    overrideComment = ''; 
+    handleChangeOverrideReason(event){
+        console.log('Override Reason');
+        this.overrideReason = event.target.value; 
+        this.wasReset = false;
+    }
+
+    //WHEN CHANGING THE OVERRIDE COMMENT  
+    handleOverrideComment(event){
+        console.log('Comment Here');
+        this.overrideComment = event.target.value;
+        this.wasReset = false;
+    }
+
     
 
     //WHEN CLICK IN CHANGE VALUE (POP-UP DATATABLE) - SEND MESSAGE TO UI FROM DATATABLE COMPONENT 
     changeTiers(){
-        let sendOverride = false;
-        if(!(this.basePrice == 'not')){
-            let index = this.quoteLines.findIndex(x => x.Id === this.dataRow.Id);
-            if(index != -1){
-                this.quoteLines[index].Base_Price_Override__c = this.basePrice; 
+        if(!this.wasReset){
+            if (this.overrideReason == '' && this.activeOverrideReason){
+                const evt = new ShowToastEvent({
+                    title: 'Required Override Reason before changing',
+                    message: 'The Override Reason field should be selected before closing the pop-up',
+                    variant: 'error', mode: 'sticky' });
+                this.dispatchEvent(evt);
             } else {
-                alert('The row cannot change, MEGA ERROR');
-            }
-            sendOverride = true; 
-            //console.log('base');
-            //console.log(this.basePrice);
-        }
-        if(!(this.customerTier == 'not')){
-            let index = this.quoteLines.findIndex(x => x.Id === this.dataRow.Id);
-            if(index != -1){
-                this.quoteLines[index].Last_Customer_Tier__c = this.quoteLines[index].New_Customer_Tier__c;
-                this.quoteLines[index].New_Customer_Tier__c = this.customerTier; 
-
-            } else {
-                alert('The row cannot change, MEGA ERROR');
-            }
-            sendOverride = true;  
-            //console.log('tier');
-            //console.log(this.customerTier);
-        }
-        if (this.changeAgreement){
-            lineSaver({line: JSON.stringify(this.dataRow), discTiers: this.tiers})
-            .then((data)=>{
-                sendOverride = true; 
-                //console.log(data);
+                let sendOverride = false;
+                if(!(this.basePrice == 'not')){
+                    let index = this.quoteLines.findIndex(x => x.Id === this.dataRow.Id);
+                    if(index != -1){
+                        this.quoteLines[index].Base_Price_Override__c = this.basePrice; 
+                    } else {
+                        alert('The row cannot change, MEGA ERROR');
+                    }
+                    sendOverride = true; 
+                    console.log('base');
+                    //console.log(this.basePrice);
+                }
+                if(!(this.customerTier == 'not')){
+                    let index = this.quoteLines.findIndex(x => x.Id === this.dataRow.Id);
+                    if(index != -1){
+                        this.quoteLines[index].Last_Customer_Tier__c = this.quoteLines[index].New_Customer_Tier__c;
+                        this.quoteLines[index].New_Customer_Tier__c = this.customerTier; 
+    
+                    } else {
+                        alert('The row cannot change, MEGA ERROR');
+                    }
+                    sendOverride = true;  
+                    console.log('tier');
+                    //console.log(this.customerTier);
+                }
+                if(!(this.overrideLeadTime == 'not')){
+                    let index = this.quoteLines.findIndex(x => x.Id === this.dataRow.Id);
+                    if(index != -1){
+                        this.quoteLines[index].Override_Quoted_Lead_Time__c = this.overrideLeadTime; 
+                    } else {
+                        alert('The row cannot change, MEGA ERROR');
+                    }
+                    sendOverride = true;  
+                    console.log('lead time');
+                }
                 let index = this.quoteLines.findIndex(x => x.Id === this.dataRow.Id);
                 if(index != -1){
-                this.quoteLines[index] = JSON.parse(data);
-                this.quotelinesString = JSON.stringify(this.quoteLines); 
-                this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
+                    this.quoteLines[index].Override_Reason__c = this.overrideReason;
+                    this.quoteLines[index].Override_Comments__c = this.overrideComment; 
                 } else {
-                alert('The row cannot change, MEGA ERROR');
+                    alert('The row cannot change, MEGA ERROR');
                 }
-            })
-            .catch((error)=>{
-                console.log('New Tiers ERROR');
-                console.log(error);
-            })
+                if (this.changeAgreement && this.tiers.length > 0){
+                    sendOverride = true; 
+                    lineSaver({line: JSON.stringify(this.dataRow), discTiers: this.tiers})
+                    .then((data)=>{
+                        console.log('New line');
+                        console.log(data);
+                        let index = this.quoteLines.findIndex(x => x.Id === this.dataRow.Id);
+                        if(index != -1){
+                        this.quoteLines[index] = JSON.parse(data);
+                        this.quotelinesString = JSON.stringify(this.quoteLines); 
+                        this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
+                        } else {
+                            alert('The row cannot change, MEGA ERROR');
+                        }
+                    })
+                    .catch((error)=>{
+                        console.log('New Tiers ERROR');
+                        console.log(error);
+                    })
+                }
+                if(sendOverride){
+                        this.quotelinesString = JSON.stringify(this.quoteLines); 
+                        this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
+                    //setTimeout(()=>{ this.dispatchEvent(new CustomEvent('overridereason')); }, 200);
+                    //console.log(this.quotelinesString);
+                }
+                this.closeTiers();
+            }
+        } else {
+            this.closeTiers();
         }
-        
-        if(sendOverride){
-            this.quotelinesString = JSON.stringify(this.quoteLines); 
-            this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
-            setTimeout(()=>{ this.dispatchEvent(new CustomEvent('overridereason')); }, 200);
-            //console.log(this.quotelinesString);
-        }
-        //HERE CALLS THE SAVING METHOD OF THE QUOTE LINE, AND RETRIEVE THE INFO THAT CAHNGES WHEN SAVING
-        //this.activeOverrideReasonFields(); 
-        this.closeTiers();
     }
+
+    //Reset Prices
+    wasReset = false;
+    resetPrices(){
+        let index = this.quoteLines.findIndex(x => x.Id === this.dataRow.id);
+        if(index != -1){
+            this.quoteLines[index].New_Customer_Tier__c = null; 
+            this.quoteLines[index].Base_Price_Override__c = null; 
+            this.quoteLines[index].New_Discount_Schedule__c = null; 
+            this.customerTier = 'not';
+            this.basePrice = 'not';
+            this.activeOverrideReason = false;
+            this.quoteLines[index].New_Customer_Tier__c != null ? this.notShowBP = true : this.notShowBP = false; 
+            this.quoteLines[index].Base_Price_Override__c != null ? this.notShowCT = true : this.notShowCT = false;
+            this.agreementSearchTearm = null;
+            this.showLineCustomertier = this.quoteLines[index].Tier__c;
+            this.dataRow = this.quoteLines[index]; 
+            this.loadingInitianTiers();
+            this.showTiersList = false;
+            this.wasReset = true; 
+            this.quotelinesString = JSON.stringify(this.quoteLines); 
+            this.template.querySelectorAll("[id*='tier']").forEach(each => { each.value = this.dataRow.Tier__c; });
+            this.template.querySelectorAll("[id*='baseprice']").forEach(each => { each.value = undefined; });
+
+
+            this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
+        } else {
+            alert('The row cannot change, MEGA ERROR');
+        }
+    }
+
 
 
     //NSP Products TO SHOW NSP FIELDS DEPENDING ON QUOTE 

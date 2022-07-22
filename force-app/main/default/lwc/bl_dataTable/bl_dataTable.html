@@ -163,7 +163,7 @@
             <section aria-modal="true" class="slds-modal slds-fade-in-open slds-align_absolute-center">
                 <div class="slds-modal__container slds-var-m-left_small  slds-var-m-right_small">
                     <header class="slds-modal__header slds-var-m-left_small  slds-var-m-right_small">
-                        <h2 class="slds-text-heading_medium slds-hyphenate">Override Pricing: {dataRow.quotelinename}</h2>
+                        <h2 class="slds-text-heading_medium slds-hyphenate">Override Price & Lead Time: {dataRow.quotelinename}</h2>
                         <lightning-icon class="slds-modal__close" icon-name="utility:close" size="small" onclick={closeTiers}></lightning-icon>
                     </header>
                     <!--style="overflow: initial;"-->
@@ -171,20 +171,25 @@
                         <div class="slds-var-p-around_small slds-align_absolute-center">
                             <div class="slds-col">
                                 
-                                <h1 class="slds-align_absolute-center slds-var-m-top_small"><b>Quote Line UOM:</b>&nbsp;{dataRow.uom}</h1>
-                                <!--<h1 class="slds-align_absolute-center slds-var-m-top_small"><b>Actual Customer Tier:</b>&nbsp;{showLineCustomertier}</h1>-->
+                                <h1 class="slds-align_absolute-center slds-var-m-top_small"><b>Quote Line UOM:</b>&nbsp;{dataRow.uom}&nbsp;-&nbsp;<b>Quoted Lead Time:</b>&nbsp;{dataRow.quotedleadtime}</h1>
                                 <!--<h1 class="slds-align_absolute-center slds-var-m-top_small"><b>Actual Base Price:</b>&nbsp;{dataRow.basepriceoverride}</h1>-->
                                     
                                 <!--CUSTOMER TIER PICKLIST-->
                                 <template if:true={tierValues.data.values}>
-                                    <lightning-combobox disabled ={notShowCT} style="width: 40%;" class="slds-align_absolute-center" name="customerTier" label="Customer Tier" value={showLineCustomertier}
+                                    <lightning-combobox id="tier" disabled ={notShowCT} style="width: 40%;" class="slds-align_absolute-center" name="customerTier" label="Customer Tier" value={showLineCustomertier}
                                     placeholder="Select Tier" options={tierValues.data.values} onchange={handleCustomerChange} ></lightning-combobox>    
                                 </template>
 
                                 <!--BASE PRICE INPUT-->
-                                <lightning-input disabled ={notShowBP}  style="width: 40%;" class="slds-align_absolute-center" type="number" name="BasePriceOverride" label="Base Price Override"
+                                <lightning-input id="baseprice" disabled ={notShowBP}  style="width: 40%;" class="slds-align_absolute-center" type="number" name="BasePriceOverride" label="Base Price Override"
                                  value={showBasePriceOverride} placeholder="$" onchange={handleBasePriceChange} ></lightning-input>
                         
+                                <!--LEAD TIME PICKLIST-->
+                                <template if:true={leadTimeValues.data.values}>
+                                    <lightning-combobox style="width: 40%;" class="slds-align_absolute-center" name="overrideleadtime" label="Lead Time" value={showLeadTime}
+                                    placeholder="Override Lead Time" options={leadTimeValues.data.values} onchange={handleLeadTime} ></lightning-combobox>    
+                                </template> 
+
                                 <!--AGREEMENT LOOK UP FIELD START-->
                                 <div>
                                     <div class="slds-form-element slds-var-m-left_small slds-var-m-right_small">
@@ -194,7 +199,7 @@
                                                     <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right" role="none">
                                                     <div class="slds-p-top_none">
                                                         <lightning-input  style="width: 40%;"  class={inputClass} type="search" id="inputAgreement" value={agreementSearchTearm}
-                                                            onclick={handleClick} onblur={onBlur} onchange={onChange} label="Agreement">
+                                                            onclick={handleClick} onblur={onBlur} onchange={onChange} label="Agreement" placeholder="Search an agreement">
                                                         </lightning-input>
                                                     </div>
                                                     </div>
@@ -220,7 +225,7 @@
                                 <!--TIERS TABLE-->
                                 <template if:true={showTiersList}>
                                     <p class="slds-align_absolute-center slds-var-m-top_small"><b>Price Breaks</b></p>
-                                    <h1 class="slds-align_absolute-center slds-var-m-top_small"><b>Agreement:</b>&nbsp;{agreementName},&nbsp;<b>Agreement UOM:</b>&nbsp;{discountScheduleUom}</h1>
+                                    <h1 class="slds-align_absolute-center slds-var-m-top_small"><b>Agreement:</b>&nbsp;{agreementName}&nbsp;-&nbsp;<b>Agreement UOM:</b>&nbsp;{discountScheduleUom}</h1>
                                     
                                     <div class="slds-align_absolute-center slds-var-m-top_small">
                                         <template if:true={thereAreTiers}>
@@ -234,7 +239,7 @@
                                     
                                 </template>
                                 <template if:true={activeOverrideReason}>
-                                    <div class="slds-var-p-around_small slds-align_absolute-center">
+                                    <div style="background-color:#F5B4B4;" class="slds-var-m-top_small slds-var-p-around_small slds-align_absolute-center">
                                         
                                         <!--OVERRIDE REASON SECTION-->
                                         

@@ -52,7 +52,7 @@ public with sharing class QuoteControllerMethodsHandler {
             wrapper.customerTotal=line.SBQQ__CustomerTotal__c;
             wrapper.defaultSubscriptionTerm=line.SBQQ__DefaultSubscriptionTerm__c;
             wrapper.priceDimension=line.SBQQ__Dimension__c;
-            wrapper.discountScheduleType=line.SBQQ__DiscountSchedule__c;
+            wrapper.discountSchedule=line.SBQQ__DiscountSchedule__c;
             wrapper.discountTier=line.SBQQ__DiscountTier__c;
             wrapper.discount=line.SBQQ__Discount__c;
             wrapper.distributorDiscount=line.SBQQ__DistributorDiscount__c;
@@ -179,6 +179,8 @@ public with sharing class QuoteControllerMethodsHandler {
             wrapper.overrideByUI = line.Overriden_By_UI__c;
             wrapper.overridereason = line.Override_Reason__c;
             wrapper.overridecomments = line.Override_Comments__c;
+            wrapper.quotedleadtime = line.Quoted_Lead_Time__c;
+            wrapper.overridequotedleadtime = line.Override_Quoted_Lead_Time__c;
             
             //NSP Fields 
 
@@ -207,7 +209,7 @@ public with sharing class QuoteControllerMethodsHandler {
             wrapper.chargeType=line.SBQQ__ChargeType__c;
             wrapper.compoundDiscountRate=line.SBQQ__CompoundDiscountRate__c;
             wrapper.costEditable=line.SBQQ__CostEditable__c;
-            wrapper.discountSchedule=line.SBQQ__DiscountScheduleType__c;
+            // wrapper.discountSchedule=line.SBQQ__DiscountScheduleType__c;
             wrapper.generateContractedPrice=line.SBQQ__GenerateContractedPrice__c;
             wrapper.hasConsumptionSchedules=line.SBQQ__HasConsumptionSchedule__c;
             wrapper.hidden=line.SBQQ__Hidden__c;
@@ -475,7 +477,7 @@ public with sharing class QuoteControllerMethodsHandler {
             wrapper.chargeType=newlyAddedLine.record.SBQQ__Product__r.SBQQ__ChargeType__c;
             wrapper.compoundDiscountRate=newlyAddedLine.record.SBQQ__Product__r.SBQQ__CompoundDiscountRate__c;
             wrapper.costEditable=newlyAddedLine.record.SBQQ__Product__r.SBQQ__CostEditable__c;
-            wrapper.discountSchedule=newlyAddedLine.record.SBQQ__Product__r.SBQQ__DiscountSchedule__c;
+            // wrapper.discountSchedule=newlyAddedLine.record.SBQQ__Product__r.SBQQ__DiscountSchedule__c;
             wrapper.generateContractedPrice=newlyAddedLine.record.SBQQ__Product__r.SBQQ__GenerateContractedPrice__c;
             wrapper.hasConsumptionSchedules=newlyAddedLine.record.SBQQ__Product__r.SBQQ__HasConsumptionSchedule__c;
             wrapper.hidden=newlyAddedLine.record.SBQQ__Product__r.SBQQ__Hidden__c;
@@ -741,7 +743,7 @@ public with sharing class QuoteControllerMethodsHandler {
             wrapper.chargeType=newlyAddedLine.record.SBQQ__Product__r.SBQQ__ChargeType__c;
             wrapper.compoundDiscountRate=newlyAddedLine.record.SBQQ__Product__r.SBQQ__CompoundDiscountRate__c;
             wrapper.costEditable=newlyAddedLine.record.SBQQ__Product__r.SBQQ__CostEditable__c;
-            wrapper.discountSchedule=newlyAddedLine.record.SBQQ__Product__r.SBQQ__DiscountSchedule__c;
+            // wrapper.discountSchedule=newlyAddedLine.record.SBQQ__Product__r.SBQQ__DiscountSchedule__c;
             wrapper.generateContractedPrice=newlyAddedLine.record.SBQQ__Product__r.SBQQ__GenerateContractedPrice__c;
             wrapper.hasConsumptionSchedules=newlyAddedLine.record.SBQQ__Product__r.SBQQ__HasConsumptionSchedule__c;
             wrapper.hidden=newlyAddedLine.record.SBQQ__Product__r.SBQQ__Hidden__c;
@@ -1016,7 +1018,7 @@ public with sharing class QuoteControllerMethodsHandler {
             wrapper.billingtype = (String)prodMap.get('SBQQ__BillingType__c');
             wrapper.chargeType=(String)prodMap.get('SBQQ__ChargeType__c');
             wrapper.costEditable=(Boolean)prodMap.get('SBQQ__CostEditable__c');
-            wrapper.discountSchedule=(Id)prodMap.get('SBQQ__DiscountScheduleType__c');
+            wrapper.discountSchedule=(Id)prodMap.get('SBQQ__DiscountSchedule__c');
             wrapper.generateContractedPrice=(String)prodMap.get('SBQQ__GenerateContractedPrice__c');
             wrapper.hasConsumptionSchedules=(Boolean)prodMap.get('SBQQ__HasConsumptionSchedule__c');
             wrapper.nonDiscountable=(Boolean)prodMap.get('SBQQ__NonDiscountable__c');
@@ -1243,6 +1245,9 @@ public with sharing class QuoteControllerMethodsHandler {
                 //     // newModel.record.Special_Price_Picklist__c='Custom';
                 // }
                 newModel.record.Billable_Tolerance__c=relatedQuoteLine.billableTolerance;
+                newModel.record.Quoted_Lead_Time__c = relatedQuoteLine.quotedleadtime;
+                newModel.record.Override_Quoted_Lead_Time__c = relatedQuoteLine.overridequotedleadtime;
+                    
                 
                 
                 //NSP Fields 

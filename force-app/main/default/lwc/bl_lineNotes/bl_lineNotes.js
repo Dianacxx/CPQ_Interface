@@ -16,8 +16,10 @@ export default class Bl_lineNotes extends LightningElement {
 
     lineNotesShow = []; 
     connectedCallback(){
-        if(this.quoteNotesString=='[]'){
-            //console.log('THERE IS NO LINE NOTES');
+        console.log(this.quotelinesString);
+        if(this.quotelinesString == '[]' || this.quotelinesString == undefined || 
+        this.quotelinesString == '[id: "none"]'){
+            console.log('THERE IS NO LINE NOTES');
         } else {
             
             this.quotelines = JSON.parse(this.quotelinesString); 

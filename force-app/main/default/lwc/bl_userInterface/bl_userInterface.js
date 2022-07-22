@@ -40,7 +40,7 @@ import {
 
 export default class UserInterface extends NavigationMixin(LightningElement) {
     @api recordId; //Quote Record Id that opens the UI
-    @api quotelinesString; //Quotelines information in string
+    @api quotelinesString = '[id: \"none\"]'; //Quotelines information in string
     @api quoteNotesString; //Quotelines Notes in string 
     @api totalValue; //quote total
     @api originalquotelinesString; //String to avoid calling saving methods if nothing changes 
@@ -55,6 +55,9 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
 
     channelName = '/event/QCP_Flag__e';
 
+    //Connect channel
+    @wire(MessageContext)
+    messageContext;
 
     //Initialize UI
     connectedCallback(){
@@ -74,24 +77,56 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             .then(data =>{
                 let endTime = window.performance.now();
                 console.log(`printQuoteLines method took ${endTime - startTime} milliseconds`);
-                if (data){
-                    this.quotelinesString = data; 
-                    this.originalquotelinesString = data; 
+                //console.log(data);
+                if (data == '[]'){ 
+                    console.log('a');
+                    this.quotelinesString = '[id: \"none\"]';
                     this.error = undefined;
                     this.isLoading = true; 
-                    //console.log('quoteLines String SUCCESS ');
-                    //console.log('quoteLines String SUCCESS: '+ this.quotelinesString);
-                    //If there are not quote lines in quote (to avoid errors in child components)
-                    if (this.quotelinesString == '[]'){ 
-                        this.quotelinesString = '[id: \"none\"]';
-                        //console.log(this.quoteLinesString);
-                        //console.log('No quotelines yet');
-                    }
+                    let startTime = window.performance.now(); 
+                    this.originalquotelinesString = this.quotelinesString;
+
                     const payload = { 
                         dataString: this.quotelinesString,
                         auxiliar: 'newtable'
                         };
                     publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
+                    console.log('channel');
+
+
+                    getQuoteTotal({quoteId: this.recordId})
+                    .then((data)=>{
+                            console.log('b');
+                            let endTime = window.performance.now();
+                            console.log(`getQuoteTotal method took ${endTime - startTime} milliseconds`);
+                            //console.log('NEW QUOTE TOTAL data');
+                            //console.log(data);
+                            this.totalValue = data;
+                            this.totalValueLoading = false;
+                            this.spinnerLoadingUI = false;
+                    })
+                    .catch((error)=>{
+                            console.log('NEW QUOTE TOTAL error');
+                            console.log(error);
+                            this.spinnerLoadingUI = false;
+                    }); 
+                    //console.log(this.quoteLinesString);
+                    //console.log('No quotelines yet');
+                } else {
+                    this.quotelinesString = data; 
+                    this.originalquotelinesString = data; 
+                    this.error = undefined;
+                    this.isLoading = true; 
+                    console.log('caro');
+                    console.log(this.quotelinesString);
+                    console.log(typeof this.quotelinesString);
+
+                    const payload = { 
+                        dataString: this.quotelinesString,
+                        auxiliar: 'newtable'
+                        };
+                    publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
+
                     //let quoteLines = JSON.parse(this.quotelinesString);
                     //console.log(JSON.stringify(quoteLines[0]));
     
@@ -116,23 +151,39 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             })
             .catch(error =>{
                 if (error){
-                    this.quotelinesString = undefined; 
+                    console.log('d');
+                    this.quotelinesString = '[id: \"none\"]'; 
+                    this.originalquotelinesString = this.quotelinesString;
                     console.log('quoteLines String ERROR:');
                     console.log(error);
                     let messageError; 
     
                     //THESE CONDITIONALS ARE TO SHOW THE USER THE EXACT ERROR MESSAGE
-                    if (error.hasOwnProperty('body')){
-                        if(error.body.hasOwnProperty('pageErrors')){
-                            if(error.body.pageErrors[0].hasOwnProperty('message')){
-                                messageError = error.body.pageErrors[0].message; 
-                            }
-                            else if (error.body.hasOwnProperty('message')){
+                    if(error != undefined){
+                        if(error.body != undefined){
+                            if (error.body.message != undefined){
                                 messageError = error.body.message; 
+                            } else if (error.body.pageErrors!= undefined){
+                                if(error.body.pageErrors[0].message != undefined){
+                                    messageError = error.body.pageErrors[0].message; 
+                                } else if (error.body.pageErrors[0].statusCode != undefined){
+                                    messageError = error.body.pageErrors[0].statusCode; 
+                                }
                             }
+                            else if (error.body.fieldErrors!= undefined){
+                                //messageError = JSON.stringify(error.body.fieldErrors[prop[0]]);
+                                messageError = 'There is a Field Error problem, please make sure the values are correct';
+                                console.log('Field Error');
+                            } else if (error.body.stackTrace != undefined) {
+                                messageError = JSON.stringify(error.body.stackTrace);
+                            }
+                            else {
+                                messageError = 'Developer: Open console to see error message';
+                            }
+                        } else {
+                            messageError = 'Developer: Open console to see error message'
                         }
-                        
-                    } else {
+                    }  else {
                         messageError = 'Unexpected error using UI - QUOTELINES'; 
                     }
                     const evt = new ShowToastEvent({
@@ -154,7 +205,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 //console.log(`printNotes method took ${endTime2 - startTime1} milliseconds`);
                 if (data){
                     this.quoteNotesString = data; 
-                    //console.log('notes string SUCCESS: '+ this.quoteNotesString);
+                    console.log('notes string SUCCESS: '+ this.quoteNotesString);
                     if (this.quoteNotesString == '[]'){
                         this.quoteNotesString = '[name: \"none\"]';
                         //console.log(this.quoteNotesString);
@@ -170,16 +221,31 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                     console.log('notes string ERROR: ');
                     console.log(error);
                     let messageError; 
-                    if (error.hasOwnProperty('body')){
-                        if(error.body.hasOwnProperty('pageErrors')){
-                            if(error.body.pageErrors[0].hasOwnProperty('message')){
-                                messageError = error.body.pageErrors[0].message; 
+                    if(error != undefined){
+                        if(error.body != undefined){
+                            if (error.body.message != undefined){
+                                messageError = error.body.message; 
+                            } else if (error.body.pageErrors!= undefined){
+                                if(error.body.pageErrors[0].message != undefined){
+                                    messageError = error.body.pageErrors[0].message; 
+                                } else if (error.body.pageErrors[0].statusCode != undefined){
+                                    messageError = error.body.pageErrors[0].statusCode; 
+                                }
                             }
-                        } else if (error.body.hasOwnProperty('message')){
-                            messageError = error.body.message; 
+                            else if (error.body.fieldErrors!= undefined){
+                                //messageError = JSON.stringify(error.body.fieldErrors[prop[0]]);
+                                messageError = 'There is a Field Error problem, please make sure the values are correct';
+                                console.log('Field Error');
+                            } else if (error.body.stackTrace != undefined) {
+                                messageError = JSON.stringify(error.body.stackTrace);
+                            }
+                            else {
+                                messageError = 'Developer: Open console to see error message';
+                            }
+                        } else {
+                            messageError = 'Developer: Open console to see error message'
                         }
-                        
-                    } else {
+                    }  else {
                         messageError = 'Unexpected error using UI - QUOTELINES'; 
                     }
                     const evt = new ShowToastEvent({
@@ -191,18 +257,6 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                     this.dispatchEvent(evt);
                 }
             })
-        //Calling the methods to print the information
-        //Note: not replace with callData() because there we can make more changes when update data
-        
-        /*
-            turnOffFlag({quoteId: this.recordId})
-            .then(()=>{
-                console.log('Turning of the falg off from begining');
-            })
-            .catch((error)=>{
-                console.log('Error turning off the flag');
-                console.log(error);
-            })*/
     }
     //CALL DATA ONCE AGAIN FROM SF WHEN SAVE BUTTON CLICKED (UPDATE DATA IN UI WITH ID'S FROM SF)
     startTimeProcess = 0;
@@ -226,207 +280,10 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 this.spinnerLoadingUI = true;
                 this.totalValueLoading = true;
                 //ALL THE SET TIMEOUT IS A DELAY WHILE SF DO THE CALCULATIONS AND SAVES THE INFO, THIS CAN CHANGE IN THE FUTURE
-                /*
-                setTimeout(()=>{
-    
-                    let startTime = window.performance.now();
-    
-                    console.log('Method printQuoteLines quoteId: '+ this.recordId);
-                    printQuoteLines({ quoteId: this.recordId})
-                    .then(data =>{
-                        let endTime = window.performance.now();
-                        console.log(`printQuoteLines method took ${endTime - startTime} milliseconds`);
-                        if (data){
-                            this.quotelinesString = data;
-                            this.originalquotelinesString = this.quotelinesString;
-                            this.error = undefined;
-                            this.isLoading = true; 
-                            //console.log('quoteLines String SUCCESS: '+ this.quotelinesString);
-                            const payload = { 
-                                dataString: this.quotelinesString,
-                                auxiliar: 'newtable'
-                            };
-                            publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
-                        }
-                        
-                        setTimeout(()=>{
-                            this.newLineNote();
-                            let startTime = window.performance.now();
-    
-                            
-                            console.log('Method getQuoteTotal quoteId: '+ this.recordId);
-                            getQuoteTotal({quoteId: this.recordId})
-                            .then((data)=>{
-                                let endTime = window.performance.now();
-                                console.log(`getQuoteTotal method took ${endTime - startTime} milliseconds`);
-                                //console.log('NEW QUOTE TOTAL data');
-                                //console.log(data);
-                                this.totalValue = data;
-                                this.totalValueLoading = false;
-                                setTimeout(()=>{this.spinnerLoadingUI = false;}, 1000);
-                            })
-                            .catch((error)=>{
-                                console.log('NEW QUOTE TOTAL error');
-                                console.log(error);
-                                this.spinnerLoadingUI = false;
-                            }); 
-                        }, DELAY_CALLING_TOTAL);
-                    })
-                    .catch(error =>{
-                        if (error){
-                            this.quotelinesString = undefined; 
-                            //console.log('quoteLines String ERROR:');
-                            //console.log(this.error);
-                            let messageError; 
-                            if (error.hasOwnProperty('body')){
-                                if(error.body.hasOwnProperty('pageErrors')){
-                                    if(error.body.pageErrors[0].hasOwnProperty('message')){
-                                        messageError = error.body.pageErrors[0].message; 
-                                    }
-                                }
-                                
-                            } else {
-                                messageError = 'Unexpected error using UI - QUOTELINES'; 
-                            }
-                            const evt = new ShowToastEvent({
-                                title: 'UI QUOTELINES Error',
-                                message: messageError,
-                                variant: 'error',
-                                mode: 'sticky'
-                            });
-                            this.dispatchEvent(evt);
-                        }
-                    })
-                        
-                    let startTime1 = window.performance.now();
-                    console.log('Method printNotes quoteId: '+ this.recordId);
-                    printNotes({ quoteId: this.recordId })
-                    .then(data =>{
-                        let endTime1 = window.performance.now();
-                        console.log(`printNotes method took ${endTime1 - startTime1} milliseconds`);
-                        
-                        if (data){
-                            this.quoteNotesString = data; 
-                            this.error = undefined;
-                            //console.log('notes string SUCCESS: '+ this.quoteNotesString);
-                        }    
-                    })
-                    .catch(error =>{
-                        if (error){
-                            this.quoteNotesString = undefined; 
-                            this.error = error;
-                            this.disableButton = true;
-                            this.quoteNotesString = '[name: \"none\"]';
-                            
-                            console.log('notes string ERROR: ');
-                            console.log(this.error);
-                            const evt = new ShowToastEvent({
-                                title: 'UI NOTES Error',
-                                message: 'Unexpected error using UI - NOTES',
-                                variant: 'error',
-                                mode: 'sticky'
-                            });
-                            this.dispatchEvent(evt);
-                        }
-                    })    
-                }, DELAY_CALLING_INFO);     //This value has to change depending on the size of quotelines
-                */
             //----------FALG TO AVOID DELAY TEST START------------------
-
             console.log('HERE THE DATA MUST BE CALLED BY THE CHANNEL');
-            //let flag = false;
-            //console.log('Inside no loop waiting');
-            //this.startTimeProcess = window.performance.now();
-            //this.processRelatedObjects();
-            /*
-            GettingFlag({quoteId: this.recordId})
-            .then((data)=>{
-               
-                if (data === 'YES'){
-                    flag = true;
-                    console.log('YES');
-                }
-                else if (data === 'NOT'){
-                    flag = false;
-                    console.log('NOT');
-                    this.processRelatedObjects();
-                }
-            })
-            .catch((error)=>{
-                flag = false;
-                console.log('Error');
-                console.log(error); 
-            })
-*/
-
-
-            /*
-            let startTime = window.performance.now();
-                        printQuoteLines({ quoteId: this.recordId})
-                        .then(data =>{
-                        let endTime = window.performance.now();
-                        console.log(`printQuoteLines method took ${endTime - startTime} milliseconds`);
-                        if (data){
-                            this.quotelinesString = data;
-                            this.originalquotelinesString = this.quotelinesString;
-                            this.error = undefined;
-                            this.isLoading = true; 
-                            //console.log('quoteLines String SUCCESS: '+ this.quotelinesString);
-                            const payload = { 
-                                dataString: this.quotelinesString,
-                                auxiliar: 'newtable'
-                            };
-                            publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
-                        }
-                            let startTime = window.performance.now();
-                            getQuoteTotal({quoteId: this.recordId})
-                            .then((data)=>{
-                                let endTime = window.performance.now();
-                                console.log(`getQuoteTotal method took ${endTime - startTime} milliseconds`);
-                                //console.log('NEW QUOTE TOTAL data');
-                                //console.log(data);
-                                this.totalValue = data;
-                                this.totalValueLoading = false;
-                                setTimeout(()=>{this.spinnerLoadingUI = false;}, 100);
-                            })
-                            .catch((error)=>{
-                                console.log('NEW QUOTE TOTAL error');
-                                console.log(error);
-                                this.spinnerLoadingUI = false;
-                            }); 
-                        })
-                        .catch(error =>{
-                        if (error){
-                            this.quotelinesString = undefined; 
-                            //console.log('quoteLines String ERROR:');
-                            //console.log(this.error);
-                            let messageError; 
-                            if (error.hasOwnProperty('body')){
-                                if(error.body.hasOwnProperty('pageErrors')){
-                                    if(error.body.pageErrors[0].hasOwnProperty('message')){
-                                        messageError = error.body.pageErrors[0].message; 
-                                    }
-                                }
-                                
-                            } else {
-                                messageError = 'Unexpected error using UI - QUOTELINES'; 
-                            }
-                            const evt = new ShowToastEvent({
-                                title: 'UI QUOTELINES Error',
-                                message: messageError,
-                                variant: 'error',
-                                mode: 'sticky'
-                            });
-                            this.dispatchEvent(evt);
-                        }
-                        }) */
-
-
-
             //----------FALG TO AVOID DELAY TEST END------------------
-            
-            
-            
+
             }
 
             
@@ -436,229 +293,6 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     @track quoteCheck = false;
     @track wiredAccountList = [];
 
-    /*
-    @wire(getRecord, { recordId: '$recordId', fields: [ 'SBQQ__Quote__c.Flag_Done_QCP__c' ] })
-    getquoteRecord(value) {
-        this.wiredActivities = value;
-        let {data, error} = value;
-        console.log('getquoteRecord => ', data, error);
-        if (data) {
-            this.quoteCheck = data; 
-            this.processRelatedObjects();
-        } else if (error) {
-            console.error('ERROR => ', JSON.stringify(error)); // handle error properly
-        }
-    }
-    */
-
-    /*
-    processRelatedObjects() {
-        //console.log(Object.getOwnPropertyNames(this.quoteCheck.fields));
-        if(this.quoteCheck){
-            console.log('YESSSSS');
-            this.quoteCheck = false;
-            let one = window.performance.now();
-            turnOffFlag({quoteId: this.recordId})
-            .then(()=>{
-                console.log('FINALLY!');
-                //this.spinnerLoadingUI = false;
-                let endTime = window.performance.now();
-                 
-                console.log(`Turning FLAG off took ${endTime - one} milliseconds`);
-                console.log(`QCP CHECKING FLAG took ${endTime - this.startTimeProcess} milliseconds`);
-                console.log(`TOTAL TIME took ${endTime - this.timeWhenclicked} milliseconds`);
-                this.callDataOnceFinished();
-            })
-            .catch(()=>{
-                console.log('Error putting flag off');
-            })
-           
-        } else {
-            let warningTime = window.performance.now();
-            //console.log(`Time is taking: ${warningTime - this.startTimeProcess} milliseconds`);
-            if((warningTime - this.startTimeProcess) > 60000){
-                alert('This process is taking a lot of time, take actions here'); 
-            } else {
-                console.log('Calling Again....');
-                this.callingRefreshApex();
-            }
-        }
-
-    }
-    callingRefreshApex(){
-        GettingFlag({quoteId: this.recordId})
-            .then((data)=>{
-                if (data === 'YES'){
-                    this.quoteCheck = true;
-                    console.log('YES, Checked');
-                    this.processRelatedObjects();
-                }
-                else if (data === 'NOT'){
-                    this.quoteCheck = false;
-                    console.log('NOT YET');
-                    this.processRelatedObjects();
-                }
-            })
-            .catch((error)=>{
-                flag = false;
-                console.log('Error');
-                console.log(error); 
-            })
-    }
-    callDataOnceFinished(){
-        console.log('Start Printing Quote Lines Info Calling'); 
-        let startTime = window.performance.now();
-        printQuoteLines({ quoteId: this.recordId})
-        .then(data =>{
-        let endTime = window.performance.now();
-        console.log(`printQuoteLines method took ${endTime - startTime} milliseconds`);
-        if (data){
-            this.quotelinesString = data;
-            this.originalquotelinesString = this.quotelinesString;
-            this.error = undefined;
-            this.isLoading = true; 
-            //console.log('quoteLines String SUCCESS: '+ this.quotelinesString);
-            const payload = { 
-                dataString: this.quotelinesString,
-                auxiliar: 'newtable'
-            };
-            publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
-        }
-            let startTime2 = window.performance.now();
-            getQuoteTotal({quoteId: this.recordId})
-            .then((data)=>{
-                let endTime = window.performance.now();
-                console.log(`getQuoteTotal method took ${endTime - startTime2} milliseconds`);
-                //console.log('NEW QUOTE TOTAL data');
-                //console.log(data);
-                this.totalValue = data;
-                this.totalValueLoading = false;
-                setTimeout(()=>{this.spinnerLoadingUI = false;}, 100);
-            })
-            .catch((error)=>{
-                console.log('NEW QUOTE TOTAL error');
-                console.log(error);
-                this.spinnerLoadingUI = false;
-            }); 
-        })
-        .catch(error =>{
-        if (error){
-            this.quotelinesString = undefined; 
-            //console.log('quoteLines String ERROR:');
-            //console.log(this.error);
-            let messageError; 
-            if (error.hasOwnProperty('body')){
-                if(error.body.hasOwnProperty('pageErrors')){
-                    if(error.body.pageErrors[0].hasOwnProperty('message')){
-                        messageError = error.body.pageErrors[0].message; 
-                    }
-                }
-                
-            } else {
-                messageError = 'Unexpected error using UI - QUOTELINES'; 
-            }
-            const evt = new ShowToastEvent({
-                title: 'UI QUOTELINES Error',
-                message: messageError,
-                variant: 'error',
-                mode: 'sticky'
-            });
-            this.dispatchEvent(evt);
-        }
-        })
-    }
-    */
-   
-
-//-----------------------------------------------------------------------------------------
-// channelName = '/event/QCP_Flag__e';
-
-// isSubscribeDisabled = false;
-// isUnsubscribeDisabled = !this.isSubscribeDisabled;
-
-// handleFetch() {
-//     console.log('Fetching');
-//     let startTime = window.performance.now();
-//     this.showTable = false; 
-//     printQuoteLineList({quoteId: this.recordId})
-//     .then((data)=>{
-//         let endTime = window.performance.now();
-//         console.log(`printQuoteLinesList method took ${endTime - startTime} milliseconds`);
-//         //quoteLines;
-//         //console.log('printQuoteLineList');
-//         //console.log(data);
-//         this.quoteLines = data; 
-//         this.showTable = true; 
-//         this.quotelinesString = JSON.stringify(this.quoteLines); 
-//     })
-//     .catch((error)=>{
-//         console.log('printQuoteLineList ERROR');
-//         console.log(error);
-//     })
-
-//     /*
-//     read({quoteId: this.recordId})
-//     .then(quote => {this.quoteLinesChannel = quote;
-//         console.log('NEW QUOTES: '+ JSON.stringify(this.quoteLinesChannel))})
-//     .catch(error => console.log(error));
-// */
-
-// }
-
-// handleChannelName(event) {
-//     this.channelName = event.target.value;
-// }
-
-// handleSubscribe() {
-//     // Callback invoked whenever a new event message is received
-//     const messageCallback = (response) => {
-//         console.log(response.data.payload);
-//         let startTime = window.performance.now();
-//         console.log('Channel Here');
-//         this.showTable = false; 
-//         printQuoteLineList({quoteId: this.recordId})
-//         .then((data)=>{
-//             let endTime = window.performance.now();
-//             console.log(`printQuoteLinesList method took ${endTime - startTime} milliseconds`);
-//             //quoteLines;
-//             //console.log('printQuoteLineList');
-//             //console.log(data);
-//             this.quoteLines = data; 
-//             this.showTable = true; 
-//             this.quotelinesString = JSON.stringify(this.quoteLines); 
-//         })
-//         .catch((error)=>{
-//             console.log('printQuoteLineList ERROR');
-//             console.log(error);
-//         })
-//     };
-
-//     // Invoke subscribe method of empApi. Pass reference to messageCallback
-//     subscribe(this.channelName, -1, messageCallback).then((response) => {
-//         // Response contains the subscription information on subscribe call
-//         console.log(
-//             'Subscription request sent to: ',
-//             JSON.stringify(response.channel)
-//         );
-//         this.subscription = response;
-//         this.toggleSubscribeButton(true);
-//     });
-// }
-
-// handleUnsubscribe() {
-//     this.toggleSubscribeButton(false);
-
-//     // Invoke unsubscribe method of empApi
-//     unsubscribe(this.subscription, (response) => {
-//         console.log('unsubscribe() response: ', JSON.stringify(response));
-//         // Response is true for successful unsubscribe
-//     });
-// }
-
-// toggleSubscribeButton(enableSubscribe) {
-//     this.isSubscribeDisabled = enableSubscribe;
-//     this.isUnsubscribeDisabled = !enableSubscribe;
-// }
 
 //-----------------------------------------------------------------------------------------
     handleFetch() {
@@ -680,6 +314,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 //If there are not quote lines in quote (to avoid errors in child components)
                 if (this.quotelinesString == '[]'){ 
                     this.quotelinesString = '[id: \"none\"]';
+                    this.originalquotelinesString = this.quotelinesString;
                     //console.log(this.quoteLinesString);
                     //console.log('No quotelines yet');
                 }
@@ -718,17 +353,31 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 let messageError; 
 
                 //THESE CONDITIONALS ARE TO SHOW THE USER THE EXACT ERROR MESSAGE
-                if (error.hasOwnProperty('body')){
-                    if(error.body.hasOwnProperty('pageErrors')){
-                        if(error.body.pageErrors[0].hasOwnProperty('message')){
-                            messageError = error.body.pageErrors[0].message; 
-                        }
-                        else if (error.body.hasOwnProperty('message')){
+                if(error != undefined){
+                    if(error.body != undefined){
+                        if (error.body.message != undefined){
                             messageError = error.body.message; 
+                        } else if (error.body.pageErrors!= undefined){
+                            if(error.body.pageErrors[0].message != undefined){
+                                messageError = error.body.pageErrors[0].message; 
+                            } else if (error.body.pageErrors[0].statusCode != undefined){
+                                messageError = error.body.pageErrors[0].statusCode; 
+                            }
                         }
+                        else if (error.body.fieldErrors!= undefined){
+                            //messageError = JSON.stringify(error.body.fieldErrors[prop[0]]);
+                            messageError = 'There is a Field Error problem, please make sure the values are correct';
+                            console.log('Field Error');
+                        } else if (error.body.stackTrace != undefined) {
+                            messageError = JSON.stringify(error.body.stackTrace);
+                        }
+                        else {
+                            messageError = 'Developer: Open console to see error message';
+                        }
+                    } else {
+                        messageError = 'Developer: Open console to see error message'
                     }
-                    
-                } else {
+                }  else {
                     messageError = 'Unexpected error using UI - QUOTELINES'; 
                 }
                 const evt = new ShowToastEvent({
@@ -777,6 +426,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                         //If there are not quote lines in quote (to avoid errors in child components)
                         if (this.quotelinesString == '[]'){ 
                             this.quotelinesString = '[id: \"none\"]';
+                            this.originalquotelinesString = this.quotelinesString;
                             //console.log(this.quoteLinesString);
                             //console.log('No quotelines yet');
                         }
@@ -863,16 +513,31 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                         console.log('notes string ERROR: ');
                         console.log(error);
                         let messageError; 
-                        if (error.hasOwnProperty('body')){
-                            if(error.body.hasOwnProperty('pageErrors')){
-                                if(error.body.pageErrors[0].hasOwnProperty('message')){
-                                    messageError = error.body.pageErrors[0].message; 
+                        if(error != undefined){
+                            if(error.body != undefined){
+                                if (error.body.message != undefined){
+                                    messageError = error.body.message; 
+                                } else if (error.body.pageErrors!= undefined){
+                                    if(error.body.pageErrors[0].message != undefined){
+                                        messageError = error.body.pageErrors[0].message; 
+                                    } else if (error.body.pageErrors[0].statusCode != undefined){
+                                        messageError = error.body.pageErrors[0].statusCode; 
+                                    }
                                 }
-                            } else if (error.body.hasOwnProperty('message')){
-                                messageError = error.body.message; 
+                                else if (error.body.fieldErrors!= undefined){
+                                    //messageError = JSON.stringify(error.body.fieldErrors[prop[0]]);
+                                    messageError = 'There is a Field Error problem, please make sure the values are correct';
+                                    console.log('Field Error');
+                                } else if (error.body.stackTrace != undefined) {
+                                    messageError = JSON.stringify(error.body.stackTrace);
+                                }
+                                else {
+                                    messageError = 'Developer: Open console to see error message';
+                                }
+                            } else {
+                                messageError = 'Developer: Open console to see error message'
                             }
-                            
-                        } else {
+                        }  else {
                             messageError = 'Unexpected error using UI - QUOTELINES'; 
                         }
                         const evt = new ShowToastEvent({
@@ -900,9 +565,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     }
 //------------------------------------------------------------------------------------
 
-    //Connect channel
-    @wire(MessageContext)
-    messageContext;
+
 
     //WHEN TABLE OF QUOTELINES IS CHANGED (TO UPDATE ALL THE COMPONENTS)
     updateTableData(event){
@@ -1000,7 +663,10 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         //console.log('Label '+ label);
             this.spinnerLoadingUI = true;
             this.notSaveYet = false; 
-            let quoteEdition = JSON.parse(this.quotelinesString);
+            let quoteEdition;
+            if(this.quotelinesString != '[]' && this.quotelinesString != '[id: \"none\"]'){
+                quoteEdition = JSON.parse(this.quotelinesString);
+            }
             this.notGoodToGoBundle[0] = false;
             this.notGoodToGoBundle[1] = false;
             
@@ -1368,7 +1034,10 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
 
     //SAVING BEFORE QUOTE NAVIGATE RECORD PAGE
     async navigateToQuoteRecordPage() {
-        let quoteEdition = JSON.parse(this.quotelinesString);
+        let quoteEdition;
+        if(this.quotelinesString != '[]' && this.quotelinesString != '[id: \"none\"]'){
+            quoteEdition = JSON.parse(this.quotelinesString);
+        }
         let quotesToFill = []; 
 
         //SAME PROCESS AS SAVING AND CALCULATE BUT ADDING THE NAVIGATION PROCESS IF IT IS GOOD TO GO
@@ -1433,7 +1102,8 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     @track toPS = false; 
     async navitageToProductSelection(){
         this.toPS = true;
-
+        console.log(this.originalquotelinesString);
+        console.log(this.quotelinesString);
         //BEFORE NAVIGATE TO PRODUCT SELECTION, QUOTE LINES IN QLE ARE SAVED. IF THERE IS AN ERROR
         //NOT NAVIGATION AND SHOW THE NOTIFICATION
         if (!(this.originalquotelinesString == this.quotelinesString)){
@@ -1454,7 +1124,10 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         } else {
             let quotesToFill = []; 
             this.notSaveYet = false; 
-            let quoteEdition = JSON.parse(this.quotelinesString); 
+            let quoteEdition;
+            if(this.quotelinesString != '[]' && this.quotelinesString != '[id: \"none\"]'){
+                quoteEdition = JSON.parse(this.quotelinesString);
+            }
 
             //PROCESS TO AVOID USER ERRORS BEFORE SAVING.
             for(let i = 0; i< quoteEdition.length; i++){
