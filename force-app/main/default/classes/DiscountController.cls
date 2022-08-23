@@ -7,10 +7,11 @@ public with sharing class DiscountController {
        List<SBQQ__DiscountTier__c> tiersToShow = new List<SBQQ__DiscountTier__c>();
        //Validates if the quote line has a new discount schedule, otherwise it shous the starndard discount given by the CPQ
        if (untypedQuoteLine.newdiscountSchedule != null) {
-            SBQQ__DiscountSchedule__c discount = [SELECT id, UOM__C, Contract__c, (SELECT ID,Tier_Name__c,UOM__C, Name, SBQQ__Number__c,SBQQ__LowerBound__c,SBQQ__UpperBound__c, SBQQ__Discount__c,Agreement__c FROM SBQQ__DiscountTiers__r) FROM SBQQ__DiscountSchedule__c WHERE id =: untypedQuoteLine.newdiscountSchedule]; 
+            SBQQ__DiscountSchedule__c discount = [SELECT id, UOM__C, Contract__c, (SELECT ID,Tier_Name__c,UOM__C, Name, SBQQ__Number__c,SBQQ__LowerBound__c,SBQQ__UpperBound__c, SBQQ__Discount__c,Agreement__c,SBQQ__Price__c FROM SBQQ__DiscountTiers__r) FROM SBQQ__DiscountSchedule__c WHERE id =: untypedQuoteLine.newdiscountSchedule]; 
             tiersToShow  = discount.SBQQ__DiscountTiers__r;
+            system.debug('entered in new ' + tierstoshow.size());
        }else if (untypedQuoteLine.discountSchedule != null){
-            SBQQ__DiscountSchedule__c discount = [SELECT id, UOM__C,Contract__c, (SELECT ID,Tier_Name__c,UOM__C, Name, SBQQ__Number__c,SBQQ__LowerBound__c,SBQQ__UpperBound__c, SBQQ__Discount__c,Agreement__c FROM SBQQ__DiscountTiers__r) FROM SBQQ__DiscountSchedule__c WHERE id =: untypedQuoteLine.discountSchedule]; 
+            SBQQ__DiscountSchedule__c discount = [SELECT id, UOM__C,Contract__c, (SELECT ID,Tier_Name__c,UOM__C, Name, SBQQ__Number__c,SBQQ__LowerBound__c,SBQQ__UpperBound__c, SBQQ__Discount__c,Agreement__c,SBQQ__Price__c FROM SBQQ__DiscountTiers__r) FROM SBQQ__DiscountSchedule__c WHERE id =: untypedQuoteLine.discountSchedule]; 
             tiersToShow  = discount.SBQQ__DiscountTiers__r;   
        }
 
@@ -22,7 +23,7 @@ public with sharing class DiscountController {
         List<SBQQ__DiscountTier__c> tiersToShow = new List<SBQQ__DiscountTier__c>();
 
         //In this query there is missing a field that tells us if a discount is active for the product -- there can only be one discount active per product
-        List<SBQQ__DiscountSchedule__c> discountList = [SELECT id, Contract__c, (SELECT ID,Tier_Name__c,UOM__C, Name, SBQQ__Number__c,SBQQ__LowerBound__c,SBQQ__UpperBound__c, SBQQ__Discount__c,Agreement__c FROM SBQQ__DiscountTiers__r) FROM SBQQ__DiscountSchedule__c WHERE Contract__c =: agreementId AND SBQQ__Product__c =: prodId]; 
+        List<SBQQ__DiscountSchedule__c> discountList = [SELECT id, Contract__c, (SELECT ID,Tier_Name__c,UOM__C, Name, SBQQ__Number__c,SBQQ__LowerBound__c,SBQQ__UpperBound__c, SBQQ__Discount__c,Agreement__c,SBQQ__Price__c FROM SBQQ__DiscountTiers__r) FROM SBQQ__DiscountSchedule__c WHERE Contract__c =: agreementId AND SBQQ__Product__c =: prodId]; 
         System.debug('discounts found ' + discountList.size()); //Should always be 1, either way we are only taking the first one
         if (discountList.size()>0) {
             for(SBQQ__DiscountTier__c tier : discountList[0].SBQQ__DiscountTiers__r){

@@ -1,7 +1,3 @@
-.stretchButton{
-    font-size: 11px;
-}
-
 /*adding row numbers through css*/
 .css-serial {
     counter-reset: serial-number; /* Set the serial number counter to 0 */
@@ -19,4 +15,8 @@ a {
 table, th, td {
     border: 1px solid black;
     border-collapse: collapse;
+}
+
+.datatable-row-detail { 
+    width: 100vw; 
 }
