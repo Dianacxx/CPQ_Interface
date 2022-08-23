@@ -77,7 +77,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             .then(data =>{
                 let endTime = window.performance.now();
                 console.log(`printQuoteLines method took ${endTime - startTime} milliseconds`);
-                //console.log(data);
+                console.log(data);
                 if (data == '[]'){ 
                     console.log('a');
                     this.quotelinesString = '[id: \"none\"]';
@@ -96,7 +96,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
 
                     getQuoteTotal({quoteId: this.recordId})
                     .then((data)=>{
-                            console.log('b');
+                            //console.log('b');
                             let endTime = window.performance.now();
                             console.log(`getQuoteTotal method took ${endTime - startTime} milliseconds`);
                             //console.log('NEW QUOTE TOTAL data');
@@ -117,9 +117,9 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                     this.originalquotelinesString = data; 
                     this.error = undefined;
                     this.isLoading = true; 
-                    console.log('caro');
-                    console.log(this.quotelinesString);
-                    console.log(typeof this.quotelinesString);
+                    //console.log('caro');
+                    //console.log(this.quotelinesString);
+                    //console.log(typeof this.quotelinesString);
 
                     const payload = { 
                         dataString: this.quotelinesString,
@@ -405,8 +405,9 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
     handleSubscribe() {
         // Callback invoked whenever a new event message is received
         const messageCallback = (response) => {
+            console.log(Date()); 
             this.timeAfterQCP = window.performance.now();
-            console.log(this.timeAfterQCP, this.timeWhenclicked);
+            console.log('Times: ',this.timeAfterQCP, this.timeWhenclicked);
             console.log(`Script took + ${this.timeAfterQCP - this.timeWhenclicked} ms to execute.`);
             console.log('2 Channel Here');
             let startTime  = window.performance.now();
@@ -484,8 +485,10 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                             variant: 'error',
                             mode: 'sticky'
                         });
+                        
                         this.dispatchEvent(evt);
                         this.errorInQuotes = true; 
+                        this.spinnerLoadingUI = false;
                     }
                 })
                 
@@ -549,6 +552,10 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                         this.dispatchEvent(evt);
                     }
                 })
+            } else {
+                console.log('NOT THE QUOTE THAT WAS UPDATED: '+ response.data.payload.quoteLines__c);
+                //this.errorInQuotes = true; 
+                //this.spinnerLoadingUI = false;
             }
         };
 
@@ -715,6 +722,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
 
     //WHEN A DICOUNT IS ADD TO MULTIPLE LINES, AND APPLY BUTTON IS CLICKED
     handleDiscount(){
+        this.template.querySelector("[id*='discountinput']").value= 0;
         this.handleSaveAndCalculate();
         this.desactiveCloneButton();
     }
@@ -730,15 +738,15 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
         return new Promise((resolve) => {
             //console.log('Record ID: '+this.recordId);
             let quoteEdition = JSON.parse(this.quotelinesString);
-
+            let callCreate = false; 
             //FILLING FIELDS IF USER MAKES A MISTAKE OR AVOID FILLING THEM 
             for(let i = 0; i< quoteEdition.length; i++){
+                if(quoteEdition[i].id.includes('new')){callCreate = true;}
                 if(quoteEdition[i].quantity == null || quoteEdition[i].quantity == 'null'){
                     quoteEdition[i].minimumorderqty == null ? quoteEdition[i].quantity = 1 : quoteEdition[i].quantity = quoteEdition[i].minimumorderqty;
                 }
-                if(quoteEdition[i].netunitprice == null || quoteEdition[i].netunitprice == 'null'){
-                    quoteEdition[i].netunitprice = 0;
-                }
+                //if(quoteEdition[i].netunitprice == null || quoteEdition[i].netunitprice == 'null'){
+                //    quoteEdition[i].netunitprice = 0;}
                 if(quoteEdition[i].alternative == null || quoteEdition[i].alternative == 'null'){
                     quoteEdition[i].alternative = false;
                 } 
@@ -765,81 +773,89 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                 console.log(`editAndDeleteQuotes method took ${endTime - startTime} milliseconds`);
                 this.goodEditing = true; 
                 this.notGoodToGoBundle[0] = false; 
-                quoteLineCreator({quoteId: this.recordId, quoteLines: this.quotelinesString})
-                .then(()=>{
-                    let endTime = window.performance.now();
-                    this.goodCreating = true; 
-                    console.log('B. New quote lines created');
-                    console.log(`quoteLineCreator method took ${endTime - startTime} milliseconds`);
-                    
-                    const payload = { 
-                        dataString: this.quotelinesString,
-                        auxiliar: 'updatetable'
-                    };
-                    publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
-
-                    this.notGoodToGoBundle[1] = false;
-                    this.callData();
-                    // setTimeout(() => {
-                    //     //console.log('TOTAL SUCCESS');
-                    //     //HERE TO AVOID CALLING THE METHOD TO UPDATE TABLE TO SEE ERRORS!
-                    //     this.callData();
-                    //     this.notGoodToGoBundle[1] = false;
-                    //     //this.spinnerLoadingUI = false;
-                    // }, 5000);
-                    
-                })
-                .catch((error)=>{
-                    if(this.toPS){
-                        this.showPSTab = false; 
-                        this.activeTab = 'UI';
-                        this.toPS = false;
-                    }
-                    console.log('quoteLineCreator ERROR');
-                    console.log(error);
-                    this.notGoodToGoBundle[1] = true;
-                    this.spinnerLoadingUI = false;
-
-                    let errorMessage;
-                    
-                    if(error != undefined){
-                        if(error.body != undefined){
-                            if (error.body.message != undefined){
-                                errorMessage = error.body.message; 
-                            } else if (error.body.pageErrors!= undefined){
-                                if(error.body.pageErrors[0].message != undefined){
-                                    errorMessage = error.body.pageErrors[0].message; 
-                                } else if (error.body.pageErrors[0].statusCode != undefined){
-                                    errorMessage = error.body.pageErrors[0].statusCode; 
+                if (callCreate){
+                    quoteLineCreator({quoteId: this.recordId, quoteLines: this.quotelinesString})
+                    .then(()=>{
+                        let endTime = window.performance.now();
+                        this.goodCreating = true; 
+                        console.log('B. New quote lines created');
+                        console.log(`quoteLineCreator method took ${endTime - startTime} milliseconds`);
+                        
+                        const payload = { 
+                            dataString: this.quotelinesString,
+                            auxiliar: 'updatetable'
+                        };
+                        publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
+    
+                        this.notGoodToGoBundle[1] = false;
+                        this.callData();
+                        // setTimeout(() => {
+                        //     //console.log('TOTAL SUCCESS');
+                        //     //HERE TO AVOID CALLING THE METHOD TO UPDATE TABLE TO SEE ERRORS!
+                        //     this.callData();
+                        //     this.notGoodToGoBundle[1] = false;
+                        //     //this.spinnerLoadingUI = false;
+                        // }, 5000);
+                        
+                    })
+                    .catch((error)=>{
+                        if(this.toPS){
+                            this.showPSTab = false; 
+                            this.activeTab = 'UI';
+                            this.toPS = false;
+                        }
+                        console.log('quoteLineCreator ERROR');
+                        console.log(error);
+                        this.notGoodToGoBundle[1] = true;
+                        this.spinnerLoadingUI = false;
+    
+                        let errorMessage;
+                        
+                        if(error != undefined){
+                            if(error.body != undefined){
+                                if (error.body.message != undefined){
+                                    errorMessage = error.body.message; 
+                                } else if (error.body.pageErrors!= undefined){
+                                    if(error.body.pageErrors[0].message != undefined){
+                                        errorMessage = error.body.pageErrors[0].message; 
+                                    } else if (error.body.pageErrors[0].statusCode != undefined){
+                                        errorMessage = error.body.pageErrors[0].statusCode; 
+                                    }
                                 }
-                            }
-                            else if (error.body.fieldErrors!= undefined){
-                                let prop = Object.getOwnPropertyNames(error.body.fieldErrors);
-                                //errorMessage = JSON.stringify(error.body.fieldErrors[prop[0]]);
-                                errorMessage = 'There is a Field Error problem, please make sure the values are correct';
-                                console.log('Field Error');
-                            } else if (error.body.stackTrace != undefined) {
-                                errorMessage = JSON.stringify(error.body.stackTrace);
-                            }
-                            else {
-                                errorMessage = 'Developer: Open console to see error message';
+                                else if (error.body.fieldErrors!= undefined){
+                                    let prop = Object.getOwnPropertyNames(error.body.fieldErrors);
+                                    //errorMessage = JSON.stringify(error.body.fieldErrors[prop[0]]);
+                                    errorMessage = 'There is a Field Error problem, please make sure the values are correct';
+                                    console.log('Field Error');
+                                } else if (error.body.stackTrace != undefined) {
+                                    errorMessage = JSON.stringify(error.body.stackTrace);
+                                }
+                                else {
+                                    errorMessage = 'Developer: Open console to see error message';
+                                }
+                            } else {
+                                errorMessage = 'Developer: Open console to see error message'
                             }
                         } else {
-                            errorMessage = 'Developer: Open console to see error message'
+                            errorMessage = 'Undefined Error'; 
                         }
-                    } else {
-                        errorMessage = 'Undefined Error'; 
-                    }
-
-
-                    const evt = new ShowToastEvent({
-                        title: 'Creating new quotelines ERROR',
-                        message: errorMessage,
-                        variant: 'error',
-                        mode: 'dismissable'
+    
+    
+                        const evt = new ShowToastEvent({
+                            title: 'Creating new quotelines ERROR',
+                            message: errorMessage,
+                            variant: 'error',
+                            mode: 'dismissable'
+                        });
+                        this.dispatchEvent(evt);
                     });
-                    this.dispatchEvent(evt);
-                });
+                }
+                else {
+                    this.goodCreating = true; 
+                    this.notGoodToGoBundle[1] = false;
+                    this.callData();
+                }
+                
 
                 /*
                 const payload = { 
@@ -872,7 +888,7 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
                         if(error.body.exceptionType != undefined){
                             errorMessage = error.body.exceptionType.message;
                         } else 
-                        if (error.body.pageErrors[0]!= undefined){
+                        if (error.body.pageErrors!= undefined){
                             if(error.body.pageErrors[0].message != undefined){
                                 errorMessage = error.body.pageErrors[0].message; 
                             } else if (error.body.pageErrors[0].statusCode != undefined){
@@ -1127,17 +1143,18 @@ export default class UserInterface extends NavigationMixin(LightningElement) {
             let quoteEdition;
             if(this.quotelinesString != '[]' && this.quotelinesString != '[id: \"none\"]'){
                 quoteEdition = JSON.parse(this.quotelinesString);
+                for(let i = 0; i< quoteEdition.length; i++){
+                    if (quoteEdition[i].qlevariableprice == 'Cable Length' && quoteEdition[i].isNSP == false){
+                        if(quoteEdition[i].length<0 || (quoteEdition[i].lengthuom != 'Meters' && quoteEdition[i].lengthuom != 'Feet')){
+                            this.notSaveYet = true;
+                            quotesToFill.push(i+1);
+                        }
+                    } 
+                }
             }
 
             //PROCESS TO AVOID USER ERRORS BEFORE SAVING.
-            for(let i = 0; i< quoteEdition.length; i++){
-                if (quoteEdition[i].qlevariableprice == 'Cable Length' && quoteEdition[i].isNSP == false){
-                    if(quoteEdition[i].length<0 || (quoteEdition[i].lengthuom != 'Meters' && quoteEdition[i].lengthuom != 'Feet')){
-                        this.notSaveYet = true;
-                        quotesToFill.push(i+1);
-                    }
-                } 
-            }
+            
             //TELL THE USER MISSING FIELDS
             if(this.notSaveYet){
                 this.showPSTab = false; 

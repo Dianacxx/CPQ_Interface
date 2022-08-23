@@ -1,0 +1,309 @@
+<template>
+
+
+
+
+    <lightning-card>
+
+
+
+        <div class="slds-page-header">
+            <div class="slds-page-header__row">
+              <div class="slds-page-header__col-title">
+                <div class="slds-media">
+                  <div class="slds-media__figure">
+                    <span class="slds-icon_container slds-icon-standard-opportunity" title="Contract">
+                      <lightning-icon icon-name="standard:account" alternative-text="Account" title="Account"></lightning-icon>
+      
+                      <span class="slds-assistive-text"></span>
+                    </span>
+                  </div>
+                  <div class="slds-media__body">
+                    <div class="slds-page-header__name">
+                      <div class="slds-page-header__name-title">
+                        <h1>
+                          <span class="slds-page-header__title slds-truncate" title="Account Name">{accountName} - {accountNumber}</span>
+                        </h1>
+                      </div>
+                    </div>
+                    <p class="slds-page-header__name-meta"> Agreement : <b> {name} </b>  # <b> {contractNumber} </b> - End User : <b>{endUserName}</b> - Start Date : <b>{startDate}</b> - End Date : <b>{endDate}</b> - Cadence : <b>{schedule} </b> -  Sales Person/Agent : <b>{salesPerson}</b> - Currency : <b>{currencyContract} </b></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+      
+      
+          <br><br><br>
+
+
+
+
+        <!--     <h1></h1>
+       
+            <div class="slds-grid slds-gutters">
+                <div class="slds-col">
+                  <span></span>
+                </div>
+                <div class="slds-col">
+                  <span>
+                    <p>       Agreement Name : <b> {name}</b></p>
+                    <p>       Quoted Customer : <b>{customer}</b></p>
+                    <p>       End Customer :  <b>{endUserName}</b></p>
+                  <p>       Start Date : <b>{startDate}</b></p>
+                    <p>       End Date : <b>{endDate}</b></p>
+                    <p>       Review Period : <b>{schedule}</b></p>
+                    <p>       Rise/Fall Cadence : <b>{cadence}</b></p>
+               
+                </span>
+                </div>
+                
+                <div class="slds-col">
+                  <span>
+                    <p>       Channel Type :  <b>{type}</b></p>
+                    <p>       Competitor : <b>{competitor}</b></p>
+                    <p>       Sales Person/Agent : <b>{salesPerson}</b></p>
+                    <p>       Currency : <b>{currencyContract}</b></p>
+                 <p>       Market : <b>{market}</b></p>
+                    <p>       Owner : <b>{ownerName}</b></p>
+                    <p>       Comments : <b>{comment}</b></p>
+                  
+                  </span>
+                </div>
+                <div class="slds-col">
+                    <span></span>
+                  </div>
+              </div> -->
+        <lightning-layout multiple-rows class="slds-border_top slds-border_right slds-border_left slds-m-left_large slds-m-right_large"> 
+            <!--Title and Discount fields-->
+            <lightning-layout-item size="12" small-device-size="8" padding="around-small">
+            <span class="slds-page-header__title slds-truncate">
+                <h2 class="slds-text-heading_large slds-m-left_large" style="color:gray;">Add Products</h2>
+            </span>
+            </lightning-layout-item>
+            <lightning-layout-item size="9" small-device-size="6" padding="around-small" style="width: 200 px;">
+              <div class="slds-p-top_none">
+                <c-bl_agreements_lookup onvalueselected={handleValueSelcted} restored-product={toRestorId} ></c-bl_agreements_lookup>
+    
+            </div>
+            </lightning-layout-item>
+            <!--Button Set-->
+            <lightning-layout-item size="12" small-device-size="6" padding="around-small">
+                <template if:true={loadApplyInput}>
+                <div class="slds-align_absolute-center slds slds-m-around_small">
+                        <button class="stretchButton slds-m-right_small" disabled={disableReorder} onclick={refreshPrice}>Reset Prices</button>
+                        <!--<button class="stretchButton slds-m-right_small"  onclick={handlePreviousScreen}>Refresh Price 2</button>-->
+                        <button class="stretchButton "  onclick={handleCancel}>Cancel</button>
+                </div>
+                <div class="slds-align_absolute-center slds-m-around_small">
+                    <button class="stretchButton slds-m-right_small" disabled={disableReorder} onclick={saveDiscountSchedule}>Save Changes</button>
+                    <button class="stretchButton slds-m-right_small"  onclick={handleSaveAndExist}>Save & Exit</button>
+                    <button class={activateClass}  disabled={disabledButton} onclick={handleActivateContract}>{activateString}</button>  
+                    <button class="slds-hidden" data-id="ApplyToQCP"  onclick={handleApplyToQCP} title="ApplyToQCP"></button>
+
+           </div>
+        </template>
+                
+            </lightning-layout-item>
+        </lightning-layout>
+        <!-- DISCOUNT COMBOBOX -->
+
+      
+<!-- DISCOUNT INPUT -->
+
+    
+<div class="slds-grid slds-wrap">
+    <div class="slds-col slds-size_10-of-12">
+      <span>
+        <lightning-combobox
+        class="discountType"
+        name="progress"
+        value=""
+        placeholder="Discount"
+        options={discountTypeOptions}
+        onchange={handleDiscountTypeChange}
+        
+></lightning-combobox>
+      </span>
+    </div>
+    
+    <div class="slds-col slds-grid slds-size_1-of-5">
+      <div class="slds-col slds-size_1-of-2">
+        <span>
+            <lightning-input type="number" step='0.01' value='' class=" discountInput " formatter={formatter}
+            onchange={handleDiscount} label ={discountLabel} name="Discount%" min="0" max={maxValue}></lightning-input>
+
+        </span>
+      </div>
+      <div class="slds-col slds-size_1-of-2">
+        <span>
+            <button class="ApplyButton label-hidden  slds-m-right_small" disabled={disableDiscount} onclick={handleApplyDiscount}>Apply</button>
+
+        </span>
+      </div>
+    </div>
+  </div>
+  <BR><BR><BR>
+
+            <!-- TABS -->
+            <lightning-spinner if:false={loadTable} alternative-text="Loading" size="medium"></lightning-spinner>
+
+            <div class="slds-border_right slds-border_bottom slds-border_left slds-var-m-left_large slds-var-m-right_large">
+                <lightning-tabset>
+                    <lightning-tab label="Primary Tab" value="Main" onactive={handleActive}>
+                        <template if:true={loadTable}>
+                            <lightning-datatable 
+                            key-field="discountName"
+                            onrowaction={handleRowActions}
+                            onrowselection={handleRowSelection}
+                            data={data} 
+                            columns={columns} 
+                            onsave={handleSaveEdition}
+                            draft-values={draftValues}>
+                            </lightning-datatable>
+                           <!--  <c-bl_agreements_custom-type-component
+                            key-field="discountName"
+                            onrowaction={handleRowActions}
+                            data={data} 
+                            columns={columns} 
+                            onsave={handleSaveEdition}
+                            draft-values={draftValues}>
+                            </lightning-datatable>
+                            ></c-bl_agreements_custom-type-component> -->
+                        </template>
+                    </lightning-tab>
+                    <lightning-tab label="Secondary Tab" value="Line Note" onactive={handleActive}>
+                        <template if:true={loadTable}>
+                            <lightning-datatable
+                            key-field="discountName"
+                            onrowaction={handleRowActions}
+                            data={data} 
+                            columns={columnsDetails} 
+                            onsave={handleSaveEdition}
+                            draft-values={draftValues}>
+                            </lightning-datatable>
+                        </template>
+                    </lightning-tab>
+                    
+                    
+                
+                </lightning-tabset>
+            </div>
+
+            <!-- END OF TABS -->
+      <!--   <lightning-spinner if:false={loadTable} alternative-text="Loading" size="medium"></lightning-spinner>
+        <template if:true={loadTable}>
+            <lightning-datatable 
+            key-field="discountName"
+            onrowaction={handleRowActions}
+            data={data} 
+            columns={columns} 
+            onsave={handleSaveEdition}
+            draft-values={draftValues}>
+            </lightning-datatable>
+        </template>
+ -->
+        <BR>
+    </lightning-card>
+    
+     <!-- EDIT POPUP -->
+     <template if:true={isModalOpen}>
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container slds-modal__container_max">
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={closeModal}>
+                        <lightning-icon icon-name="utility:close"
+                            alternative-text="close"
+                            variant="inverse"
+                            size="small" ></lightning-icon>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                    <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Quantity Breaks</h2>
+                </header>
+                <div class="slds-modal__content discountTiersPopup slds-p-around_medium" id="modal-content-id-1">
+                   
+                   
+                    <c-bl_agreements_tiers_table old-record-id={oldRecordId} conversion-rate={conversionRate} new-id={newId} prod-name={prodName} onapplytoqcp={handleApplyToQCP} onclose={closeModal} onsavee={saveDiscountSchedule} onsauvegarde={handleApplyToQCP} active-tiers={activeTiers} currency-contract={currencyContract} customer={customer}   discount-id={discountId} indexo ={indexo} factoro ={factoro} conversion-factor={conversionFactor} producto={producto} record-id={recordId} discount-nombre={discountNombre} is-modal-open={isModalOpen} ></c-bl_agreements_tiers_table>
+                
+
+ 
+                
+                </div>
+               <!--  <footer class="slds-modal__footer">
+                    <button class="slds-button slds-button_neutral" onclick={closeModal} title="Cancel">Cancel</button>
+                    <button class="slds-button slds-button_brand" onclick={submitDetails} title="OK">OK</button>
+                </footer> -->
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+
+    <!-- DELETE POPUP -->
+    <template if:true={isDeleteModalOpen}>
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <!-- Modal/Popup Box LWC header here -->
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={closeModal}>
+                        <lightning-icon icon-name="utility:close"
+                            alternative-text="close"
+                            variant="inverse"
+                            size="small" ></lightning-icon>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                    <h2 id="modal-heading-02" class="slds-text-heading_medium slds-hyphenate">Delete Confirmation</h2>
+                </header>
+                <!-- Modal/Popup Box LWC body starts here -->
+                <div class="slds-modal__content slds-p-around_medium " id="modal-content-id-2">
+                   
+                    <p><b>Are you sure to delete this Discount Schedule ?
+                    </b></p>
+                </div>
+                <!-- Modal/Popup Box LWC footer starts here -->
+                <footer class="slds-modal__footer">
+                    <button class="slds-button slds-button_neutral" onclick={closeDeleteModal} title="Cancel">Cancel</button>
+                    <button class="slds-button slds-button_brand" onclick={confirmDelete} title="Confirm">Confirm</button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+
+
+        <!-- UOM POPUP -->
+     <template if:true={uomPopupOpen}>
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container modal__container_uom">
+                <header class="slds-modal__header slds-var-m-left_small  slds-var-m-right_small">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={closeUomPopup}>
+                        <lightning-icon icon-name="utility:close"
+                            alternative-text="close"
+                            variant="inverse"
+                            size="small" ></lightning-icon>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                </header>
+                <div style="overflow: initial;" class="slds-modal__content slds-var-p-around_medium slds-var-m-left_small  slds-var-m-right_small">
+                
+                    <lightning-combobox class="slds-align_absolute-center" style="width:80%"
+                    name="uom"
+                    label="Unit Of Measure"
+                    value=""
+                    placeholder="Select a UOM"
+                    options={uomList}
+                    onchange={uomHandler}>
+
+                   
+        </lightning-combobox>
+                
+
+                </div>
+                <footer class="slds-modal__footer slds-var-m-left_small  slds-var-m-right_small">
+                    <button class="slds-button slds-button_neutral" onclick={closeUomPopup} title="Cancel">Cancel</button>
+                    <button class="slds-button slds-button_brand" onclick={saveUom} title="OK">OK</button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+    </template>

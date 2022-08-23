@@ -158,13 +158,12 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                     } else if (secondList.quantity < secondList.minimumorderqty){
                         secondList.quantity = secondList.minimumorderqty;
                     }
-                    secondList.netunitprice = 1;
+                    //secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
                     //console.log('LUPL'+secondList.listunitprice);
-                    if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
-                        secondList.listunitprice = 1;
-                    }
+                    //if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
+                    //    secondList.listunitprice = 1;}
                     if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
                         secondList.isNSP = false;
                     }
@@ -196,13 +195,12 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                     } else if (secondList.quantity < secondList.minimumorderqty){
                         secondList.quantity = secondList.minimumorderqty;
                     }
-                    secondList.netunitprice = 1;
+                    //secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
                     //console.log('LUPL'+secondList.listunitprice);
-                    if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
-                        secondList.listunitprice = 1;
-                    }
+                    //if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
+                    //    secondList.listunitprice = 1;}
                     if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
                         secondList.isNSP = false;
                     }
@@ -239,12 +237,11 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                     } else if (secondList.quantity < secondList.minimumorderqty){
                         secondList.quantity = secondList.minimumorderqty;
                     }
-                    secondList.netunitprice = 1;
+                    //secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
-                    if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
-                        secondList.listunitprice = 1;
-                    }
+                    //if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
+                    //    secondList.listunitprice = 1; }
                     if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
                         secondList.isNSP = false;
                     }
@@ -276,13 +273,12 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                     } else if (secondList.quantity < secondList.minimumorderqty){
                         secondList.quantity = secondList.minimumorderqty;
                     }
-                    secondList.netunitprice = 1;
+                    //secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
                     //console.log('LUPL'+secondList.listunitprice);
-                    if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
-                        secondList.listunitprice = 1;
-                    }
+                    //if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
+                    //    secondList.listunitprice = 1; }
                     if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
                         secondList.isNSP = false;
                     }
@@ -314,13 +310,12 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                     } else if (secondList.quantity < secondList.minimumorderqty){
                         secondList.quantity = secondList.minimumorderqty;
                     }
-                    secondList.netunitprice = 1;
+                    //secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
                     //console.log('LUPL'+secondList.listunitprice);
-                    if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
-                        secondList.listunitprice = 1;
-                    }
+                    //if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
+                    //    secondList.listunitprice = 1; }
                     if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
                         secondList.isNSP = false;
                     }
@@ -346,15 +341,18 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             //console.log('MANUAL LIST');
             let list6 = JSON.parse(JSON.stringify(this.girdDataManualItemTabAdd)); 
             for (let list of list6){
-                list.netunitprice = 1;
-                if ((list.listunitprice == null) || (list.listunitprice == 'null')){
-                    list.listunitprice = 1;
-                }
+                //if ((list.netunitprice == null) || (list.netunitprice == 'null')){
+                //    list.netunitprice = 1; }
+                //if ((list.listunitprice == null) || (list.listunitprice == 'null')){
+                //    list.listunitprice = 1; }
                 if((list.stock == null) || (list.stock == 'null')){
                     list.stock = false;
                 }
                 if((list.alternative == null) || (list.alternative == 'null')){
                     list.alternative = false;
+                }
+                if((list.optional == null) || (list.optional == 'null')){
+                    list.optional = false;
                 }
                 if ((list.isNSP == null) || (list.isNSP == 'null')){
                     list.isNSP = false;
@@ -383,7 +381,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             //SAVING QUOTE LINES BEFORE GOING TO CONFIGURED PAGE
             let startTime = window.performance.now();
 
-            console.log('Method quoteLineCreator quoteId: '+this.recordId+ ' quoteLines: '+stringQuotesAdded);
+            //console.log('Method quoteLineCreator quoteId: '+this.recordId+ ' quoteLines: '+stringQuotesAdded);
             quoteLineCreator({quoteId: this.recordId, quoteLines: stringQuotesAdded})
             .then(()=>{
 
@@ -532,7 +530,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
     handleSaveAndExit(){
         this.savePSValues = true;
         this.quotesAdded = []; 
-
+        console.log(Date()); 
         //SAME PROCESS OF SAVING BEFORE NAVIGATION TO OTHER PAGE
         if(this.girdDataAcaTabAdd.length > 0){
             //console.log('ACA LIST');
@@ -544,13 +542,13 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                     } else if (secondList.quantity < secondList.minimumorderqty){
                         secondList.quantity = secondList.minimumorderqty;
                     }
-                    secondList.netunitprice = 1;
+                    //secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
                     //console.log('LUPL'+secondList.listunitprice);
-                    if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
-                        secondList.listunitprice = 1;
-                    }
+                    //if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
+                    //    secondList.listunitprice = 1;
+                    //}
                     if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
                         secondList.isNSP = false;
                     }
@@ -582,13 +580,13 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                     } else if (secondList.quantity < secondList.minimumorderqty){
                         secondList.quantity = secondList.minimumorderqty;
                     }
-                    secondList.netunitprice = 1;
+                    //secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
                     //console.log('LUPL'+secondList.listunitprice);
-                    if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
-                        secondList.listunitprice = 1;
-                    }
+                    //if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
+                    //    secondList.listunitprice = 1;
+                    //}
                     if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
                         secondList.isNSP = false;
                     }
@@ -625,12 +623,12 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                     } else if (secondList.quantity < secondList.minimumorderqty){
                         secondList.quantity = secondList.minimumorderqty;
                     }
-                    secondList.netunitprice = 1;
+                    //secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
-                    if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
-                        secondList.listunitprice = 1;
-                    }
+                    //if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
+                    //    secondList.listunitprice = 1;
+                    // }
                     if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
                         secondList.isNSP = false;
                     }
@@ -662,13 +660,13 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                     } else if (secondList.quantity < secondList.minimumorderqty){
                         secondList.quantity = secondList.minimumorderqty;
                     }
-                    secondList.netunitprice = 1;
+                    //secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
                     //console.log('LUPL'+secondList.listunitprice);
-                    if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
-                        secondList.listunitprice = 1;
-                    }
+                    //if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
+                    //    secondList.listunitprice = 1;
+                    //}
                     if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
                         secondList.isNSP = false;
                     }
@@ -700,13 +698,13 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                     } else if (secondList.quantity < secondList.minimumorderqty){
                         secondList.quantity = secondList.minimumorderqty;
                     }
-                    secondList.netunitprice = 1;
+                    //secondList.netunitprice = 1;
                     secondList.alternative = false;
                     secondList.stock = false;
                     //console.log('LUPL'+secondList.listunitprice);
-                    if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
-                        secondList.listunitprice = 1;
-                    }
+                    //if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
+                    //    secondList.listunitprice = 1;
+                    //}
                     if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
                         secondList.isNSP = false;
                     }
@@ -732,15 +730,20 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
             //console.log('MANUAL LIST');
             let list6 = JSON.parse(JSON.stringify(this.girdDataManualItemTabAdd)); 
             for (let list of list6){
-                list.netunitprice = 1;
-                if ((list.listunitprice == null) || (list.listunitprice == 'null')){
-                    list.listunitprice = 1;
-                }
+                //if ((list.netunitprice == null) || (list.netunitprice == 'null')){
+                //    list.netunitprice = 1;
+                //}
+                //if ((list.listunitprice == null) || (list.listunitprice == 'null')){
+                //    list.listunitprice = 1;
+                //}
                 if((list.stock == null) || (list.stock == 'null')){
                     list.stock = false;
                 }
                 if((list.alternative == null) || (list.alternative == 'null')){
                     list.alternative = false;
+                }
+                if((list.optional == null) || (list.optional == 'null')){
+                    list.optional = false;
                 }
                 if ((list.isNSP == null) || (list.isNSP == 'null')){
                     list.isNSP = false;
@@ -761,7 +764,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         } else {
 
             let startTime = window.performance.now();
-            console.log('Method quoteLineCreator quoteId: '+this.recordId+ ' quoteLines: '+stringQuotesAdded);
+            //console.log('Method quoteLineCreator quoteId: '+this.recordId+ ' quoteLines: '+stringQuotesAdded);
             quoteLineCreator({quoteId: this.recordId, quoteLines: stringQuotesAdded})
             .then(()=>{
                 let endTime = window.performance.now();

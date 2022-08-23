@@ -395,7 +395,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
 
             let startTime = window.performance.now();
 
-            console.log('Method getFirstFilter filteredGrouping: '+filterGroup);
+            //console.log('Method getFirstFilter filteredGrouping: '+filterGroup);
             getFirstFilter({filteredGrouping: filterGroup})
             .then((data)=>{
                 let endTime = window.performance.now();
@@ -451,7 +451,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
 
             let startTime = window.performance.now();
 
-            console.log('Method getFirstFilter filteredGrouping: '+filterGroup);
+            //console.log('Method getFirstFilter filteredGrouping: '+filterGroup);
             getFirstFilter({filteredGrouping: filterGroup})
             .then((data)=>{
                 let endTime = window.performance.now();
@@ -531,14 +531,14 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
 
         let startTime = window.performance.now();
 
-        console.log('Method getProductFilteringv2 filteredGrouping: '+ this.trackList.lookupCode+' typeSelection'+ this.requiredApex);
+        //console.log('Method getProductFilteringv2 filteredGrouping: '+ this.trackList.lookupCode+' typeSelection'+ this.requiredApex);
         getProductFilteringv2({filteredGrouping: this.trackList.lookupCode, typeSelection: this.requiredApex })
         .then((data)=>{
             let endTime = window.performance.now();
             console.log(`getProductFilteringv2 method took ${endTime - startTime} milliseconds`);
 
             //console.log('SECOND PRODUCT TYPE');
-            console.log(data);
+            //console.log(data);
             let temporalList = JSON.parse(data);
 
             //This line is to check if it is ADSS Cable to allow convertion in feet
@@ -632,7 +632,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
             //console.log('Customer/Model Value: '+JSON.stringify(event.detail.value));
 
             let startTime = window.performance.now();
-            console.log('Method getAdditionalFiltering customerSelection: '+ event.detail.value+' filteredGrouping'+ this.trackList.lookupCode);
+            //console.log('Method getAdditionalFiltering customerSelection: '+ event.detail.value+' filteredGrouping'+ this.trackList.lookupCode);
 
             getAdditionalFiltering({customerSelection: event.detail.value, filteredGrouping: this.trackList.lookupCode})
             .then((data)=>{
@@ -715,7 +715,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
         //console.log('tabSelectedValue: ' + tabSelectedValue);
         let startTime = window.performance.now();
 
-        console.log('Method filteredProductPrinter filterValues: '+ JSON.stringify(filters)+' level1 '+ tabSelectedValue+ ' filteredGrouping '+this.trackList.lookupCode);
+        //console.log('Method filteredProductPrinter filterValues: '+ JSON.stringify(filters)+' level1 '+ tabSelectedValue+ ' filteredGrouping '+this.trackList.lookupCode);
 
         filteredProductPrinter({filterValues: JSON.stringify(filters), level1: tabSelectedValue, filteredGrouping: this.trackList.lookupCode})
         .then((data)=>{
@@ -753,6 +753,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     clearFilters(){
         //Clearing filters with button in Filter Tab
         this.checkFeetToMeters = false; 
+        this.feetToMeters = false;
         this.listFilters = [];
         this.listTextFilters = [];
         this.reviewSelectedLabel = [];

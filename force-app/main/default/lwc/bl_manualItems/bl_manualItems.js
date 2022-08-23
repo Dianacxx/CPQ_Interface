@@ -44,7 +44,7 @@ export default class Bl_manualItems extends LightningElement {
     {label: 'Description',  property: 'description', value: '', required: true,},
     {label: 'Quantity',  property: 'quantity', value: '', required: true,}, 
     {label: 'Primary UOM',  property: 'primaryUOM', value: '', required: true,},
-    {label: 'Price',  property: 'price', value: '', required: true,}, 
+    {label: 'Price',  property: 'listunitprice', value: '', required: true,}, 
     ]; 
 
     
@@ -123,7 +123,12 @@ export default class Bl_manualItems extends LightningElement {
             propertyValue = propertyValue.replace(/\s/g, '');
             if (propertyValue == 'productlevel3'){
                 propertyValue = 'prodLevel3';
+            } else if (propertyValue == 'alternative'){
+                propertyValue = 'optional';
+            } else if (propertyValue == 'billingtolerance'){
+                propertyValue = 'billingTolerance';
             }
+
             this.listOfCaracteristics.push({label: label, value: value, property:propertyValue, required: false,});
             console.log(this.listOfCaracteristics[this.listOfCaracteristics.length-1]);
 
@@ -144,7 +149,7 @@ export default class Bl_manualItems extends LightningElement {
             {label: 'Description',  property: 'description', value: '', required: true,},
             {label: 'Quantity',  property: 'quantity', value: '', required: true,}, 
             {label: 'Primary UOM',  property: 'primaryUOM', value: '', required: true,},
-            {label: 'Price',  property: 'price', value: '', required: true,}, ]; 
+            {label: 'Price',  property: 'listunitprice', value: '', required: true,}, ]; 
             this.productLevel2Picklist = false;
             this.productLevel3Picklist = false;
             this.uomList = false;
@@ -207,7 +212,9 @@ export default class Bl_manualItems extends LightningElement {
                             //console.log('VALUE: '+ this.listOfCaracteristics[i].value);
                         }
 
-                        manualQuoteline[0][this.listOfCaracteristics[i].property] = this.listOfCaracteristics[i].value; 
+                        manualQuoteline[0][this.listOfCaracteristics[i].property] = this.listOfCaracteristics[i].value;
+                        console.log('Poperty:  ' +this.listOfCaracteristics[i].property);
+                        console.log('Value:  '+this.listOfCaracteristics[i].value);  
                     }
                     manualQuoteline[0].uom = manualQuoteline[0].primaryUOM;
                     manualQuoteline[0].isNSP = false;

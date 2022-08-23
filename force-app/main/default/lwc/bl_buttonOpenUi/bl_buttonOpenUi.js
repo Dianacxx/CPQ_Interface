@@ -18,21 +18,22 @@ export default class ButtonOpenUi extends NavigationMixin(LightningElement) {
     @api quoteLinesAuxiliar; 
     //NAVIGATION TO OPEN UI 
     handleNavigateUi(){
-
+        this.isLoading = true; 
         //NAVIGATE IF IT HAS A PRICEBOOK
         let startTime = window.performance.now();
-        console.log('Method checkPricebookInQuote quoteId '+this.recordId);
+        //console.log('Method checkPricebookInQuote quoteId '+this.recordId);
 
         checkPricebookInQuote({quoteId: this.recordId})
         .then((data)=>{
+            
             let endTime = window.performance.now();
-            console.log(`search method took ${endTime - startTime} milliseconds`);
+            console.log(`Pricing Book search method took ${endTime - startTime} milliseconds`);
             if (data == 'YES'){
-
                 let startTime1 = window.performance.now();
-                console.log('Method savingRecordId quoteId '+this.recordId);
+                //console.log('Method savingRecordId quoteId '+this.recordId);
                 savingRecordId({quoteId: this.recordId})
                 .then(() => {
+                    this.isLoading = false; 
                     let endTime1 = window.performance.now();
                     console.log(`savingRecordId method took ${endTime1 - startTime1} milliseconds`);
                     //console.log('RECORD SAVE IN ACTION!');
@@ -56,6 +57,7 @@ export default class ButtonOpenUi extends NavigationMixin(LightningElement) {
                     console.log(error);
                 });   
             } else if (data == 'NOT'){
+                this.isLoading = false; 
                 const evt = new ShowToastEvent({
                     title: 'The Quote has not PriceBook assigned',
                     message: 'Please, assign it a Price Book and a Pricebook ID to open the QLE',
@@ -66,6 +68,7 @@ export default class ButtonOpenUi extends NavigationMixin(LightningElement) {
             }
         })
         .catch((error)=>{
+            this.isLoading = false; 
             const evt = new ShowToastEvent({
                 title: 'There is a server error',
                 message: 'Please wait and try again later',

@@ -38,7 +38,7 @@
                         <!--SAVE & DISCOUNT  BUTTONS START-->
                         <lightning-layout-item size="12" small-device-size="6" padding="around-small">
                                 <div class="slds-col slds-align_absolute-center">
-                                    <lightning-input  style="width: 100px;" class="" type="number" label="Line Discount (%)" placeholder="50" value={valueDiscount} onchange={handleValueDiscount}></lightning-input>
+                                    <lightning-input  id="discountinput" style="width: 100px;" class="" type="number" label="Line Discount (%)" placeholder="50" value={valueDiscount} onchange={handleValueDiscount}></lightning-input>
                                     <lightning-button class="stretchButton slds-var-m-top_medium slds-var-m-left_x-small" variant="brand" label="Apply" disabled={disableButton} onclick={handleApplyDiscount}></lightning-button>
                                     <lightning-helptext content="Apply discounts will save the quote lines you have added in the table."></lightning-helptext>
                                     <lightning-button class="stretchButton slds-var-m-top_medium slds-var-m-left_x-small slds-var-m-right_x-small" variant="brand" label="Save & Calculate" onclick={handleSaveAndCalculate}></lightning-button>

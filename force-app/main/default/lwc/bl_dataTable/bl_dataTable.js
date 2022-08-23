@@ -45,9 +45,14 @@ import UPDATE_INTERFACE_CHANNEL from '@salesforce/messageChannel/update_Interfac
 
 //TIER COLUMNS FOR TABLE IN TIERS POP-UP (POP-UP DATATABLE)
 const TIER_COLUMNS = [
+    /*
     { label: 'Quantity Breaks', fieldName: 'Tier_Name__c', initialWidth: 150, },
     { label: 'Number', fieldName: 'SBQQ__Number__c', type: 'number', initialWidth: 100,},
     { label: 'Discount', fieldName: 'SBQQ__Discount__c', type: 'number', initialWidth: 100, },
+    */
+    {label: 'Lower Bound',initialWidth: 150, fieldName: 'SBQQ__LowerBound__c',  type: 'number'},
+    {label: 'Upper Bound',initialWidth: 150,fieldName: 'SBQQ__UpperBound__c' , type: 'number'},
+    {label: 'Price',initialWidth: 150,fieldName: 'SBQQ__Price__c' , type: 'number'},
 ];
 
 //DATA TABLE COLUMNS FOR EACH TAB USED
@@ -98,7 +103,7 @@ export default class Bl_dataTable extends LightningElement {
     //QuoteLines information + Quote Notes
     @api quotelinesLength = 0; //Quotelines quantity
     @api quotelinesString; //Quotelines information in string
-    @api quoteLines; //Quotelines information as object
+    @api quoteLines = []; //Quotelines information as object
 
     //QuoteLines fieldSet
     @track fieldSetLength;
@@ -148,13 +153,13 @@ export default class Bl_dataTable extends LightningElement {
             //DEPENDING ON TAB, CHANGE COLUMS VALUES
         
             if (this.quotelinesString.length > 2 && this.quotelinesString !== '[id: "none"]'){
-                console.log('2');
-                console.log(typeof this.quotelinesString);
-                console.log(this.quotelinesString);
+                //console.log('2');
+                //console.log(typeof this.quotelinesString);
+                //console.log(this.quotelinesString);
                 this.quoteLines = JSON.parse(this.quotelinesString);
                 //console.log(JSON.stringify(this.quoteLines[0]));
-                console.log('3');
-                console.log(this.quoteLines[0]); 
+                //console.log('3');
+                //console.log(this.quoteLines[0]); 
                 for(let i=0;i<this.quoteLines.length;i++){
                     if(this.quoteLines[i].product.includes('"')){
                         this.quoteLines[i].product = this.quoteLines[i].product.replace(/['"]+/g, '');
@@ -166,11 +171,13 @@ export default class Bl_dataTable extends LightningElement {
                 }
                 this.quoteLinesString = JSON.stringify(this.quoteLines);
                 this.updateTable();
+            } else {
+                this.spinnerLoading = false; 
             }
             //Make available the look up field
             this.spinnerLoading = false; 
             this.dispatchEvent(new CustomEvent('notselected'));
-
+            
         },1000);
     }
 
@@ -297,7 +304,6 @@ export default class Bl_dataTable extends LightningElement {
             }
         }
         //WHEN A DISCOUNT VALUES IS ADDED AND APPLY
-        //HERE THE ERROR MESSAGE IS SHOWN TWICE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         else if (message.auxiliar == 'applydiscount'){
             this.discount = message.dataString;
             if (this.selectedRows != undefined && this.selectedRows !=  null && this.selectedRows.length > 0 ){
@@ -313,6 +319,11 @@ export default class Bl_dataTable extends LightningElement {
                 setTimeout(()=>{
                     this.dispatchEvent(new CustomEvent('discount'));
                     this.spinnerLoading = false;
+                    const payload = { 
+                        dataString: null,
+                        auxiliar: ''
+                      };
+                    publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
                 },500);
             } else {
                 this.dispatchEvent(new CustomEvent('notselected'));
@@ -428,7 +439,7 @@ export default class Bl_dataTable extends LightningElement {
                         newQuotelines[i].id = 'new'+randomId; 
                         newQuotelines[i].name = 'New QL-'+randomName; 
                         newQuotelines[i].minimumorderqty == null ? newQuotelines[i].quantity = 1 : newQuotelines[i].quantity = newQuotelines[i].minimumorderqty;
-                        newQuotelines[i].netunitprice = 1;
+                        //newQuotelines[i].netunitprice = 1;
                         newQuotelines[i].alternative = false;
                         newQuotelines[i].alternativeindicator = false;
                         newQuotelines[i].dynamicIcon = 'utility:close';
@@ -503,7 +514,7 @@ export default class Bl_dataTable extends LightningElement {
             .then((data) => {
                 let endTime = window.performance.now();
                 console.log(`addQuoteLine method took ${endTime - startTime} milliseconds`);
-                //console.log('Add Product DATA: '+ data); 
+                console.log('Add Product DATA: '+ data); 
                 newQuotelines = JSON.parse(data); 
                 for (let i=0; i< newQuotelines.length; i++){
                     //To create auxiliar ID and Name
@@ -512,7 +523,7 @@ export default class Bl_dataTable extends LightningElement {
                     newQuotelines[i].id = 'new'+randomId; 
                     newQuotelines[i].name = 'New QL-'+randomName; 
                     newQuotelines[i].minimumorderqty == null ? newQuotelines[i].quantity = 1 : newQuotelines[i].quantity = newQuotelines[i].minimumorderqty;
-                    newQuotelines[i].netunitprice = 1;
+                    //newQuotelines[i].netunitprice = null;
                     newQuotelines[i].alternative = false;
                     newQuotelines[i].alternativeindicator = false;
                     newQuotelines[i].dynamicIcon = 'utility:close';
@@ -783,9 +794,8 @@ export default class Bl_dataTable extends LightningElement {
                 if(this.quoteLines[index].prodLevel3 == null || this.quoteLines[index].prodLevel3 == undefined){
                     this.quoteLines[index].prodLevel4 =	null;
                 }
-                if(this.quoteLines[index].netunitprice == null || this.quoteLines[index].netunitprice == undefined){
-                    this.quoteLines[index].netunitprice = 1;
-                }
+                //if(this.quoteLines[index].netunitprice == null || this.quoteLines[index].netunitprice == undefined){
+                //    this.quoteLines[index].netunitprice = 1;}
             }   
 
                 //SHOW ERROR MESSAGES
@@ -912,8 +922,13 @@ export default class Bl_dataTable extends LightningElement {
                 this.deleteClick = true; 
             break;
             case 'Tiers':
-                //alert('THIS PROCESS IS NOT FINISHED YET, PLEASE DO NOT TEST HERE');
-                console.log(JSON.stringify(this.dataRow));
+                //console.log(JSON.stringify(this.dataRow));
+                this.notShowCT= false;
+                this.notShowBP= false; 
+                this.notShowA = false; 
+                this.checkedCT= false;
+                this.checkedBP= false; 
+                this.checkedA = false; 
                 if (this.dataRow.id.startsWith('new')){
                     const evt = new ShowToastEvent({
                         title: 'Unable to change Tiers', 
@@ -930,8 +945,27 @@ export default class Bl_dataTable extends LightningElement {
                     this.overrideLeadTime = 'not'; 
                     this.changeAgreement = false;
                     this.activeOverrideReason = false;
-                    this.dataRow.newCustomerTier != null ? this.notShowBP = true : this.notShowBP = false; 
-                    this.dataRow.basepriceoverride != null ? this.notShowCT = true : this.notShowCT = false;
+                    if(this.dataRow.newCustomerTier != null){
+                        this.notShowBP = true;
+                        this.notShowA = true;
+                        this.checkedBP= false; 
+                        this.checkedA = false; 
+                        this.checkedCT = true;
+                    } else if (this.dataRow.basepriceoverride != null){
+                        this.notShowCT = true;
+                        this.notShowA = true;
+                        this.checkedCT= false;
+                        this.checkedA = false;
+                        this.checkedBP = true;
+                    } else if (this.dataRow.newdiscountSchedule != null){
+                        this.notShowCT = true;
+                        this.notShowBP = true;
+                        this.checkedCT= false;
+                        this.checkedBP= false; 
+                        this.checkedA = true;
+                    }
+                    //this.dataRow.newCustomerTier != null ? this.notShowBP = true : this.notShowBP = false; 
+                    //this.dataRow.basepriceoverride != null ? this.notShowCT = true : this.notShowCT = false;
                     this.dataRow.newCustomerTier == null ? this.showLineCustomertier = this.dataRow.CustomerTier : this.showLineCustomertier = this.dataRow.newCustomerTier;
                     this.dataRow.basepriceoverride == null ? this.showBasePriceOverride = null : this.showBasePriceOverride = this.dataRow.basepriceoverride;
                     this.showLeadTime = this.dataRow.overridequotedleadtime; 
@@ -1125,6 +1159,7 @@ export default class Bl_dataTable extends LightningElement {
     }
 
     //INITIAL VALUE IN POP-UP TIERS/UPDATE SHOW PRINCIPAR DISCOUNT SCHEDULE
+    overrideTypeCheck = '';
     thereAreTiers = false;
     discountScheduleUom; 
     agreementName;
@@ -1137,6 +1172,10 @@ export default class Bl_dataTable extends LightningElement {
             console.log(JSON.stringify(data));
             this.tiers = data; 
             if(data.length > 0){
+                this.notShowBP = true; 
+                this.notShowCT= true;
+                this.checkedCT= false;
+                this.checkedBP= false; 
                 this.thereAreTiers = true;
                 this.showTiersList = true;
                 this.tiers[0].UOM__c != undefined ? this.discountScheduleUom = this.tiers[0].UOM__c 
@@ -1146,7 +1185,7 @@ export default class Bl_dataTable extends LightningElement {
             } else {
                 this.thereAreTiers = false;
                 this.discountScheduleUom = '';
-
+                this.agreementName = '';
             }
 
         })
@@ -1173,9 +1212,10 @@ export default class Bl_dataTable extends LightningElement {
             searchAgreement( {accId : this.accountId, searchTerm: this.searchTermTier})
             .then((data)=>{
                     //console.log(data);
+                    //console.log('Looked');
                     this.recordsTiers = data;
                     if (this.recordsTiers.length == 0){
-                        this.recordsTiers = [{"Id":"norecords","Agreement_Name__c":"NO RECORDS",}];
+                        this.recordsTiers = [{"Id":"norecords","Agreement_Name__c":"NO Agreements","UOM__c":"NO UOM"}];
                     } 
             })
             .catch((error)=>{
@@ -1212,6 +1252,11 @@ export default class Bl_dataTable extends LightningElement {
                 this.tiers = data; 
                 if(this.tiers.length > 0){
                     this.activeOverrideReasonFields();
+                    this.notShowBP = true; 
+                    this.notShowCT= true;
+                    this.checkedCT= false;
+                    this.checkedBP= false; 
+                    this.checkedA = true;
                     this.tiers[0].UOM__c != undefined ? this.discountScheduleUom = this.tiers[0].UOM__c 
                     :  this.discountScheduleUom = '';
                     this.tiers[0].Agreement__c != undefined ? this.agreementName = this.tiers[0].Agreement__c 
@@ -1219,6 +1264,7 @@ export default class Bl_dataTable extends LightningElement {
                     this.thereAreTiers = true;
                 } else {
                     this.discountScheduleUom = '';
+                    this.agreementName = selectedName;
                     this.thereAreTiers = false;
                 }
                
@@ -1238,9 +1284,71 @@ export default class Bl_dataTable extends LightningElement {
     }
 
     
+    
     //WHEN CHANGING CUSTOMER TIER VALUE (POP-UP DATATABLE)
     notShowCT= false;
     notShowBP= false; 
+    notShowA = false; 
+    checkedCT= false;
+    checkedBP= false; 
+    checkedA = false; 
+
+    //WHEN SELECTING TYPE OF OVERRIDE
+    handleOverryCheck(event){
+        //console.log(event.target.checked);
+        //console.log(event.target.label);
+        if(event.target.label == 'Tier'){
+            if(event.target.checked){
+                this.notShowBP = true;
+                this.notShowA = true;
+                this.checkedBP= false; 
+                this.checkedA = false; 
+                this.checkedCT = true;
+            } else {
+                this.checkedCT = true;
+                this.template.querySelector("[id*='tiercheckbox']").checked = this.checkedCT;
+                const evt = new ShowToastEvent({
+                    title: 'Reset Override Price.',
+                    message: 'Please, reset prices if you want to change the Override Type.',
+                    variant: 'info', mode: 'dismissible ' });
+                this.dispatchEvent(evt);
+            }
+        } else if (event.target.label == 'Price'){
+            if(event.target.checked){
+                this.notShowCT = true;
+                this.notShowA = true;
+                this.checkedCT= false;
+                this.checkedA = false;
+                this.checkedBP = true;
+            } else {
+                this.checkedBP = true;
+                this.template.querySelector("[id*='pricecheckbox']").checked = this.checkedBP;
+                const evt = new ShowToastEvent({
+                    title: 'Reset Override Price.',
+                    message: 'Please, reset prices if you want to change the Override Type.',
+                    variant: 'info', mode: 'dismissible ' });
+                this.dispatchEvent(evt);
+            }
+            
+        } else if (event.target.label == 'Sales Agreement'){
+            if(event.target.checked){
+                this.notShowCT = true;
+                this.notShowBP = true;
+                this.checkedCT= false;
+                this.checkedBP= false; 
+                this.checkedA = true;
+            } else {
+                this.checkedA = true;
+                this.template.querySelector("[id*='agreementcheckbox']").checked = this.checkedA;
+                const evt = new ShowToastEvent({
+                    title: 'Reset Override Price.',
+                    message: 'Please, reset prices if you want to change the Override Type.',
+                    variant: 'info', mode: 'dismissible ' });
+                this.dispatchEvent(evt);
+            }
+        } 
+    }
+
     customerTier = 'not';
     showLineCustomertier;
     showBasePriceOverride;
@@ -1248,6 +1356,10 @@ export default class Bl_dataTable extends LightningElement {
         console.log('customer change');
         this.customerTier = event.target.value; 
         this.notShowBP = true; 
+        this.notShowA = true; 
+        this.checkedBP= false; 
+        this.checkedA = false; 
+        this.checkedCT = true; 
         this.activeOverrideReasonFields();
     }
 
@@ -1265,6 +1377,10 @@ export default class Bl_dataTable extends LightningElement {
         console.log('base price');
         this.basePrice = event.target.value; 
         this.notShowCT= true;
+        this.notShowA = true;          
+        this.checkedCT= false;
+        this.checkedA = false; 
+        this.checkedBP= true;
         this.activeOverrideReasonFields();
     }
 
@@ -1398,8 +1514,6 @@ export default class Bl_dataTable extends LightningElement {
             this.customerTier = 'not';
             this.basePrice = 'not';
             this.activeOverrideReason = false;
-            this.quoteLines[index].newCustomerTier != null ? this.notShowBP = true : this.notShowBP = false; 
-            this.quoteLines[index].basepriceoverride != null ? this.notShowCT = true : this.notShowCT = false;
             this.agreementSearchTearm = null;
             this.showLineCustomertier = this.quoteLines[index].CustomerTier;
             this.dataRow = this.quoteLines[index]; 
@@ -1410,7 +1524,13 @@ export default class Bl_dataTable extends LightningElement {
             this.template.querySelectorAll("[id*='tier']").forEach(each => { each.value = this.dataRow.CustomerTier; });
             this.template.querySelectorAll("[id*='baseprice']").forEach(each => { each.value = undefined; });
 
-
+            this.checkedCT = false;
+            this.checkedBP = false; 
+            this.checkedA  = false; 
+            this.notShowBP = false;
+            this.notShowA  = false;
+            this.notShowCT = false;
+              
             this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
         } else {
             alert('The row cannot change, MEGA ERROR');
@@ -1425,7 +1545,7 @@ export default class Bl_dataTable extends LightningElement {
     properties = [];
     showNSPValues(){
         this.showNSP = false;
-        //console.log(this.dataRow);
+        console.log(this.dataRow);
 
         let startTime = window.performance.now();
         NSPAdditionalFields({productId: this.dataRow.productid })

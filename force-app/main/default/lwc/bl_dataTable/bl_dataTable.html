@@ -171,9 +171,24 @@
                         <div class="slds-var-p-around_small slds-align_absolute-center">
                             <div class="slds-col">
                                 
-                                <h1 class="slds-align_absolute-center slds-var-m-top_small"><b>Quote Line UOM:</b>&nbsp;{dataRow.uom}&nbsp;-&nbsp;<b>Quoted Lead Time:</b>&nbsp;{dataRow.quotedleadtime}</h1>
+                                <h1 class="slds-align_absolute-center slds-var-m-top_small slds-var-m-bottom_small"><b>Quote Line UOM:</b>&nbsp;{dataRow.uom}&nbsp;-&nbsp;<b>Quoted Lead Time:</b>&nbsp;{dataRow.quotedleadtime}</h1>
                                 <!--<h1 class="slds-align_absolute-center slds-var-m-top_small"><b>Actual Base Price:</b>&nbsp;{dataRow.basepriceoverride}</h1>-->
-                                    
+                                <!--LEAD TIME PICKLIST-->
+                                <template if:true={leadTimeValues.data.values}>
+                                    <lightning-combobox style="width: 40%;" class="slds-align_absolute-center" name="overrideleadtime" label="Lead Time" value={showLeadTime}
+                                    placeholder="Override Lead Time" options={leadTimeValues.data.values} onchange={handleLeadTime} ></lightning-combobox>    
+                                </template> 
+
+                                <!--OVERRIDE TYPE CHECK BOX-->
+                                <div class="slds-form-element slds-align_absolute-center slds-var-m-top_small">
+                                    <div class="slds-form-element__control slds-align_absolute-center">
+                                        <b class="slds-var-m-right_small">Override Type: </b>
+                                        <lightning-input type="checkbox" id="tiercheckbox" label="Tier" name="tier" disabled={notShowCT} value={checkedCT} checked={checkedCT} onchange={handleOverryCheck}></lightning-input>
+                                        <lightning-input type="checkbox" id="pricecheckbox" label="Price" name="price" disabled={notShowBP} value={checkedBP} checked={checkedBP} onchange={handleOverryCheck}></lightning-input>
+                                        <lightning-input type="checkbox" id="agreementcheckbox" label="Sales Agreement" disabled={notShowA} name="agreement" value={checkedA} checked={checkedA} onchange={handleOverryCheck}></lightning-input>
+                                    </div>
+                                </div>
+
                                 <!--CUSTOMER TIER PICKLIST-->
                                 <template if:true={tierValues.data.values}>
                                     <lightning-combobox id="tier" disabled ={notShowCT} style="width: 40%;" class="slds-align_absolute-center" name="customerTier" label="Customer Tier" value={showLineCustomertier}
@@ -181,14 +196,10 @@
                                 </template>
 
                                 <!--BASE PRICE INPUT-->
-                                <lightning-input id="baseprice" disabled ={notShowBP}  style="width: 40%;" class="slds-align_absolute-center" type="number" name="BasePriceOverride" label="Base Price Override"
+                                <lightning-input id="baseprice" disabled ={notShowBP}  style="width: 40%;" class="slds-align_absolute-center" type="number" step=".001" name="BasePriceOverride" label="Base Price Override"
                                  value={showBasePriceOverride} placeholder="$" onchange={handleBasePriceChange} ></lightning-input>
                         
-                                <!--LEAD TIME PICKLIST-->
-                                <template if:true={leadTimeValues.data.values}>
-                                    <lightning-combobox style="width: 40%;" class="slds-align_absolute-center" name="overrideleadtime" label="Lead Time" value={showLeadTime}
-                                    placeholder="Override Lead Time" options={leadTimeValues.data.values} onchange={handleLeadTime} ></lightning-combobox>    
-                                </template> 
+                                
 
                                 <!--AGREEMENT LOOK UP FIELD START-->
                                 <div>
@@ -199,7 +210,8 @@
                                                     <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right" role="none">
                                                     <div class="slds-p-top_none">
                                                         <lightning-input  style="width: 40%;"  class={inputClass} type="search" id="inputAgreement" value={agreementSearchTearm}
-                                                            onclick={handleClick} onblur={onBlur} onchange={onChange} label="Agreement" placeholder="Search an agreement">
+                                                            onclick={handleClick} onblur={onBlur} onchange={onChange} label="Agreement" placeholder="Search an agreement"  disabled={notShowA}>
+                                                           
                                                         </lightning-input>
                                                     </div>
                                                     </div>
