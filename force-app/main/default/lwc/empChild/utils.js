@@ -1,5 +1,4 @@
 import queryCT from '@salesforce/apex/CustomerTierController.queryCT';
-import queryPPT from '@salesforce/apex/ProductPricingTierController.queryPPT';
 import queryBlockPrices from '@salesforce/apex/BlockPriceController.queryBlockPrices';
 import queryAscendPackagingAdder from '@salesforce/apex/AscendPackagingAdderController.queryAscendPackagingAdder';
 import queryUOM from '@salesforce/apex/UomConversionController.queryUOM';
@@ -9,6 +8,9 @@ import querySchedules from '@salesforce/apex/ContractController.getDiscountSched
 import queryPremiseMaps from '@salesforce/apex/PremiseMapController.queryPremiseMaps';
 import queryPriceRules from '@salesforce/apex/PriceRuleController.queryPriceRules';
 import retrieveQLM from '@salesforce/apex/myProductWrapper.retrieveQLM';
+import NSPAdditionalFields from '@salesforce/apex/QuoteController.NSPAdditionalFields';
+import wrapQuoteLine from '@salesforce/apex/QuoteController.wrapQuoteLine';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 //Function to check error conditions of a product rule
 const conditionsCheck = (errorConditions, quote, conditionsMet, evaluateQuoteLines) => {
@@ -315,54 +317,52 @@ const produceNewQL = async(event, quote) => {
     shellQuote = { lineItems: [], record: {attributes: { type: "SBQQ__Quote__c" }, ...fields}, ...other };
     
     // get new QuoteModel from apex
-    const data = await retrieveQLM({productId: event.detail.Id, modelJSON: JSON.stringify(shellQuote) });
-    const model = JSON.parse(data);
+    const modelJSON = await retrieveQLM({productId: event.detail.Id, modelJSON: JSON.stringify(shellQuote) });
+    const model = JSON.parse(modelJSON);
+    console.log(model);
 
     // get QLM from new QuoteModel and clone first line in UI quote
     const clone = model.lineItems[0];
-    // const clone = JSON.parse(JSON.stringify(quote.lineItems[0]));
 
-    // let setAll = (obj, val) => Object.keys(obj).forEach(k => obj[k] = val);
-    // let setNull = obj => setAll(obj, null);
+    // get nsp fields
+    const nspFieldsJSON = await NSPAdditionalFields({productId: event.detail.Id });
+    const nspFields = JSON.parse(nspFieldsJSON);
+    if(nspFields.length){
+        const nspApiNames = nspFields.map(nsp => nsp.apiName);
+        for(let apiName of nspApiNames){
+            clone.record[apiName] = clone.record[apiName] ? clone.record[apiName] : null
+        }
+    }
 
-    // setNull(clone.record);
-
-    // for(let key of Object.keys(modelRecord)){
-    //     clone.record[key] = modelRecord[key];
-    // }
-
+    // add recalc fields to clone
+    const formulaRecalcFields = [
+        'SBQQ__Bundle__c', 'SBQQ__Bundled__c', 'SBQQ__CarryoverLine__c',
+        'SBQQ__ComponentDiscountedByPackage__c', 'SBQQ__ComponentUpliftedByPackage__c',
+        'SBQQ__CostEditable__c', 'SBQQ__Existing__c', 'Selected__c',
+        'Price_Overridden_By_15per__c', 'Price_Overridden_By_10per__c',
+        'Price_Overridden_By_5per__c', 'Price_Overridden_By_3per__c',
+        'Price_Override_Approval_Required__c'
+    ]
+    for(let recalcField of formulaRecalcFields){
+        clone.record[recalcField] = clone.record[recalcField] ? clone.record[recalcField] : false
+    }
+    
     // Set new quote line values
-    clone.record['SBQQ__ProductName__c'] = clone.record.SBQQ__Product__r['Name'];
-    clone.record['SBQQ__Quote__c'] = quote.record.Id;
     clone.record['Quote_Line_Name__c'] = clone.record.SBQQ__Product__r['Name'];
     clone.record['SBQQ__AdditionalDiscount__c'] = 0;
-    clone.record['SBQQ__Bundle__c'] = false;
-    clone.record['SBQQ__Bundled__c'] = false;
-    clone.record['SBQQ__CarryoverLine__c'] = false;
-    clone.record['SBQQ__ComponentDiscountedByPackage__c'] = false;
-    clone.record['SBQQ__ComponentUpliftedByPackage__c'] = false;
-    clone.record['SBQQ__CostEditable__c'] = false;
     clone.record['SBQQ__CustomerPrice__c'] = clone.record['SBQQ__OriginalPrice__c'];
+    clone.record['SBQQ__Quantity__c'] = clone.record['Minimum_Order_Qty__c'] ? clone.record['Minimum_Order_Qty__c'] : 1;
     clone.record['SBQQ__EffectiveQuantity__c'] = clone.record['SBQQ__Quantity__c'];
-    clone.record['SBQQ__Existing__c'] = false;
     clone.record['SBQQ__Markup__c'] = 0;
-    clone.record['SBQQ__SpecialPrice__c'] = clone.record['SBQQ__OriginalPrice__c'];
     clone.record['SBQQ__NetPrice__c'] = clone.record['SBQQ__OriginalPrice__c'];
     clone.record['SBQQ__NetTotal__c'] = clone.record['SBQQ__OriginalPrice__c'];
     clone.record['SBQQ__PricebookEntryId__c'] = clone.record.SBQQ__Product__r.PricebookEntries.records[0].Id;
+    clone.record['SBQQ__ProductName__c'] = clone.record.SBQQ__Product__r['Name'];
+    clone.record['SBQQ__Quote__c'] = quote.record.Id;
+    clone.record['SBQQ__SpecialPrice__c'] = clone.record['SBQQ__OriginalPrice__c'];    
     clone.record['SBQQ__UpliftAmount__c'] = 0;
     clone.record['SBQQ__Uplift__c'] = 0;
-    clone.record['Selected__c'] = false;
-    clone.record['Price_Overridden_By_15per__c'] = false;
-    clone.record['Price_Overridden_By_10per__c'] = false;
-    clone.record['Price_Overridden_By_5per__c'] = false;
-    clone.record['Price_Overridden_By_3per__c'] = false;
-    clone.record['Price_Override_Approval_Required__c'] = false;
     clone.key = quote.nextKey + 1;
-    // clone.record.attributes = clone.record.attributes;
-
-    // set minimum order qty to product or 1
-    clone.record['SBQQ__Quantity__c'] = clone.record['Minimum_Order_Qty__c'] ? clone.record['Minimum_Order_Qty__c'] : 1;
 
     // set length and length uom
     if (clone.record['Filtered_Grouping__c'] == 'Cable Assemblies' || clone.record['Product_Type__c'] == 'Patch Panel - Stubbed'){
@@ -378,7 +378,7 @@ const produceNewQL = async(event, quote) => {
         clone.record['Length__c'] = '5';
         clone.record['Length_UOM__c'] = 'Meters';
     }
-
+    
     return clone;
 }
 
@@ -393,7 +393,6 @@ const build = async(quote) => {
     // Query SF objects and set state
     const [ 
         customerTiers,
-        prodTiers,
         blockPrices,
         ascendPackagingList,
         uomRecords,
@@ -403,7 +402,6 @@ const build = async(quote) => {
         priceRules
     ] = await Promise.all([
         queryCT({accountId: quote.record['SBQQ__Account__c']}),
-        queryPPT({prodLevel1List: quote.lineItems.map(line => line.record['ProdLevel1__c'])}),
         queryBlockPrices({listProduct: listBlockProducts}),
         queryAscendPackagingAdder(),
         queryUOM(),
@@ -418,7 +416,6 @@ const build = async(quote) => {
 
     return {
         customerTiers,
-        prodTiers,
         blockPrices,
         ascendPackagingList,
         uomRecords,
@@ -430,4 +427,90 @@ const build = async(quote) => {
     }
 }
 
-export { operatorConverter, conditionsCheck, build, priceRuleLookup, produceNewQL }
+//Product Rule handling
+const productRuleLookup = async (productRules,quote) => {
+    //The product rules already come sorted by evaluation order from the query
+    //Initialize return variables
+    let allowSave;
+    let event;
+    let data = []
+    // wrap quote line model records for conversion
+    const quoteLines = quote.lineItems.map(line => {
+    const { attributes, ...other } = line.record;
+    return other;
+    });
+    if (quoteLines.length <= 100){
+        let startTime = window.performance.now();
+        data = await wrapQuoteLine({qlJSON: JSON.stringify(quoteLines)});
+        let endTime = window.performance.now();
+        console.log(`wrapQuoteLine waited ${endTime - startTime} milliseconds`);
+    }else{
+        let linesSaver = [];
+        let results = [];
+        while (quoteLines.length > 0){
+            const batchSize = 100;
+            const linesBatch = quoteLines.splice(0, batchSize);
+            linesSaver.push(linesBatch);
+        }
+        let startTime = window.performance.now();
+        results = await Promise.all(linesSaver.map(lines => wrapQuoteLine({qlJSON: JSON.stringify(lines)})));
+        let endTime = window.performance.now();
+        console.log(`wrapQuoteLine with batches waited ${endTime - startTime} milliseconds`);
+        results.forEach(line =>{
+            data = data.concat(line);
+        })
+    }
+    const evaluateQuoteLines=data;
+    //Validation Rules
+    const valRules= productRules.filter(rule=> rule['SBQQ__Type__c']=='Validation');
+    //console.log(valRules)
+    if(valRules.length !==0){
+        for(let valRule of valRules){const triggerRule = conditionsCheck(valRule['SBQQ__ErrorConditions__r'],quote,valRule['SBQQ__ConditionsMet__c'], evaluateQuoteLines);
+            if(triggerRule!==-1){
+            const evt = new ShowToastEvent({
+                title: 'Product Rule Error on line: '+ (parseInt(triggerRule)+1),
+                message: valRule['SBQQ__ErrorMessage__c'],
+                variant: 'error', mode: 'sticky'
+                });
+                allowSave = false;
+                event = evt;
+                return{
+                    allowSave,
+                    event
+                }
+            }
+        };
+    } else {
+    //console.log('no validation rules here');
+    }
+    //Alert Rules
+    const alertRules= productRules.filter(rule=> rule['SBQQ__Type__c']=='Alert');
+    //console.log(alertRules);
+    if(alertRules.length !==0){
+        for(let alertRule of alertRules){
+            const triggerRule = conditionsCheck(alertRule['SBQQ__ErrorConditions__r'],quote, alertRule['SBQQ__ConditionsMet__c'], evaluateQuoteLines);
+            if(triggerRule!==-1 ){
+                const evt = new ShowToastEvent({
+                    title: 'Product Rule Alert on line: '+ (parseInt(triggerRule)+1),
+                    message: alertRule['SBQQ__ErrorMessage__c'],
+                    variant: 'warning', mode: 'dismissable'
+                });
+                allowSave = true;
+                event = evt;
+                return{
+                    allowSave,
+                    event
+                }
+            }
+        };
+    }
+    //console.log('no alert rules here');
+    allowSave = true;
+    event = 'no event';
+    return{
+        allowSave,
+        event
+    }
+}
+
+export { build, productRuleLookup, priceRuleLookup, produceNewQL }

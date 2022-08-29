@@ -1,16 +1,16 @@
 <template>
-    <lightning-card title="QLE User Interface" icon-name="cus   m:custom14">
+    <lightning-card title="QLE User Interface" icon-name="custom:custom14">
         <!--HEADER START-->
         <div class="slds-border_top slds-border_right slds-border_bottom slds-border_left slds-var-m-left_large slds-var-m-right_large">
-            <c-bl_header quote-id={quoteId}></c-bl_header>
+            <c-bl_header record-id={quoteId}></c-bl_header>
         </div>
         <!--HEADER END-->   
         <lightning-layout multiple-rows class="slds-border_top slds-border_right slds-border_left slds-var-m-right_large slds-var-m-left_large"> 
             
             <!--FUCTIONALITY BUTTONS START-->
             <lightning-layout-item size="12" small-device-size="6" padding="around-small">
-                <div class="slds-col slds-align_absolute-center slds-var-m-top_xx-large">
-                    <!--<lightning-button class="stretchButton slds-var-m-right_x-small" variant="brand-outline" label="Product Selection" onclick={navitageToProductSelection}></lightning-button>-->
+                <div class="slds-col slds-align_absolute-center slds-var-m-top_medium">
+                    <lightning-button class="stretchButton slds-var-m-right_x-small" variant="brand-outline" label="Product Selection" onclick={navitageToProductSelectionPage}></lightning-button>
                     <lightning-button class="stretchButton slds-var-m-right_x-small" variant="brand-outline" label="Import Lines" onclick={handleImportLines}></lightning-button>
                     <lightning-button class="stretchButton slds-var-m-right_x-small" variant="brand-outline" label="Clone Selected" disabled={isCloneButtonDisabled} onclick={handleCloneRows}></lightning-button>
                     <lightning-button class="stretchButton" variant="brand-outline" label="Reorder Lines" disabled={disableReorder} onclick={handleReorderLines}></lightning-button>
@@ -20,11 +20,11 @@
 
             <!--SAVE & DISCOUNT  BUTTONS START-->
             <lightning-layout-item size="12" small-device-size="6" padding="around-small">
-                <div class="slds-col slds-align_absolute-center slds-var-m-top_xx-small">
+                <div class="slds-col slds-align_absolute-center">
                     <lightning-input  id="discountinput" style="width: 100px;" class="" type="number" label="Line Discount (%)" placeholder="50" value={valueDiscount} onchange={handleValueDiscount}></lightning-input>
-                    <lightning-button class="stretchButton slds-var-m-top_medium slds-var-m-left_x-small" variant="brand" label="Apply" disabled={disableButton} onclick={handleApplyDiscount}></lightning-button>
+                    <lightning-button class="stretchButton slds-var-m-top_medium slds-var-m-left_x-small" variant="brand" label="Apply" disabled={isCloneButtonDisabled} onclick={handleApplyDiscount}></lightning-button>
                     <lightning-helptext content="Apply discounts will calculate with the quote lines you have added in the table."></lightning-helptext>
-                    <lightning-button class="stretchButton slds-var-m-top_medium slds-var-m-left_x-small slds-var-m-right_x-small" variant="brand" label="Save & Calculate" onclick={handleSaveAndCalculate}></lightning-button>
+                    <lightning-button class="stretchButton slds-var-m-top_medium slds-var-m-left_x-small slds-var-m-right_x-small" variant="brand" label="Calculate" onclick={handleSaveAndCalculate}></lightning-button>
                     <lightning-button class="stretchButton slds-var-m-top_medium " variant="brand" label="Save & Exit"  onclick={handleSaveAndExit}></lightning-button>
                 </div>
                 <div class="slds-align_absolute-center slds-var-m-top_x-small">

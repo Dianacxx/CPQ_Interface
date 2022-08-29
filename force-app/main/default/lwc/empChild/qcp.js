@@ -4,13 +4,17 @@ import queryNewSchedules from '@salesforce/apex/ContractController.getDiscountSc
 import wrapQuoteLine from '@salesforce/apex/QuoteController.wrapQuoteLine';
 
 const log = (print) => {
-    console.log(print);
+     console.log(print);
 }
 
 const priceAdjustments = async(quote) => {
 
     // replace net price with special price
     quote.lineItems.forEach(line => {
+        if(!line.record['SBQQ__SpecialPrice__c']){
+            log('Special Price not set by script, using List Price instead.');
+            line.record['SBQQ__SpecialPrice__c'] = line.record['SBQQ__ListPrice__c'];
+        }
         line.record['SBQQ__RegularPrice__c'] = line.record['SBQQ__SpecialPrice__c'];
         line.record['SBQQ__CustomerPrice__c'] = line.record['SBQQ__SpecialPrice__c'];
         // apply additional discount
@@ -30,10 +34,9 @@ const priceAdjustments = async(quote) => {
     const recalculatedQuoteLines = await wrapQuoteLine({qlJSON: JSON.stringify(quoteLines)});
     
     // replace formula fields in original quote line
-    for(let line of quote.lineItems){
-        let index = recalculatedQuoteLines.findIndex(recalcLine => recalcLine['Id'] === line.record['Id']);
-        line.record['Quote_Line_Name__c'] = recalculatedQuoteLines[index]['Quote_Line_Name__c'];
-        line.record['SBQQ__NetTotal__c'] = recalculatedQuoteLines[index]['SBQQ__NetTotal__c'];
+    for(let i = 0; i < quote.lineItems.length; i++){
+        quote.lineItems[i].record['Quote_Line_Name__c'] = recalculatedQuoteLines[i]['Quote_Line_Name__c'];
+        quote.lineItems[i].record['SBQQ__NetTotal__c'] = recalculatedQuoteLines[i]['SBQQ__NetTotal__c'];
     }
     
     return quote;
@@ -202,7 +205,8 @@ const productPricingTierScript = (prodTiers, quoteModel, uomConvertMap) => {
             //now loop through and compare quote line qty to tier min and max qty
             //assuming that quote line qty has been converted to same UOM for comparison
             for(let i = 0; i < pricingTierMapQtyRecs.length; i++){
-                //log('Min qty = ' + pricingTierMapQtyRecs[i].Minimum_Quantity_Num__c);
+                log('Min qty = ' + pricingTierMapQtyRecs[i].Minimum_Quantity_Num__c);
+                log('Max qty = ' + pricingTierMapQtyRecs[i].Maximum_Quantity_Num__c);
                 
                 if (qtyForPricingTier && qtyForPricingTier >= pricingTierMapQtyRecs[i].Minimum_Quantity_Num__c && qtyForPricingTier <= pricingTierMapQtyRecs[i].Maximum_Quantity_Num__c) {
                     
@@ -278,7 +282,7 @@ const customerTierScript = (tiers, quote) => {
 
 const setLeadTimeTier = async (line, quoteModel) => {
 
-    const custLeadTimeTier = await getCustLeadTimeTier(quoteModel.record['End_User__c'], line.record['Product_Lead_Time_Category__c'])
+    let custLeadTimeTier = await getCustLeadTimeTier(quoteModel.record['End_User__c'], line.record['Product_Lead_Time_Category__c'])
     
     if(!custLeadTimeTier){
         log('No customer tier for this end user');
@@ -457,8 +461,10 @@ const getCustLeadTimeTier = async(endUser, lineProdLeadTimeCat) => {
         endUser: endUser,
         productLeadTimeCategory: lineProdLeadTimeCat
     }).then(result => {
-        if (result) {
+        if (result.length) {
             return result[0]['Customer_Lead_Time_Tier__c'];
+        } else {
+            return undefined;
         }
     });   
 }
@@ -563,6 +569,7 @@ const setBusConductorPrice = line => {
     let CalcPrice1 = 0;
     let CalcPrice2 = 0;
     let FinalPrice = 0;
+    let margin = line.record['Margin_Change_Value__c'] ? line.record['Margin_Change_Value__c'] : 0;
                 
     //when keyFieldText is blank that indicates that the product was just added to the line
     if (!line.record['Product_Name_Key_Field_Text__c']) {
@@ -572,39 +579,39 @@ const setBusConductorPrice = line => {
     
     if (line.record['SBQQ__Quantity__c'] && (!line.record['Product_Name_Key_Field_Text__c'] || (line.record['Product_Name_Key_Field_Text__c'] && line.record['Product_Name_Key_Field_Text__c'] != (line.record['SBQQ__Quantity__c'] + "~" + line.record['Region_Code__c'])))) {
     
-        if (line.record['Region_Code__c']== 'East') {
-            RegionAdder = line.record['Region_Adder_East__c'];                           
+        if (line.record['Region_Code__c']== 'East' && line.record['Region_Adder_East__c']) {
+            RegionAdder = line.record['Region_Adder_East__c'];
         }
-        else if (line.record['Region_Code__c']== 'West') {
-            RegionAdder = line.record['Region_Adder_West__c'];         
+        else if (line.record['Region_Code__c']== 'West' && line.record['Region_Adder_West__c']) {
+            RegionAdder = line.record['Region_Adder_West__c'];
         }
-        else if (line.record['Region_Code__c']== 'Central') {
-            RegionAdder = line.record['Region_Adder_Central__c'];        
+        else if (line.record['Region_Code__c']== 'Central' && line.record['Region_Adder_Central__c']) {
+            RegionAdder = line.record['Region_Adder_Central__c'];
         }
-        else if (line.record['Region_Code__c']== 'Northwest') {
-            RegionAdder = line.record['Region_Adder_Northwest__c'];        
+        else if (line.record['Region_Code__c']== 'Northwest' && line.record['Region_Adder_Northwest__c']) {
+            RegionAdder = line.record['Region_Adder_Northwest__c'];
         }
                         
         PieceCount = line.record['Count_Factor__c']/line.record['SBQQ__Quantity__c'];
                         
         var FinalCost = (line.record['Weight_lbs_per_foot__c'] * (RegionAdder + line.record['SBQQ__OriginalPrice__c'])) + PieceCount;
                         
-        if (line.record['Bus_Margin_Low_Value__c'] != 0) {
+        if (line.record['Bus_Margin_Low_Value__c']) {
             CalcPrice1 = FinalCost/line.record['Bus_Margin_Low_Value__c'];
         }
-        if (line.record['Bus_Margin_High_Value__c'] != 0) {
+        if (line.record['Bus_Margin_High_Value__c']) {
             CalcPrice2 = FinalCost/line.record['Bus_Margin_High_Value__c'];
         }
 
-        if ((CalcPrice1 * line.record['SBQQ__Quantity__c']) < line.record['Margin_Change_Value__c']) {
+        if ((CalcPrice1 * line.record['SBQQ__Quantity__c']) < margin) {
             FinalPrice = CalcPrice1;                     
-        }
-        else {
+        } else {
             FinalPrice = CalcPrice2;
         }	
                         
         line.record['Product_Name_Key_Field_Text__c'] = line.record['SBQQ__Quantity__c'] + "~" + line.record['Region_Code__c'];
         line.record['SBQQ__ListPrice__c'] = FinalPrice;
+        log('Final price = ' + line.record['SBQQ__ListPrice__c']);
     }
     return line;
     
@@ -664,10 +671,6 @@ const setPremiseCableName = (line, premiseMaps) => {
     const subunitColor = line.record['Subunit_Color__c'];
     let itemDesc = line.record['SBQQ__Description__c'];
     let FinalItem = line.record['SBQQ__ProductName__c'];
-
-    console.log(FinalItem);
-    console.log(premiseJacketPrintMap, premiseJacketColorMap, premiseSubunitColorMap);
-    console.log(premiseJacketColorMap[jacketColor]);
 
     log('Name change required for line: '+ line.record['Name']);
 
@@ -789,7 +792,8 @@ const onBeforePriceRules = async(quoteModel, ascendPackagingMap, tiers, prodTier
 
             // if Product Lead Time Category is defined
             let inSLTT = false; // Flag to let async function resolve
-            if (line.record['Product_Lead_Time_Category__c'] !== null){
+            console.log(line.record['Product_Lead_Time_Category__c']);
+            if (line.record['Product_Lead_Time_Category__c']){
                 inSLTT = true;
                 log('calling setLeadTimeTier');
                 setLeadTimeTier(line, quoteModel)

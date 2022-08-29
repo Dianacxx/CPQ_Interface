@@ -11,7 +11,7 @@
                     </c-bl_custom-lookup>
                 </div>
             </template>
-    <!--LOOK UP FIELD END-->
+            <!--LOOK UP FIELD END-->
             <!--PAGINATION CONTROL START-->
             <div>
                 <p class="slds-align_absolute-center"><b> Quote lines: {linesLength} </b></p>
@@ -29,7 +29,7 @@
                 <lightning-datatable
                 key-field="id"
                 class="slds-var-m-left_x-small slds-var-m-right_x-small"
-                style="width:94vw !important;" data={dataPages}
+                style="width:92vw !important;" data={dataPages}
                 columns={columns}
                 oncellchange={handleCellChange}
                 onrowaction={handleRowAction}
@@ -59,7 +59,7 @@
             <lightning-datatable
                 key-field="id"
                 class="slds-var-m-left_x-small slds-var-m-right_x-small"
-                style="width:94vw !important;"
+                style="width:91vw !important;"
                 data={dataPages}
                 columns={detailColumns}
                 oncellchange={handleCellChange}
@@ -85,6 +85,38 @@
                     </lightning-button-group>
                 </div>
                 <!--PAGINATION CONTROL END-->
+                <div class="slds-var-m-right_small slds-var-m-left_small slds-var-m-top_small slds-align_absolute-center">  
+                    <table class='slds-table css-serial slds-var-m-left_x-small' style="width:90vw !important;">
+                        <thead>
+                            <tr>     
+                                <th></th>
+                                <th>
+                                    <a data-id="name" onclick={sort}>
+                                        <div>Product</div>
+                                    </a>
+                                </th>
+                                <th>
+                                    <a data-id="notetext" onclick={sort}>
+                                        <div>Note Text</div>
+                                    </a>
+                                </th> 
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template for:each={dataPages} for:item="productnotes">
+                                <tr key={productnotes.name}>     
+                                    <td></td>           
+                                    <td width ="30%" class="slds-cell-wrap">                                
+                                        {productnotes.name}
+                                    </td>
+                                    <td width ="70%" class="slds-cell-wrap">                                
+                                        {productnotes.notetext}
+                                    </td>          
+                                </tr>                                                                     
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </lightning-tab>
 
@@ -105,7 +137,7 @@
                 <!--PAGINATION CONTROL END-->
             </div>
             <div class="slds-var-m-right_small slds-var-m-left_small slds-var-m-top_small slds-align_absolute-center">  
-                <table class='slds-table css-serial slds-var-m-left_x-small' style="width:93vw !important;">
+                <table class='slds-table css-serial slds-var-m-left_x-small' style="width:90vw !important;">
                     <thead>
                         <tr>     
                             <th></th>

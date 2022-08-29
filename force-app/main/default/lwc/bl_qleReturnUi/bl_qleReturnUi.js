@@ -35,9 +35,13 @@ export default class Bl_qleReturnUi extends NavigationMixin(LightningElement) {
                 this.quoteName = data; 
                 setTimeout(()=>{
                     var compDefinition = {
-                        componentDef: "c:bl_userInterface",
+                        /*componentDef: "c:bl_userInterface",
                         attributes: {
                             recordId: this.recordId,
+                        }*/
+                        componentDef: "c:empApi",
+                        attributes: {
+                            quoteId: this.recordId,
                         }
                     };
                     // Base64 encode the compDefinition JS object

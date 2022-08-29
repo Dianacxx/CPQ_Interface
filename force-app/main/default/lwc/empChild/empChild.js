@@ -4,12 +4,12 @@ import read from '@salesforce/apex/myQuoteExample.read';
 import save from '@salesforce/apex/myQuoteCalculator.save';
 
 import { onBeforePriceRules, onBeforePriceRulesBatchable } from './qcp';
-import { build, conditionsCheck, priceRuleLookup, produceNewQL } from './utils';
-import wrapQuoteLine from '@salesforce/apex/QuoteController.wrapQuoteLine';
+import { build, productRuleLookup, priceRuleLookup, produceNewQL } from './utils';
 import searchAgreement from '@salesforce/apex/SearchAgreementLookupController.search';
 import discountPrinter from '@salesforce/apex/DiscountController.discountPrinter';
 import tiersByScheduleId from '@salesforce/apex/DiscountController.tiersByScheduleId';
 import deleteQuoteLines from '@salesforce/apex/QuoteController.deleteQuoteLines';
+import queryPPT from '@salesforce/apex/ProductPricingTierController.queryPPT';
 
 import { getObjectInfo } from 'lightning/uiObjectInfoApi';
 import { getPicklistValues } from 'lightning/uiObjectInfoApi';
@@ -23,6 +23,9 @@ import uomDependencyLevel2List from '@salesforce/apex/QuoteController.uomDepende
 
 //APEX METHOD TO SHOW NSP FIELDS IN POP UP
 import NSPAdditionalFields from '@salesforce/apex/QuoteController.NSPAdditionalFields';
+
+//Apex method for the product notes. 
+import printNotes from '@salesforce/apex/QuoteController.printNotes'; 
 
 const columns = [
     { label: 'Product', fieldName: 'Quote_Line_Name__c', editable: false ,sortable: true, wrapText: false, initialWidth: 250,}, //References Quote_Line_Name__c in Sandbox
@@ -67,6 +70,7 @@ const discountTierColumns = [
 ];
 
 const nspGroupings = ['ADSS Cable', 'Bus Conductor -Rectangular Bar', 'Bus Conductor -Seamless Bus Pipe', 'Bus Conductor -Universal Angle', 'Loose Tube Cable', 'Premise Cable'];
+const nspLevel1Groupings = ['ACA', 'Fiber Optic Cable'];
 
 export default class EmpChildCaro extends NavigationMixin(LightningElement) {
 
@@ -76,7 +80,6 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
     @track columns = columns;
     @track loading = true;
     tiers = [];
-    prodTiers = [];
     pricingTierMap = [];
     ascendPackagingList = [];
     productRules = [];
@@ -86,6 +89,8 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
     isHomeTab = true;
     allowSave = true;
 
+
+    @track flagEditAdd = false; 
     connectedCallback(){
         const load = async() => {
             const quote = await read({quoteId: this.quoteId});
@@ -98,7 +103,6 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
             this.contracts = payload.contracts;
             this.schedules = payload.schedules;
             this.tiers = payload.customerTiers;
-            this.prodTiers = payload.prodTiers;
             this.blockPrices = payload.blockPrices;
             this.ascendPackagingList = payload.ascendPackagingList;
             this.productRules = payload.productRules;
@@ -106,13 +110,18 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
             this.premiseMaps = payload.premiseMaps;
             this.priceRules = payload.priceRules;
 
-            const flatLines = this.quote.lineItems.filter(line => !line.record['SBQQ__ProductOption__c']).map(line => {
-                return {
-                    rowId: line['key'],
-                    isNSP: nspGroupings.includes(line.record['Filtered_Grouping__c']) ? true : false,
-                    ...line.record
-                }
-            });
+            let flatLines = [];
+            if(this.quote.lineItems.length){
+                flatLines = this.quote.lineItems.filter(line => !line.record['SBQQ__ProductOption__c']).map(line => {
+                    return {
+                        rowId: line['key'],
+                        isNSP: (nspGroupings.includes(line.record['Filtered_Grouping__c']) && 
+                        nspLevel1Groupings.includes(line.record['ProdLevel1__c'])) ? true : false,
+                        ...line.record
+                    }
+                });
+            }
+
             return flatLines;
         }
         
@@ -123,6 +132,21 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
             this.updateQuoteTotal(); 
             console.log('Script loaded');
         });
+
+        printNotes({ quoteId: this.quoteId })
+        .then(data =>{
+            //console.log('notes string SUCCESS');
+            if (data == '[]'){
+                this.prodNotes = [];
+            } else {
+                this.prodNotes = JSON.parse(data);
+            }
+            console.log(this.prodNotes);
+        })
+        .catch(error =>{
+            console.log('notes string Error');
+            console.log(error);
+        })
     }
 
     //GETTING PICKLIST VALUES IN UOM/LENGTH UOM/ DEPENDENT ON LEVEL 2
@@ -213,7 +237,7 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
     handleCellChange(event) {
         let lines = this.quote.lineItems;
         const minQtyLines=[];
-
+        this.flagEditAdd = true;
         // Inspect changes
         let page; 
         this.inlineEditing = true; 
@@ -315,15 +339,23 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
         //PRODUCT RULE LOGIC STARTS HERE --------------------
         if(this.productRules.length !==0){
             const beforeProdRules = window.performance.now();
-            const allowSave = await this.productRuleLookup(this.productRules,this.quote);
+            const productRuleResults = await productRuleLookup(this.productRules,this.quote);
+            this.allowSave = productRuleResults.allowSave;
+            this.event = productRuleResults.event;
             const afterProdRules = window.performance.now();
             console.log(`productRuleLookup waited ${afterProdRules - beforeProdRules} milliseconds`);
-            this.allowSave = allowSave;            
         }
         
         //Allowing to save if no validation product rules prevent it
-        if(this.allowSave==true){                                    //needs to be ==true so the event also dispatches here
+        //needs to be ==true so the event also dispatches here
+        if(this.allowSave==true){       
             console.log('saving...');
+
+            //Dispatch an alert rule toast message if there's one
+            if(typeof this.event == 'object'){
+                this.dispatchEvent(this.event);
+            }
+
             // BLOCKPRICES LOGIC STARTS HERE -----------
             for(let line of lines){
                 // Check if block price exists
@@ -344,17 +376,20 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
             // BLOCKPRICES LOGIC ENDS HERE -----------
             
             this.quote.lineItems = lines;
+            
+            //query ppt
+            const prodTiers = await queryPPT({prodLevel1List: this.quote.lineItems.map(line => line.record['ProdLevel1__c'])});
 
             // execute qcp script
             let newQuote;
             if (this.quote.lineItems.length <= 100){
                 let startTime = window.performance.now();
-                newQuote = await onBeforePriceRules(this.quote, this.ascendPackagingList, this.tiers, this.prodTiers, this.uomRecords, this.schedules, this.premiseMaps)
+                newQuote = await onBeforePriceRules(this.quote, this.ascendPackagingList, this.tiers, prodTiers, this.uomRecords, this.schedules, this.premiseMaps)
                 let endTime = window.performance.now();
                 console.log(`onBeforePriceRules waited ${endTime - startTime} milliseconds`);
             } else {
                 let startTimeBatchable = window.performance.now();
-                newQuote = await onBeforePriceRulesBatchable(this.quote, this.ascendPackagingList, this.tiers, this.prodTiers, this.uomRecords, this.schedules, this.premiseMaps)
+                newQuote = await onBeforePriceRulesBatchable(this.quote, this.ascendPackagingList, this.tiers, prodTiers, this.uomRecords, this.schedules, this.premiseMaps)
                 let endTimeBatchable = window.performance.now();
                 console.log(`onBeforePriceRulesBatchable waited ${endTimeBatchable - startTimeBatchable} milliseconds`);
             }
@@ -362,7 +397,7 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
             this.regenerateFlatLines(500);
 
             //PRICE RULE LOGIC STARTS HERE --------------------
-            if(this.priceRules.length !==0){
+            if(this.priceRules.length !== 0){
                 const startedPriceRules = window.performance.now();
                 priceRuleLookup(this.priceRules,this.quote);
                 const afterPriceRules = window.performance.now();
@@ -371,18 +406,9 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
             //PRICE RULE LOGIC ENDS HERE --------------------
         
         } else if(this.allowSave == false){
-            console.log('No save --> Wait for the rules to evaluate');
-            const evt = new ShowToastEvent({
-                title: 'Product Rule logic executing',
-                message: 'This action is not available at this moment. Please, try again.',
-                variant: 'info', mode: 'dismissable'
-            });
-            this.dispatchEvent(evt);
-
-        } else{
             console.log('No save --> Validation rule');
-            this.loading=false;
-            this.dispatchEvent(this.allowSave);
+            this.loading = false;
+            this.dispatchEvent(this.event);
         }
         //PRODUCT RULE LOGIC ENDS HERE --------------------
     }
@@ -462,7 +488,7 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
                 mode: 'dismissable'
             });
             this.dispatchEvent(evt);
-
+            this.flagEditAdd = true;
         } catch (error) {
             console.log(error);
         }
@@ -715,7 +741,7 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
         } else {
             let index = this.quote.lineItems.findIndex(x =>  x.key === this.dataRow.rowId);
             this.quote.lineItems[index].record['Length_UOM__c'] = this.newLengthUOM;
-            
+            this.flagEditAdd = true;
             this.closeLengthUomModal();
             this.notChangePageWhenEditing();
             this.regenerateFlatLines(0);
@@ -731,6 +757,7 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
             let index = this.quote.lineItems.findIndex(x => x.key === this.dataRow.rowId);
             this.quote.lineItems[index].record['UOM__c'] = this.newUOM;
         }
+        this.flagEditAdd = true;
         this.closeUomModal();
         this.notChangePageWhenEditing();
         this.regenerateFlatLines(0);
@@ -755,6 +782,7 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
             });
             this.dispatchEvent(evt);
         }
+        this.flagEditAdd = true;
         this.notChangePageWhenEditing();
         this.regenerateFlatLines(0);
         
@@ -765,7 +793,8 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
         const flatLines = this.quote.lineItems.filter(line => !line.record['SBQQ__ProductOption__c']).map(line => {
             return {
                 rowId: line['key'],
-                isNSP: nspGroupings.includes(line.record['Filtered_Grouping__c']) ? true : false,
+                isNSP: (nspGroupings.includes(line.record['Filtered_Grouping__c']) && 
+                        nspLevel1Groupings.includes(line.record['ProdLevel1__c'])) ? true : false,
                 ...line.record
             }
         });
@@ -791,82 +820,22 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
 
     // this function updates the net total amount on the parent component
     updateQuoteTotal() {
-        this.dispatchEvent(new CustomEvent('updatetotal', {
-            bubbles: true,
-            detail: this.quote.lineItems.reduce((o, line) => {
-                return {
-                    record: {
-                        SBQQ__NetTotal__c: o.record['SBQQ__NetTotal__c'] + line.record['SBQQ__NetTotal__c']
+        try{
+            let detail = { record: { SBQQ__NetTotal__c: '0' } }; // initialize to 0
+            if(this.quote.lineItems.length){
+                detail = this.quote.lineItems.reduce((o, line) => {
+                    return {
+                        record: {
+                            SBQQ__NetTotal__c: o.record['SBQQ__NetTotal__c'] + line.record['SBQQ__NetTotal__c']
+                        }
                     }
-                }
-            })
-        }));
-    }
-
-    //Product Rule handling
-    async productRuleLookup(productRules, quote){  //The product rules already come sorted by evaluation order from the query
-        let data = []
-        // wrap quote line model records for conversion
-        const quoteLines = quote.lineItems.map(line => {
-        const { attributes, ...other } = line.record;
-        return other;
-        });
-        if (quoteLines.length <= 100){
-            let startTime = window.performance.now();
-            data = await wrapQuoteLine({qlJSON: JSON.stringify(quoteLines)});
-            let endTime = window.performance.now();
-            console.log(`wrapQuoteLine waited ${endTime - startTime} milliseconds`);
-        }else{
-            let linesSaver = [];
-            let results = [];
-            while (quoteLines.length > 0){
-                const batchSize = 100;
-                const linesBatch = quoteLines.splice(0, batchSize);
-                linesSaver.push(linesBatch);
-            }
-            let startTime = window.performance.now();
-            results = await Promise.all(linesSaver.map(lines => wrapQuoteLine({qlJSON: JSON.stringify(lines)})));
-            let endTime = window.performance.now();
-            console.log(`wrapQuoteLine with batches waited ${endTime - startTime} milliseconds`);
-            results.forEach(line =>{
-                data = data.concat(line);
-            })
-        }
-        const evaluateQuoteLines=data;
-        //Validation Rules
-        const valRules= productRules.filter(rule=> rule['SBQQ__Type__c']=='Validation');
-        if(valRules.length !==0){
-            for(let valRule of valRules){const triggerRule = conditionsCheck(valRule['SBQQ__ErrorConditions__r'],quote,valRule['SBQQ__ConditionsMet__c'], evaluateQuoteLines);
-                if(triggerRule!==-1){
-                const evt = new ShowToastEvent({
-                    title: 'Product Rule Error on line: '+ (parseInt(triggerRule)+1),
-                    message: valRule['SBQQ__ErrorMessage__c'],
-                    variant: 'error', mode: 'sticky'
-                    });
-                    this.dispatchEvent(evt);
-                    //return the event to dispatch it when clicking save & calculate!
-                    return evt;
-                }
-            };
-        }
-
-        //Alert Rules
-        const alertRules= productRules.filter(rule=> rule['SBQQ__Type__c']=='Alert');
-        if(alertRules.length !==0){
-            for(let alertRule of alertRules){
-                const triggerRule = conditionsCheck(alertRule['SBQQ__ErrorConditions__r'],quote, alertRule['SBQQ__ConditionsMet__c'], evaluateQuoteLines);
-                if(triggerRule!==-1 ){
-                const evt = new ShowToastEvent({
-                    title: 'Product Rule Alert on line: '+ (parseInt(triggerRule)+1),
-                    message: alertRule['SBQQ__ErrorMessage__c'],
-                    variant: 'warning', mode: 'dismissable'
                 });
-                this.dispatchEvent(evt);
-                return true;
-                }
-            };
-        }
-        return true;
+            }
+            this.dispatchEvent(new CustomEvent('updatetotal', {
+                bubbles: true,
+                detail
+            }));
+        } catch(error) {console.log(error)}
     }
 
     //Reorder Lines in Pop up by Product (Quote Line Name Field)
@@ -1006,7 +975,7 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
 
     //Alternative Indicator - Optional checkbox
     changingAlternative(){
-        
+        this.flagEditAdd = true;
         let index = this.quote.lineItems.findIndex(x => x.key === this.dataRow.rowId);
         if(index != -1){
             this.quote.lineItems[index].record.SBQQ__Optional__c = !this.quote.lineItems[index].record.SBQQ__Optional__c; 
@@ -1060,6 +1029,7 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
     }
 
     saveLineNote(){
+        this.flagEditAdd = true;
         let index = this.quote.lineItems.findIndex(x => x.key === this.dataRow.rowId);
         this.quote.lineItems[index].record['Line_Note__c'] = this.newLineNote;
         this.closeLineNotes();
@@ -1216,7 +1186,7 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
     @api
     applyDiscountInLines(discountValue){
         console.log('The Discount Value: '+discountValue);
-
+        this.flagEditAdd = true;
         try{
             const rows = this.selectedRows;
             this.loading = true;
@@ -1241,11 +1211,9 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
         }
     }
 
-
     //PRODUCT NOTES
     prodNotesLength = 0; 
     prodNotes = [];
-    
     
     // CLASS: OVERRIDES
     overrideReason = '';
@@ -1362,6 +1330,7 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
         record['New_Discount_Schedule__c'] = null;
 
         this.showTiersList = false;
+        this.flagEditAdd = true;
 
     }
 
@@ -1594,7 +1563,7 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
             }
 
             }catch(error){console.log(error)}
-
+            this.flagEditAdd = true;
             this.closeOverridesModal();
         }
     }
@@ -1608,6 +1577,7 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
     }
 
     deleteModal(){
+        this.flagEditAdd = true;
         let lines = this.quote.lineItems;
         let row = lines.findIndex(line => line.key === this.dataRow.rowId);
         if(this.dataRow['Id']){
@@ -1646,26 +1616,123 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
     }
 
     // CLASS: PRODUCT LOOKUP
-
     handleProductSelection(event) {
         this.loading = true;
         
         // produce new QL by setting correct values
         produceNewQL(event, this.quote)
         .then(clone => {
+            console.log(clone);
+
+            // if product is a bundle
+            if(clone.record['SBQQ__Bundle__c']){
+                throw {
+                    type: 'bundle',
+                    message: 'Product not added to your quote. This product is part of a bundle. Please use the Product Selection page to continue adding this product.'
+                }
+            }
 
             // push new QL into state
             this.quote.lineItems = [...this.quote.lineItems, clone];
-            
-            // save to db
-            save({quoteJSON: JSON.stringify(this.quote)})
-            .then(async() => {
-                const quote = await read({quoteId: this.quoteId});
-                this.quote = JSON.parse(quote);
-                // recalculate quote value
-                this.calculate();
+            this.quote.nextKey += 1;
+
+            // Regenerate flat lines object
+            const flatLines = this.quote.lineItems.filter(line => !line.record['SBQQ__ProductOption__c']).map(line => {
+                return {
+                    rowId: line['key'],
+                    isNSP: (nspGroupings.includes(line.record['Filtered_Grouping__c']) && 
+                        nspLevel1Groupings.includes(line.record['ProdLevel1__c'])) ? true : false,
+                    ...line.record
+                }
             });
+
+            // if line is NSP
+            if(flatLines[flatLines.length - 1].isNSP === true){
+                // set NSP field values
+                const evt = { 
+                    detail: {
+                        row: flatLines[flatLines.length - 1],
+                        action: {
+                            name: 'NSP'
+                        }
+                    }
+                }
+                this.handleRowAction(evt);
+
+            }
+
+            this.flatLines = flatLines;
+            this.flagEditAdd = true;
+            this.regenerateFlatLines(0);
+
         })
-        .catch(error => console.log(error));
+        .catch(error => {
+            console.log(error);
+            if(error.type === 'bundle'){
+                const evt = new ShowToastEvent({
+                    title: 'Incorrect Product Type', 
+                    message: error.message,
+                    variant: 'error', mode: 'dismissable'
+                });
+                this.dispatchEvent(evt);
+                this.loading = false;
+            }
+        });
     }
+
+
+    //Navigation to product selection page
+    //flagEditAdd = false; 
+    @api 
+    navigateToProductSelection(){
+
+        if(this.flagEditAdd){
+            console.log('SAVING HERE');
+            this.loading = true;
+            // delete quote lines that were removed from the db
+            deleteQuoteLines({quoteIds: this.deleteLines});
+            // use save API to update the quote
+            save({ quoteJSON: JSON.stringify(this.quote) })
+            .then(result => {
+                // redirect user to the quote record page
+                this.flagEditAdd = false;
+                setTimeout(() => {
+                    this.loading = false;
+                    var compDefinition = {
+                        componentDef: "c:empApiProductSelection",
+                        attributes: {
+                            recordId: this.quoteId,
+                        }
+                    };
+                    // Base64 encode the compDefinition JS object
+                    var encodedCompDef = btoa(JSON.stringify(compDefinition));
+                    this[NavigationMixin.Navigate]({
+                        type: 'standard__webPage',
+                        attributes: {
+                            url: '/one/one.app#' + encodedCompDef
+                        }
+                    });
+                }, 1000);
+            });
+            
+        } else {
+            console.log('NOT SAVING HERE');
+            var compDefinition = {
+                componentDef: "c:empApiProductSelection",
+                attributes: {
+                    recordId: this.quoteId,
+                }
+            };
+            // Base64 encode the compDefinition JS object
+            var encodedCompDef = btoa(JSON.stringify(compDefinition));
+            this[NavigationMixin.Navigate]({
+                type: 'standard__webPage',
+                attributes: {
+                    url: '/one/one.app#' + encodedCompDef
+                }
+            });
+        }
+
+    }
+
 }

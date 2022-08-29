@@ -11,7 +11,7 @@ import getProductFilteringv2 from '@salesforce/apex/QuoteController.getProductFi
 import getAdditionalFiltering from '@salesforce/apex/QuoteController.getAdditionalFiltering';
 
 //APEX METHOD TO SEE NSP FIELDS THAT MUST BE FILLED. 
-import NSPAdditionalFields from '@salesforce/apex/QuoteController.NSPAdditionalFields'; 
+import NSPAdditionalFields from '@salesforce/apex/QuoteController.NSPAdditionalFieldsProductSelection'; 
 
 //CREATING QUOTE LINES DEPENDING IF IT NSP OR NOT NSP 
 import addSelectorQuoteLine from '@salesforce/apex/QuoteController.addSelectorQuoteLine'; //FOR THE NON NSP PRODUCTS

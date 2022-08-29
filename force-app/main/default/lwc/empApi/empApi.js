@@ -1,9 +1,11 @@
-import { LightningElement, track } from 'lwc';
+import { LightningElement, track, api } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import { NavigationMixin } from 'lightning/navigation';
 
-export default class EmpApiLWC extends LightningElement {
+export default class EmpApiLWC extends NavigationMixin(LightningElement) {
 
-    quoteId = 'a0q8Z00000Ct7xWQAR'; //  a0q8Z00000CsZBaQAN a0q8Z00000CrwOYQAZ
+    @api quoteId ;// = 'a0q8Z00000Ct7xWQAR'; //  a0q8Z00000CsZBaQAN a0q8Z00000CrwOYQAZ
+    @api comeFromPS;
     totalValue;
     totalValueLoading = false;
 
@@ -33,6 +35,7 @@ export default class EmpApiLWC extends LightningElement {
         this.template.querySelector('c-emp-child').clonerows();
     }
 
+    isCloneButtonDisabled = true;
     enableCloneButton(){
         this.isCloneButtonDisabled = false;
     }
@@ -85,6 +88,11 @@ export default class EmpApiLWC extends LightningElement {
             });
             this.dispatchEvent(evt);
         }
+    }
+
+    //Navigation to PS page
+    navitageToProductSelectionPage(){
+        this.template.querySelector('c-emp-child').navigateToProductSelection();
     }
     
 }

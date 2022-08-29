@@ -89,8 +89,8 @@
                 <lightning-spinner if:true={showManualTable} alternative-text="Loading" variant="brand" size="small"></lightning-spinner>
                 <template if:false={showManualTable}>
                     <div class="slds-align_absolute-center slds-var-m-top_small">
-                        <lightning-datatable style="width: 85%;" key-field="name" data={newManualList} columns={newManualColumns}
-                        onrowaction={handleRowAction} hide-checkbox-column></lightning-datatable>
+                        <lightning-datatable style="width: 85%;" key-field="id" data={newManualList} columns={newManualColumns}
+                        onrowaction={handleRowAction} hide-checkbox-column oncellchange={handleCellChange} suppress-bottom-bar></lightning-datatable>
                      </div>
                 </template>
             </div>

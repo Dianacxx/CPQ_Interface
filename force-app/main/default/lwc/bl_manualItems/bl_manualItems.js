@@ -16,7 +16,7 @@ import PRODUCT_LEVEL_1_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.ProdLev
 
 //COLUMNS FOR MANUAL ITEMS
 const columns = [
-    {label: 'Manual Item: Part Number', fieldName: 'partnumber'},
+    {label: 'Manual Item: Part Number', fieldName: 'partnumber', editable: true},
     { label: 'Clone', type: 'button-icon',initialWidth: 60,typeAttributes:{iconName: 'action:clone', name: 'clone', variant:'brand', size:'xx-small'}},
     { label: 'Delete', type: 'button-icon',initialWidth: 60,typeAttributes:{iconName: 'action:delete', name: 'delete', variant:'brand', size:'xx-small'}}
    ];
@@ -130,11 +130,11 @@ export default class Bl_manualItems extends LightningElement {
             }
 
             this.listOfCaracteristics.push({label: label, value: value, property:propertyValue, required: false,});
-            console.log(this.listOfCaracteristics[this.listOfCaracteristics.length-1]);
+            //console.log(this.listOfCaracteristics[this.listOfCaracteristics.length-1]);
 
         } else {
             this.listOfCaracteristics[index].value = value;
-            console.log(this.listOfCaracteristics[this.listOfCaracteristics.length-1]);
+            //console.log(this.listOfCaracteristics[this.listOfCaracteristics.length-1]);
         }
     }
 
@@ -194,7 +194,7 @@ export default class Bl_manualItems extends LightningElement {
                 productMockId = data; 
                 //CREATING THE QUOTE LINE AND LET IT COMPLETE TO BE SAVED.
                 let startTime2 = window.performance.now(); 
-                console.log('Method addQuoteLine Manual quoteId:'+this.recordId+ ' productId ' +productMockId);
+                //console.log('Method addQuoteLine Manual quoteId:'+this.recordId+ ' productId ' +productMockId);
                 addQuoteLine({quoteId: this.recordId, productId: productMockId})
                 .then((data)=>{
                     let endTime2 = window.performance.now();
@@ -213,8 +213,8 @@ export default class Bl_manualItems extends LightningElement {
                         }
 
                         manualQuoteline[0][this.listOfCaracteristics[i].property] = this.listOfCaracteristics[i].value;
-                        console.log('Poperty:  ' +this.listOfCaracteristics[i].property);
-                        console.log('Value:  '+this.listOfCaracteristics[i].value);  
+                        //console.log('Poperty:  ' +this.listOfCaracteristics[i].property);
+                        //console.log('Value:  '+this.listOfCaracteristics[i].value);  
                     }
                     manualQuoteline[0].uom = manualQuoteline[0].primaryUOM;
                     manualQuoteline[0].isNSP = false;
@@ -307,5 +307,15 @@ export default class Bl_manualItems extends LightningElement {
             break;
         }
 
+    }
+
+
+    handleCellChange(event){
+        //console.log(event.detail.draftValues);
+        //console.log(JSON.stringify(event.detail.draftValues));
+        let index = this.newManualList.findIndex(x => x.id === event.detail.draftValues[0].id);
+        this.newManualList[index].partnumber = event.detail.draftValues[0].partnumber; 
+        this.dispatchEvent(new CustomEvent('listtodisplayadd', { detail: {list: this.newManualList, tab: 'Manual Items'} }));
+        //this.restarManualForm();
     }
 }
