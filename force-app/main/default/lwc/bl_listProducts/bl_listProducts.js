@@ -18,7 +18,7 @@ import addSelectorQuoteLine from '@salesforce/apex/QuoteController.addSelectorQu
 import addNSPProducts from '@salesforce/apex/QuoteController.addNSPProducts';
 
 //TO SHOW DEPENDENCIES VALUES FOR UOM FIELD IF PRODUCT 2 
-import uomDependencyLevel2List from '@salesforce/apex/blMockData.uomDependencyLevel2List'; 
+import uomDependencyLevel2List from '@salesforce/apex/blQuoteIdController.uomDependencyLevel2List'; 
 
 //TO SHOW POSSIBLE VALUES IN LWC TABLE PICKLIST FIELDS WITHOUT GETTING ERROR FROM APEX
 //ADD NAME PICKLIST FIELD WHEN A NEW FIELD IN TABLE IS ADD. 
@@ -156,7 +156,8 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     @track activeFilterTab = 'Filter';
     //Close the pop up and restart the values
     closeFilterAndSelected(){
-        
+        this.page = 1;
+        this.pageR = 1;
         this.openFilterPopup = false;
         this.clearFilters();
         this.reviewDisplay = []; 

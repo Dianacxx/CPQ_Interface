@@ -1,14 +1,15 @@
+
 import { LightningElement, api, wire, track } from 'lwc';
 import { NavigationMixin } from 'lightning/navigation';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent'; //To show messages to user
 
 //SAVING RECORD ID IN CUSTOM ACTION TO QLE
-import savingRecordId from '@salesforce/apex/blMockData.savingRecordId'; 
+import savingRecordId from '@salesforce/apex/blQuoteIdController.savingRecordId'; 
 
 //CHECKING IF THE QUOTE HAS A PRICE BOOK ASSIGNED
-import checkPricebookInQuote from '@salesforce/apex/blMockData.checkPricebookInQuote'; 
+import checkPricebookInQuote from '@salesforce/apex/blQuoteIdController.checkPricebookInQuote'; 
 
-export default class ButtonOpenUi extends NavigationMixin(LightningElement) {
+export default class Bl_buttonOpenUi extends NavigationMixin(LightningElement) {
     @api recordId; //Quote Record Id opening the UI
     @api isLoading = false;
 
@@ -25,10 +26,10 @@ export default class ButtonOpenUi extends NavigationMixin(LightningElement) {
 
         checkPricebookInQuote({quoteId: this.recordId})
         .then((data)=>{
-            
             let endTime = window.performance.now();
-            console.log(`Pricing Book search method took ${endTime - startTime} milliseconds`);
+            console.log(`searchPriceBook method took ${endTime - startTime} milliseconds`);
             if (data == 'YES'){
+
                 let startTime1 = window.performance.now();
                 //console.log('Method savingRecordId quoteId '+this.recordId);
                 savingRecordId({quoteId: this.recordId})
@@ -40,7 +41,8 @@ export default class ButtonOpenUi extends NavigationMixin(LightningElement) {
                     var compDefinition = {
                         componentDef: "c:bl_userInterface",
                         attributes: {
-                            recordId: this.recordId,
+                            quoteId: this.recordId,
+                            comeFromPS: 'false',
                         }
                     };
                     // Base64 encode the compDefinition JS object

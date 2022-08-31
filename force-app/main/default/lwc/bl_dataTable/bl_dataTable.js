@@ -1,377 +1,865 @@
-import { LightningElement, api, track, wire} from 'lwc';
-import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import { LightningElement, api, track, wire } from 'lwc';
+import { NavigationMixin } from 'lightning/navigation';
+import read from '@salesforce/apex/myQuoteExample.read';
+import save from '@salesforce/apex/myQuoteCalculator.save';
 
+import { onBeforePriceRules, onBeforePriceRulesBatchable } from './qcp';
+import { build, productRuleLookup, priceRuleLookup, produceNewQL } from './utils';
+import searchAgreement from '@salesforce/apex/SearchAgreementLookupController.search';
+import discountPrinter from '@salesforce/apex/DiscountController.discountPrinter';
+import tiersByScheduleId from '@salesforce/apex/DiscountController.tiersByScheduleId';
+import deleteQuoteLines from '@salesforce/apex/QuoteController.deleteQuoteLines';
+import queryPPT from '@salesforce/apex/ProductPricingTierController.queryPPT';
 
-//APEX METHOD TO CREATE QUOTE LINES FROM LOOUP FIELD 
-import addQuoteLine from '@salesforce/apex/QuoteController.addQuoteLine';
-//APEX METHOD TO CREATE NSP FROM LOOKUP
-//import addNSPProducts from '@salesforce/apex/QuoteController.addNSPProducts';
-
-//APEX METHOD TO SHOW NSP FIELDS IN POP UP
-import NSPAdditionalFields from '@salesforce/apex/QuoteController.NSPAdditionalFields'; 
-
-
-//APEX METHOD THAT SEARCH THE AGREEMENT IN TIER POP-UP (POP-UP DATATABLE)
-import searchAgreement from '@salesforce/apex/SearchAgreementLookupController.search'; 
-
-//APEX METHOD THAT RETRIEVE TIERS OF THE AGREEMENT SELECTED
-import discountPrinter from '@salesforce/apex/DiscountController.discountPrinter'; 
-import initialDiscountPrinter from '@salesforce/apex/DiscountController.initialDiscountPrinter'; 
-import lineSaver from '@salesforce/apex/DiscountController.lineSaver';
-
-//GETTING THE ACCOUNT OF THE QUOTE (POP-UP DATATABLE)
-import ACCOUNT_ID_FIELD from '@salesforce/schema/SBQQ__Quote__c.SBQQ__Account__c'; 
-import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
-
-
-//TO SHOW POSSIBLE VALUES IN LWC TABLE PICKLIST FIELDS WITHOUT GETTING ERROR FROM APEX
-//ADD NAME PICKLIST FIELD WHEN A NEW FIELD IN TABLE IS ADD. 
-import QUOTELINE_OBJECT from '@salesforce/schema/SBQQ__QuoteLine__c';
 import { getObjectInfo } from 'lightning/uiObjectInfoApi';
 import { getPicklistValues } from 'lightning/uiObjectInfoApi';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import QUOTELINE_OBJECT from '@salesforce/schema/SBQQ__QuoteLine__c';
 import LENGTH_UOM_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.Length_UOM__c';
 import TIER_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.Tier__c';
 import OVERRIDE_LEAD_TIME_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.Override_Quoted_Lead_Time__c';
-import OVERRIDE_REASON from '@salesforce/schema/SBQQ__Quote__c.Override_Reason__c';
-//import LEVEL2_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.ProdLevel2__c';
-//import UOM_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.UOM__c';
+import OVERRIDE_REASON from '@salesforce/schema/SBQQ__QuoteLine__c.Override_Reason__c';
+import uomDependencyLevel2List from '@salesforce/apex/QuoteController.uomDependencyLevel2List';
 
-//TO SHOW DEPENDENCIES VALUES FOR UOM FIELD IF PRODUCT 2 
-import uomDependencyLevel2List from '@salesforce/apex/blMockData.uomDependencyLevel2List'; 
+//APEX METHOD TO DELETE THE RECORD THAT SAVES THE QUOTE ID 
+import deletingRecordId from '@salesforce/apex/blQuoteIdController.deletingRecordId';
 
-//CHANNEL SERVICE TO COMMUNICATE COMPONENTS 
-import { subscribe, publish, MessageContext } from 'lightning/messageService';
-import UPDATE_INTERFACE_CHANNEL from '@salesforce/messageChannel/update_Interface__c';
+//APEX METHOD TO SHOW NSP FIELDS IN POP UP
+import NSPAdditionalFields from '@salesforce/apex/QuoteController.NSPAdditionalFields';
 
-//TIER COLUMNS FOR TABLE IN TIERS POP-UP (POP-UP DATATABLE)
-const TIER_COLUMNS = [
-    /*
-    { label: 'Quantity Breaks', fieldName: 'Tier_Name__c', initialWidth: 150, },
-    { label: 'Number', fieldName: 'SBQQ__Number__c', type: 'number', initialWidth: 100,},
-    { label: 'Discount', fieldName: 'SBQQ__Discount__c', type: 'number', initialWidth: 100, },
-    */
-    {label: 'Lower Bound',initialWidth: 150, fieldName: 'SBQQ__LowerBound__c',  type: 'number'},
-    {label: 'Upper Bound',initialWidth: 150,fieldName: 'SBQQ__UpperBound__c' , type: 'number'},
-    {label: 'Price',initialWidth: 150,fieldName: 'SBQQ__Price__c' , type: 'number'},
-];
+//Apex method for the product notes. 
+import printNotes from '@salesforce/apex/QuoteController.printNotes'; 
 
-//DATA TABLE COLUMNS FOR EACH TAB USED
-const QUOTE_LINE_COLUMNS = [
-    { label: 'Product', fieldName: 'quotelinename', editable: false ,sortable: true, wrapText: false, initialWidth: 250,},
-    { label: 'Description', fieldName: 'description', editable: true ,sortable: true, wrapText: false, initialWidth: 100,},
-    { label: 'Quantity', fieldName: 'quantity', editable: true ,sortable: true, wrapText: false,type: 'number',hideDefaultActions: true,  },
-    {label: 'UOM',sortable: true,fieldName: 'uom' ,type: "button", typeAttributes: 
-    { label: { fieldName: 'uom' }, name: 'uomChange',value: { fieldName: 'uom' }, iconPosition: 'right', variant: 'base', iconName: 'utility:chevrondown',}, },
-    //{ label: 'UOM', fieldName: 'uom', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true , },
-    { label: 'Length', fieldName: 'length', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true,  },
-    //{ label: 'Length UOM', fieldName: 'lengthuom', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true,  },
-    {label: 'Length UOM',sortable: true,fieldName: 'lengthuom' ,type: "button", typeAttributes: 
-    { label: { fieldName: 'lengthuom' }, name: 'lengthUomChange',value: { fieldName: 'lengthuom' }, iconPosition: 'right', variant: 'base', iconName: 'utility:chevrondown',},},
-    { label: 'Discount (%)', fieldName: 'discount', editable: true ,sortable: true, wrapText: false,type: 'number', hideDefaultActions: true },
-    { label: 'Net Unit Price', fieldName: 'netunitprice', editable: false ,sortable: true, wrapText: false,type: 'number',  hideDefaultActions: true },
-    { label: 'List Unit Price', fieldName: 'listunitprice', editable: false ,sortable: true, wrapText: false,type: 'number',  hideDefaultActions: true },
-    { label: 'Net Total', fieldName: 'nettotal', editable: false ,sortable: true, wrapText: false,type: 'number',  hideDefaultActions: true },
-    { label: 'NSP', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:google_news', name: 'NSP', variant:'brand', size:'xxx-small'}},
-    { label: 'Updates', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:adjust_value', name: 'Tiers', variant:'brand', size:'xxx-small'}},
+const columns = [
+    { label: 'Product', fieldName: 'Quote_Line_Name__c', editable: false ,sortable: true, wrapText: false, initialWidth: 250,}, //References Quote_Line_Name__c in Sandbox
+    { label: 'Description', fieldName: 'SBQQ__Description__c', editable: true ,sortable: true, wrapText: false, initialWidth: 100,},
+    { label: 'Quantity', fieldName: 'SBQQ__Quantity__c', type: 'number', editable: true },
+    { label: 'UOM', sortable: true, fieldName: 'UOM__c' , type: "button",
+        typeAttributes: { label: { fieldName: 'UOM__c' }, name: 'changeUOM', value: { fieldName: 'UOM__C' }, iconPosition: 'right', variant: 'base', iconName: 'utility:chevrondown' }},
+    { label: 'Length', fieldName: 'Length__c', type: 'text', editable: true},
+    { label: 'Length UOM', sortable: true, fieldName: 'Length_UOM__c' , type: "button",
+        typeAttributes: { label: { fieldName: 'Length_UOM__c' }, name: 'changeLengthUOM', value: { fieldName: 'Length_UOM__c' }, icPosition: 'right', variant: 'base', iconName: 'utility:chevrondown' }},
+    { label: 'Discount (%)', fieldName: 'SBQQ__Discount__c', editable: true ,sortable: true, wrapText: false,type: 'number', hideDefaultActions: true },
+    { label: 'List Unit Price', fieldName: 'SBQQ__ListPrice__c', type: 'currency' },
+    { label: 'Special Price', fieldName: 'SBQQ__SpecialPrice__c', type: 'currency' },
+    { label: 'Net Unit Price', fieldName: 'SBQQ__NetPrice__c', type: 'currency' },
+    { label: 'Total', fieldName: 'SBQQ__NetTotal__c', type: 'currency' },
+    { label: 'NSP', type: 'button-icon', initialWidth: 30,
+        typeAttributes:{iconName: 'action:google_news', name: 'NSP', variant:'brand', size:'xxx-small'}},
+    { label: 'Tiers', type: 'button-icon', initialWidth: 30,
+        typeAttributes:{iconName: 'action:adjust_value', name: 'Tiers', variant:'brand', size:'xxx-small'}},
     { label: 'Line Notes', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:new_note', name: 'Linenote', variant:'brand', size:'xxx-small'}},
-    { label: '', type: 'button-icon',initialWidth: 20,typeAttributes:{iconName: 'action:delete', name: 'Delete', variant:'border-filled', size:'xxx-small'}}
+    { label: '', type: 'button-icon',initialWidth: 20,typeAttributes:{iconName: 'action:delete', name: 'Delete', variant:'border-filled', size:'xxx-small'}},
+    // replace
 ];
-
 
 const DETAIL_COLUMNS = [
-    { label: 'Product', fieldName: 'quotelinename', editable: false ,sortable: true, wrapText: false, initialWidth :325,},
-    { label: 'Billing Tolerance', fieldName: 'billingTolerance', editable: true ,sortable: true, wrapText: false,type: 'number',hideDefaultActions: true },
-    { label: 'Source', fieldName: 'source', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true},
-    { label: 'Destination', fieldName: 'destination', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true},
-    {label: 'Alternative Indicator',sortable: true/*,fieldName: 'alternativeindicator'*/ ,type: "button", typeAttributes: 
-    { /*label: { fieldName: 'alternativeindicator' },*/ name: 'alternativeindicator',value: { fieldName: 'alternativeindicator' }, iconPosition: 'right', variant: 'base', iconName: { fieldName: 'dynamicIcon' } /*'utility:sort'*/,},},
-   
-   // { label: 'Alternative Indicator', fieldName: 'alternativeindicator', editable: true ,sortable: true, wrapText: false,hideDefaultActions: true },
-    { label: 'NSP', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:google_news', name: 'NSP', variant:'brand', size:'xxx-small'}},
+    { label: 'Product', fieldName: 'Quote_Line_Name__c', editable: false ,sortable: true, wrapText: false, initialWidth :325,},
+    { label: 'Billing Tolerance', fieldName: 'BL_Billing_Tolerance__c', editable: true ,sortable: true, wrapText: false,type: 'number',hideDefaultActions: true },
+    { label: 'Source', fieldName: 'BL_Source__c', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true},
+    { label: 'Destination', fieldName: 'BL_Destination__c', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true},
+    {label: 'Alternative Indicator',sortable: true,type: "button", typeAttributes:
+    { name: 'alternativeindicator', value: { fieldName: 'SBQQ__Optional__c' }, iconPosition: 'right', variant: 'base', iconName: { fieldName: 'Alternative_Icon__c' } ,},},
+       { label: 'NSP', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:google_news', name: 'NSP', variant:'brand', size:'xxx-small'}},
     { label: 'Updates', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:adjust_value', name: 'Tiers', variant:'brand', size:'xxx-small'}},
     { label: 'Line Notes', type: 'button-icon',initialWidth: 30,typeAttributes:{iconName: 'action:new_note', name: 'Linenote', variant:'brand', size:'xxx-small'}},
     { label: '', type: 'button-icon',initialWidth: 20,typeAttributes:{iconName: 'action:delete', name: 'Delete', variant:'border-filled', size:'xxx-small'}}
 ];
 
-export default class Bl_dataTable extends LightningElement {
-    @api recordId;
-    @api auxiliar = false; //Auxiliar variable to see how informaton works
+const discountTierColumns = [
+    {label: 'Lower Bound', fieldName: 'SBQQ__LowerBound__c',  type: 'number'},
+    {label: 'Upper Bound', fieldName: 'SBQQ__UpperBound__c' , type: 'number'},
+    {label: 'Price',fieldName: 'SBQQ__Price__c' , type: 'currency'},
+];
 
-    @api tabSelected; //To display fields depending on tab
-    @api spinnerLoading = false; //To show loading when changes
+const nspGroupings = ['ADSS Cable', 'Bus Conductor -Rectangular Bar', 'Bus Conductor -Seamless Bus Pipe', 'Bus Conductor -Universal Angle', 'Loose Tube Cable', 'Premise Cable'];
+const nspLevel1Groupings = ['ACA', 'Fiber Optic Cable'];
 
-    //QuoteLines information + Quote Notes
-    @api quotelinesLength = 0; //Quotelines quantity
-    @api quotelinesString; //Quotelines information in string
-    @api quoteLines = []; //Quotelines information as object
+export default class bl_dataTable extends NavigationMixin(LightningElement) {
 
-    //QuoteLines fieldSet
-    @track fieldSetLength;
-
-    //Lookup field available if quotelines tabs
-    @track isQuoteLinesTab;
-
-    //Applying discount
-    @track discount; 
-
-    //TIERS VARIBALES (POP-UP DATATABLE)
-    tiers = []; 
-    tiersColumns = TIER_COLUMNS; 
-    popUpTiers = false;
-    showTiersList = false;
-    accountId; 
-    @track selectedName;
-    @track recordsTiers;
-    @track blurTimeout;
-    @track searchTermTier;
-    showTiers = false;
-    //CSS VARIABLES (POP-UP DATATABLE)
-    @track boxClass = 'slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click slds-has-focus';
-    @track inputClass = 'slds-align_absolute-center';
-    
-    //CONNECTING CHANNEL 
-    @wire(MessageContext)
-    messageContext;
-
-    subscribeToMessageChannel() {
-        this.subscription = subscribe(
-            this.messageContext,
-            UPDATE_INTERFACE_CHANNEL,
-            (message) => this.handleMessage(message)
-        );
-    }
+    @api quoteId;
+    quote;
+    flatLines = [];
+    @track columns = columns;
+    @track loading = true;
+    tiers = [];
+    pricingTierMap = [];
+    ascendPackagingList = [];
+    productRules = [];
+    uomRecords = [];
+    contracts = [];
+    priceRules = [];
+    isHomeTab = true;
+    allowSave = true;
 
 
-
+    @track flagEditAdd = false; 
     connectedCallback(){
-        this.spinnerLoading = true; 
-        this.tabSelected == 'Home' ? this.isQuoteLinesTab = true : this.isQuoteLinesTab = false; 
-        this.tabSelected == 'Home' ? this.columns = QUOTE_LINE_COLUMNS : this.columns =  DETAIL_COLUMNS; 
-        setTimeout(()=>{
-            console.log('1');
-            this.subscribeToMessageChannel();
-            //DEPENDING ON TAB, CHANGE COLUMS VALUES
-        
-            if (this.quotelinesString.length > 2 && this.quotelinesString !== '[id: "none"]'){
-                //console.log('2');
-                //console.log(typeof this.quotelinesString);
-                //console.log(this.quotelinesString);
-                this.quoteLines = JSON.parse(this.quotelinesString);
-                //console.log(JSON.stringify(this.quoteLines[0]));
-                //console.log('3');
-                //console.log(this.quoteLines[0]); 
-                for(let i=0;i<this.quoteLines.length;i++){
-                    if(this.quoteLines[i].product.includes('"')){
-                        this.quoteLines[i].product = this.quoteLines[i].product.replace(/['"]+/g, '');
+        const load = async() => {
+            const quote = await read({quoteId: this.quoteId});
+            this.quote = JSON.parse(quote);
+            console.log(this.quote);
+
+            // Build state of the app
+            const payload = await build(this.quote);
+            console.log(payload);
+            this.contracts = payload.contracts;
+            this.schedules = payload.schedules;
+            this.tiers = payload.customerTiers;
+            this.blockPrices = payload.blockPrices;
+            this.ascendPackagingList = payload.ascendPackagingList;
+            this.productRules = payload.productRules;
+            this.uomRecords = payload.uomRecords;
+            this.premiseMaps = payload.premiseMaps;
+            this.priceRules = payload.priceRules;
+
+            let flatLines = [];
+            if(this.quote.lineItems.length){
+                flatLines = this.quote.lineItems.filter(line => !line.record['SBQQ__ProductOption__c']).map(line => {
+                    return {
+                        rowId: line['key'],
+                        isNSP: (nspGroupings.includes(line.record['Filtered_Grouping__c']) && 
+                        nspLevel1Groupings.includes(line.record['ProdLevel1__c'])) ? true : false,
+                        ...line.record
                     }
-                    this.quoteLines[i].alternativeindicator == true ? this.quoteLines[i]['dynamicIcon'] = 'utility:check':
-                    this.quoteLines[i]['dynamicIcon'] = 'utility:close'; 
-                    
-                    //console.log('No double quotes: '+ this.quoteLines[i].product);
-                }
-                this.quoteLinesString = JSON.stringify(this.quoteLines);
-                this.updateTable();
-            } else {
-                this.spinnerLoading = false; 
+                });
             }
-            //Make available the look up field
-            this.spinnerLoading = false; 
-            this.dispatchEvent(new CustomEvent('notselected'));
-            
-        },1000);
+
+            return flatLines;
+        }
+        
+        load().then(flatLines => { 
+            this.flatLines = flatLines;
+            this.startingPageControl();
+            this.loading = false;
+            this.updateQuoteTotal(); 
+            console.log('Script loaded');
+        });
+
+        printNotes({ quoteId: this.quoteId })
+        .then(data =>{
+            //console.log('notes string SUCCESS');
+            if (data == '[]'){
+                this.prodNotes = [];
+            } else {
+                this.prodNotes = JSON.parse(data);
+            }
+            console.log(this.prodNotes);
+        })
+        .catch(error =>{
+            console.log('notes string Error');
+            console.log(error);
+        })
     }
 
     //GETTING PICKLIST VALUES IN UOM/LENGTH UOM/ DEPENDENT ON LEVEL 2
+    //CUSTOMER TIERS/QUOTED LEAD TIMES/OVERRIDE REASONS
     @wire(getObjectInfo, { objectApiName: QUOTELINE_OBJECT })
     objectInfo;
-
     @wire(getPicklistValues, { recordTypeId: '$objectInfo.data.defaultRecordTypeId', fieldApiName: LENGTH_UOM_FIELD})
     lengthUom;
-
     @wire(getPicklistValues, { recordTypeId: '$objectInfo.data.defaultRecordTypeId', fieldApiName: TIER_FIELD})
-    tierValues;
-    
+    customerTiers;
     @wire(getPicklistValues, { recordTypeId: '$objectInfo.data.defaultRecordTypeId', fieldApiName: OVERRIDE_LEAD_TIME_FIELD})
-    leadTimeValues;
-    
-    
-    //WIRE METHOD TO GET ACCOUNT INFO (POP-UP DATATABLE)
-    @wire(getRecord, { recordId: '$recordId', fields: ACCOUNT_ID_FIELD})
-    quoteData({error, data}){
-        if (data){
-            let account = data;
-            this.accountId = getFieldValue(account, ACCOUNT_ID_FIELD ); }
-        else {
-            this.accountId = 'NO ACCOUNT'; 
-        }
-    }
+    quotedLeadTimes;
+    @wire(getPicklistValues,{ recordTypeId: '$objectInfo.data.defaultRecordTypeId', fieldApiName: OVERRIDE_REASON})
+    overrideReasonsList;
 
-
-
-    //HANDLE MESSAGES IN CHANNEL TO UPDATE/DELETE/EIT OR MORE FROM PARENT OT CHILD COMPONENT
-    handleMessage(message) {
-        //Message when table has changed
-        this.spinnerLoading = true;
-        //WHEN CALLING NEW INFO FROM SF
-        if (message.auxiliar == 'newtable'){
-            this.quotelinesString = message.dataString;
-            if (this.quotelinesString){
-                this.quoteLines = JSON.parse(this.quotelinesString);
-                for(let i=0;i<this.quoteLines.length;i++){
-                    if(this.quoteLines[i].product.includes('"')){
-                    this.quoteLines[i].product = this.quoteLines[i].product.replace(/['"]+/g, '');
-                    this.quoteLines[i].alternativeindicator == true ? this.quoteLines[i]['dynamicIcon'] = 'utility:check':
-                    this.quoteLines[i]['dynamicIcon'] = 'utility:close'; 
-                    //console.log('No double quotes: '+ this.quoteLines[i].product);
-                    }
-                }
-                this.quoteLinesString = JSON.stringify(this.quoteLines);
-                this.updateTable();
-            }
-        }
-        //WHEN A CHANGE TO THE TABLE HAS BEING DONE 
-        else if (message.auxiliar == 'updatetable'){
-            this.quotelinesString = message.dataString;
-            this.quoteLines = JSON.parse(this.quotelinesString);
-            this.updateTable();
-        }
-        //WHEN THE REORDER FUNCTION WAS DONE
-        else if (message.auxiliar == 'reordertable'){
-            this.tabSelected == 'Detail' ? this.popUpReorder = false : this.popUpReorder = true; 
-            this.ElementList = this.quoteLines;
-        }
-        //WHEN THE REORDER FUNCTION IS CLOSED
-        else if (message.auxiliar == 'closereorder'){
-            this.popUpReorder = false;
-        }
-        //WHEN LINES ARE CLONED
-        else if (message.auxiliar =='letsclone'){
-            if (this.selectedRows.length > 0){
-                let cloneRows = JSON.parse(JSON.stringify(this.selectedRows)); 
-                let randomId; 
-                let randomName; 
-                let last4Name;
-                this.spinnerLoading = true;
-                for(let i=0;i<this.selectedRows.length;i++){
-                    randomId = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(2, 10);
-                    randomName = Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 6); 
-                    last4Name = cloneRows[i].name.substr(cloneRows[i].name.length - 4);
-                    //CREATE A NEW ID BUT MAKE SURE IT HAS THE CLONED ID (IF IT IS ALREADY IN SF)
-                    cloneRows[i].id =  'new'+randomId;
-                    cloneRows[i].name = 'Clone QL-'+last4Name+'-'+randomName; 
-                    if(this.selectedRows[i].id.startsWith('new')){
-                        cloneRows[i].clonedFrom = this.selectedRows[i].clonedFrom;
-                        //console.log('Clone from new one');
-                    } else {
-                        cloneRows[i].clonedFrom = this.selectedRows[i].id;
-                        //console.log('Clone from old one');
-                    }
-                    this.quoteLines = [...this.quoteLines, cloneRows[i]];
-                }
-                this.updateTable();
-
-                this.quotelinesString = JSON.stringify(this.quoteLines); 
-                this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
-                this.spinnerLoading = false;
-                setTimeout(()=>{
-                    const evt = new ShowToastEvent({
-                        title: 'Cloned Lines',
-                        message: 'Clone line successfully done',
-                        variant: 'success',
-                        mode: 'dismissable'
-                    });
-                    this.dispatchEvent(evt);
-                },250);
-                this.template.querySelector('lightning-datatable').selectedRows=[];
-                this.selectedRows = [];
-                this.dispatchEvent(new CustomEvent('notselected'));
-                this.firstHandler();
-            } else {
-                this.dispatchEvent(new CustomEvent('notselected'));
-                
-                /*
-                setTimeout(()=> {
-                    const evt = new ShowToastEvent({
-                        title: 'No Lines selected',
-                        message: 'Select in the actual tab the lines you want to modify',
-                        variant: 'warning',
-                        mode: 'dismissable'
-                    });
-                    this.dispatchEvent(evt);
-                }, 500);
-                */
-                this.firstHandler();
-            }
-        }
-        //WHEN A DISCOUNT VALUES IS ADDED AND APPLY
-        else if (message.auxiliar == 'applydiscount'){
-            this.discount = message.dataString;
-            if (this.selectedRows != undefined && this.selectedRows !=  null && this.selectedRows.length > 0 ){
-                for(let j = 0; j< this.selectedRows.length; j++){
-                    let index = this.quoteLines.findIndex(x => x.id === this.selectedRows[j].id);
-                    //console.log('quotelines Name: '+this.quoteLines[index].name + ' selected Name: ' +this.selectedRows[j].name)
-                    this.quoteLines[index].discount = (this.discount);
-                    //console.log('Disccount apply: '+this.quoteLines[index].discount);
-                }
-                this.updateTable();
-                this.quotelinesString = JSON.stringify(this.quoteLines); 
-                this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
-                setTimeout(()=>{
-                    this.dispatchEvent(new CustomEvent('discount'));
-                    this.spinnerLoading = false;
-                    const payload = { 
-                        dataString: null,
-                        auxiliar: ''
-                      };
-                    publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
-                },500);
-            } else {
-                this.dispatchEvent(new CustomEvent('notselected'));
-                setTimeout(()=>{
-                    const evt = new ShowToastEvent({
-                        title: 'No Lines selected',
-                        message: 'Select in the actual tab the lines you want to modify',
-                        variant: 'warning',
-                        mode: 'dismissable'
-                    });
-                    this.dispatchEvent(evt);
-                }, 500);
-                this.firstHandler();
-            }
-            this.template.querySelector('lightning-datatable').selectedRows=[];
-            this.selectedRows = [];
-            this.dispatchEvent(new CustomEvent('notselected'));
-            this.firstHandler();
+    saveValues(event) {
+        let lines = this.quote.lineItems;
+        const minQtyLines=[];
+        
+        // Inspect changes
+        event.detail.draftValues.forEach((row, index) => {
             
-            const payload = { 
-                dataString: null,
-                auxiliar: ''
-              };
-            publish(this.messageContext, UPDATE_INTERFACE_CHANNEL, payload); 
+            // Obtain row id
+            const rowId = row.id.substring(4);
+            const localKey = this.flatLines[rowId].rowId;
+
+            // Obtain quote lines index
+            const myIndex = lines.findIndex(ql => ql.key === localKey);
+
+            // Obtain list of fields that were changed
+            const fieldList = Object.keys(row).filter(field => field !== 'id');
+            if(!lines[myIndex].parentItemKey){
+                // Cycle through the fields that were changed
+                for(let field of fieldList){
+                    // change value of fields on that line
+                    lines[myIndex].record[field] = row[field];
+                }
+            }
+            
+            // BUNDLE LOGIC STARTS HERE --------
+            // If line is a bundle parent
+            if(lines[myIndex].record['SBQQ__Bundle__c']) {
+                // Cycle through products that come next
+                for(let i = myIndex; i < lines.length; i++){
+                    // if product is a parent
+                    if(lines[i].record['SBQQ__Bundle__c']){
+                        continue;
+                    }
+                    // if product belongs to parent
+                    if(lines[i].parentItemKey === lines[myIndex].key){
+                        // if is type 'component'
+                        if(lines[i].record['SBQQ__OptionType__c'] === 'Component'){
+                            // Adjust quantity accordingly
+                            lines[i].record['SBQQ__Quantity__c'] = lines[myIndex].record['SBQQ__Quantity__c'] * lines[i].record['SBQQ__BundledQuantity__c'];
+                        }
+                    } else {
+                        break; // Stop cycling, reached the end of bundle
+                    }
+                }
+            }
+            
+            // BUNDLE LOGIC ENDS HERE --------
+
+            //MIN ORDER QTY LOGIC STARTS HERE
+            if(lines[myIndex].record['SBQQ__Quantity__c'] < parseInt(lines[myIndex].record['Minimum_Order_Qty__c'])){
+                //row Id so the alert index matches the number displayed on datatable
+                minQtyLines.push(parseInt(rowId)+1);
+                lines[myIndex].record['SBQQ__Quantity__c']=lines[myIndex].record['Minimum_Order_Qty__c'];
+            }
+
+        });  //End of for each loop
+
+        if(minQtyLines.length!=0){
+            const evt = new ShowToastEvent({
+                title: 'Warning Fields', 
+                message: 'The minimum quantity required has not been reached for line(s): ' + minQtyLines.join(','),
+                variant: 'warning', mode: 'dismissable'
+            });
+            this.dispatchEvent(evt);
         }
-        this.spinnerLoading = false;
+        //MIN ORDER QTY LOGIC ENDS HERE
+
+        this.regenerateFlatLines(0);
+        
     }
 
-    //Selecting rows
-    @api selectedRows = [];
+    @track inlineEditing = false; 
+    handleCellChange(event) {
+        let lines = this.quote.lineItems;
+        const minQtyLines=[];
+        this.flagEditAdd = true;
+        // Inspect changes
+        let page; 
+        this.inlineEditing = true; 
+        if(this.tabSelected == 'Home'){
+            page = this.pageHome;
+
+        } else if (this.tabSelected == 'Detail'){
+            page = this.pageDetail;
+        }
+        event.detail.draftValues.forEach((row, index) => {
+            
+            // Obtain row id
+            const rowId = parseInt(row.id.substring(4))+((page-1)*this.pageSize); //row.id.substring(4); //((this.page-1)*this.pageSize)
+            const localKey = this.flatLines[rowId].rowId;
+            // Obtain quote lines index
+            const myIndex = lines.findIndex(ql => ql.key === localKey);
+
+            // Obtain list of fields that were changed
+            const fieldList = Object.keys(row).filter(field => field !== 'id');
+            if(!lines[myIndex].parentItemKey){
+                // Cycle through the fields that were changed
+                for(let field of fieldList){
+                    // change value of fields on that line
+                    lines[myIndex].record[field] = row[field];
+                }
+            }
+            
+            // BUNDLE LOGIC STARTS HERE --------
+            // If line is a bundle parent
+            if(lines[myIndex].record['SBQQ__Bundle__c']) {
+                // Cycle through products that come next
+                for(let i = myIndex; i < lines.length; i++){
+                    // if product is a parent
+                    if(lines[i].record['SBQQ__Bundle__c']){
+                        continue;
+                    }
+                    // if product belongs to parent
+                    if(lines[i].parentItemKey === lines[myIndex].key){
+                        // if is type 'component'
+                        if(lines[i].record['SBQQ__OptionType__c'] === 'Component'){
+                            // Adjust quantity accordingly
+                            lines[i].record['SBQQ__Quantity__c'] = lines[myIndex].record['SBQQ__Quantity__c'] * lines[i].record['SBQQ__BundledQuantity__c'];
+                        }
+                    } else {
+                        break; // Stop cycling, reached the end of bundle
+                    }
+                }
+            }
+            
+            // BUNDLE LOGIC ENDS HERE --------
+
+            //MIN ORDER QTY LOGIC STARTS HERE --------
+            let minQty = parseInt(lines[myIndex].record['Minimum_Order_Qty__c']);
+            let actualMinQty;
+            minQty != 0 && !isNaN(minQty) ? actualMinQty = minQty : actualMinQty = 1;
+            let minMult = parseInt(lines[myIndex].record['Minimum_Order_Multiple__c']);
+            
+            //First check minimum quantity
+            if(lines[myIndex].record['SBQQ__Quantity__c'] < minQty){
+                lines[myIndex].record['SBQQ__Quantity__c'] = actualMinQty;
+                const evt = new ShowToastEvent({
+                    title: 'Warning Fields',
+                    message: 'The minimum quantity required has not been reached for line: ' + (parseInt(rowId)+1),  //row Id so the alert index matches the number displayed on datatable
+                    variant: 'warning', mode: 'dismissable'
+                });
+                this.dispatchEvent(evt);
+
+            } else if (minMult != 0 && !isNaN(minMult)) {
+
+                //Then checks min multiple
+                if(lines[myIndex].record['SBQQ__Quantity__c'] % minMult != 0){
+                    lines[myIndex].record['SBQQ__Quantity__c'] = actualMinQty;  //Goes back to min qty --> should be correclty set
+                    
+                    //display toast here because it runs at the same tame in cell change saving
+                    const evt = new ShowToastEvent({
+                        title: 'Warning Fields',
+                        message: 'Required multiple not reached: Line '+ (parseInt(rowId)+1) + ' quantity must be multiple of '+ minMult,
+                        variant: 'warning', mode: 'dismissable'
+                    });
+                    this.dispatchEvent(evt);
+                }
+            }
+            //MIN ORDER QTY LOGIC ENDS HERE  --------
+
+        });  //End of for each loop
+
+
+        this.regenerateFlatLines(0);
+    }
+
+    // this function triggers the calculation sequence locally
+    // it checks the product rules, continues with the qcp script
+    // and checks the price rules towards the end
+    @api
+    async calculate() {
+        const lines = this.quote.lineItems;
+        this.loading = true;
+
+        //PRODUCT RULE LOGIC STARTS HERE --------------------
+        if(this.productRules.length !==0){
+            const beforeProdRules = window.performance.now();
+            const productRuleResults = await productRuleLookup(this.productRules,this.quote);
+            this.allowSave = productRuleResults.allowSave;
+            this.event = productRuleResults.event;
+            const afterProdRules = window.performance.now();
+            console.log(`productRuleLookup waited ${afterProdRules - beforeProdRules} milliseconds`);
+        }
+        
+        //Allowing to save if no validation product rules prevent it
+        //needs to be ==true so the event also dispatches here
+        if(this.allowSave==true){       
+            console.log('saving...');
+
+            //Dispatch an alert rule toast message if there's one
+            if(typeof this.event == 'object'){
+                this.dispatchEvent(this.event);
+            }
+
+            // BLOCKPRICES LOGIC STARTS HERE -----------
+            for(let line of lines){
+                // Check if block price exists
+                if(line.record['SBQQ__BlockPrice__c']){
+                    for(let blockPrice of this.blockPrices){
+                        // If block price belongs to produce in quote line
+                        if(blockPrice['SBQQ__Product__c'] === line.record['SBQQ__Product__c']){
+                            // If quantity in block
+                            if(parseInt(line.record ['SBQQ__Quantity__c']) >= blockPrice['SBQQ__LowerBound__c'] && parseInt(line.record['SBQQ__Quantity__c']) < blockPrice['SBQQ__UpperBound__c']){
+                                // Adjust prices accordingly
+                                line.record['SBQQ__ListPrice__c'] = blockPrice['SBQQ__Price__c'];
+                                line.record['SBQQ__SpecialPrice__c'] = blockPrice['SBQQ__Price__c'];
+                            }
+                        }
+                    }
+                }
+            }
+            // BLOCKPRICES LOGIC ENDS HERE -----------
+            
+            this.quote.lineItems = lines;
+            
+            //query ppt
+            const prodTiers = await queryPPT({prodLevel1List: this.quote.lineItems.map(line => line.record['ProdLevel1__c'])});
+
+            // execute qcp script
+            let newQuote;
+            if (this.quote.lineItems.length <= 100){
+                let startTime = window.performance.now();
+                newQuote = await onBeforePriceRules(this.quote, this.ascendPackagingList, this.tiers, prodTiers, this.uomRecords, this.schedules, this.premiseMaps)
+                let endTime = window.performance.now();
+                console.log(`onBeforePriceRules waited ${endTime - startTime} milliseconds`);
+            } else {
+                let startTimeBatchable = window.performance.now();
+                newQuote = await onBeforePriceRulesBatchable(this.quote, this.ascendPackagingList, this.tiers, prodTiers, this.uomRecords, this.schedules, this.premiseMaps)
+                let endTimeBatchable = window.performance.now();
+                console.log(`onBeforePriceRulesBatchable waited ${endTimeBatchable - startTimeBatchable} milliseconds`);
+            }
+            this.quote = newQuote;
+            this.regenerateFlatLines(500);
+
+            //PRICE RULE LOGIC STARTS HERE --------------------
+            if(this.priceRules.length !== 0){
+                const startedPriceRules = window.performance.now();
+                priceRuleLookup(this.priceRules,this.quote);
+                const afterPriceRules = window.performance.now();
+                console.log(`priceRuleLookup waited ${afterPriceRules - startedPriceRules} milliseconds`);
+            }
+            //PRICE RULE LOGIC ENDS HERE --------------------
+        
+        } else if(this.allowSave == false){
+            console.log('No save --> Validation rule');
+            this.loading = false;
+            this.dispatchEvent(this.event);
+        }
+        //PRODUCT RULE LOGIC ENDS HERE --------------------
+    }
+
+    // this functions saves the quote record to the db
+    // and navigates back to the quote record page
+    @api
+    async exit() {
+        this.loading = true;
+        // delete quote lines that were removed from the db
+        await deleteQuoteLines({quoteIds: this.deleteLines});
+        // use save API to update the quote
+        await save({ quoteJSON: JSON.stringify(this.quote) });
+        //Delete record Id from custom object
+        await deletingRecordId({quoteId: this.recordId});
+        // redirect user to the quote record page
+        setTimeout(() => {
+            this[NavigationMixin.Navigate]({
+                type: 'standard__recordPage',
+                attributes: {
+                    recordId: this.quoteId,
+                    actionName: 'view'
+                },
+            });
+        }, 2000);
+    }
+
+    // this function clones the selected quote lines while maintaining
+    // the existing relationships
+    @api
+    clonerows(){
+        try{
+            const rows = this.selectedRows;
+            this.loading = true;
+            for(let row of rows){
+                // find the index of the element that matches the row Id
+                let index = this.quote.lineItems.findIndex(ql => ql.key === row.rowId);
+                // clone the quote line model with such index
+                const clone = {...this.quote.lineItems[index]};
+                // assign key with next highest value
+                clone.key = Math.max(...this.quote.lineItems.map(o => o.key)) + 1;
+                // remove identifiers pointing to the old record
+                const { attributes, Id, ...other } = clone.record;
+                // define new record data type
+                clone.record = {attributes: {type: 'SBQQ__QuoteLine__c'}, ...other};
+                // push cloned quote line into the collection
+                this.quote.lineItems = [...this.quote.lineItems, clone];
+                // if cloned record is a bundle
+                if(clone.record['SBQQ__Bundle__c']){
+                    const parentKey = clone.key;
+                    // get all the children lines
+                    const childrenQuoteLines = this.quote.lineItems.filter(ql => ql.parentItemKey === this.quote.lineItems[index].key);
+                    for(let child of childrenQuoteLines){
+                        // clone the child
+                        const clone = {...child};
+                        // assign next highest key
+                        clone.key = Math.max(...this.quote.lineItems.map(o => o.key)) + 1;
+                        // assign parent key to child record
+                        clone.parentItemKey = parentKey;
+                        // remove identifiers pointing to the old record
+                        const { attributes, Id, ...other } = clone.record;
+                        // define the new record data type
+                        clone.record = {attributes: {type: 'SBQQ__QuoteLine__c'}, ...other};
+                        // push cloned quote line into the collection
+                        this.quote.lineItems = [...this.quote.lineItems, clone];
+                    }
+                }
+            }
+    
+            this.regenerateFlatLines(1000);
+
+            // send success toast notification
+            const evt = new ShowToastEvent({
+                title: 'Lines Cloned Successfully',
+                variant: 'success',
+                mode: 'dismissable'
+            });
+            this.dispatchEvent(evt);
+            this.flagEditAdd = true;
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    // this function handles all the different row level actions coming
+    // through the data table (set length uom, set uom, set nps,
+    // and set overrides modals)
+    dataRow;
+    isLengthUomModalOpen = false;
+    isUomModalOpen = false;
+    nspShowMessage = false;
+    isOverridesModalOpen = false;
+    handleRowAction(event) {
+        this.dataRow = event.detail.row;
+        switch(event.detail.action.name){
+            
+            case 'Delete':
+                this.deleteClick = true;
+                break;
+
+            case 'changeLengthUOM':
+                this.searchLengthUomValues();
+                this.isLengthUomModalOpen = true;
+                break;
+
+            case 'changeUOM':
+                this.newUOM = '';
+                this.searchUomValuesForProduct2();
+                this.isUomModalOpen = true;
+                break;
+
+            case 'NSP':
+                this.isNspModalOpen = true; 
+                if(this.dataRow.isNSP){
+                    this.nspShowMessage = true;
+                    this.showNSPValues();
+                } else {
+                    this.showNSP = true;
+                    this.nspShowMessage = false;
+                }
+                break;
+
+                case 'Tiers':
+                    this.loadOverridesModal();
+                    this.isOverridesModalOpen = true;
+                break;
+
+            case 'Linenote':
+                    this.lineNotePopUp = true; 
+                break;
+
+            case 'alternativeindicator':
+                this.changingAlternative();
+                break;
+            default:
+            alert('There is an error trying to complete this action');    
+        }
+    }
+
+    handleCancel(event) {
+        // read quote again
+        this.loading = true;
+        read({quoteId: this.quoteId})
+        .then(quote => {
+            const originalQuote = JSON.parse(quote);
+            this.quote.lineItems = originalQuote.lineItems;
+            this.loading = false;
+        })
+    }
+
+    // this function alerts the parent component if rows have been
+    // selected on the data table
     handleRowSelection(event){
         //TO ALERT THAT A ROW HAS BEEN SELECTED
         if(event.detail.selectedRows.length == 0){
             this.selectedRows = [];
-            this.dispatchEvent(new CustomEvent('notselected'));
+            this.dispatchEvent(new CustomEvent('rowunselected'));
         } else {
-            this.dispatchEvent(new CustomEvent('clone'));
+            this.dispatchEvent(new CustomEvent('rowselected'));
             this.selectedRows = event.detail.selectedRows;
         }   
     }
 
-    //Reorder quotelines + Drag and Drop 
-    @track popUpReorder = false;
+    lengthUomList = [];
+    searchLengthUomValues(){
+        if(this.lengthUom.data.values){
+            this.lengthUomList = this.lengthUom.data.values;
+        } else {
+            const evt = new ShowToastEvent({
+                title: 'There is not lengthUom for this quote line',
+                message: 'Please, do not change the Length UOM value, it is not available now.',
+                variant: 'warning', mode: 'dismissable'
+            });
+            this.dispatchEvent(evt);
+            this.closeLengthUomModal();
+        }
+    }
+
+    uomList = [];
+    searchUomValuesForProduct2(){
+        
+        if(this.dataRow['ProdLevel2__c'] != null && this.dataRow['ProdLevel2__c'] != ''){
+            uomDependencyLevel2List({productLevel2 : this.dataRow['ProdLevel2__c']})
+            .then((data)=>{
+                let list = JSON.parse(data);
+                let prodLevel2 = Object.getOwnPropertyNames(list);
+                this.uomList = list[prodLevel2[0]];
+            })
+            .catch((error)=>{
+                const evt = new ShowToastEvent({
+                    title: 'There is a problem loading the possible values for the UOM value',
+                    message: 'Please, do not edit UOM values now or refresh the UI to correct this mistake.',
+                    variant: 'error', mode: 'dismissable'
+                });
+                this.dispatchEvent(evt);
+            })
+        } else {
+            const evt = new ShowToastEvent({
+                title: 'There is not Product level 2 for this quote line',
+                message: 'The Product Level 2 is empty, the UOM value is not available',
+                variant: 'warning', mode: 'dismissable'
+            });
+            this.dispatchEvent(evt);
+            this.closeUomModal();
+        }
+    }
+
+    nspValues = [];
+    nspOptions = []; 
+    nspInputs = [];
+    showNSP = false;
+    properties = [];
+    showNSPValues(){
+        this.showNSP = false;
+        NSPAdditionalFields({productId: this.dataRow['SBQQ__Product__c'] })
+        .then( data => {  
+            
+            let listNspValues = JSON.parse(data);
+            console.log(listNspValues);
+            let values = [];
+            let labels = [];
+            let types = [];
+            let optionsP = [];
+
+            for(let nsp of listNspValues){
+                values.push({value: nsp.apiName, label: nsp.label});
+                labels.push(nsp.label); 
+                types.push(nsp.type); 
+                optionsP.push(JSON.parse(nsp.options));
+            }
+            
+            let prop = Object.getOwnPropertyNames(this.dataRow); 
+            this.properties = [];
+
+            for(let i=0; i < prop.length; i++){
+                let ind = (values.findIndex(z => z.value == prop[i]));
+                if(ind !== -1 ){
+                    this.properties.push({key: this.dataRow.rowId, value: prop[i].toLowerCase(), property: prop[i], label: values[ind].label});
+                }   
+            }
+            
+            for(let i =0; i < this.properties.length; i++){
+                this.nspValues.push({label: this.properties[i].label, value: this.dataRow[this.properties[i].property]});
+                this.nspValues.sort((a, b) => (a.label > b.label) ? 1 : -1);
+                if(types[i] == 'PICKLIST'){
+                    this.nspOptions.push({apiName: values[i].value, label:labels[i], options: optionsP[i],}); 
+                    this.nspOptions.sort((a, b) => (a.label > b.label) ? 1 : -1);
+                } else {
+                    this.nspInputs.push({label: labels[i],}); 
+                    this.nspInputs.sort((a, b) => (a.label > b.label) ? 1 : -1);
+                }
+                
+            }
+
+            this.showNSP = true;
+        })
+        .catch((error)=>{
+            console.log('NSP VALUES ERROR');
+            console.log(error);
+        })
+    }
+
+    closeLengthUomModal(){
+        this.isLengthUomModalOpen = false;
+    }
+
+    closeUomModal(){
+        this.isUomModalOpen = false;
+    }
+
+    isNspModalOpen = false;
+    closeNsp(){
+        if (this.nspShowMessage){
+            let fieldsEmpty = 0;
+            for(let i=0 ; i < this.properties.length; i++){
+                let index = this.quote.lineItems.findIndex(x =>  x.key === this.properties[i].key);
+                if (this.quote.lineItems[index].record[this.properties[i].property] == null){
+                    fieldsEmpty++; 
+                } 
+            } 
+            if(fieldsEmpty > 0){
+                fieldsEmpty = 0; 
+                const evt = new ShowToastEvent({
+                    title: 'Some fields are missing.',
+                    message: 'Please, fill in all NSP fields.',
+                    variant: 'warning',
+                    mode: 'dismissable'
+                });
+                this.dispatchEvent(evt);
+            } else {
+                this.isNspModalOpen = false; 
+                this.nspValues = [];
+                this.nspOptions = [];
+                this.nspInputs = [];
+            }
+        } else {
+            this.isNspModalOpen = false; 
+            this.nspValues = [];
+            this.nspOptions = [];
+            this.nspInputs = [];
+        }
+        
+    }
+
+    // lengthUOM Modal handler
+    newLengthUOM = '';
+    lengthUomHandler(event){
+        this.newLengthUOM = event.target.value;
+    }
+
+    // UOM Modal handler 
+    newUOM = '';
+    uomHandler(event){
+        this.newUOM = event.target.value;
+    }
+
+    saveLengthUom(){
+        //SPECIAL BEHAVIOR TO ADD LENGTH BASE VALUES
+        // if (this.dataRow.ouping == 'Cable Assemblies' || this.dataRow.productType == 'Patch Panel - Stubbed'){
+        //     this.dataRow.qlevariableprice = 'Cable Length';
+        // } else {
+        //     newQuotelines[i].qlevariableprice = null ;
+        // }
+        // if (!(this.dataRow.qlevariableprice == 'Cable Length')){
+        //     this.newLengthUOM = 'NA';
+        // }
+        if(this.newLengthUOM === '' || this.newLengthUOM == null){
+            console.log('No changes but save value.');
+        } else {
+            let index = this.quote.lineItems.findIndex(x =>  x.key === this.dataRow.rowId);
+            this.quote.lineItems[index].record['Length_UOM__c'] = this.newLengthUOM;
+            this.flagEditAdd = true;
+            this.closeLengthUomModal();
+            this.notChangePageWhenEditing();
+            this.regenerateFlatLines(0);
+        }
+        
+        // this.qcpScript();
+    }
+
+    saveUom(){
+        if(this.newUOM === '' || this.newUOM == null){
+            console.log('No changes but save value.');
+        } else {
+            let index = this.quote.lineItems.findIndex(x => x.key === this.dataRow.rowId);
+            this.quote.lineItems[index].record['UOM__c'] = this.newUOM;
+        }
+        this.flagEditAdd = true;
+        this.closeUomModal();
+        this.notChangePageWhenEditing();
+        this.regenerateFlatLines(0);
+    }
+
+    saveNSP(event){
+        this.showNSP = false;
+        let prop = event.target.name;
+        let indProp = this.properties.findIndex(x => x.property === prop);
+        let value = event.target.value;
+        let index = this.quote.lineItems.findIndex(x => x.key === this.dataRow.rowId);
+        if(index != -1 && indProp != -1){
+            this.quote.lineItems[index].record[this.properties[indProp].property] = value; 
+            setTimeout(()=>{ this.showNSP = true; }, 200);
+            this.nspValues[this.nspValues.findIndex(x => x.label === event.target.label)].value = value;
+        } else {
+            const evt = new ShowToastEvent({
+                title: 'Problem changing NSP values',
+                message: 'The changes cannot be saved',
+                variant: 'error',
+                mode: 'dismissable'
+            });
+            this.dispatchEvent(evt);
+        }
+        this.flagEditAdd = true;
+        this.notChangePageWhenEditing();
+        this.regenerateFlatLines(0);
+        
+    }
+
+    regenerateFlatLines(delay){
+        // Regenerate flat lines object
+        const flatLines = this.quote.lineItems.filter(line => !line.record['SBQQ__ProductOption__c']).map(line => {
+            return {
+                rowId: line['key'],
+                isNSP: (nspGroupings.includes(line.record['Filtered_Grouping__c']) && 
+                        nspLevel1Groupings.includes(line.record['ProdLevel1__c'])) ? true : false,
+                ...line.record
+            }
+        });
+        // Refresh component
+        const randDelay = Math.floor(Math.random() * delay/2) + delay/2;
+        setTimeout(() => {
+            this.updateQuoteTotal();
+            this.flatLines = flatLines;
+            this.columns = [...columns];
+            this.detailColumns = [...DETAIL_COLUMNS]; 
+            //Olga from here
+            // this.page = 1;
+            // this.linesLength = this.flatLines.length;
+            // //Aca iria el totalRecordCount sera necesario??
+            // this.totalPage=Math.ceil(this.linesLength / this.pageSize);
+            // this.dataPages = this.flatLines.slice(0,this.pageSize);
+            // this.endingRecord = this.pageSize;
+            this.startingPageControl();
+            //olga to here
+            this.loading = false;
+        }, randDelay);
+    }
+
+    // this function updates the net total amount on the parent component
+    updateQuoteTotal() {
+        try{
+            let detail = { record: { SBQQ__NetTotal__c: '0' } }; // initialize to 0
+            if(this.quote.lineItems.length){
+                detail = this.quote.lineItems.reduce((o, line) => {
+                    return {
+                        record: {
+                            SBQQ__NetTotal__c: o.record['SBQQ__NetTotal__c'] + line.record['SBQQ__NetTotal__c']
+                        }
+                    }
+                });
+            }
+            this.dispatchEvent(new CustomEvent('updatetotal', {
+                bubbles: true,
+                detail
+            }));
+        } catch(error) {console.log(error)}
+    }
+
+    //Reorder Lines in Pop up by Product (Quote Line Name Field)
     @track dragStart;
     @track ElementList = []; 
+    popUpReorder = false; 
+    quotelinesLength = 0;
+
+    //When user clicks the reorder button
+    @api
+    reorderLines(){
+        this.popUpReorder = true;
+        this.ElementList = this.flatLines;
+        this.quotelinesLength = this.ElementList.length
+    }
+    
+    //Close the reorder pop up
     closeReorder(){
         this.popUpReorder = false;
-    }  
+    }
+
+    //Functions to reorder by drag and drop 
     DragStart(event) {
         this.dragStart = event.target.title;
         event.target.classList.add("drag");
@@ -395,1312 +883,34 @@ export default class Bl_dataTable extends LightningElement {
         };
         this.ElementList.move(currentIndex, newIndex);
     }
+
+    //When user wants to save the new order
     submitReorder(){
-        this.quoteLines = this.ElementList;
-        this.updateTable();
-        this.quotelinesString = JSON.stringify(this.quoteLines); 
+        this.flatLines = this.ElementList;
+        let reorderItems = [];
+        for(let i =0; i < this.flatLines.length; i++){
+            reorderItems.push(this.quote.lineItems.find(element => element.record.Id == this.flatLines[i].Id));
+        } 
+        for(let j =0; j<  this.quote.lineItems.length; j++){
+            if(reorderItems.find(element => element.record.Id == this.quote.lineItems[j].record.Id) == undefined){
+                reorderItems.push(this.quote.lineItems[j]);
+            }
+        }
+
+        this.quote.lineItems = reorderItems;
+        this.regenerateFlatLines(0);
         this.closeReorder();
         const evt = new ShowToastEvent({
             title: 'Table Reordered',
-            message: 'Changes are sucessfully done',
+            message: 'Changes are successfully done',
             variant: 'success',
             mode: 'dismissable'
         });
         this.dispatchEvent(evt);
-        this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
     }
 
-    //Lookup search product selected to be added to table as quote line
-    handleProductSelection(event){
-        this.spinnerLoading = true;
-        //console.log("the selected record id is: ");
-        //console.log(JSON.stringify(event.detail));
-        let level = event.detail.level; 
-        let lookupcode = event.detail.filtergroup; 
-        let productId = event.detail.Id; 
-
-        //FOR NSP LOOKUP SEARCH ADDITION
-        if (((level == 'ACA') && (lookupcode != 'Copperclad') && (lookupcode != '') && (lookupcode != null) ) || 
-            ((level == 'Fiber Optic Cable') && ((lookupcode == 'Premise Cable') || 
-            (lookupcode == 'Loose Tube Cable') || (lookupcode == 'ADSS Cable')) )) {
-                
-                let startTime = window.performance.now();
-                addQuoteLine({quoteId: this.recordId, productId: productId})
-                .then((data) => {
-                    let endTime = window.performance.now();
-                    console.log(`addQuoteLine method took ${endTime - startTime} milliseconds`);
-                    //console.log('SUCCESS TURNING NSP QUOTELINES');
-                    //console.log(data);
-                    let newQuotelines = JSON.parse(data); 
-                    for (let i=0; i< newQuotelines.length; i++){
-                        //To create auxiliar ID and Name
-                        let randomId = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 10);
-                        let randomName = Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 10);//Math.random().toFixed(36).substring(0, 7)); 
-                        newQuotelines[i].id = 'new'+randomId; 
-                        newQuotelines[i].name = 'New QL-'+randomName; 
-                        newQuotelines[i].minimumorderqty == null ? newQuotelines[i].quantity = 1 : newQuotelines[i].quantity = newQuotelines[i].minimumorderqty;
-                        //newQuotelines[i].netunitprice = 1;
-                        newQuotelines[i].alternative = false;
-                        newQuotelines[i].alternativeindicator = false;
-                        newQuotelines[i].dynamicIcon = 'utility:close';
-                        newQuotelines[i].quotelinename = newQuotelines[i].product;
-                        
-                        //SPECIAL BEHAVIOR TO ADD LENGTH BASE VALUES 
-                        if (newQuotelines[i].filteredGrouping == 'Cable Assemblies' || newQuotelines[i].productType == 'Patch Panel - Stubbed'){
-                            newQuotelines[i].qlevariableprice = 'Cable Length'; 
-                        } else {
-                            newQuotelines[i].qlevariableprice = null ; 
-                        }
-                        if (!(newQuotelines[i].qlevariableprice == 'Cable Length')){
-                            newQuotelines[i].length = 'NA';
-                            newQuotelines[i].lengthuom = 'NA';
-                        } else {
-                            newQuotelines[i].length = '5';
-                            newQuotelines[i].lengthuom = 'Meters';
-                        }
-                        
-                        //NSP CHECK BOX VALUE
-                        newQuotelines[i].isNSP = true; 
-                        if (newQuotelines[i].prodLevel1 == null){
-                            newQuotelines[i].prodLevel2 = null;
-                        }
-                        if (newQuotelines[i].prodLevel2 == null){
-                            newQuotelines[i].uom = null;
-                        }
-                        this.quoteLines = [...this.quoteLines, newQuotelines[i]];
-                    }
-    
-                    this.updateTable();
-                    this.quotelinesString = JSON.stringify(this.quoteLines); 
-                    this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
-                    
-                    //----------
-                    setTimeout(()=>{
-                        const evt = new ShowToastEvent({
-                            title: 'NSP Product added',
-                            message: 'Please, add the NSP fields first',
-                            variant: 'info',
-                            mode: 'dismissable'
-                        });
-                        this.dispatchEvent(evt);
-                        this.spinnerLoading = false;
-                        //NSP POP UP OPEN 
-                        this.nspProduct = true; 
-                        this.nspShowMessage = true;
-                        //----------
-                        this.dataRow = this.quoteLines[this.quoteLines.length-1];
-                        this.showNSPValues();
-                    },250); 
-                })
-                .catch((error)=>{
-                    console.log('ERROR TURNING NSP QUOTELINES');
-                    console.log(error);
-                    const evt = new ShowToastEvent({
-                        title: 'Error creating the Quote Line',
-                        message: 'The server has problems creating quote lines',
-                        variant: 'error',
-                        mode: 'dismissable'
-                    });
-                    this.dispatchEvent(evt);
-                })
-        } else {
-            //let productId = event.detail.Id; 
-            let newQuotelines; //New quoteline
-            let randomId;     //Random Id for new quoteline
-            let randomName;   //Random Name for new quoteline
-
-            let startTime = window.performance.now();
-            addQuoteLine({quoteId: this.recordId, productId: productId})
-            .then((data) => {
-                let endTime = window.performance.now();
-                console.log(`addQuoteLine method took ${endTime - startTime} milliseconds`);
-                console.log('Add Product DATA: '+ data); 
-                newQuotelines = JSON.parse(data); 
-                for (let i=0; i< newQuotelines.length; i++){
-                    //To create auxiliar ID and Name
-                    randomId = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 10);
-                    randomName = Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 10);//Math.random().toFixed(36).substring(0, 7)); 
-                    newQuotelines[i].id = 'new'+randomId; 
-                    newQuotelines[i].name = 'New QL-'+randomName; 
-                    newQuotelines[i].minimumorderqty == null ? newQuotelines[i].quantity = 1 : newQuotelines[i].quantity = newQuotelines[i].minimumorderqty;
-                    //newQuotelines[i].netunitprice = null;
-                    newQuotelines[i].alternative = false;
-                    newQuotelines[i].alternativeindicator = false;
-                    newQuotelines[i].dynamicIcon = 'utility:close';
-                    
-                    newQuotelines[i].quotelinename = newQuotelines[i].product;
-                    //SPECIAL BEHAVIOR TO ADD LENGTH BASE VALUES 
-                    if (newQuotelines[i].filteredGrouping == 'Cable Assemblies' || newQuotelines[i].productType == 'Patch Panel - Stubbed'){
-                        newQuotelines[i].qlevariableprice = 'Cable Length'; 
-                    } else {
-                        newQuotelines[i].qlevariableprice = null ; 
-                    }
-                    if (!(newQuotelines[i].qlevariableprice == 'Cable Length')){
-                        newQuotelines[i].length = 'NA';
-                        newQuotelines[i].lengthuom = 'NA';
-                    } else {
-                        newQuotelines[i].length = '5';
-                        newQuotelines[i].lengthuom = 'Meters';
-                    }
-                    if (newQuotelines[i].prodLevel1 == null){
-                        newQuotelines[i].prodLevel2 = null;
-                    }
-                    if (newQuotelines[i].prodLevel2 == null){
-                        newQuotelines[i].uom = null;
-                    }
-                    this.quoteLines = [...this.quoteLines, newQuotelines[i]];
-                }
-                this.updateTable();
-                this.quotelinesString = JSON.stringify(this.quoteLines); 
-                this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
-                this.spinnerLoading = false;
-                setTimeout(()=>{
-                    const evt = new ShowToastEvent({
-                        title: 'Product added in the table',
-                        message: 'The product you searched was added',
-                        variant: 'success',
-                        mode: 'dismissable'
-                    });
-                    this.dispatchEvent(evt);
-                },250);
-            })
-            .catch((error) =>{
-                console.log('Add Product ERROR: ');
-                console.log(error);
-                this.spinnerLoading = false;
-                const evt = new ShowToastEvent({
-                    title: 'Error creating QuoteLine',
-                    message: 'The product selected cannot turn into a quoteline',
-                    variant: 'error',
-                    mode: 'sticky'
-                });
-                this.dispatchEvent(evt);
-            }) 
-        }
-        /*
-        let productId = event.detail; 
-        let newQuotelines; //New quoteline
-        let randomId;     //Random Id for new quoteline
-        let randomName;   //Random Name for new quoteline
-        addQuoteLine({quoteId: this.recordId, productId: productId})
-        .then((data) => {
-            //console.log('Add Product DATA: '+ data); 
-            newQuotelines = JSON.parse(data); 
-            for (let i=0; i< newQuotelines.length; i++){
-                //To create auxiliar ID and Name
-                randomId = Math.random().toString(36).replace(/[^a-z]+/g, '').substring(0, 10);
-                randomName = Math.random().toString().replace(/[^0-9]+/g, '').substring(2, 10);//Math.random().toFixed(36).substring(0, 7)); 
-                newQuotelines[i].id = 'new'+randomId; 
-                newQuotelines[i].name = 'New QL-'+randomName; 
-                newQuotelines[i].minimumorderqty == null ? newQuotelines[i].quantity = 1 : newQuotelines[i].quantity = newQuotelines[i].minimumorderqty;
-                newQuotelines[i].netunitprice = 1;
-                newQuotelines[i].alternativeindicator = false;
-                 newQuotelines[i].alternative = false;
-                newQuotelines[i].quotelinename = newQuotelines[i].product;
-                newQuotelines[i].length = 'NA';
-                newQuotelines[i].lengthuom = 'NA';
-                if (newQuotelines[i].prodLevel1 == null){
-                    newQuotelines[i].prodLevel2 = null;
-                }
-                if (newQuotelines[i].prodLevel2 == null){
-                    newQuotelines[i].uom = null;
-                }
-                this.quoteLines = [...this.quoteLines, newQuotelines[i]];
-            }
-
-            this.updateTable();
-            this.quotelinesString = JSON.stringify(this.quoteLines); 
-            this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
-            this.spinnerLoading = false;
-            setTimeout(()=>{
-                const evt = new ShowToastEvent({
-                    title: 'Product added in the table',
-                    message: 'The product you searched was added',
-                    variant: 'success',
-                    mode: 'dismissable'
-                });
-                this.dispatchEvent(evt);
-            },250);
-        })
-        .catch((error) =>{
-            console.log('Add Product ERROR: ');
-            console.log(error);
-            this.spinnerLoading = false;
-            const evt = new ShowToastEvent({
-                title: 'Error creating QuoteLine',
-                message: 'The product selected cannot turn into a quoteline',
-                variant: 'error',
-                mode: 'sticky'
-            });
-            this.dispatchEvent(evt);
-        }) 
-        */
-    }
-
-    @track quoteLinesEdit;
-    showUOMValues = false; 
-    @track uomMessageError = ''; 
-    @track lengthUomMessageError = ''; 
-    //valuesUOMString = []; 
-    @track rowUOMErrors = [];
-    @track nonProductLevel2 = [];
-    @track minimumQuantityErrors = [];
-    @track minimumQuantityMultipleErrors = [];
-
-    //Save when table is edited and clicked in save button.
-    handleSaveEdition(event){
-        //this.valuesUOMString = []; 
-        this.rowUOMErrors = [];
-        this.minimumQuantityErrors = [];
-        this.minimumQuantityMultipleErrors = []; 
-        this.nonProductLevel2 = [];
-        this.quoteLinesEdit = event.detail.draftValues; 
-        if(this.quoteLinesEdit.length != undefined){
-            this.uomMessageError = '';
-            this.showUOMValues = false;
-            this.lengthUomMessageError = '';
-            for (let i =0; i< this.quoteLinesEdit.length; i++){
-                //console.log('Id editada: '+this.quoteLinesEdit[i].id);
-                let index = this.quoteLines.findIndex(x => x.id === this.quoteLinesEdit[i].id);
-                //console.log('Index en quoteLines '+index); 
-                //GETTING THE FIELDS EDITED IN THE TABLE
-                let inputsItems = this.quoteLinesEdit.slice().map(draft => {
-                    let fields = Object.assign({}, draft);
-                    return { fields };
-                });
-                let prop = Object.getOwnPropertyNames(inputsItems[i].fields); 
-                
-                //console.log(this.quoteLinesEdit[0]);
-                //VALIDATION RULES TO AVOID ERRORS FROM THE USER BEFORE SAVING IN EACH EDITED QUOTE LINE
-                //SPECIAL CASE, PLEASE NOTE THESE ARE FRAGILE BEHAVIORS IN THE UI 
-                for(let j= 0; j<prop.length-1; j++){
-                    if(prop[j]=='length'){
-                        if (!(this.quoteLines[index].qlevariableprice == 'Cable Length' && 
-                        (this.quoteLines[index].isNSP == false || this.quoteLines[index].isNSP == null)))
-                        {   
-                            inputsItems[i].fields[prop[j]] = 'NA';
-                        } 
-                    }
-                    if(prop[j]=='lengthuom'){
-                        //console.log(this.quoteLines[index].qlevariableprice);
-                        //console.log(this.quoteLines[index].isNSP);
-                        if (this.quoteLines[index].qlevariableprice == 'Cable Length' && 
-                        (this.quoteLines[index].isNSP == false || this.quoteLines[index].isNSP == null)){
-                            if(this.lengthUom.data.values){
-                                let values = [];
-                                for (let picklist of this.lengthUom.data.values){
-                                    values.push(picklist.value);
-                                }
-                                values = values.map(element => { return element.toLowerCase(); });
-                                let indexL = values.findIndex(x => x == inputsItems[i].fields[prop[j]].toLowerCase()); 
-                                if (indexL == -1){
-                                    let list = this.lengthUom.data.values[0].value;
-                                    for(let i=1; i< this.lengthUom.data.values.length; i++){
-                                        if(i == this.lengthUom.data.values.length-1){
-                                            list = list + ' and '+this.lengthUom.data.values[i].value;
-                                        } else {
-                                            list = list + ', '+this.lengthUom.data.values[i].value;
-                                        }
-                                    }
-                                    this.lengthUomMessageError = 'For Length UOM, available values are: '+list; 
-                                    //console.log(this.lengthUomMessageError); 
-                                    inputsItems[i].fields[prop[j]] = null;
-                                } else if (values[indexL].toLowerCase() == inputsItems[i].fields[prop[j]].toLowerCase() ){
-                                    let str = inputsItems[i].fields[prop[j]];
-                                    str = str.toLowerCase();
-                                    inputsItems[i].fields[prop[j]] = str.charAt(0).toUpperCase() + str.slice(1);
-                                    //console.log('Value: '+ values[indexL]);
-                                    //console.log('Input: '+inputsItems[i].fields[prop[j]] );
-                                }
-                            }
-                        } else {
-                            inputsItems[i].fields[prop[j]] = 'NA'; 
-                            this.quoteLines[index].length = 'NA';  //The length is NA
-                        }
-                    }
-                    if(prop[j]=='uom'){
-                        let prodLevel2 = this.quoteLines[index].prodLevel2; 
-                        if(prodLevel2 == null){
-                            this.nonProductLevel2.push(index+1); 
-                            inputsItems[i].fields[prop[j]] = null; 
-                            //console.log('It does not have product level 2');
-                        } else {
-                            let level2 = prodLevel2.toLowerCase();
-                            let restictedIndex = -1;
-                            for(let k =0; k< this.level2Dependencies.length; k++){
-                                if(this.level2Dependencies[k].level2 == level2) {
-                                    restictedIndex = k; 
-                                }
-                            }
-                            if (restictedIndex == -1) {
-                                //console.log('It is not in the product level 2 list');
-                                this.nonProductLevel2.push(index+1); 
-                                inputsItems[i].fields[prop[j]] = null; 
-                            } else {
-                                let isInRestrictedArray = this.level2Dependencies[restictedIndex].dependencies.find(uom => uom == inputsItems[i].fields[prop[j]].toLowerCase());
-                                if (isInRestrictedArray == undefined){
-                                    this.showUOMValues = true;
-                                    //console.log('It is not available for this product level 2');
-                                    this.rowUOMErrors.push(inputsItems[i].fields[prop[j]]+' is not available for line '+(index+1));
-                                    let str = this.level2Dependencies[restictedIndex].dependencies[0];
-                                    str = str.toLowerCase();
-                                    inputsItems[i].fields[prop[j]] = str.charAt(0).toUpperCase() + str.slice(1);
-                                } else {
-                                    //console.log('It is available and it is save');
-                                    let str = inputsItems[i].fields[prop[j]];
-                                    str = str.toLowerCase();
-                                    inputsItems[i].fields[prop[j]] = str.charAt(0).toUpperCase() + str.slice(1);
-                                }
-                            }
-                        }
-                    }
-                    if(prop[j]=='quantity'){
-                        let minQuote = 1; 
-                        //console.log('Min Q ' + this.quoteLines[index].minimumorderqty);
-                        //console.log('Quantity '+ inputsItems[i].fields[prop[j]]);
-                        Number.isInteger(this.quoteLines[index].minimumorderqty) ? minQuote = this.quoteLines[index].minimumorderqty : minQuote = parseInt(this.quoteLines[index].minimumorderqty) ;
-                       
-                        //CONDITION OF MINIMUM QUANTITY
-                        let minQMult = 0;
-                        this.quoteLines[index].minimumordermultiple == null ? minQMult = 0 : minQMult = this.quoteLines[index].minimumordermultiple.valueOf(); 
-                                                if (inputsItems[i].fields[prop[j]].valueOf() < minQuote.valueOf() ){
-                            this.minimumQuantityErrors.push(index+1); 
-                            this.quoteLines[index].minimumorderqty == null ?  inputsItems[i].fields[prop[j]] = 1 :  inputsItems[i].fields[prop[j]] =  this.quoteLines[index].minimumorderqty;
-                        } 
-                        //CONDITION OF MULTIPLE QUANTITY IF THERE IS A VALUE THERE
-                        else if (parseInt(minQMult) != 0 && !isNaN(minQMult)){
-                            if (inputsItems[i].fields[prop[j]].valueOf() % parseInt(this.quoteLines[index].minimumordermultiple) != 0){
-                                this.minimumQuantityMultipleErrors.push('Line '+ (index+1) + ' multiple of '+ parseInt(this.quoteLines[index].minimumordermultiple));
-                                this.quoteLines[index].minimumorderqty == null ?  inputsItems[i].fields[prop[j]] = 1 :  inputsItems[i].fields[prop[j]] =  this.quoteLines[index].minimumorderqty;
-                            }
-                            
-                        }
-                    }
-                    this.quoteLines[index][prop[j]] = inputsItems[i].fields[prop[j]];
-                }         
-
-                //CHECKING DEPENDENCIES OF EMPTY PRODUCT LEVELS VALUES
-                if(this.quoteLines[index].prodLevel1 == null || this.quoteLines[index].prodLevel1 == undefined){
-                    this.quoteLines[index].prodLevel2 = null; 
-                    this.quoteLines[index].prodLevel3 =	null;
-                    this.quoteLines[index].prodLevel4 =	null;
-                    this.quoteLines[index].uom = null;
-                }
-                if(this.quoteLines[index].prodLevel2 == null || this.quoteLines[index].prodLevel2 == undefined){
-                    this.quoteLines[index].uom = null;
-                    this.quoteLines[index].prodLevel3 =	null;
-                    this.quoteLines[index].prodLevel4 =	null;
-                }
-                if(this.quoteLines[index].prodLevel3 == null || this.quoteLines[index].prodLevel3 == undefined){
-                    this.quoteLines[index].prodLevel4 =	null;
-                }
-                //if(this.quoteLines[index].netunitprice == null || this.quoteLines[index].netunitprice == undefined){
-                //    this.quoteLines[index].netunitprice = 1;}
-            }   
-
-                //SHOW ERROR MESSAGES
-                if(this.rowUOMErrors.length >0){
-                    this.rowUOMErrors = this.rowUOMErrors.join();
-                    const evt01 = new ShowToastEvent({ title: 'Warning Fields', message: this.rowUOMErrors,
-                    variant: 'warning', mode: 'sticky' });
-                    this.dispatchEvent(evt01);
-                }
-                if(this.showUOMValues){
-                    let values = [];
-                    for (let picklist of this.uom.data.values){
-                        values.push(picklist.value);
-                    }
-                    const evt1 = new ShowToastEvent({ title: 'Values Available for UOM field', 
-                    message: 'They have some constrains depending on the Level 2 of the product: '+ values.join(),
-                    variant: 'warning', mode: 'sticky' });
-                    this.dispatchEvent(evt1);
-                    this.showUOMValues = false; 
-                }
-                if(this.lengthUomMessageError.length > 0){
-                    const evt1 = new ShowToastEvent({ title: 'Warning Fields', message: this.lengthUomMessageError,
-                    variant: 'warning', mode: 'sticky' });
-                    this.dispatchEvent(evt1);
-                }
-                if(this.minimumQuantityErrors.length > 0){
-                    const evt1 = new ShowToastEvent({ title: 'Warning Fields', 
-                    message: 'The minimum quantity required has not been reached for line(s): '+this.minimumQuantityErrors,
-                    variant: 'warning', mode: 'sticky' });
-                    this.dispatchEvent(evt1);
-                }
-                if(this.minimumQuantityMultipleErrors.length > 0){
-                    const evt1 = new ShowToastEvent({ title: 'Warning Fields', 
-                    message: 'The quantity must be for: '+this.minimumQuantityMultipleErrors,
-                    variant: 'warning', mode: 'sticky' });
-                    this.dispatchEvent(evt1);
-                }
-                
-                //SHOW SUCCESS MESSAGE!
-                if(this.rowUOMErrors.length == 0 && !this.showUOMValues && this.lengthUomMessageError.length == 0 
-                    && this.minimumQuantityErrors.length == 0 && this.minimumQuantityMultipleErrors.length == 0){
-                    const evt = new ShowToastEvent({
-                        title: 'Edits in Table saved',
-                        message: 'Changes are sucessfully saved',
-                        variant: 'success',
-                        mode: 'dismissable'
-                    });
-                    this.dispatchEvent(evt);
-                }
-               
-                this.quotelinesString = JSON.stringify(this.quoteLines); 
-                //console.log(this.quoteLinesString);
-                this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
-                
-                this.quoteLinesEdit = [];
-                
-                this.template.querySelector("lightning-datatable").draftValues = [];
-                //this.firstHandler();
-                this.updateTable();
-           
-        }
-    }
-
-    //UPDATE PAGE VIEW OF TABLE 
-    updateTable(){
-        this.page = 1;
-        //console.log('EVERY TIME YOU UPDATE');
-        //console.log(JSON.stringify(this.quoteLines));
-        this.quotelinesLength = this.quoteLines.length;
-        this.totalRecountCount = this.quotelinesLength;  
-        this.totalPage = Math.ceil(this.totalRecountCount / this.pageSize); 
-        this.dataPages = this.quoteLines.slice(0,this.pageSize); 
-        this.endingRecord = this.pageSize;
-        this.quotelinesLength = this.quoteLines.length;
-        //this.firstHandler();
-    }
-
-    @track deleteClick = false; 
-    @track dataRow; 
-    //Message to delete row 
-    deleteModal(){
-        let quoteLinesDeleted = this.quoteLines; 
-        let row = quoteLinesDeleted.findIndex(x => x.id === this.dataRow.id);
-        this.dispatchEvent(new CustomEvent('deletedid', { detail: this.dataRow.name}));
-        //console.log("Deleted: " + this.dataRow.name + "- Row: " + row);
-        if (quoteLinesDeleted.length > 1){
-            quoteLinesDeleted.splice(row,1); 
-        }
-        else {
-            quoteLinesDeleted = []; 
-        }
-        this.quoteLines = quoteLinesDeleted;
-        this.quotelinesString = JSON.stringify(this.quoteLines);
-        this.updateTable();
-        this.firstHandler();
-        this.dispatchEvent(new CustomEvent('deletedvalues', { detail: this.quotelinesString }));
-        this.deleteClick = false;
-    }
-    //CLOSE DELETE MODAL
-    closeModal(){
-        this.deleteClick = false;
-    }
-
-    @track nspShowMessage = false; 
-    //Delete Row, NSP and See Tiers/Contracts - when click row buttons
-    lineNoteValue; //To show in pop up lineNoteValue
-    uomPopupOpen = false; //To open pop-up that changes UOM value
-    lengthUomPopupOpen = false;  //To open pop-up that changes Length UOM value
-
-    convertToPlain(html){
-        // Create a new div element
-        var tempDivElement = document.createElement("div");
-        // Set the HTML content with the given value
-        tempDivElement.innerHTML = html;
-        // Retrieve the text property of the element 
-        return tempDivElement.textContent || tempDivElement.innerText || "";
-    } 
-
-    handleRowAction(event){
-        this.dataRow = event.detail.row;
-       //console.log(Object.getOwnPropertyNames(event.detail));
-        switch (event.detail.action.name){
-            case 'Delete':
-                this.deleteClick = true; 
-            break;
-            case 'Tiers':
-                //console.log(JSON.stringify(this.dataRow));
-                this.notShowCT= false;
-                this.notShowBP= false; 
-                this.notShowA = false; 
-                this.checkedCT= false;
-                this.checkedBP= false; 
-                this.checkedA = false; 
-                if (this.dataRow.id.startsWith('new')){
-                    const evt = new ShowToastEvent({
-                        title: 'Unable to change Tiers', 
-                        message: 'Please, save the Quote Line first to do this action.',
-                        variant: 'warning', mode: 'dismissable'
-                    });
-                    this.dispatchEvent(evt);
-                } else {
-                    this.popUpTiers = true; 
-                    this.loadingInitianTiers();
-                    this.customerTier = 'not';
-                    this.wasReset = false; 
-                    this.basePrice = 'not';
-                    this.overrideLeadTime = 'not'; 
-                    this.changeAgreement = false;
-                    this.activeOverrideReason = false;
-                    if(this.dataRow.newCustomerTier != null){
-                        this.notShowBP = true;
-                        this.notShowA = true;
-                        this.checkedBP= false; 
-                        this.checkedA = false; 
-                        this.checkedCT = true;
-                    } else if (this.dataRow.basepriceoverride != null){
-                        this.notShowCT = true;
-                        this.notShowA = true;
-                        this.checkedCT= false;
-                        this.checkedA = false;
-                        this.checkedBP = true;
-                    } else if (this.dataRow.newdiscountSchedule != null){
-                        this.notShowCT = true;
-                        this.notShowBP = true;
-                        this.checkedCT= false;
-                        this.checkedBP= false; 
-                        this.checkedA = true;
-                    }
-                    //this.dataRow.newCustomerTier != null ? this.notShowBP = true : this.notShowBP = false; 
-                    //this.dataRow.basepriceoverride != null ? this.notShowCT = true : this.notShowCT = false;
-                    this.dataRow.newCustomerTier == null ? this.showLineCustomertier = this.dataRow.CustomerTier : this.showLineCustomertier = this.dataRow.newCustomerTier;
-                    this.dataRow.basepriceoverride == null ? this.showBasePriceOverride = null : this.showBasePriceOverride = this.dataRow.basepriceoverride;
-                    this.showLeadTime = this.dataRow.overridequotedleadtime; 
-                }
-            break;
-            case 'NSP':
-                this.nspProduct = true; 
-                if(this.dataRow.isNSP){
-                    this.nspShowMessage = true;
-                    this.showNSPValues();
-                } else {
-                    this.showNSP = true;
-                    this.nspShowMessage = false;
-                }
-            break;
-            case 'Linenote':
-                this.lineNotePopUp = true;
-                //TO SHOW NEW LINES IF THERE IS ONE ALREADY IN THE LINE NOTE WITOUT HTML TAGS 
-                if (this.dataRow.linenote != null){
-                    //EDITING HERE
-                    console.log('HTML TAGS');
-                    console.log(this.convertToPlain(this.dataRow.linenote));
-                    //no editing here
-                    /*
-                    let text =  String(this.dataRow.linenote);
-                    //console.log(text)
-                    text = '<p>'+text;
-                    //cambiar para quitar todas las tags
-                    text = text.replace(/\r\n|\n/g, '</p><p>');
-                    text = text+'</p>';*/
-                    
-                    this.lineNoteValue = this.dataRow.linenote; //text; 
-                } else {
-                    this.lineNoteValue = '';
-                }
-            break;
-            case 'uomChange':
-                this.newUOM = ''; 
-                this.searchUomValuesForProduct2();
-                this.uomPopupOpen = true; 
-            break;
-            case 'lengthUomChange':
-                this.newLengthUOM = ''; 
-                this.searchLenthUomValues();
-                this.lengthUomPopupOpen = true; 
-            break; 
-            case 'alternativeindicator':
-                this.changingAlternative();
-            break;
-            default: 
-                alert('There is an error trying to complete this action');
-        }
-
-    }
-
-    //UOM POP UP
-    uomList = [];
-    uomDone = false;
-    searchUomValuesForProduct2(){
-        this.uomDone = true; 
-        if(this.dataRow.prodLevel2 != null && this.dataRow.prodLevel2 != ''){
-            uomDependencyLevel2List({productLevel2 : this.dataRow.prodLevel2})
-            .then((data)=>{
-                //console.log('HERE UOM VALUES');
-                //console.log(data);
-                let list = JSON.parse(data);
-                let prodLevel2 = Object.getOwnPropertyNames(list);
-                this.uomList = list[prodLevel2[0]];
-                this.uomDone = false; 
-            })
-            .catch((error)=>{
-                this.uomDone = false; 
-                console.log(error);
-                const evt = new ShowToastEvent({
-                    title: 'There is a problem loading the possible values for the UOM value', 
-                    message: 'Please, do not edit UOM values now or reload the UI to correct this mistake.',
-                    variant: 'error', mode: 'dismissable'
-                });
-                this.dispatchEvent(evt);
-            })
-        } else {
-            const evt = new ShowToastEvent({
-                title: 'Ther is not Product level 2 for this Quote Line', 
-                message: 'The Product Level 2 is empty, the UOM value is not avialable',
-                variant: 'warning', mode: 'dismissable'
-            });
-            this.dispatchEvent(evt);
-            this.uomDone = false; 
-            this.closeUomPopup();
-        }
-       
-    }
-    closeUomPopup(){
-        this.uomPopupOpen = false; 
-    }
-    newUOM = ''; 
-    uomHandler(event){
-        this.newUOM = event.target.value; 
-    }   
-    saveUom(){
-        if(this.newUOM === '' || this.newUOM == null){
-            console.log('No changes but save value.');
-        } else {
-            let index = this.quoteLines.findIndex(x => x.id === this.dataRow.id);
-            this.quoteLines[index].uom = this.newUOM;
-            this.quotelinesString = JSON.stringify(this.quoteLines); 
-            this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
-        }
-        
-        this.closeUomPopup();
-    }
-
-    //LENGTH POP UP
-    lengthUomList = [];
-
-    searchLenthUomValues(){
-        if(this.lengthUom.data.values){
-            this.lengthUomList = this.lengthUom.data.values; 
-        } else {
-            const evt = new ShowToastEvent({
-                title: 'There is not Length Uom for this Quote Line', 
-                message: 'Please, Do not change the Length UOM value, it is not avialable now.',
-                variant: 'warning', mode: 'dismissable'
-            });
-            this.dispatchEvent(evt);
-            this.closeLengthUomPopup();
-        }
-    }
-
-    closeLengthUomPopup(){
-        this.lengthUomPopupOpen = false; 
-    }
-
-    newLengthUOM = ''; 
-    lengthUomHandler(event){
-        this.newLengthUOM = event.target.value; 
-    }   
-    saveLengthUom(){
-        //SPECIAL BEHAVIOR TO ADD LENGTH BASE VALUES 
-        // if (this.dataRow.filteredGrouping == 'Cable Assemblies' || this.dataRow.productType == 'Patch Panel - Stubbed'){
-        //     this.dataRow.qlevariableprice = 'Cable Length'; 
-        // } else {
-        //     newQuotelines[i].qlevariableprice = null ; 
-        // }
-        if (!(this.dataRow.qlevariableprice == 'Cable Length')){
-            this.newLengthUOM = 'NA';
-        } 
-
-        if(this.newLengthUOM === '' || this.newLengthUOM == null){
-            console.log('No changes but save value.');
-        } else {
-            let index = this.quoteLines.findIndex(x => x.id === this.dataRow.id);
-            this.quoteLines[index].lengthuom = this.newLengthUOM;
-            this.quotelinesString = JSON.stringify(this.quoteLines); 
-            this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
-        }
-        
-        this.closeLengthUomPopup();
-    }
-
-
-    //Alternative Indicator change
-    changingAlternative(){
-
-        let index = this.quoteLines.findIndex(x => x.id === this.dataRow.id);
-        this.quoteLines[index].alternativeindicator =  !this.quoteLines[index].alternativeindicator;
-        this.quoteLines[index].alternativeindicator == true ? this.quoteLines[index].dynamicIcon = 'utility:check':
-                this.quoteLines[index].dynamicIcon = 'utility:close'; 
-        this.quotelinesString = JSON.stringify(this.quoteLines); 
-        this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
-    }
-
-    //Tiers Pop Up 
-    @track popUpTiers = false;
-    closeTiers(){
-        this.popUpTiers = false;
-        this.showTiersList = false;
-    }
-
-    //CHANGE CSS (POP-UP DATATABLE)
-    handleClick() {
-        this.searchTermTier = '';
-        this.inputClass = 'slds-align_absolute-center slds-has-focus';
-        this.boxClass = 'slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click slds-has-focus slds-is-open';
-    }
-
-    onBlur() {
-        this.blurTimeout = setTimeout(() => {
-            this.boxClass = 'slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click slds-has-focus'
-        }, 300);
-    }
-
-    //INITIAL VALUE IN POP-UP TIERS/UPDATE SHOW PRINCIPAR DISCOUNT SCHEDULE
-    overrideTypeCheck = '';
-    thereAreTiers = false;
-    discountScheduleUom; 
-    agreementName;
-    loadingInitianTiers(){
-        //console.log(JSON.stringify(this.dataRow));
-        console.log('Searching Tiers By quote line Id');
-        initialDiscountPrinter({lineId: JSON.stringify(this.dataRow)}) 
-        .then((data)=>{
-            console.log('initial discount Tiers GOOD'); 
-            console.log(JSON.stringify(data));
-            this.tiers = data; 
-            if(data.length > 0){
-                this.notShowBP = true; 
-                this.notShowCT= true;
-                this.checkedCT= false;
-                this.checkedBP= false; 
-                this.thereAreTiers = true;
-                this.showTiersList = true;
-                this.tiers[0].UOM__c != undefined ? this.discountScheduleUom = this.tiers[0].UOM__c 
-                :  this.discountScheduleUom = '';
-                this.tiers[0].Agreement__c != undefined ? this.agreementName = this.tiers[0].Agreement__c 
-                :  this.agreementName = '';
-            } else {
-                this.thereAreTiers = false;
-                this.discountScheduleUom = '';
-                this.agreementName = '';
-            }
-
-        })
-        .catch((error)=>{
-            console.log('initial discount Tiers BAD'); 
-            console.log(error);
-        })
-    }
-
-    //WHEN CHANGING THE TERM TO LOOK UP THE AGREEMENT (POP-UP DATATABLE)
-    onChange(event) {
-        this.searchTermTier = event.target.value;
-        //console.log('search Term : '+ this.searchTermTier);
-        //IF NOT RELATED ACCOUNT 
-        if(this.accountId == 'NO ACCOUNT'){
-            const evt = new ShowToastEvent({
-                title: 'No Account available',
-                message: 'This quote has no associated account',
-                variant: 'error',
-                mode: 'dismissable'
-            });
-            this.dispatchEvent(evt);
-        } else {
-            searchAgreement( {accId : this.accountId, searchTerm: this.searchTermTier})
-            .then((data)=>{
-                    //console.log(data);
-                    //console.log('Looked');
-                    this.recordsTiers = data;
-                    if (this.recordsTiers.length == 0){
-                        this.recordsTiers = [{"Id":"norecords","Agreement_Name__c":"NO Agreements","UOM__c":"NO UOM"}];
-                    } 
-            })
-            .catch((error)=>{
-                console.log('Lookup ERROR: '); 
-                console.log(error);
-                const evt = new ShowToastEvent({
-                    title: 'No agreements found',
-                    message: 'This quote has no associated agreements',
-                    variant: 'warning',
-                    mode: 'dismissable'
-                });
-                this.dispatchEvent(evt);
-            });
-        }
-        
-    }
-
-    changeAgreement = false; 
-     
-    //WHEN SELECTING AN AGREEMENT FROM THE LIST  (POP-UP DATATABLE)
-    onSelect(event) {
-        this.changeAgreement = true; 
-        let selectedId = event.currentTarget.dataset.id;
-        let selectedName = event.currentTarget.dataset.name;
-        console.log('Selected:' + selectedId+', '+selectedName);
-        this.template.querySelectorAll("[id*='inputAgreement']").forEach(each => { each.value = undefined; });
-        if(!(selectedId == 'norecords')){
-            //selectedId 
-            //this.showTiers = false;
-            discountPrinter({agreementId: selectedId /* 8002h000000engBAAQ*/, prodId: this.dataRow.productid /*'01t2h000004Rvu1AAC'*/ })
-            .then((data)=>{
-                console.log('discount Tiers GOOD'); 
-                console.log(data);
-                this.tiers = data; 
-                if(this.tiers.length > 0){
-                    this.activeOverrideReasonFields();
-                    this.notShowBP = true; 
-                    this.notShowCT= true;
-                    this.checkedCT= false;
-                    this.checkedBP= false; 
-                    this.checkedA = true;
-                    this.tiers[0].UOM__c != undefined ? this.discountScheduleUom = this.tiers[0].UOM__c 
-                    :  this.discountScheduleUom = '';
-                    this.tiers[0].Agreement__c != undefined ? this.agreementName = this.tiers[0].Agreement__c 
-                    :  this.agreementName = '';
-                    this.thereAreTiers = true;
-                } else {
-                    this.discountScheduleUom = '';
-                    this.agreementName = selectedName;
-                    this.thereAreTiers = false;
-                }
-               
-                this.showTiers = true; 
-                this.showTiersList = true;
-            })
-            .catch((error)=>{
-                console.log('discount Tiers BAD'); 
-                console.log(error);
-            })
-            if(this.blurTimeout) {
-                clearTimeout(this.blurTimeout);
-            }
-            this.boxClass = 'slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click slds-has-focus';
-        }
-        
-    }
-
-    
-    
-    //WHEN CHANGING CUSTOMER TIER VALUE (POP-UP DATATABLE)
-    notShowCT= false;
-    notShowBP= false; 
-    notShowA = false; 
-    checkedCT= false;
-    checkedBP= false; 
-    checkedA = false; 
-
-    //WHEN SELECTING TYPE OF OVERRIDE
-    handleOverryCheck(event){
-        //console.log(event.target.checked);
-        //console.log(event.target.label);
-        if(event.target.label == 'Tier'){
-            if(event.target.checked){
-                this.notShowBP = true;
-                this.notShowA = true;
-                this.checkedBP= false; 
-                this.checkedA = false; 
-                this.checkedCT = true;
-            } else {
-                this.checkedCT = true;
-                this.template.querySelector("[id*='tiercheckbox']").checked = this.checkedCT;
-                const evt = new ShowToastEvent({
-                    title: 'Reset Override Price.',
-                    message: 'Please, reset prices if you want to change the Override Type.',
-                    variant: 'info', mode: 'dismissible ' });
-                this.dispatchEvent(evt);
-            }
-        } else if (event.target.label == 'Price'){
-            if(event.target.checked){
-                this.notShowCT = true;
-                this.notShowA = true;
-                this.checkedCT= false;
-                this.checkedA = false;
-                this.checkedBP = true;
-            } else {
-                this.checkedBP = true;
-                this.template.querySelector("[id*='pricecheckbox']").checked = this.checkedBP;
-                const evt = new ShowToastEvent({
-                    title: 'Reset Override Price.',
-                    message: 'Please, reset prices if you want to change the Override Type.',
-                    variant: 'info', mode: 'dismissible ' });
-                this.dispatchEvent(evt);
-            }
-            
-        } else if (event.target.label == 'Sales Agreement'){
-            if(event.target.checked){
-                this.notShowCT = true;
-                this.notShowBP = true;
-                this.checkedCT= false;
-                this.checkedBP= false; 
-                this.checkedA = true;
-            } else {
-                this.checkedA = true;
-                this.template.querySelector("[id*='agreementcheckbox']").checked = this.checkedA;
-                const evt = new ShowToastEvent({
-                    title: 'Reset Override Price.',
-                    message: 'Please, reset prices if you want to change the Override Type.',
-                    variant: 'info', mode: 'dismissible ' });
-                this.dispatchEvent(evt);
-            }
-        } 
-    }
-
-    customerTier = 'not';
-    showLineCustomertier;
-    showBasePriceOverride;
-    handleCustomerChange(event){
-        console.log('customer change');
-        this.customerTier = event.target.value; 
-        this.notShowBP = true; 
-        this.notShowA = true; 
-        this.checkedBP= false; 
-        this.checkedA = false; 
-        this.checkedCT = true; 
-        this.activeOverrideReasonFields();
-    }
-
-    //WHEN CHANGING THE OVERRIDE LEAD TIME VALUE (PICK-LIST)
-    overrideLeadTime = 'not'; 
-    handleLeadTime(event){
-        console.log('LEAD TIME change');
-        this.overrideLeadTime = event.target.value; 
-        this.activeOverrideReasonFields();
-    }
-
-    //WHEN CHANGING THE BASE PRICE VALUE (POP-UP DATATABLE)
-    basePrice = 'not'; 
-    handleBasePriceChange(event){
-        console.log('base price');
-        this.basePrice = event.target.value; 
-        this.notShowCT= true;
-        this.notShowA = true;          
-        this.checkedCT= false;
-        this.checkedA = false; 
-        this.checkedBP= true;
-        this.activeOverrideReasonFields();
-    }
-
-    //OVERRIDE REASON FUNCTION
-    //WIRE METHODS TO GET QUOTE OVERRIDE REASON  INFO 
-    @wire(getObjectInfo, { objectApiName: QUOTELINE_OBJECT })
-    quotelineMetadata;
-    @wire(getPicklistValues,{ recordTypeId: '$quotelineMetadata.data.defaultRecordTypeId', 
-            fieldApiName: OVERRIDE_REASON})
-    overrideReasonsList;
-
-    //ACTIVE OVERRIDE REASON WHEN CHANGIN SOME VALUE
-    activeOverrideReason = false;
-    activeOverrideReasonFields(){
-        this.wasReset = false;
-        this.activeOverrideReason = true; 
-        this.overrideReason = '';
-    }
-
-    //WHEN CHANGING THE OVERRIDE REASON CHANGE
-    overrideReason = '';
-    overrideComment = ''; 
-    handleChangeOverrideReason(event){
-        console.log('Override Reason');
-        this.overrideReason = event.target.value; 
-        this.wasReset = false;
-    }
-
-    //WHEN CHANGING THE OVERRIDE COMMENT  
-    handleOverrideComment(event){
-        console.log('Comment Here');
-        this.overrideComment = event.target.value;
-        this.wasReset = false;
-    }
-
-    
-
-    //WHEN CLICK IN CHANGE VALUE (POP-UP DATATABLE) - SEND MESSAGE TO UI FROM DATATABLE COMPONENT 
-    changeTiers(){
-        if(!this.wasReset){
-            if (this.overrideReason == '' && this.activeOverrideReason){
-                const evt = new ShowToastEvent({
-                    title: 'Required Override Reason before changing',
-                    message: 'The Override Reason field should be selected before closing the pop-up',
-                    variant: 'error', mode: 'sticky' });
-                this.dispatchEvent(evt);
-            } else {
-                let sendOverride = false;
-                if(!(this.basePrice == 'not')){
-                    let index = this.quoteLines.findIndex(x => x.id === this.dataRow.id);
-                    if(index != -1){
-                        this.quoteLines[index].basepriceoverride = this.basePrice; 
-                    } else {
-                        alert('The row cannot change, MEGA ERROR');
-                    }
-                    sendOverride = true; 
-                    console.log('base');
-                    //console.log(this.basePrice);
-                }
-                if(!(this.customerTier == 'not')){
-                    let index = this.quoteLines.findIndex(x => x.id === this.dataRow.id);
-                    if(index != -1){
-                        this.quoteLines[index].lastCustomerTier = this.quoteLines[index].newCustomerTier;
-                        this.quoteLines[index].newCustomerTier = this.customerTier; 
-    
-                    } else {
-                        alert('The row cannot change, MEGA ERROR');
-                    }
-                    sendOverride = true;  
-                    console.log('tier');
-                    //console.log(this.customerTier);
-                }
-                if(!(this.overrideLeadTime == 'not')){
-                    let index = this.quoteLines.findIndex(x => x.id === this.dataRow.id);
-                    if(index != -1){
-                        this.quoteLines[index].overridequotedleadtime = this.overrideLeadTime; 
-                    } else {
-                        alert('The row cannot change, MEGA ERROR');
-                    }
-                    sendOverride = true;  
-                    console.log('lead time');
-                }
-                let index = this.quoteLines.findIndex(x => x.id === this.dataRow.id);
-                if(index != -1){
-                    this.quoteLines[index].overridereason = this.overrideReason;
-                    this.quoteLines[index].overridecomments = this.overrideComment; 
-                } else {
-                    alert('The row cannot change, MEGA ERROR');
-                }
-                if (this.changeAgreement && this.tiers.length > 0){
-                    sendOverride = true; 
-                    lineSaver({line: JSON.stringify(this.dataRow), discTiers: this.tiers})
-                    .then((data)=>{
-                        console.log('New line');
-                        console.log(data);
-                        let index = this.quoteLines.findIndex(x => x.id === this.dataRow.id);
-                        if(index != -1){
-                        this.quoteLines[index] = JSON.parse(data);
-                        this.quotelinesString = JSON.stringify(this.quoteLines); 
-                        this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
-                        } else {
-                            alert('The row cannot change, MEGA ERROR');
-                        }
-                    })
-                    .catch((error)=>{
-                        console.log('New Tiers ERROR');
-                        console.log(error);
-                    })
-                }
-                if(sendOverride){
-                        this.quotelinesString = JSON.stringify(this.quoteLines); 
-                        this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
-                    //setTimeout(()=>{ this.dispatchEvent(new CustomEvent('overridereason')); }, 200);
-                    //console.log(this.quotelinesString);
-                }
-                this.closeTiers();
-            }
-        } else {
-            this.closeTiers();
-        }
-    }
-
-    //Reset Prices
-    wasReset = false;
-    resetPrices(){
-        let index = this.quoteLines.findIndex(x => x.id === this.dataRow.id);
-        if(index != -1){
-            this.quoteLines[index].newCustomerTier = null; 
-            this.quoteLines[index].basepriceoverride = null; 
-            this.quoteLines[index].newdiscountSchedule = null; 
-            this.customerTier = 'not';
-            this.basePrice = 'not';
-            this.activeOverrideReason = false;
-            this.agreementSearchTearm = null;
-            this.showLineCustomertier = this.quoteLines[index].CustomerTier;
-            this.dataRow = this.quoteLines[index]; 
-            this.loadingInitianTiers();
-            this.showTiersList = false;
-            this.wasReset = true; 
-            this.quotelinesString = JSON.stringify(this.quoteLines); 
-            this.template.querySelectorAll("[id*='tier']").forEach(each => { each.value = this.dataRow.CustomerTier; });
-            this.template.querySelectorAll("[id*='baseprice']").forEach(each => { each.value = undefined; });
-
-            this.checkedCT = false;
-            this.checkedBP = false; 
-            this.checkedA  = false; 
-            this.notShowBP = false;
-            this.notShowA  = false;
-            this.notShowCT = false;
-              
-            this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
-        } else {
-            alert('The row cannot change, MEGA ERROR');
-        }
-    }
-
-    //NSP Products TO SHOW NSP FIELDS DEPENDING ON QUOTE 
-    @track nspValues = [];
-    @track nspOptions = []; 
-    @track nspInputs = [];
-    @track showNSP = false;
-    properties = [];
-    showNSPValues(){
-        this.showNSP = false;
-        console.log(this.dataRow);
-
-        let startTime = window.performance.now();
-        NSPAdditionalFields({productId: this.dataRow.productid })
-        .then((data)=>{  
-            let endTime = window.performance.now();
-            console.log(`NSPAdditionalFields method took ${endTime - startTime} milliseconds`);
-            //console.log('NSP VALUES');
-            //console.log(data);
-            let nspVal = JSON.parse(data); 
-            let values = [];
-            let labels = [];
-            let types = [];
-            let optionsP = [];
-            for(let nsp of nspVal){
-                //console.log('LABEL '+nsp.label); 
-                //console.log('LABEL BETTER '+(nsp.label.toLowerCase()).replaceAll(/\s/g,'')); 
-                values.push({value: (nsp.label.toLowerCase()).replaceAll(/\s/g,''), label: nsp.label});
-                labels.push(nsp.label); 
-                types.push(nsp.type); 
-                optionsP.push(JSON.parse(nsp.options));
-            }
-            //console.log(values);
-            let prop = Object.getOwnPropertyNames(this.dataRow); 
-            this.properties = []; 
-            for(let i=0; i<prop.length; i++){
-                let ind = (values.findIndex(z => z.value == prop[i].toLowerCase()));
-                if(ind !== -1 ){
-                    this.properties.push({value: prop[i].toLowerCase(), property: prop[i], label: values[ind].label});
-                }   
-            }
-            //console.log(properties);
-            for(let i =0; i<this.properties.length; i++){
-                this.nspValues.push({label: this.properties[i].label, value: this.dataRow[this.properties[i].property]});
-                this.nspValues.sort((a, b) => (a.label > b.label) ? 1 : -1);
-                if(types[i] == 'PICKLIST'){
-                    this.nspOptions.push({label:labels[i], options: optionsP[i],}); 
-                    this.nspOptions.sort((a, b) => (a.label > b.label) ? 1 : -1);
-                } else {
-                    this.nspInputs.push({label: labels[i],}); 
-                    this.nspInputs.sort((a, b) => (a.label > b.label) ? 1 : -1);
-                }
-                
-                //console.log('Showing: '+ JSON.stringify(this.nspValues[this.nspValues.length-1]));
-            }
-            //console.log('Showing: '+ JSON.stringify(this.properties));
-            this.showNSP = true;
-        })
-        .catch((error)=>{
-            console.log('NSP VALUES ERROR');
-            console.log(error);
-        })
-    }
-
-    //WHEN USER CHANGES A NSP VALUE IN QUOTE, AUTO SAVES IN QUOITE LINE
-    changingNSP(event){
-        this.showNSP = false;
-        let prop = ((event.target.label).toLowerCase()).replaceAll(/\s/g,''); 
-        let indProp = this.properties.findIndex(x => x.value === prop);
-        let value = event.target.value;
-        let index = this.quoteLines.findIndex(x => x.id === this.dataRow.id);
-        if(index != -1 && indProp != -1){
-            this.quoteLines[index][this.properties[indProp].property] = value; 
-            setTimeout(()=>{ this.showNSP = true; }, 200);
-            this.nspValues[this.nspValues.findIndex(x => x.label === event.target.label)].value = value;
-        } else {
-            //console.log('There is a problem finding the line selected.');
-            const evt = new ShowToastEvent({
-                title: 'Problem changing NSP values',
-                message: 'The changes cannot be saved',
-                variant: 'error',
-                mode: 'dismissable'
-            });
-            this.dispatchEvent(evt);
-        }
-        
-        
-    }
-
-    //CLOSE THE NSP POP UP AND RELOAD TABLE TO KEEP VALUES IN ALL COMPONENTS UPDATED 
-    @track nspProduct = false;
-    closeNsp(){
-        if (this.nspShowMessage){
-            let fieldsEmpty = 0;
-            for(let i=0 ; i< this.properties.length; i++){
-                if (this.dataRow[this.properties[i].property] == null){
-                    //console.log('Property '+ this.properties[i].property+' is empty');
-                    fieldsEmpty++; 
-                } 
-            } 
-            if(fieldsEmpty > 0){
-                fieldsEmpty = 0; 
-                const evt = new ShowToastEvent({
-                    title: 'Some fields are missing.',
-                    message: 'Please, fill in all NSP fields.',
-                    variant: 'warning',
-                    mode: 'dismissable'
-                });
-                this.dispatchEvent(evt);
-            } else {
-                if(JSON.stringify(this.quoteLines) != this.quotelinesString){
-                    this.quotelinesString = JSON.stringify(this.quoteLines);
-                    this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
-                }
-                this.nspProduct = false; 
-                this.nspValues = [];
-                this.nspOptions = [];
-                this.nspInputs = [];
-            }
-        } else {
-            this.nspProduct = false; 
-            this.nspValues = [];
-            this.nspOptions = [];
-            this.nspInputs = [];
-        }
-        
-    }
-
-    //Pagination
-    @track startingRecord = 1;
-    @track endingRecord = 0; 
-    @track page = 1; 
-    @track totalRecountCount = 0;
-    @track dataPages = []; 
-    @track totalPage = 0;
-    @track pageSize = 10; 
-    //PAGINATION CONTROL 
-    previousHandler() {
-        if (this.page > 1) {
-            this.page = this.page - 1; //decrease page by 1
-            this.displayRecordPerPage(this.page);
-        }
-    }
-    nextHandler() {
-        if((this.page<this.totalPage) && this.page !== this.totalPage){
-            this.page = this.page + 1; //increase page by 1
-            this.displayRecordPerPage(this.page);            
-        }             
-    }
-    firstHandler() {
-        this.page = 1; //turn to page 1
-        this.displayRecordPerPage(this.page);                   
-    }
-    lastHandler() {
-        this.page = this.totalPage; //turn to last page 
-        this.displayRecordPerPage(this.page);                   
-    }
-    displayRecordPerPage(page){
-        this.startingRecord = ((page -1) * this.pageSize) ;
-        this.endingRecord = (this.pageSize * page);
-        this.endingRecord = (this.endingRecord > this.totalRecountCount) 
-                            ? this.totalRecountCount : this.endingRecord; 
-        this.dataPages = this.quoteLines.slice(this.startingRecord, this.endingRecord);
-        this.startingRecord = this.startingRecord + 1;
-    }    
-
+    sortBy;
+    sortDirection; 
     //Sort Columns
     handleSortData(event) {       
         this.sortBy = event.detail.fieldName;       
@@ -1721,32 +931,804 @@ export default class Bl_dataTable extends LightningElement {
         this.dataPages = parseData;
     }
 
-    //Line Notes Pop-Up
-    @track lineNotePopUp = false; 
+
+    @track tabSelected = 'Home'; 
+    @track detailColumns = DETAIL_COLUMNS; 
+    @track lineNotes = [];
+    //Handle Tabs
+    handleActive(event){
+        if (event.target.value=='Notes'){
+            this.dispatchEvent(new CustomEvent('reorderinactive')); 
+            this.tabSelected = 'Notes'; 
+            this.startingPageControl();
+            this.displayRecordPerPage(1);
+        }
+        else if (event.target.value=='Line'){
+            
+            this.dispatchEvent(new CustomEvent('reorderinactive')); 
+            this.tabSelected = 'Line'; 
+            this.lineNotes = JSON.parse(JSON.stringify(this.flatLines)); //[...this.flatLines];
+            this.lineNotes.forEach((quoteline)=>{ 
+                if(quoteline.Line_Note__c != null){
+                    let text = quoteline.Line_Note__c;
+                    text = text.replace(/<\/p\>/g, "\n");
+                    quoteline.Line_Note__c = text.replace(/<p>/gi, "");
+                    quoteline.Line_Note__c = this.convertToPlain(quoteline.Line_Note__c);
+                }
+                if(quoteline.Quote_Line_Name__c.includes('"')){
+                quoteline.Quote_Line_Name__c = quoteline.Quote_Line_Name__c.replace(/['"]+/g, '');
+            }});
+            this.startingPageControl();
+            this.displayRecordPerPage(1);
+        }
+        else  if (event.target.value=='Detail'){
+            this.dispatchEvent(new CustomEvent('reorderinactive')); 
+            this.tabSelected = 'Detail'; 
+            this.detailColumns = DETAIL_COLUMNS; 
+            this.startingPageControl();
+            this.displayRecordPerPage(1);
+        } else { //MUST BE 'QUOTE HOME'
+            this.dispatchEvent(new CustomEvent('reorderactive')); 
+            this.tabSelected = 'Home';  
+            this.startingPageControl();
+            this.displayRecordPerPage(1);
+        }      
+    }
+
+    //Alternative Indicator - Optional checkbox
+    changingAlternative(){
+        this.flagEditAdd = true;
+        let index = this.quote.lineItems.findIndex(x => x.key === this.dataRow.rowId);
+        if(index != -1){
+            this.quote.lineItems[index].record.SBQQ__Optional__c = !this.quote.lineItems[index].record.SBQQ__Optional__c; 
+            this.quote.lineItems[index].record.SBQQ__Optional__c == true ? this.quote.lineItems[index].record.Alternative_Icon__c = 'utility:check':
+            this.quote.lineItems[index].record.Alternative_Icon__c = 'utility:close'; 
+            this.notChangePageWhenEditing();
+            this.regenerateFlatLines(0);
+
+        }
+    }
+
+    //------- Line Notes Behavior (TAB + POP-UP)
+    lineNotePopUp = false;
+    @track sortedDirection = 'asc';
+    @track sortedColumn = 'Quote_Line_Name__c';
+    //Line notes Tab
+    sort(event) {
+        console.log('sorting');
+        if(this.sortedColumn === event.currentTarget.dataset.id){
+            this.sortedDirection = this.sortedDirection === 'asc' ? 'desc' : 'asc';
+        }else{
+            this.sortedDirection = 'asc';
+        } 
+
+        var reverse = this.sortedDirection === 'asc' ? 1 : -1;
+        let table = JSON.parse(JSON.stringify(this.lineNotes));
+        table.sort((a,b) => {return a[event.currentTarget.dataset.id] > b[event.currentTarget.dataset.id] ? 1 * reverse : -1 * reverse});
+        this.sortedColumn = event.currentTarget.dataset.id;        
+        this.lineNotes = table;
+        this.displayRecordPerPage(this.pageLineNotes);
+
+    } 
+    //Line Notes Display without HTML Tags
+    convertToPlain(html){
+        // Create a new div element
+        var tempDivElement = document.createElement("div");
+        // Set the HTML content with the given value
+        tempDivElement.innerHTML = html;
+        // Retrieve the text property of the element 
+        return tempDivElement.textContent || tempDivElement.innerText || "";
+    } 
+
+    //Pop Up Line Notes
     closeLineNotes(){
         this.lineNotePopUp = false;
-        this.newLineNote = '';
     }
-    //CHANGING LINE NOTES
+    //Changing Line Notes
     @track newLineNote; 
     changingLineNote(event){
-        //console.log(event.detail.value); 
         this.newLineNote = event.detail.value;
     }
-    //SABING LINE NOTES, UPDATING TAB AND DELETING HTML TAGS 
+
     saveLineNote(){
-        let index = this.quoteLines.findIndex(x => x.id === this.dataRow.id);
-        let text = this.newLineNote;
-        text = text.replace(/<\/p\>/g, "\n");
-        this.newLineNote = text.replace(/<p>/gi, "");
-        this.quoteLines[index].linenote = this.newLineNote;
-        this.quotelinesString = JSON.stringify(this.quoteLines); 
-        this.dispatchEvent(new CustomEvent('editedtable', { detail: this.quotelinesString }));
-        setTimeout(()=>{
-            this.dispatchEvent(new CustomEvent('newlinenote'));
-            this.closeLineNotes();
-        }, 500);
+        this.flagEditAdd = true;
+        let index = this.quote.lineItems.findIndex(x => x.key === this.dataRow.rowId);
+        this.quote.lineItems[index].record['Line_Note__c'] = this.newLineNote;
+        this.closeLineNotes();
+        this.notChangePageWhenEditing();
+        this.regenerateFlatLines(0);
+    }
+
+    //CLASS: PAGINATION
+    @track linesLength = 0;  
+    @track startingRecord = 1;
+    @track endingRecord = 0; 
+    @track dataPages = []; 
+    @track totalPage = 0;
+
+    @track pageSize = 10; 
+    @track totalPageDetail = 0; @track totalPageHome = 0; @track totalPageNotes = 0; @track totalPageLines = 0;
+    @track pageDetail = 1;  @track pageHome = 1;  @track pageProdNotes = 1;  @track pageLineNotes= 1; 
+
+
+    notChangePageWhenEditing(){
+        this.inlineEditing = true; 
+    }
+    //PAGINATION CONTROL FOR ALL 4 TABS
+    startingPageControl(){
+        if(this.inlineEditing){            
+            if(this.tabSelected == 'Home'){this.assignPageValueByTab(this.pageHome);}
+            else if (this.tabSelected == 'Detail'){this.assignPageValueByTab(this.pageDetail);}
+        } else {
+            this.assignPageValueByTab(1);
+        }
+        this.linesLength = this.flatLines.length;
+        this.prodNotesLength = this.prodNotes.length; 
+        let dataToDisplay;
+        switch (this.tabSelected){
+            case 'Home': 
+                this.totalPageHome = Math.ceil(this.linesLength / this.pageSize);
+                this.isHomeTab = true;
+                dataToDisplay= this.flatLines;
+            break;
+            case 'Detail': 
+                this.totalPageDetail = Math.ceil(this.linesLength / this.pageSize);
+                this.isHomeTab = false;
+                dataToDisplay= this.flatLines;
+            break;
+            case 'Line': 
+                this.totalPageLines = Math.ceil(this.lineNotes.length / this.pageSize);
+                this.isHomeTab = false;
+                dataToDisplay = this.lineNotes; 
+            break;
+            case 'Notes': 
+                this.totalPageNotes = Math.ceil(this.prodNotesLength / this.pageSize);
+                this.isHomeTab = false;
+                dataToDisplay = this.prodNotes; 
+            break;
+        }        
+
+        this.dataPages = dataToDisplay.slice(0,this.pageSize);
+        this.endingRecord = this.pageSize;
+
+        if(this.inlineEditing){
+            if(this.tabSelected == 'Home'){this.displayRecordPerPage(this.pageHome); this.inlineEditing = false;}
+            else if (this.tabSelected == 'Detail'){this.displayRecordPerPage(this.pageDetail); this.inlineEditing = false;}
+        }
         
+    }
+
+    classifyPageByTab(){
+        let page; 
+        switch (this.tabSelected){
+            case 'Home': page = this.pageHome;  break;
+            case 'Detail': page = this.pageDetail;  break;
+            case 'Line': page = this.pageLineNotes;  break;
+            case 'Notes': page = this.pageProdNotes; break;
+        }        
+
+        return page; 
+    }
+
+    assignPageValueByTab(newPage){
+        switch (this.tabSelected){
+            case 'Home': this.pageHome = newPage;  break;
+            case 'Detail': this.pageDetail = newPage;  break;
+            case 'Line': this.pageLineNotes = newPage;  break;
+            case 'Notes': this.pageProdNotes = newPage; break;
+        }
+
+    }
+
+    classifyTotalPageByTab(){
+        let page; 
+        switch (this.tabSelected){
+            case 'Home': page = this.totalPageHome;  break;
+            case 'Detail': page = this.totalPageDetail;  break;
+            case 'Line': page = this.totalPageLines;  break;
+            case 'Notes': page = this.totalPageNotes; break;
+        }
+        return page; 
+    }
+    
+    previousHandler() {
+        let page = this.classifyPageByTab();
+
+        if (page > 1) {
+            page = page - 1; //decrease page by 1
+            this.assignPageValueByTab(page);
+            this.displayRecordPerPage(page);
+        }
+    }
+
+    nextHandler() {
+        let page = this.classifyPageByTab();
+        let totalPage = this.classifyTotalPageByTab();
+        if((page<totalPage) && page !== totalPage){
+            page = page + 1; //increase page by 1
+            this.assignPageValueByTab(page);
+            this.displayRecordPerPage(page);            
+        }             
+    }
+
+    firstHandler() {
+        let page = 1;
+        this.assignPageValueByTab(page);
+        this.displayRecordPerPage(page);    
+    }
+
+    lastHandler() {
+        let page = this.classifyTotalPageByTab();
+        this.assignPageValueByTab(page);
+        this.displayRecordPerPage(page);
+    }
+
+    displayRecordPerPage(page){
+        this.startingRecord = ((page -1) * this.pageSize) ;
+        this.endingRecord = (this.pageSize * page);
+        let dataLength; 
+        let dataToDisplay; 
+        switch (this.tabSelected){
+            case 'Home':
+            case 'Detail':
+                dataLength = this.linesLength; dataToDisplay= this.flatLines;  break;
+            case 'Line': 
+                dataLength = this.linesLength; dataToDisplay = this.lineNotes;  break;
+            case 'Notes':
+                dataLength = this.prodNotesLength; dataToDisplay = this.prodNotes;  break;
+        }
+        this.endingRecord = (this.endingRecord > dataLength) ? dataLength : this.endingRecord;
+        this.dataPages = dataToDisplay.slice(this.startingRecord, this.endingRecord);
+        this.startingRecord = this.startingRecord + 1;
+    }  
+
+    //APPLY DISCOUNT 
+    @api
+    applyDiscountInLines(discountValue){
+        console.log('The Discount Value: '+discountValue);
+        this.flagEditAdd = true;
+        try{
+            const rows = this.selectedRows;
+            this.loading = true;
+            for(let row of rows){
+                // find the index of the element that matches the row Id
+                let index = this.quote.lineItems.findIndex(ql => ql.key === row.rowId);
+                this.quote.lineItems[index].record.SBQQ__Discount__c = discountValue; 
+                this.quote.lineItems[index].record.AdditionalDiscountUnit__c = 'Percent';
+            }
+            this.calculate();
+            //this.regenerateFlatLines(1000);
+
+            // send success toast notification
+            const evt = new ShowToastEvent({
+                title: 'Discount applied Successfully',
+                variant: 'success',
+                mode: 'dismissable'
+            });
+            this.dispatchEvent(evt);
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    //PRODUCT NOTES
+    prodNotesLength = 0; 
+    prodNotes = [];
+    
+    // CLASS: OVERRIDES
+    overrideReason = '';
+    overrideComment = '';
+    isOverrideReason = false;
+    isBpDisabled = false;
+    isSaDisabled = false;
+    isCtDisabled = false;
+    isBpChecked = false;
+    isSaChecked = false;
+    isCtChecked = false;
+    agreementSearchTerm;
+    searchTermTier;
+    boxClass = 'slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click slds-has-focus';
+    inputClass = 'slds-align_absolute-center';
+    agreementRecords;
+    discountScheduleUom;
+    agreementName;
+    discountTiers = [];
+    @track discountTierColumns = discountTierColumns;
+    noTiersFound = true;
+    showTiersList = false;
+    _overrideQuotedLeadTime;
+    _overrideCustomerTier;
+    _overrideBasePrice;
+    previousOverrideState = {};
+    @track loadingOverrides = false;
+
+    showOverrideReason(){
+        // this.wasReset = false;
+        this.isOverrideReason = true; 
+        this.overrideReason = '';
+    }
+
+    showAgreements(){
+        this.searchTermTier = '';
+        this.boxClass = 'slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click slds-has-focus slds-is-open';
+        this.inputClass = 'slds-align_absolute-center slds-has-focus';
+    }
+
+    loadOverridesModal(){
+
+        this.loadingOverrides = true;
+        
+        this.resetModalState();
+        
+        let index = this.quote.lineItems.findIndex(ql => ql.key === this.dataRow.rowId);
+
+        if(this.quote.lineItems[index].record['Override_Quoted_Lead_Time__c']){
+            this._overrideQuotedLeadTime = this.quote.lineItems[index].record['Override_Quoted_Lead_Time__c'];
+        }
+
+        // if new customer tier has been written, lock the other two
+        if(this.quote.lineItems[index].record['New_Customer_Tier__c']){
+            this._overrideCustomerTier = this.quote.lineItems[index].record['New_Customer_Tier__c'];
+            this.isCtChecked = true;
+            this.isBpDisabled = true;
+            this.isSaDisabled = true;
+        }
+
+        // if new base price has been written, lock the other two
+        if(this.quote.lineItems[index].record['Base_Price_Override__c']){
+            this._overrideBasePrice = this.quote.lineItems[index].record['Base_Price_Override__c'];
+            this.isBpChecked = true;
+            this.isSaDisabled = true;
+            this.isCtDisabled = true;
+        }
+
+        // if new discount schedule has been written, lock the other two
+        if(this.quote.lineItems[index].record['New_Discount_Schedule__c']){
+            tiersByScheduleId({scheduleId: this.quote.lineItems[index].record['New_Discount_Schedule__c']})
+            .then( data => {
+                if(data.length > 0){
+                    this._overrideAgreement = data[0]['SBQQ__Schedule__c']; // _overrideAgreement is set to the discount schedule Id not the contract Id
+                    this.isBpDisabled = true; 
+                    this.isCtDisabled= true;
+                    this.isSaChecked= true;
+                    data[0].UOM__c != undefined ? this.discountScheduleUom = data[0].UOM__c 
+                    :  this.discountScheduleUom = '';
+                    data[0].Agreement__c != undefined ? this.agreementName = data[0].Agreement__c 
+                    :  this.agreementName = '';
+                    this.noTiersFound = false;
+                }
+                else {
+                    this.discountScheduleUom = '';
+                    this.agreementName = selectedName;
+                    this.noTiersFound = true;
+                }
+
+                this.discountTiers = data;
+                this.discountTierColumns = [...this.discountTierColumns];
+                this.showTiersList = true;
+                this.loadingOverrides = false;
+            })
+            .catch(error => {
+                console.log(error);
+            });
+        } else {
+            this.loadingOverrides = false;
+        }
+    }
+
+    resetOverrides(){
+
+        this.resetModalState();
+
+        let index = this.quote.lineItems.findIndex(ql => ql.key === this.dataRow.rowId);
+
+        const {record, ...other} = this.quote.lineItems[index];
+
+        record['Override_Quoted_Lead_Time__c'] = null;
+        record['New_Customer_Tier__c'] = null;
+        record['Base_Price_Override__c'] = null;
+        record['New_Discount_Schedule__c'] = null;
+
+        this.showTiersList = false;
+        this.flagEditAdd = true;
+
+    }
+
+    resetModalState(){
+        this.isBpChecked = false;
+        this.isSaChecked = false;
+        this.isCtChecked = false;                
+        this.isBpDisabled = false;
+        this.isSaDisabled = false;
+        this.isCtDisabled = false;
+        this.isOverrideReason = false;
+        this._overrideQuotedLeadTime = null;
+        this._overrideCustomerTier = null;
+        this._overrideBasePrice = null;
+        this._overrideAgreement = null;
+        this.discountTiers = [];
+        this.agreementSearchTerm = '';
+    }
+
+    debounceInterval = 300;
+    typingTimer;
+    handleLookupChange(event) {
+        if(event.target.value.length < 3){
+            this.onLookupBlur();
+            return;
+        }
+        clearTimeout(this.typingTimer);
+        this.searchTermTier = event.target.value;
+        if(!this.quote.record['SBQQ__Account__c']){
+            const evt = new ShowToastEvent({
+                title: 'No Account Available',
+                message: 'This quote has no associated account',
+                variant: 'error',
+                mode: 'dismissable'
+            });
+            this.dispatchEvent(evt);
+        } else {
+            this.typingTimer = setTimeout(() => {
+                searchAgreement({accId : this.quote.record['SBQQ__Account__c'], searchTerm: this.searchTermTier})
+                .then( data => {
+                    this.agreementRecords = data;
+                    if (this.agreementRecords.length == 0){
+                        this.agreementRecords = [{"Id":"norecords","Agreement_Name__c":"NO Agreements","UOM__c":"NO UOM"}];
+                    }
+                    this.showAgreements(); 
+                })
+                .catch( error => {
+                    const evt = new ShowToastEvent({
+                        title: 'No agreements found',
+                        message: 'The quote has no associated agreements',
+                        variant: 'warning',
+                        mode: 'dismissable'
+                    });
+                    this.dispatchEvent(evt);
+                });
+            }, this.debounceInterval);   
+        } 
+    }
+
+    blurTimeout;
+    onLookupBlur() {
+        this.blurTimeout = setTimeout(() => {
+            this.boxClass = 'slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click slds-has-focus'
+        }, 300);
+    }
+
+    closeOverridesModal(){
+        this.isOverridesModalOpen = false;
+        this.showTiersList = false;
+    }
+
+    setOverrideLeadTime(event){
+        this._overrideQuotedLeadTime = event.target.value;
+        this.showOverrideReason();
+    }
+
+    setOverrideReason(event){
+        this.overrideReason = event.target.value; 
+        // this.wasReset = false;
+     }
+ 
+    setOverrideComment(event){
+        this.overrideComment = event.target.value;
+        // this.wasReset = false;
+     }
+
+    setOverrideType(event){
+        if(event.target.label == 'Tier'){
+            if(event.target.checked){
+                this.isBpDisabled = true;
+                this.isSaDisabled = true;
+                this.isBpChecked= false; 
+                this.isSaChecked = false; 
+                this.isCtChecked = true;
+            } else {
+                this.isCtChecked = true;
+                this.template.querySelector("[id*='tiercheckbox']").checked = this.isCtChecked;
+                const evt = new ShowToastEvent({
+                    title: 'Reset Override Price.',
+                    message: 'Please, reset prices if you want to change the Override Type.',
+                    variant: 'info', mode: 'dismissible ' });
+                this.dispatchEvent(evt);
+            }
+        } else if (event.target.label == 'Price'){
+            if(event.target.checked){
+                this.isCtDisabled = true;
+                this.isSaDisabled = true;
+                this.isCtChecked= false;
+                this.isSaChecked = false;
+                this.isBpChecked = true;
+            } else {
+                this.isBpChecked = true;
+                this.template.querySelector("[id*='pricecheckbox']").checked = this.isBpChecked;
+                const evt = new ShowToastEvent({
+                    title: 'Reset Override Price.',
+                    message: 'Please, reset prices if you want to change the Override Type.',
+                    variant: 'info', mode: 'dismissible ' });
+                this.dispatchEvent(evt);
+            }
+            
+        } else if (event.target.label == 'Sales Agreement'){
+            if(event.target.checked){
+                this.isCtDisabled = true;
+                this.isBpDisabled = true;
+                this.isCtChecked= false;
+                this.isBpChecked= false; 
+                this.isSaChecked = true;
+            } else {
+                this.isSaChecked = true;
+                this.template.querySelector("[id*='agreementcheckbox']").checked = this.isSaChecked;
+                const evt = new ShowToastEvent({
+                    title: 'Reset Override Price.',
+                    message: 'Please, reset prices if you want to change the Override Type.',
+                    variant: 'info', mode: 'dismissible ' });
+                this.dispatchEvent(evt);
+            }
+        } 
+    }
+
+    setOverrideCustomerTier(event){
+        this._overrideCustomerTier = event.target.value; 
+        this.isBpDisabled = true; 
+        this.isSaDisabled = true; 
+        this.isBpChecked= false; 
+        this.isSaChecked = false; 
+        this.isCtChecked = true; 
+        this.showOverrideReason();
+    }
+
+    setOverrideBasePrice(event){
+        this._overrideBasePrice = event.target.value; 
+        this.isCtDisabled= true;
+        this.isSaDisabled = true;          
+        this.isCtChecked= false;
+        this.isSaChecked = false; 
+        this.isBpChecked= true;
+        this.showOverrideReason();
+    }
+
+    setOverrideAgreement(event) {
+        let selectedId = event.currentTarget.dataset.id;
+        let selectedName = event.currentTarget.dataset.name;
+        this.agreementSearchTerm = selectedName;
+        this.template.querySelectorAll("[id*='inputAgreement']").forEach(each => { each.value = undefined; });
+        discountPrinter({ agreementId: selectedId, prodId: this.dataRow['SBQQ__Product__c'] })
+        .then( data => {
+            if(data.length > 0){
+                this._overrideAgreement = data[0]['SBQQ__Schedule__c']; // _overrideAgreement is set to the discount schedule Id not the contract Id
+                this.showOverrideReason();
+                this.isBpDisabled = true; 
+                this.isCtDisabled= true;
+                this.isCtChecked= false;
+                this.isBpChecked= false; 
+                this.isSaChecked = true;
+                data[0].UOM__c != undefined ? this.discountScheduleUom = data[0].UOM__c 
+                :  this.discountScheduleUom = '';
+                data[0].Agreement__c != undefined ? this.agreementName = data[0].Agreement__c 
+                :  this.agreementName = '';
+                this.noTiersFound = false;
+            } else {
+                this.discountScheduleUom = '';
+                this.agreementName = selectedName;
+                this.noTiersFound = true;
+            }
+            
+            this.discountTiers = data;
+            this.discountTierColumns = [...this.discountTierColumns];
+            this.showTiersList = true;
+        })
+        .catch( error => {
+            console.log(error);
+        })
+            
+        if(this.blurTimeout) {
+            clearTimeout(this.blurTimeout);
+        }
+            
+        this.boxClass = 'slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click slds-has-focus';
+    }
+
+    setOverrideValues(){
+
+        if (this.overrideReason == '' && this.isOverrideReason){
+            const evt = new ShowToastEvent({
+                title: 'Required Override Reason before changing',
+                message: 'The Override Reason field should be selected before closing the pop-up',
+                variant: 'error', mode: 'sticky' });
+            this.dispatchEvent(evt);
+        } else {
+            
+            try{
+            let index = this.quote.lineItems.findIndex(ql => ql.key === this.dataRow.rowId);
+            
+            if(this._overrideQuotedLeadTime){
+                this.quote.lineItems[index].record['Override_Quoted_Lead_Time__c'] = this._overrideQuotedLeadTime;
+            }
+
+            if(this._overrideCustomerTier && this._overrideCustomerTier != this.quote.lineItems[index].record['New_Customer_Tier__c']){
+                this.quote.lineItems[index].record['Last_Customer_Tier__c'] = this.quote.lineItems[index].record['New_Customer_Tier__c'];
+                this.quote.lineItems[index].record['New_Customer_Tier__c'] = this._overrideCustomerTier;
+            }
+
+            if(this._overrideBasePrice){
+                this.quote.lineItems[index].record['Base_Price_Override__c'] = this._overrideBasePrice;
+            }
+
+            if(this._overrideAgreement && this._overrideAgreement != this.quote.lineItems[index].record['New_Discount_Schedule__c'] && this.discountTiers.length > 0){
+                this.quote.lineItems[index].record['Last_Discount_Schedule__c'] = this.quote.lineItems[index].record['New_Discount_Schedule__c'];
+                this.quote.lineItems[index].record['New_Discount_Schedule__c'] = this._overrideAgreement;
+            }
+
+            }catch(error){console.log(error)}
+            this.flagEditAdd = true;
+            this.closeOverridesModal();
+        }
+    }
+    
+    // CLASS: DELETE BUTTON
+    deleteClick = false;
+    deleteLines = [];
+
+    closeDeleteModal(){
+        this.deleteClick = false;
+    }
+
+    deleteModal(){
+        this.flagEditAdd = true;
+        let lines = this.quote.lineItems;
+        let row = lines.findIndex(line => line.key === this.dataRow.rowId);
+        if(this.dataRow['Id']){
+            this.deleteLines.push(this.dataRow['Id']);
+        }
+
+        // Bundle Logic
+        if(lines[row].record['SBQQ__Bundle__c']){
+            let bundleRows = [];
+            for(let i = row; i<lines.length; i++){
+                if(lines[i].parentItemKey === lines[row].key){
+                    bundleRows.push(lines.findIndex(x => x.record.Id === lines[i].record.Id));
+                    if(lines[i].record.Id){
+                        this.deleteLines.push(lines[i].record.Id);
+                    }
+                }
+            }
+            bundleRows.push(row);
+            bundleRows.forEach(row => {
+                if(lines.length > 1){
+                    lines.splice(row,1);
+                }else{
+                    lines = [];
+                }
+            })
+        }else{
+            if (lines.length > 1){
+                lines.splice(row,1);
+            }else{
+                lines = [];
+            }
+        }
+        this.quote.lineItems = lines;
+        this.regenerateFlatLines(0);
+        this.deleteClick = false;
+    }
+
+    // CLASS: PRODUCT LOOKUP
+    handleProductSelection(event) {
+        this.loading = true;
+        
+        // produce new QL by setting correct values
+        produceNewQL(event, this.quote)
+        .then(clone => {
+            console.log(clone);
+
+            // if product is a bundle
+            if(clone.record['SBQQ__Bundle__c']){
+                throw {
+                    type: 'bundle',
+                    message: 'Product not added to your quote. This product is part of a bundle. Please use the Product Selection page to continue adding this product.'
+                }
+            }
+
+            // push new QL into state
+            this.quote.lineItems = [...this.quote.lineItems, clone];
+            this.quote.nextKey += 1;
+
+            // Regenerate flat lines object
+            const flatLines = this.quote.lineItems.filter(line => !line.record['SBQQ__ProductOption__c']).map(line => {
+                return {
+                    rowId: line['key'],
+                    isNSP: (nspGroupings.includes(line.record['Filtered_Grouping__c']) && 
+                        nspLevel1Groupings.includes(line.record['ProdLevel1__c'])) ? true : false,
+                    ...line.record
+                }
+            });
+
+            // if line is NSP
+            if(flatLines[flatLines.length - 1].isNSP === true){
+                // set NSP field values
+                const evt = { 
+                    detail: {
+                        row: flatLines[flatLines.length - 1],
+                        action: {
+                            name: 'NSP'
+                        }
+                    }
+                }
+                this.handleRowAction(evt);
+
+            }
+
+            this.flatLines = flatLines;
+            this.flagEditAdd = true;
+            this.regenerateFlatLines(0);
+
+        })
+        .catch(error => {
+            console.log(error);
+            if(error.type === 'bundle'){
+                const evt = new ShowToastEvent({
+                    title: 'Incorrect Product Type', 
+                    message: error.message,
+                    variant: 'error', mode: 'dismissable'
+                });
+                this.dispatchEvent(evt);
+                this.loading = false;
+            }
+        });
+    }
+
+
+    //Navigation to product selection page
+    //flagEditAdd = false; 
+    @api 
+    async navigateToProductSelection(){
+
+        let delay = 0;
+        // if it needs to save, use save and wait 1000ms before redirect
+        if(this.flagEditAdd){
+            console.log('SAVING HERE');
+            delay = 1000;
+            this.loading = true;
+            // delete quote lines that were removed from the db
+            try{
+            await deleteQuoteLines({quoteIds: this.deleteLines});
+            // use save API to update the quote
+            await save({ quoteJSON: JSON.stringify(this.quote) });
+            this.flagEditAdd = false;
+            } catch(error){
+                this.loading = false;
+                const evt = new ShowToastEvent({
+                    title: 'Oops!', 
+                    message: 'We found a problem saving your quote. Please try again!',
+                    variant: 'error', mode: 'dismissable'
+                });
+                this.dispatchEvent(evt);
+                return ;
+            } // we could display a notification here            
+            
+        }
+
+        setTimeout(() => {
+            this.loading = false;
+            var compDefinition = {
+                componentDef: "c:bl_productSelection",
+                attributes: {
+                    recordId: this.quoteId,
+                }
+            };
+            // Base64 encode the compDefinition JS object
+            var encodedCompDef = btoa(JSON.stringify(compDefinition));
+            this[NavigationMixin.Navigate]({
+                type: 'standard__webPage',
+                attributes: {
+                    url: '/one/one.app#' + encodedCompDef
+                }
+            });
+        }, delay);
+
     }
 
 }

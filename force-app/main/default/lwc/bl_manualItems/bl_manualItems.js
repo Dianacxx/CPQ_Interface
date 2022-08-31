@@ -2,7 +2,7 @@ import { LightningElement, api, track, wire } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 //GET MOCK PRODUCT FROM SF (IF THERE ARE UPDATES IN THE PRODUCT USED TO CREATE MANUAL ONES)
-import getMockProduct from '@salesforce/apex/blMockData.getMockProduct';
+import getMockProduct from '@salesforce/apex/blQuoteIdController.getMockProduct';
 //TO CREATE NEW QUOTE LINE 
 import addQuoteLine from '@salesforce/apex/QuoteController.addQuoteLine';
 //TO DISPLAT LEVEL OPTIONS AVAILABLE

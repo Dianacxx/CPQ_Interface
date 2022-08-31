@@ -33,6 +33,11 @@
                         <lightning-dynamic-icon class="slds-var-m-left_x-small" type="eq" option="play" alternative-text="Loading"></lightning-dynamic-icon>                                   
                     </template>
                 </div>
+                <template if:true={showUncalculateQuote}>
+                <div class="slds-align_absolute-center slds-var-m-top_x-small" style="background-color:rgb(237, 157, 91);">
+                    <h3><b>Uncalculated quote, please calculate to see updated totals.</b></h3>
+                </div>
+                </template>
             </lightning-layout-item>
             <!--SAVE & DISCOUNT  BUTTONS END-->
             

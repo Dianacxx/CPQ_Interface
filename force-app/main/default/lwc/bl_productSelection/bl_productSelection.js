@@ -1,18 +1,18 @@
-import { LightningElement, api , track} from 'lwc';
-import { NavigationMixin } from 'lightning/navigation';
+import { LightningElement, track, api } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import { NavigationMixin } from 'lightning/navigation';
 
 //APEX METHOD TO GET LOOKUP CODES TO SHOW IN CHILD COMPONENT
 import getProductLevels  from '@salesforce/apex/QuoteController.getProductLevels'; 
 //APEX METHOD TO SAVE THE QUOTE LINES CREATED IN PS
 import quoteLineCreator from '@salesforce/apex/QuoteController.quoteLineCreator'; 
 //APEX METHOD THAT CALLS THE CUSTOM ACTION TO GO TO CONFIGURED PAGE 
-import customActionId from '@salesforce/apex/blMockData.customActionId'; 
+import customActionId from '@salesforce/apex/blQuoteIdController.customActionId'; 
 
-export default class Bl_productSelection extends NavigationMixin(LightningElement) {
-    @api recordId; //Quote Record Id that opens the UI
-    @api quotelinesString; //Quotelines information in string
-    @api quoteNotesString; //Quotelines Notes in string 
+export default class bl_productSelection extends NavigationMixin(LightningElement) {
+
+    @api recordId; 
+
     @api savePSValues = false; 
     //DISPLAY VALUES IN EVERY TAB
     @api girdDataAcaTab = []; 
@@ -37,7 +37,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         //IF THIS CHANGES IN THE OBJECT, MUST BE CHANGED HERE TOO.
         let startTime = window.performance.now();
 
-        console.log('Method getProductLevels level1: ACA');
+        //console.log('Method getProductLevels level1: ACA');
         getProductLevels({level1: 'ACA'})
         .then((data)=>{
             let endTime = window.performance.now();
@@ -490,8 +490,24 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
     }
 
     //When click cancel button in Product Selection UI
+    flagForUncalculatedQuote = 'false'; 
     handleCancel(){
-        this.dispatchEvent(new CustomEvent('cancelps'));
+
+        var compDefinition = {
+            componentDef: "c:bl_userInterface",
+            attributes: {
+                quoteId: this.recordId,
+                comeFromPS: this.flagForUncalculatedQuote, 
+            }
+        };
+        // Base64 encode the compDefinition JS object
+        var encodedCompDef = btoa(JSON.stringify(compDefinition));
+        this[NavigationMixin.Navigate]({
+            type: 'standard__webPage',
+            attributes: {
+                url: '/one/one.app#' + encodedCompDef
+            }
+        });
     }
 
     @api quotesAdded = []; 
@@ -528,6 +544,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
 
     //When click Save and Exit button in Product Selection UI
     handleSaveAndExit(){
+        
         this.savePSValues = true;
         this.quotesAdded = []; 
         console.log(Date()); 
@@ -760,9 +777,10 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         //console.log('Quotelines before process: '+stringQuotesAdded); 
         if(stringQuotesAdded == '[]'){
             //console.log('No quotes to save, going to QLE'); 
-            this.dispatchEvent(new CustomEvent('saveandexitps')); 
+            this.flagForUncalculatedQuote = 'false';
+            this.handleCancel();
         } else {
-
+            
             let startTime = window.performance.now();
             //console.log('Method quoteLineCreator quoteId: '+this.recordId+ ' quoteLines: '+stringQuotesAdded);
             quoteLineCreator({quoteId: this.recordId, quoteLines: stringQuotesAdded})
@@ -772,8 +790,9 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                 //console.log('Quotes Saved from PS, going to QLE'); 
                 this.savePSValues = false;
                 setTimeout(()=>{
-                    this.dispatchEvent(new CustomEvent('saveandexitps')); 
-              }, 1500);
+                    this.flagForUncalculatedQuote = 'true';
+                    this.handleCancel(); 
+              }, 1000);
             })
             .catch((error)=>{
                 let errorMessage; 
@@ -803,7 +822,7 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
                 }
                 const evt = new ShowToastEvent({
                     title: 'Error creating quote lines',
-                    message: 'The server has problems creating quote lines, please do again the process',
+                    message: errorMessage,
                     variant: 'error',
                     mode: 'dismissable'
                 });
@@ -815,6 +834,5 @@ export default class Bl_productSelection extends NavigationMixin(LightningElemen
         }     
         //this.dispatchEvent(new CustomEvent('saveandexitps'));
     }
-    
-    
+
 }

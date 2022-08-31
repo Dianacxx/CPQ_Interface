@@ -490,14 +490,14 @@ export default class EmpApiProductSelection extends NavigationMixin(LightningEle
     }
 
     //When click cancel button in Product Selection UI
-    
+    flagForUncalculatedQuote = 'false'; 
     handleCancel(){
 
         var compDefinition = {
             componentDef: "c:empApi",
             attributes: {
                 quoteId: this.recordId,
-                comeFromPS: true, 
+                comeFromPS: this.flagForUncalculatedQuote, 
             }
         };
         // Base64 encode the compDefinition JS object
@@ -544,6 +544,7 @@ export default class EmpApiProductSelection extends NavigationMixin(LightningEle
 
     //When click Save and Exit button in Product Selection UI
     handleSaveAndExit(){
+        
         this.savePSValues = true;
         this.quotesAdded = []; 
         console.log(Date()); 
@@ -776,9 +777,10 @@ export default class EmpApiProductSelection extends NavigationMixin(LightningEle
         //console.log('Quotelines before process: '+stringQuotesAdded); 
         if(stringQuotesAdded == '[]'){
             //console.log('No quotes to save, going to QLE'); 
+            this.flagForUncalculatedQuote = 'false';
             this.handleCancel();
         } else {
-
+            
             let startTime = window.performance.now();
             //console.log('Method quoteLineCreator quoteId: '+this.recordId+ ' quoteLines: '+stringQuotesAdded);
             quoteLineCreator({quoteId: this.recordId, quoteLines: stringQuotesAdded})
@@ -788,8 +790,9 @@ export default class EmpApiProductSelection extends NavigationMixin(LightningEle
                 //console.log('Quotes Saved from PS, going to QLE'); 
                 this.savePSValues = false;
                 setTimeout(()=>{
+                    this.flagForUncalculatedQuote = 'true';
                     this.handleCancel(); 
-              }, 2000);
+              }, 1000);
             })
             .catch((error)=>{
                 let errorMessage; 
@@ -819,7 +822,7 @@ export default class EmpApiProductSelection extends NavigationMixin(LightningEle
                 }
                 const evt = new ShowToastEvent({
                     title: 'Error creating quote lines',
-                    message: 'The server has problems creating quote lines, please do again the process',
+                    message: errorMessage,
                     variant: 'error',
                     mode: 'dismissable'
                 });

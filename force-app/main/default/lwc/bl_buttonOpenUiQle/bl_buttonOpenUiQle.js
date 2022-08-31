@@ -42,7 +42,7 @@ export default class Bl_buttonOpenUiQle extends NavigationMixin(LightningElement
                         componentDef: "c:empApi",
                         attributes: {
                             quoteId: this.recordId,
-                            comeFromPS: false,
+                            comeFromPS: 'false',
                         }
                     };
                     // Base64 encode the compDefinition JS object

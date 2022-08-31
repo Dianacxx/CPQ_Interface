@@ -8,7 +8,12 @@ export default class EmpApiLWC extends NavigationMixin(LightningElement) {
     @api comeFromPS;
     totalValue;
     totalValueLoading = false;
+    showUncalculateQuote = false;
 
+    connectedCallback(){
+        console.log('Flag: '+this.comeFromPS);
+        this.comeFromPS == 'true' ?  this.showUncalculateQuote = true : this.showUncalculateQuote = false;
+    }
     // Tracks changes to channelName text field
     handleChannelName(event) {
         this.channelName = event.target.value;
@@ -24,6 +29,7 @@ export default class EmpApiLWC extends NavigationMixin(LightningElement) {
 
     handleSaveAndCalculate(){
         console.log('save and calculate');
+        this.showUncalculateQuote = false;
         this.template.querySelector("c-emp-child").calculate();
     }
 

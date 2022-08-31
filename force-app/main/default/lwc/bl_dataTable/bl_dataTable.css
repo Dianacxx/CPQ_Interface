@@ -1,12 +1,22 @@
-.stretchButton{
-    font-size: 11px;
+/*adding row numbers through css*/
+.css-serial {
+    counter-reset: serial-number; /* Set the serial number counter to 0 */
 }
 
-.slds-modal__container{
-    width: 80% !important;
-    max-width: 80% !important;
-    height: 90% !important;
-    max-height: 90% !important;
-
+.css-serial td:first-child:before {
+    counter-increment: serial-number; /* Increment the serial number counter */
+    content: counter(serial-number); /* Display the counter */
 }
 
+a {
+    color: black; 
+}
+
+table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+
+.datatable-row-detail { 
+    width: 100vw; 
+}

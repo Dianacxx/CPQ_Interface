@@ -416,25 +416,22 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
     // this functions saves the quote record to the db
     // and navigates back to the quote record page
     @api
-    exit() {
+    async exit() {
         this.loading = true;
         // delete quote lines that were removed from the db
-        deleteQuoteLines({quoteIds: this.deleteLines});
+        await deleteQuoteLines({quoteIds: this.deleteLines});
         // use save API to update the quote
-        save({ quoteJSON: JSON.stringify(this.quote) })
-        .then(result => {
-            // redirect user to the quote record page
-            setTimeout(() => {
-                this[NavigationMixin.Navigate]({
-                    type: 'standard__recordPage',
-                    attributes: {
-                        recordId: this.quoteId,
-                        actionName: 'view'
-                    },
-                });
-            }, 2000);
-        });
-        
+        await save({ quoteJSON: JSON.stringify(this.quote) });
+        // redirect user to the quote record page
+        setTimeout(() => {
+            this[NavigationMixin.Navigate]({
+                type: 'standard__recordPage',
+                attributes: {
+                    recordId: this.quoteId,
+                    actionName: 'view'
+                },
+            });
+        }, 2000);
     }
 
     // this function clones the selected quote lines while maintaining
@@ -1684,39 +1681,35 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
     //Navigation to product selection page
     //flagEditAdd = false; 
     @api 
-    navigateToProductSelection(){
+    async navigateToProductSelection(){
 
+        let delay = 0;
+        // if it needs to save, use save and wait 1000ms before redirect
         if(this.flagEditAdd){
             console.log('SAVING HERE');
+            delay = 1000;
             this.loading = true;
             // delete quote lines that were removed from the db
-            deleteQuoteLines({quoteIds: this.deleteLines});
+            try{
+            await deleteQuoteLines({quoteIds: this.deleteLines});
             // use save API to update the quote
-            save({ quoteJSON: JSON.stringify(this.quote) })
-            .then(result => {
-                // redirect user to the quote record page
-                this.flagEditAdd = false;
-                setTimeout(() => {
-                    this.loading = false;
-                    var compDefinition = {
-                        componentDef: "c:empApiProductSelection",
-                        attributes: {
-                            recordId: this.quoteId,
-                        }
-                    };
-                    // Base64 encode the compDefinition JS object
-                    var encodedCompDef = btoa(JSON.stringify(compDefinition));
-                    this[NavigationMixin.Navigate]({
-                        type: 'standard__webPage',
-                        attributes: {
-                            url: '/one/one.app#' + encodedCompDef
-                        }
-                    });
-                }, 1000);
-            });
+            await save({ quoteJSON: JSON.stringify(this.quote) });
+            this.flagEditAdd = false;
+            } catch(error){
+                this.loading = false;
+                const evt = new ShowToastEvent({
+                    title: 'Oops!', 
+                    message: 'We found a problem saving your quote. Please try again!',
+                    variant: 'error', mode: 'dismissable'
+                });
+                this.dispatchEvent(evt);
+                return ;
+            } // we could display a notification here            
             
-        } else {
-            console.log('NOT SAVING HERE');
+        }
+
+        setTimeout(() => {
+            this.loading = false;
             var compDefinition = {
                 componentDef: "c:empApiProductSelection",
                 attributes: {
@@ -1731,7 +1724,7 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
                     url: '/one/one.app#' + encodedCompDef
                 }
             });
-        }
+        }, delay);
 
     }
 
