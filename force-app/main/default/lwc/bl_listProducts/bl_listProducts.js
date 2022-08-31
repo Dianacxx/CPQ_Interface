@@ -182,7 +182,7 @@ export default class Bl_listProducts extends NavigationMixin(LightningElement) {
     }
     //If the user clicks the Review Tab
     handleReviewTabActive(){ //If user returns to tab clicking in the name
-
+        this.updateReviewTable();
         this.activeFilterTab = 'Review';
         this.tabOption = true;
         

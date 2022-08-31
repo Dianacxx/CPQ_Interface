@@ -28,44 +28,44 @@ export default class Bl_customLookup extends LightningElement {
         let startTime = window.performance.now();
         //console.log('Method search searchTerm: '+  this.searchTerm + ' quoteId '+this.recordId+ ' option '+ this.productSelected);
 
-        search({searchTerm : this.searchTerm, quoteId: this.recordId, option: this.productSelected})
-        .then((data)=>{
-                let endTime = window.performance.now();
-                //console.log(`search method took ${endTime - startTime} milliseconds`);
-                //console.log('Seacrh data: '+JSON.stringify(data));
-                this.error = undefined;
-                this.records = data;
-                if (this.records.length == 0){
-                    this.records = [{"Id":"norecords","Name":"NO RECORDS","IsActive":false, level: '', filtergroup: '', }];
-                } else {
-                    //TO SHOW CUTOMER PART OR COMPETITOR REFERENCE IN THE SEARCH
-                if (!(this.productSelected == 'name' )) { 
-                    for (let k = 0; k< this.records.length; k++){
-                        if(this.records[k].hasOwnProperty('Customer_Part_Cross_References__r')){
-                            this.customerDisplay = true; 
-                            this.competitorDisplay = false;
-                        }
-                        else if(this.records[k].hasOwnProperty('Competitor_Cross_References__r')){
-                            this.competitorDisplay = true; 
-                            this.customerDisplay = false; 
-                        }
-                    } 
-                }
-            }
-        })
-        .catch((error)=>{
-                this.error = error;
-                this.records = undefined;
-                console.log('Lookup ERROR: '); 
-                console.log(this.error);
-                const evt = new ShowToastEvent({
-                    title: 'No products found',
-                    message: 'This quote has no associated products',
-                    variant: 'warning',
-                    mode: 'dismissable'
-                });
-                this.dispatchEvent(evt);
-        });
+        // search({searchTerm : this.searchTerm, quoteId: this.recordId, option: this.productSelected})
+        // .then((data)=>{
+        //         let endTime = window.performance.now();
+        //         //console.log(`search method took ${endTime - startTime} milliseconds`);
+        //         //console.log('Seacrh data: '+JSON.stringify(data));
+        //         this.error = undefined;
+        //         this.records = data;
+        //         if (this.records.length == 0){
+        //             this.records = [{"Id":"norecords","Name":"NO RECORDS","IsActive":false, level: '', filtergroup: '', }];
+        //         } else {
+        //             //TO SHOW CUTOMER PART OR COMPETITOR REFERENCE IN THE SEARCH
+        //         if (!(this.productSelected == 'name' )) { 
+        //             for (let k = 0; k< this.records.length; k++){
+        //                 if(this.records[k].hasOwnProperty('Customer_Part_Cross_References__r')){
+        //                     this.customerDisplay = true; 
+        //                     this.competitorDisplay = false;
+        //                 }
+        //                 else if(this.records[k].hasOwnProperty('Competitor_Cross_References__r')){
+        //                     this.competitorDisplay = true; 
+        //                     this.customerDisplay = false; 
+        //                 }
+        //             } 
+        //         }
+        //     }
+        // })
+        // .catch((error)=>{
+        //         this.error = error;
+        //         this.records = undefined;
+        //         console.log('Lookup ERROR: '); 
+        //         console.log(this.error);
+        //         const evt = new ShowToastEvent({
+        //             title: 'No products found',
+        //             message: 'This quote has no associated products',
+        //             variant: 'warning',
+        //             mode: 'dismissable'
+        //         });
+        //         this.dispatchEvent(evt);
+        // });
     }
 
     //Lookup field combobox options, handle change to type of search

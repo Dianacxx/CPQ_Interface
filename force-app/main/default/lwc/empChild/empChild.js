@@ -454,6 +454,7 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
                 clone.record = {attributes: {type: 'SBQQ__QuoteLine__c'}, ...other};
                 // push cloned quote line into the collection
                 this.quote.lineItems = [...this.quote.lineItems, clone];
+                this.quote.nextKey += 1;
                 // if cloned record is a bundle
                 if(clone.record['SBQQ__Bundle__c']){
                     const parentKey = clone.key;
@@ -472,6 +473,7 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
                         clone.record = {attributes: {type: 'SBQQ__QuoteLine__c'}, ...other};
                         // push cloned quote line into the collection
                         this.quote.lineItems = [...this.quote.lineItems, clone];
+                        this.quote.nextKey += 1;
                     }
                 }
             }
@@ -1488,6 +1490,7 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
     }
 
     setOverrideAgreement(event) {
+        console.log(event);
         let selectedId = event.currentTarget.dataset.id;
         let selectedName = event.currentTarget.dataset.name;
         this.agreementSearchTerm = selectedName;
@@ -1704,8 +1707,7 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
                 });
                 this.dispatchEvent(evt);
                 return ;
-            } // we could display a notification here            
-            
+            }      
         }
 
         setTimeout(() => {

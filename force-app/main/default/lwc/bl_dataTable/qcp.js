@@ -610,7 +610,9 @@ const setBusConductorPrice = line => {
         }	
                         
         line.record['Product_Name_Key_Field_Text__c'] = line.record['SBQQ__Quantity__c'] + "~" + line.record['Region_Code__c'];
-        line.record['SBQQ__ListPrice__c'] = FinalPrice;
+        if(FinalPrice){
+            line.record['SBQQ__ListPrice__c'] = FinalPrice;
+        }
         log('Final price = ' + line.record['SBQQ__ListPrice__c']);
     }
     return line;
@@ -785,7 +787,7 @@ const onBeforePriceRules = async(quoteModel, ascendPackagingMap, tiers, prodTier
             if (line.record['New_Discount_Schedule__c']) {
                 log('sales agreement overriden at line level');
                 getOverriddenContractPrice(line, overridesDiscountMap);
-            } else {
+            } else if(schedules.length > 0) {
                 log('contract exists, check if quoted product is on the contract');
                 getContractPrice(line, discountMap);
             }

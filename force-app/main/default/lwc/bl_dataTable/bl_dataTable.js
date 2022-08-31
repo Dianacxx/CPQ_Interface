@@ -21,9 +21,6 @@ import OVERRIDE_LEAD_TIME_FIELD from '@salesforce/schema/SBQQ__QuoteLine__c.Over
 import OVERRIDE_REASON from '@salesforce/schema/SBQQ__QuoteLine__c.Override_Reason__c';
 import uomDependencyLevel2List from '@salesforce/apex/QuoteController.uomDependencyLevel2List';
 
-//APEX METHOD TO DELETE THE RECORD THAT SAVES THE QUOTE ID 
-import deletingRecordId from '@salesforce/apex/blQuoteIdController.deletingRecordId';
-
 //APEX METHOD TO SHOW NSP FIELDS IN POP UP
 import NSPAdditionalFields from '@salesforce/apex/QuoteController.NSPAdditionalFields';
 
@@ -425,8 +422,6 @@ export default class bl_dataTable extends NavigationMixin(LightningElement) {
         await deleteQuoteLines({quoteIds: this.deleteLines});
         // use save API to update the quote
         await save({ quoteJSON: JSON.stringify(this.quote) });
-        //Delete record Id from custom object
-        await deletingRecordId({quoteId: this.recordId});
         // redirect user to the quote record page
         setTimeout(() => {
             this[NavigationMixin.Navigate]({
@@ -459,6 +454,7 @@ export default class bl_dataTable extends NavigationMixin(LightningElement) {
                 clone.record = {attributes: {type: 'SBQQ__QuoteLine__c'}, ...other};
                 // push cloned quote line into the collection
                 this.quote.lineItems = [...this.quote.lineItems, clone];
+                this.quote.nextKey += 1;
                 // if cloned record is a bundle
                 if(clone.record['SBQQ__Bundle__c']){
                     const parentKey = clone.key;
@@ -477,6 +473,7 @@ export default class bl_dataTable extends NavigationMixin(LightningElement) {
                         clone.record = {attributes: {type: 'SBQQ__QuoteLine__c'}, ...other};
                         // push cloned quote line into the collection
                         this.quote.lineItems = [...this.quote.lineItems, clone];
+                        this.quote.nextKey += 1;
                     }
                 }
             }
@@ -1043,6 +1040,8 @@ export default class bl_dataTable extends NavigationMixin(LightningElement) {
     @track linesLength = 0;  
     @track startingRecord = 1;
     @track endingRecord = 0; 
+    //@track page = 1; 
+    //@track totalRecountCount = 0;
     @track dataPages = []; 
     @track totalPage = 0;
 
@@ -1491,6 +1490,7 @@ export default class bl_dataTable extends NavigationMixin(LightningElement) {
     }
 
     setOverrideAgreement(event) {
+        console.log(event);
         let selectedId = event.currentTarget.dataset.id;
         let selectedName = event.currentTarget.dataset.name;
         this.agreementSearchTerm = selectedName;
@@ -1707,14 +1707,13 @@ export default class bl_dataTable extends NavigationMixin(LightningElement) {
                 });
                 this.dispatchEvent(evt);
                 return ;
-            } // we could display a notification here            
-            
+            }      
         }
 
         setTimeout(() => {
             this.loading = false;
             var compDefinition = {
-                componentDef: "c:bl_productSelection",
+                componentDef: "c:empApiProductSelection",
                 attributes: {
                     recordId: this.quoteId,
                 }
