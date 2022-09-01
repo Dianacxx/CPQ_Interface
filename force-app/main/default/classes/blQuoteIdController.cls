@@ -43,12 +43,12 @@ public with sharing class blQuoteIdController {
         if (blAction.isEmpty()){
             SBQQ__Quote__c recentView = [SELECT Id FROM SBQQ__Quote__c WHERE LastModifiedById =: actualUser AND 
             LastViewedDate != NULL  ORDER BY LastViewedDate DESC LIMIT 1]; 
-            blMockData.savingRecordId(recentView.Id); 
+            blQuoteIdController.savingRecordId(recentView.Id); 
             return recentView.Id;
         } else if (blAction[0].quoteId__c == null){
             SBQQ__Quote__c recentView = [SELECT Id FROM SBQQ__Quote__c WHERE LastModifiedById =: actualUser AND 
             LastViewedDate != NULL  ORDER BY LastViewedDate DESC LIMIT 1]; 
-            blMockData.savingRecordId(recentView.Id); 
+            blQuoteIdController.savingRecordId(recentView.Id); 
             return recentView.Id;
         } else {
             system.debug(blAction[0]); 

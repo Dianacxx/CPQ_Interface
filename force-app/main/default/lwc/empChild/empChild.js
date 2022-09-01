@@ -27,6 +27,9 @@ import NSPAdditionalFields from '@salesforce/apex/QuoteController.NSPAdditionalF
 //Apex method for the product notes. 
 import printNotes from '@salesforce/apex/QuoteController.printNotes'; 
 
+//APEX METHOD TO DELETE THE RECORD THAT SAVES THE QUOTE ID 
+import deletingRecordId from '@salesforce/apex/blQuoteIdController.deletingRecordId';
+
 const columns = [
     { label: 'Product', fieldName: 'Quote_Line_Name__c', editable: false ,sortable: true, wrapText: false, initialWidth: 250,}, //References Quote_Line_Name__c in Sandbox
     { label: 'Description', fieldName: 'SBQQ__Description__c', editable: true ,sortable: true, wrapText: false, initialWidth: 100,},
@@ -91,6 +94,7 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
 
 
     @track flagEditAdd = false; 
+    @track flagUncalculate = false;
     connectedCallback(){
         const load = async() => {
             const quote = await read({quoteId: this.quoteId});
@@ -237,7 +241,7 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
     handleCellChange(event) {
         let lines = this.quote.lineItems;
         const minQtyLines=[];
-        this.flagEditAdd = true;
+        this.turnOnFlagEdit();
         // Inspect changes
         let page; 
         this.inlineEditing = true; 
@@ -411,6 +415,7 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
             this.dispatchEvent(this.event);
         }
         //PRODUCT RULE LOGIC ENDS HERE --------------------
+        this.flagUncalculate = false;
     }
 
     // this functions saves the quote record to the db
@@ -418,20 +423,30 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
     @api
     async exit() {
         this.loading = true;
-        // delete quote lines that were removed from the db
-        await deleteQuoteLines({quoteIds: this.deleteLines});
-        // use save API to update the quote
-        await save({ quoteJSON: JSON.stringify(this.quote) });
-        // redirect user to the quote record page
-        setTimeout(() => {
-            this[NavigationMixin.Navigate]({
-                type: 'standard__recordPage',
-                attributes: {
-                    recordId: this.quoteId,
-                    actionName: 'view'
-                },
-            });
-        }, 2000);
+       if(this.flagUncalculate){
+            this.dispatchEvent(new CustomEvent('uncalculate'));
+            this.loading = false;
+            //this.flagUncalculate = false;
+       } else {
+            // delete quote lines that were removed from the db
+            await deleteQuoteLines({quoteIds: this.deleteLines});
+            // use save API to update the quote
+            await save({ quoteJSON: JSON.stringify(this.quote) });
+            //Deleting Record Id frm custom object.
+            await deletingRecordId({quoteId: this.quoteId});
+            // redirect user to the quote record page
+            setTimeout(() => {
+                this.loading = false;
+                this[NavigationMixin.Navigate]({
+                    type: 'standard__recordPage',
+                    attributes: {
+                        recordId: this.quoteId,
+                        actionName: 'view'
+                    },
+                });
+            }, 2000);
+        }
+        
     }
 
     // this function clones the selected quote lines while maintaining
@@ -487,7 +502,7 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
                 mode: 'dismissable'
             });
             this.dispatchEvent(evt);
-            this.flagEditAdd = true;
+            this.turnOnFlagEdit();
         } catch (error) {
             console.log(error);
         }
@@ -740,7 +755,7 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
         } else {
             let index = this.quote.lineItems.findIndex(x =>  x.key === this.dataRow.rowId);
             this.quote.lineItems[index].record['Length_UOM__c'] = this.newLengthUOM;
-            this.flagEditAdd = true;
+            this.turnOnFlagEdit();
             this.closeLengthUomModal();
             this.notChangePageWhenEditing();
             this.regenerateFlatLines(0);
@@ -756,7 +771,7 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
             let index = this.quote.lineItems.findIndex(x => x.key === this.dataRow.rowId);
             this.quote.lineItems[index].record['UOM__c'] = this.newUOM;
         }
-        this.flagEditAdd = true;
+        this.turnOnFlagEdit();
         this.closeUomModal();
         this.notChangePageWhenEditing();
         this.regenerateFlatLines(0);
@@ -781,7 +796,7 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
             });
             this.dispatchEvent(evt);
         }
-        this.flagEditAdd = true;
+        this.turnOnFlagEdit();
         this.notChangePageWhenEditing();
         this.regenerateFlatLines(0);
         
@@ -974,7 +989,7 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
 
     //Alternative Indicator - Optional checkbox
     changingAlternative(){
-        this.flagEditAdd = true;
+        this.turnOnFlagEdit();
         let index = this.quote.lineItems.findIndex(x => x.key === this.dataRow.rowId);
         if(index != -1){
             this.quote.lineItems[index].record.SBQQ__Optional__c = !this.quote.lineItems[index].record.SBQQ__Optional__c; 
@@ -1028,7 +1043,7 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
     }
 
     saveLineNote(){
-        this.flagEditAdd = true;
+        this.turnOnFlagEdit();
         let index = this.quote.lineItems.findIndex(x => x.key === this.dataRow.rowId);
         this.quote.lineItems[index].record['Line_Note__c'] = this.newLineNote;
         this.closeLineNotes();
@@ -1185,7 +1200,7 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
     @api
     applyDiscountInLines(discountValue){
         console.log('The Discount Value: '+discountValue);
-        this.flagEditAdd = true;
+        this.turnOnFlagEdit();
         try{
             const rows = this.selectedRows;
             this.loading = true;
@@ -1329,7 +1344,7 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
         record['New_Discount_Schedule__c'] = null;
 
         this.showTiersList = false;
-        this.flagEditAdd = true;
+        this.turnOnFlagEdit();
 
     }
 
@@ -1563,7 +1578,7 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
             }
 
             }catch(error){console.log(error)}
-            this.flagEditAdd = true;
+            this.turnOnFlagEdit();
             this.closeOverridesModal();
         }
     }
@@ -1572,12 +1587,17 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
     deleteClick = false;
     deleteLines = [];
 
+    turnOnFlagEdit(){
+        this.flagEditAdd = true;
+        this.flagUncalculate = true; 
+    }
+
     closeDeleteModal(){
         this.deleteClick = false;
     }
 
     deleteModal(){
-        this.flagEditAdd = true;
+        this.turnOnFlagEdit();
         let lines = this.quote.lineItems;
         let row = lines.findIndex(line => line.key === this.dataRow.rowId);
         if(this.dataRow['Id']){
@@ -1662,7 +1682,7 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
             }
 
             this.flatLines = flatLines;
-            this.flagEditAdd = true;
+            this.turnOnFlagEdit();
             this.regenerateFlatLines(0);
 
         })

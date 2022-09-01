@@ -35,7 +35,7 @@
                 </div>
                 <template if:true={showUncalculateQuote}>
                 <div class="slds-align_absolute-center slds-var-m-top_x-small" style="background-color:rgb(237, 157, 91);">
-                    <h3><b>Uncalculated quote, please calculate to see updated totals.</b></h3>
+                    <h3><b>Uncalculated quote, calculate before saving to see updated totals.</b></h3>
                 </div>
                 </template>
             </lightning-layout-item>
@@ -48,8 +48,10 @@
                 onrowunselected={disableCloneButton}
                 onreorderinactive={deactivateReorderButton}  
                 onreorderactive={activateReorderButton}
+                onuncalculate={showUncalMessage}
                 ></c-bl_data-table>
             </div>
         </lightning-layout>
+        
     </lightning-card>
 </template>

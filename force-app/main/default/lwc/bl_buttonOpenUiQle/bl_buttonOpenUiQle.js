@@ -4,10 +4,10 @@ import { NavigationMixin } from 'lightning/navigation';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent'; //To show messages to user
 
 //SAVING RECORD ID IN CUSTOM ACTION TO QLE
-import savingRecordId from '@salesforce/apex/blMockData.savingRecordId'; 
+import savingRecordId from '@salesforce/apex/blQuoteIdController.savingRecordId'; 
 
 //CHECKING IF THE QUOTE HAS A PRICE BOOK ASSIGNED
-import checkPricebookInQuote from '@salesforce/apex/blMockData.checkPricebookInQuote'; 
+import checkPricebookInQuote from '@salesforce/apex/blQuoteIdController.checkPricebookInQuote'; 
 
 export default class Bl_buttonOpenUiQle extends NavigationMixin(LightningElement) {
     @api recordId; //Quote Record Id opening the UI

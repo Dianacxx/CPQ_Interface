@@ -1,5 +1,5 @@
 @isTest
-public class blMockDataTest{
+public class blQuoteIdControllerTest{
     @isTest static void testcheckPricebookInQuote() {
         //MOCK DATA START
             List<SBQQ__Quote__c> quotes = new List<SBQQ__Quote__c>();
@@ -23,8 +23,8 @@ public class blMockDataTest{
         //MOCK DATA END
         //TEST START
         Test.startTest();
-            string hasPriceBook = blMockData.checkPricebookInQuote(quotes[0].id);
-            string noHasPriceBook = blMockData.checkPricebookInQuote(quotes[1].id);
+            string hasPriceBook = blQuoteIdController.checkPricebookInQuote(quotes[0].id);
+            string noHasPriceBook = blQuoteIdController.checkPricebookInQuote(quotes[1].id);
         Test.stopTest();
         //TEST END
         //CHECK START
@@ -44,7 +44,7 @@ public class blMockDataTest{
         //TEST START
             Test.startTest();
         	//Saving quote Id in recordSaver Object
-            blMockData.savingRecordId(q.id);
+            blQuoteIdController.savingRecordId(q.id);
         	//Getting record from recordSaver Object by User Id
         	Id actualUser = UserInfo.getUserId(); 
             List<bl_UI_RecordSaver__c> newRecords = [SELECT Id, quoteId__c FROM bl_UI_RecordSaver__c WHERE CreatedById = :actualUser];
@@ -54,7 +54,7 @@ public class blMockDataTest{
         	SBQQ__Quote__c q2 = new SBQQ__Quote__c();
             insert q2; 
         	//Checking that it is different by calling again the value and comparing. 
-        	blMockData.savingRecordId(newRecords[0].quoteId__c);
+        	blQuoteIdController.savingRecordId(newRecords[0].quoteId__c);
             System.assertNotEquals(q2.Id,newRecords[0].quoteId__c);
         	Test.stopTest();
         //TEST END  
@@ -72,8 +72,8 @@ public class blMockDataTest{
         //MOCK DATA END
         //TEST START
             Test.startTest();
-            blMockData.savingRecordId(q[0].id);
-        	blMockData.savingRecordId(q[1].id);
+            blQuoteIdController.savingRecordId(q[0].id);
+        	blQuoteIdController.savingRecordId(q[1].id);
         	Id actualUser = UserInfo.getUserId(); 
             List<bl_UI_RecordSaver__c> Records = [SELECT Id, quoteId__c FROM bl_UI_RecordSaver__c WHERE CreatedById = :actualUser];
             System.assertNotEquals(q[0].Id,Records[0].quoteId__c);
@@ -90,7 +90,7 @@ public class blMockDataTest{
         //MOCK DATA END
         Test.startTest();
         	//Getting name from quote created by Id
-    		String quoteName = blMockData.gettingQuoteName(q.Id);
+    		String quoteName = blQuoteIdController.gettingQuoteName(q.Id);
         Test.stopTest();
         //Comparing quote name with value returned from class
         SBQQ__Quote__c quote = [SELECT Id, Name FROM SBQQ__Quote__c WHERE Id = :q.Id LIMIT 1];
@@ -105,9 +105,9 @@ public class blMockDataTest{
         //MOCK DATA END
             Test.startTest();
         	//Creating recordSaver 
-            blMockData.savingRecordId(q.Id);
+            blQuoteIdController.savingRecordId(q.Id);
         	//Deleting that recordSaver
-            blMockData.deletingRecordId(q.Id);
+            blQuoteIdController.deletingRecordId(q.Id);
             Test.stopTest();
         	//Looking for records that contain that quote id save (must be empty)
             List<bl_UI_RecordSaver__c> oldRecords = [SELECT Id, quoteId__c FROM bl_UI_RecordSaver__c WHERE quoteId__c = :q.Id];
@@ -121,7 +121,7 @@ public class blMockDataTest{
             insert cA; 
         //MOCK DATA END
             Test.startTest();
-            String customAction = blMockData.customActionId();
+            String customAction = blQuoteIdController.customActionId();
             Test.stopTest();
         	//Checking if returning value Id is the same as the custom action that we are looking for.  
         	System.assertEquals(cA.Id,customAction);
@@ -134,7 +134,7 @@ public class blMockDataTest{
             insert mockP; 
         //MOCK DATA END
             Test.startTest();
-            String mockProduct = blMockData.getMockProduct();
+            String mockProduct = blQuoteIdController.getMockProduct();
             Test.stopTest();
         	//Comparing ID's of product2 and returning value. 
         	System.assertEquals(mockP.Id,mockProduct);
@@ -146,13 +146,13 @@ public class blMockDataTest{
             insert q; 
         Test.startTest();
         	//Getting record Id + comparing with quote inserted
-            String recordId = blMockData.gettingRecordId();
+            String recordId = blQuoteIdController.gettingRecordId();
             System.assertEquals(q.Id,recordId);
         	//Changing quote Id to NULL
             bl_UI_RecordSaver__c recordS = new bl_UI_RecordSaver__c(quoteId__c = null);
             insert recordS; 
         	//Checking if it is null value in recordSaver
-            String recordIdNull = blMockData.gettingRecordId();
+            String recordIdNull = blQuoteIdController.gettingRecordId();
             System.assertEquals(q.Id,recordIdNull);
         Test.stopTest();
     }
@@ -165,7 +165,7 @@ public class blMockDataTest{
         	//Getting record Id + comparing with quote inserted
             bl_UI_RecordSaver__c recordS = new bl_UI_RecordSaver__c(quoteId__c = null);
             insert recordS; 
-            String recordId = blMockData.gettingRecordId();
+            String recordId = blQuoteIdController.gettingRecordId();
         	Id actualUser = UserInfo.getUserId(); 
         	SBQQ__Quote__c recentViewNull = [SELECT Id FROM SBQQ__Quote__c WHERE LastModifiedById =: actualUser AND 
             LastViewedDate != NULL  ORDER BY LastViewedDate DESC LIMIT 1]; 
@@ -180,7 +180,7 @@ public class blMockDataTest{
             String expected = '{"ADSS":[{"active":true,"defaultValue":false,"label":"Feet","validFor":"FuAACAVAAQFQRMAI","value":"Feet"},{"active":true,"defaultValue":false,"label":"Foot","validFor":"FuAACAVAAQFQRMAI","value":"Foot"},{"active":true,"defaultValue":false,"label":"Meter","validFor":"FAAAAAQAAQBARAAI","value":"Meter"},{"active":true,"defaultValue":false,"label":"Meters","validFor":"FAAAAAQAAQBARAAI","value":"Meters"}]}';
         Test.startTest();
         	//Comparing values of 'UOM Dependencies from Level 2 values'
-            String listPickList = blMockData.uomDependencyLevel2List(prodLevel2Mock);
+            String listPickList = blQuoteIdController.uomDependencyLevel2List(prodLevel2Mock);
         	//System.debug(listPickList);
         	System.assertEquals(expected,listPickList);
         Test.stopTest();

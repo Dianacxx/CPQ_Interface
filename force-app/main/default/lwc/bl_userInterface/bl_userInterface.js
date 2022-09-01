@@ -4,7 +4,7 @@ import { NavigationMixin } from 'lightning/navigation';
 
 export default class bl_userInterface extends NavigationMixin(LightningElement) {
 
-    @api quoteId ;// = 'a0q8Z00000Ct7xWQAR'; //  a0q8Z00000CsZBaQAN a0q8Z00000CrwOYQAZ
+    @api quoteId ;
     @api comeFromPS;
     totalValue;
     totalValueLoading = false;
@@ -99,6 +99,11 @@ export default class bl_userInterface extends NavigationMixin(LightningElement) 
     //Navigation to PS page
     navitageToProductSelectionPage(){
         this.template.querySelector('c-bl_data-table').navigateToProductSelection();
+    }
+
+    //Show Uncalculated Message 
+    showUncalMessage(){
+        this.showUncalculateQuote = true;
     }
     
 }

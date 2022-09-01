@@ -100,5 +100,10 @@ export default class EmpApiLWC extends NavigationMixin(LightningElement) {
     navitageToProductSelectionPage(){
         this.template.querySelector('c-emp-child').navigateToProductSelection();
     }
+
+    //Show Uncalculated Message 
+    showUncalMessage(){
+        this.showUncalculateQuote = true;
+    }
     
 }

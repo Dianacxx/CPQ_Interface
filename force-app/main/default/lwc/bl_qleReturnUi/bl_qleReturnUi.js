@@ -2,8 +2,8 @@ import { LightningElement, api } from 'lwc';
 import { NavigationMixin } from 'lightning/navigation';
 
 //APEX METHODS TO GET THE QUOTE LINE INFO TO RETURN FROM SF QLE TO CUSTOM QLE
-import gettingRecordId from '@salesforce/apex/blMockData.gettingRecordId';
-import gettingQuoteName from '@salesforce/apex/blMockData.gettingQuoteName';
+import gettingRecordId from '@salesforce/apex/blQuoteIdController.gettingRecordId';
+import gettingQuoteName from '@salesforce/apex/blQuoteIdController.gettingQuoteName';
 
 export default class Bl_qleReturnUi extends NavigationMixin(LightningElement) {
     @api waiting = false; 
@@ -39,7 +39,7 @@ export default class Bl_qleReturnUi extends NavigationMixin(LightningElement) {
                         attributes: {
                             recordId: this.recordId,
                         }*/
-                        componentDef: "c:empApi",
+                        componentDef: "c:bl_UserInterface",
                         attributes: {
                             quoteId: this.recordId,
                         }
