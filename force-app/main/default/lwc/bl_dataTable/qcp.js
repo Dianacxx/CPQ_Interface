@@ -672,6 +672,17 @@ const setPremiseCableName = (line, premiseMaps) => {
     const jacketPrint = line.record['Jacket_Print__c'];
     const subunitColor = line.record['Subunit_Color__c'];
     let itemDesc = line.record['SBQQ__Description__c'];
+
+    // If jacket color has already been added to desc
+    const regex = /\b, [^,]* jacket color\b/g;
+    if(itemDesc){
+        const match = itemDesc.match(regex);
+        if(match.length){
+            // replace with empty string
+            itemDesc = itemDesc.replace(match[0], '');
+        }
+    }
+    
     let FinalItem = line.record['SBQQ__ProductName__c'];
 
     log('Name change required for line: '+ line.record['Name']);

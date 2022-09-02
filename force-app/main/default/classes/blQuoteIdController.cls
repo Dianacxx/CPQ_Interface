@@ -1,4 +1,3 @@
-
 public with sharing class blQuoteIdController {
     //Pricebook Rule in quote - If it does not have a pricebook, the UI is not going to open. 
     @AuraEnabled

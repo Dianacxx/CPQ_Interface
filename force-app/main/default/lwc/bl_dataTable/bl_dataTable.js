@@ -1733,7 +1733,7 @@ export default class bl_dataTable extends NavigationMixin(LightningElement) {
         setTimeout(() => {
             this.loading = false;
             var compDefinition = {
-                componentDef: "c:empApiProductSelection",
+                componentDef: "c:bl_productSelection",
                 attributes: {
                     recordId: this.quoteId,
                 }

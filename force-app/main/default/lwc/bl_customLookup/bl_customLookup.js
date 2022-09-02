@@ -166,7 +166,7 @@ export default class Bl_customLookup extends LightningElement {
         //console.log('option : '+ this.productSelected);
 
         let startTime = window.performance.now();
-        //console.log('Method search searchTerm: '+  this.searchTerm + ' quoteId '+this.recordId+ ' option '+ this.productSelected);
+        console.log('Method search searchTerm: '+  this.searchTerm + ' quoteId '+this.recordId+ ' option '+ this.productSelected);
 
         search({searchTerm : this.searchTerm, quoteId: this.recordId, option: this.productSelected})
         .then((data)=>{
