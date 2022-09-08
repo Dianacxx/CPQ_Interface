@@ -6,10 +6,11 @@ import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
 //GETTING FIELDS OF QUOTE USED
 import NAME_FIELD from '@salesforce/schema/SBQQ__Quote__c.Name';
 import ACCOUNT_NAME_FIELD from '@salesforce/schema/SBQQ__Quote__c.SBQQ__Account__r.Name'; 
-import CONTACT_NAME_FIELD from '@salesforce/schema/SBQQ__Quote__c.SBQQ__PrimaryContact__r.Name';
+import CONTACT_NAME_FIELD from '@salesforce/schema/SBQQ__Quote__c.Quoted_Contact__r.Name';
+//import CONTACT_NAME_FIELD from '@salesforce/schema/SBQQ__Quote__c.SBQQ__PrimaryContact__r.Name';
 import STATUS_FIELD from '@salesforce/schema/SBQQ__Quote__c.SBQQ__Status__c';
 import END_USER_PROJECT_FIELD from '@salesforce/schema/SBQQ__Quote__c.SBQQ__Opportunity2__r.Name'; 
-import DATE_FIELD from '@salesforce/schema/SBQQ__Quote__c.SBQQ__StartDate__c';
+//import DATE_FIELD from '@salesforce/schema/SBQQ__Quote__c.SBQQ__StartDate__c';
 import END_USER_ACC_FIELD  from '@salesforce/schema/SBQQ__Quote__c.SBQQ__Opportunity2__r.AccountId';
 import END_USER_ACC_NAME_FIELD  from '@salesforce/schema/Account.Name';
 import REVISION_NUMBER_FIELD from '@salesforce/schema/SBQQ__Quote__c.Review__c';
@@ -33,7 +34,7 @@ export default class Bl_header extends LightningElement {
     @api account; //Account from the opportunity
 
     //GET QUOTE INFORMATION
-    @wire(getRecord, { recordId: '$recordId', fields: [ACCOUNT_NAME_FIELD, NAME_FIELD, CONTACT_NAME_FIELD, STATUS_FIELD, DATE_FIELD,END_USER_PROJECT_FIELD,END_USER_ACC_FIELD, REVISION_NUMBER_FIELD]})
+    @wire(getRecord, { recordId: '$recordId', fields: [ACCOUNT_NAME_FIELD, NAME_FIELD, CONTACT_NAME_FIELD, STATUS_FIELD,END_USER_PROJECT_FIELD,END_USER_ACC_FIELD, REVISION_NUMBER_FIELD]})
     quoteData({error, data}){
         if (data){
             this.quote = data;
@@ -46,7 +47,7 @@ export default class Bl_header extends LightningElement {
             //console.log('this.quoteContact '+this.quoteContact); 
             this.quoteStatus = getFieldValue(this.quote, STATUS_FIELD );
             //console.log('this.quoteStatus '+this.quoteStatus);
-            this.quoteDate = getFieldValue(this.quote, DATE_FIELD );
+            //this.quoteDate = getFieldValue(this.quote, DATE_FIELD );
             //console.log('this.quoteDate '+this.quoteDate);
             this.opportEndUserProject = getFieldValue(this.quote, END_USER_PROJECT_FIELD );
             //console.log('this.opportEndUserProject '+this.opportEndUserProject);

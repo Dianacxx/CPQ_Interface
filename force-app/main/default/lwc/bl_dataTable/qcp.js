@@ -3,8 +3,12 @@ import queryPLT from '@salesforce/apex/ProdLeadTimeController.queryPLT';
 import queryNewSchedules from '@salesforce/apex/ContractController.getDiscountSchedulesById';
 import wrapQuoteLine from '@salesforce/apex/QuoteController.wrapQuoteLine';
 
-const log = (print) => {
-    console.log(print);
+let debug = false;
+
+const log = print => {
+    if(debug){
+        console.log(print);
+    }
 }
 
 const priceAdjustments = async(quote) => {
@@ -143,8 +147,6 @@ const productPricingTierScript = (prodTiers, quoteModel, uomConvertMap) => {
             pricingTierMap[record.Customer_Tier__c+'~'+record.Prod_Level_1__c+'~'+record.Prod_Level_2__c+'~'+record.Prod_Level_3__c+'~'+record.Prod_Level_4__c] = pricingTierMapRecs;											
         }
     });
-
-    console.log('pricing tier map: ', pricingTierMap);
     
     quoteModel.lineItems.forEach(line => {
         let pricingTierMapQtyRecs = [];
@@ -205,8 +207,8 @@ const productPricingTierScript = (prodTiers, quoteModel, uomConvertMap) => {
             //now loop through and compare quote line qty to tier min and max qty
             //assuming that quote line qty has been converted to same UOM for comparison
             for(let i = 0; i < pricingTierMapQtyRecs.length; i++){
-                log('Min qty = ' + pricingTierMapQtyRecs[i].Minimum_Quantity_Num__c);
-                log('Max qty = ' + pricingTierMapQtyRecs[i].Maximum_Quantity_Num__c);
+                // log('Min qty = ' + pricingTierMapQtyRecs[i].Minimum_Quantity_Num__c);
+                // log('Max qty = ' + pricingTierMapQtyRecs[i].Maximum_Quantity_Num__c);
                 
                 if (qtyForPricingTier && qtyForPricingTier >= pricingTierMapQtyRecs[i].Minimum_Quantity_Num__c && qtyForPricingTier <= pricingTierMapQtyRecs[i].Maximum_Quantity_Num__c) {
                     
@@ -245,7 +247,6 @@ const customerTierScript = (tiers, quote) => {
     // if the query returned rows then build the keys else we still need to set all lines to List.
     log('Begin Tier Script');
     let customerTierObj = {};
-    console.log(tiers);
     if (tiers?.length) {
         customerTierObj = tiers.reduce((o, record) => Object.assign(o, { [record.Account__c + '~' + record.Prod_Level_1__c + '~' + record.Prod_Level_2__c]: record }), {});
     }
@@ -674,13 +675,17 @@ const setPremiseCableName = (line, premiseMaps) => {
     let itemDesc = line.record['SBQQ__Description__c'];
 
     // If jacket color has already been added to desc
-    const regex = /\b, [^,]* jacket color\b/g;
-    if(itemDesc){
-        const match = itemDesc.match(regex);
-        if(match.length){
-            // replace with empty string
-            itemDesc = itemDesc.replace(match[0], '');
+    try{
+        const regex = /\b, [^,]* jacket color\b/g;
+        if(itemDesc){
+            const match = itemDesc.match(regex);
+            if(match.length){
+                // replace with empty string
+                itemDesc = itemDesc.replace(match[0], '');
+            }
         }
+    } catch(error){
+        log('product jacket color has not been set')
     }
     
     let FinalItem = line.record['SBQQ__ProductName__c'];
@@ -754,6 +759,8 @@ const buildPremiseMaps = (premiseRecords) => {
 
 const onBeforePriceRules = async(quoteModel, ascendPackagingMap, tiers, prodTiers, uomRecords, schedules, premiseRecords) => {
 
+    debug = quoteModel.record['AFL_Debug_Enabled__c'];
+
     // build Premise Maps
     const premiseMaps = buildPremiseMaps(premiseRecords);
 
@@ -768,7 +775,6 @@ const onBeforePriceRules = async(quoteModel, ascendPackagingMap, tiers, prodTier
 
     // Wait until all line specific calculations have resolved
     await Promise.all(quoteModel.lineItems.map(line => {
-        log('in var adder', line);
 
         return new Promise((resolve, reject) => {
 
@@ -805,11 +811,15 @@ const onBeforePriceRules = async(quoteModel, ascendPackagingMap, tiers, prodTier
 
             // if Product Lead Time Category is defined
             let inSLTT = false; // Flag to let async function resolve
-            if (line.record['Product_Lead_Time_Category__c']){
+            if (line.record['Override_Quoted_Lead_Time__c']){
+                log('quoted lead time was overriden for line: ' + line.record['Quote_Line_Name__c']);
+            } else if (!line.record['Quoted_Lead_Time__c'] && line.record['Product_Lead_Time_Category__c']){
                 inSLTT = true;
                 log('calling setLeadTimeTier');
                 setLeadTimeTier(line, quoteModel)
-                .then(() => resolve(line));	
+                .then(() => resolve(line));
+            } else if (line.record['Quoted_Lead_Time__c']){
+                log('quoted lead time was already set for line: ' + line.record['Quote_Line_Name__c']);
             }
             
             if(!inSLTT){ resolve(line);}
@@ -838,7 +848,8 @@ const onBeforePriceRulesBatchable = async(quoteModel, ascendPackagingMap, tiers,
         let newQuote = {
             record:{
                 End_User__c : quoteModel.record['End_User__c'],
-                SBQQ__Account__c : quoteModel.record['SBQQ__Account__c']
+                SBQQ__Account__c : quoteModel.record['SBQQ__Account__c'],
+                AFL_Debug_Enabled__c: quoteModel.record['AFL_Debug_Enabled__c']
             }
         };
         const batchSize = 100;

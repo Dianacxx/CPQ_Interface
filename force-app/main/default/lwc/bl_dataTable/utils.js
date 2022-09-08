@@ -10,6 +10,7 @@ import queryPriceRules from '@salesforce/apex/PriceRuleController.queryPriceRule
 import retrieveQLM from '@salesforce/apex/myProductWrapper.retrieveQLM';
 import NSPAdditionalFields from '@salesforce/apex/QuoteController.NSPAdditionalFields';
 import wrapQuoteLine from '@salesforce/apex/QuoteController.wrapQuoteLine';
+import getListPrice from '@salesforce/apex/myProductWrapper.getListPrice';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 //Function to check error conditions of a product rule
@@ -304,7 +305,11 @@ const priceRuleLookup = (priceRules,quote) => {
 const produceNewQL = async(event, quote) => {
     
     // Create shell quote with only key fields
+    let numberQL = quote.lineItems.length
+    console.log('number of QL:')
+    console.log(numberQL)
     let shellQuote = JSON.parse(JSON.stringify(quote));
+    
     const {
         lineItems,
         record,
@@ -315,15 +320,16 @@ const produceNewQL = async(event, quote) => {
         ...other } = shellQuote;
     const { attributes, ...fields } = record;
     shellQuote = { lineItems: [], record: {attributes: { type: "SBQQ__Quote__c" }, ...fields}, ...other };
-    
+    console.log('shell quote2:')
+    console.log(shellQuote)
     // get new QuoteModel from apex
     const modelJSON = await retrieveQLM({productId: event.detail.Id, modelJSON: JSON.stringify(shellQuote) });
     const model = JSON.parse(modelJSON);
-    console.log(model);
+    console.log('model:')
+    console.log(model)
 
     // get QLM from new QuoteModel and clone first line in UI quote
     const clone = model.lineItems[0];
-
     // get nsp fields
     try{
         const nspFieldsJSON = await NSPAdditionalFields({productId: event.detail.Id });
@@ -334,9 +340,8 @@ const produceNewQL = async(event, quote) => {
                 clone.record[apiName] = clone.record[apiName] ? clone.record[apiName] : null
             }
         }
-    }catch(error){console.log(error)}
+    }catch(error){console.log('product with no nsp fields')}
     
-
     // add recalc fields to clone
     const formulaRecalcFields = [
         'SBQQ__Bundle__c', 'SBQQ__Bundled__c', 'SBQQ__CarryoverLine__c',
@@ -344,13 +349,19 @@ const produceNewQL = async(event, quote) => {
         'SBQQ__CostEditable__c', 'SBQQ__Existing__c', 'Selected__c',
         'Price_Overridden_By_15per__c', 'Price_Overridden_By_10per__c',
         'Price_Overridden_By_5per__c', 'Price_Overridden_By_3per__c',
-        'Price_Override_Approval_Required__c'
+        'Price_Override_Approval_Required__c', 'SBQQ__Optional__c'
     ]
     for(let recalcField of formulaRecalcFields){
         clone.record[recalcField] = clone.record[recalcField] ? clone.record[recalcField] : false
     }
     
     // Set new quote line values
+    if(!clone.record['SBQQ__OriginalPrice__c'] || !clone.record['SBQQ__ListPrice__c']){
+        const listPrice = await getListPrice({productId: clone.record['SBQQ__Product__c']});
+        clone.record['SBQQ__OriginalPrice__c'] = listPrice;
+        clone.record['SBQQ__ListPrice__c'] = listPrice;
+    }
+
     clone.record['Quote_Line_Name__c'] = clone.record.SBQQ__Product__r['Name'];
     clone.record['SBQQ__AdditionalDiscount__c'] = 0;
     clone.record['SBQQ__CustomerPrice__c'] = clone.record['SBQQ__OriginalPrice__c'];
@@ -358,14 +369,19 @@ const produceNewQL = async(event, quote) => {
     clone.record['SBQQ__EffectiveQuantity__c'] = clone.record['SBQQ__Quantity__c'];
     clone.record['SBQQ__Markup__c'] = 0;
     clone.record['SBQQ__NetPrice__c'] = clone.record['SBQQ__OriginalPrice__c'];
-    clone.record['SBQQ__NetTotal__c'] = clone.record['SBQQ__OriginalPrice__c'];
-    clone.record['SBQQ__PricebookEntryId__c'] = clone.record.SBQQ__Product__r.PricebookEntries.records[0].Id;
+    clone.record['SBQQ__NetTotal__c'] = clone.record['SBQQ__OriginalPrice__c'] * clone.record['SBQQ__Quantity__c'];
+    // clone.record['SBQQ__PricebookEntryId__c'] = clone.record.SBQQ__Product__r.PricebookEntries.records[0].Id;
     clone.record['SBQQ__ProductName__c'] = clone.record.SBQQ__Product__r['Name'];
     clone.record['SBQQ__Quote__c'] = quote.record.Id;
     clone.record['SBQQ__SpecialPrice__c'] = clone.record['SBQQ__OriginalPrice__c'];    
     clone.record['SBQQ__UpliftAmount__c'] = 0;
     clone.record['SBQQ__Uplift__c'] = 0;
+    clone.record['Alternative_Icon__c'] = 'utility:close';
+    clone.record['SBQQ__Number__c'] = numberQL+1
     clone.key = quote.nextKey + 1;
+
+    //Set primary UOM as default UOM if it exists
+    clone.record['Primary_UOM__c'] ? clone.record['UOM__c'] = clone.record['Primary_UOM__c'] : console.log('No primary UOM defined');
 
     // set length and length uom
     if (clone.record['Filtered_Grouping__c'] == 'Cable Assemblies' || clone.record['Product_Type__c'] == 'Patch Panel - Stubbed'){
@@ -381,7 +397,7 @@ const produceNewQL = async(event, quote) => {
         clone.record['Length__c'] = '5';
         clone.record['Length_UOM__c'] = 'Meters';
     }
-    
+
     return clone;
 }
 
@@ -443,10 +459,7 @@ const productRuleLookup = async (productRules,quote) => {
     return other;
     });
     if (quoteLines.length <= 100){
-        let startTime = window.performance.now();
         data = await wrapQuoteLine({qlJSON: JSON.stringify(quoteLines)});
-        let endTime = window.performance.now();
-        console.log(`wrapQuoteLine waited ${endTime - startTime} milliseconds`);
     }else{
         let linesSaver = [];
         let results = [];
@@ -455,10 +468,7 @@ const productRuleLookup = async (productRules,quote) => {
             const linesBatch = quoteLines.splice(0, batchSize);
             linesSaver.push(linesBatch);
         }
-        let startTime = window.performance.now();
         results = await Promise.all(linesSaver.map(lines => wrapQuoteLine({qlJSON: JSON.stringify(lines)})));
-        let endTime = window.performance.now();
-        console.log(`wrapQuoteLine with batches waited ${endTime - startTime} milliseconds`);
         results.forEach(line =>{
             data = data.concat(line);
         })

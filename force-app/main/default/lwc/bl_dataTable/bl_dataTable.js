@@ -41,7 +41,7 @@ const columns = [
         typeAttributes: { label: { fieldName: 'Length_UOM__c' }, name: 'changeLengthUOM', value: { fieldName: 'Length_UOM__c' }, icPosition: 'right', variant: 'base', iconName: 'utility:chevrondown' }},
     { label: 'Discount (%)', fieldName: 'SBQQ__Discount__c', editable: true ,sortable: true, wrapText: false,type: 'number', hideDefaultActions: true },
     { label: 'List Unit Price', fieldName: 'SBQQ__ListPrice__c', type: 'currency' },
-    { label: 'Special Price', fieldName: 'SBQQ__SpecialPrice__c', type: 'currency' },
+    // { label: 'Special Price', fieldName: 'SBQQ__SpecialPrice__c', type: 'currency' },
     { label: 'Net Unit Price', fieldName: 'SBQQ__NetPrice__c', type: 'currency' },
     { label: 'Total', fieldName: 'SBQQ__NetTotal__c', type: 'currency' },
     { label: 'NSP', type: 'button-icon', initialWidth: 30,
@@ -99,11 +99,15 @@ export default class bl_dataTable extends NavigationMixin(LightningElement) {
         const load = async() => {
             const quote = await read({quoteId: this.quoteId});
             this.quote = JSON.parse(quote);
-            console.log(this.quote);
+            console.log('Quote Here:')
+            console.log(this.quote)
+            const numbers = this.quote.lineItems.map(line => line.record['SBQQ__Number__c']);
+            console.log('numbers')
+            console.log(numbers)
+            
 
             // Build state of the app
             const payload = await build(this.quote);
-            console.log(payload);
             this.contracts = payload.contracts;
             this.schedules = payload.schedules;
             this.tiers = payload.customerTiers;
@@ -116,7 +120,15 @@ export default class bl_dataTable extends NavigationMixin(LightningElement) {
 
             let flatLines = [];
             if(this.quote.lineItems.length){
-                flatLines = this.quote.lineItems.filter(line => !line.record['SBQQ__ProductOption__c']).map(line => {
+                flatLines = this.quote.lineItems
+                .filter(line => !line.record['SBQQ__ProductOption__c'])
+                .map(line => {
+                    // Products coming from product selection screen should not have empty price fields
+                    if(!line.record['SBQQ__SpecialPrice__c']){
+                        line.record['SBQQ__SpecialPrice__c'] = line.record['SBQQ__ListPrice__c'];
+                        line.record['SBQQ__NetPrice__c'] = line.record['SBQQ__ListPrice__c'];
+                        line.record['SBQQ__NetTotal__c'] = line.record['SBQQ__Quantity__c'] * line.record['SBQQ__NetPrice__c'];
+                    }
                     return {
                         rowId: line['key'],
                         isNSP: (nspGroupings.includes(line.record['Filtered_Grouping__c']) && 
@@ -145,7 +157,6 @@ export default class bl_dataTable extends NavigationMixin(LightningElement) {
             } else {
                 this.prodNotes = JSON.parse(data);
             }
-            console.log(this.prodNotes);
         })
         .catch(error =>{
             console.log('notes string Error');
@@ -264,6 +275,25 @@ export default class bl_dataTable extends NavigationMixin(LightningElement) {
             if(!lines[myIndex].parentItemKey){
                 // Cycle through the fields that were changed
                 for(let field of fieldList){
+                    // reset quoted lead time if quantity changes
+                    if(field === 'SBQQ__Quantity__c'){
+                        lines[myIndex].record['Quoted_Lead_Time__c'] = null;
+                    }
+                    // validation: Length field in non cable assemblies, non patch panel products
+                    if(field === 'Length__c'){
+                        if(lines[myIndex].record['Filtered_Grouping__c'] == 'Cable Assemblies' || lines[myIndex].record['Product_Type__c'] == 'Patch Panel - Stubbed'){
+                            lines[myIndex].record[field] = row[field];
+                        } else {
+                            const evt = new ShowToastEvent({
+                                title: 'Incorrect Product Type',
+                                message: 'The value will not be saved.',
+                                variant: 'error',
+                                mode: 'dismissable'});
+                            this.dispatchEvent(evt);
+                            lines[myIndex].record[field] = 'NA';
+                            continue;
+                        }
+                    }
                     // change value of fields on that line
                     lines[myIndex].record[field] = row[field];
                 }
@@ -353,7 +383,6 @@ export default class bl_dataTable extends NavigationMixin(LightningElement) {
         //Allowing to save if no validation product rules prevent it
         //needs to be ==true so the event also dispatches here
         if(this.allowSave==true){       
-            console.log('saving...');
 
             //Dispatch an alert rule toast message if there's one
             if(typeof this.event == 'object'){
@@ -408,14 +437,14 @@ export default class bl_dataTable extends NavigationMixin(LightningElement) {
                 console.log(`priceRuleLookup waited ${afterPriceRules - startedPriceRules} milliseconds`);
             }
             //PRICE RULE LOGIC ENDS HERE --------------------
+            this.flagUncalculate = false;
         
         } else if(this.allowSave == false){
             console.log('No save --> Validation rule');
             this.loading = false;
             this.dispatchEvent(this.event);
         }
-        //PRODUCT RULE LOGIC ENDS HERE --------------------
-        this.flagUncalculate = false;
+        //PRODUCT RULE LOGIC ENDS HERE --------------------     
     }
 
     // this functions saves the quote record to the db
@@ -754,7 +783,18 @@ export default class bl_dataTable extends NavigationMixin(LightningElement) {
             console.log('No changes but save value.');
         } else {
             let index = this.quote.lineItems.findIndex(x =>  x.key === this.dataRow.rowId);
-            this.quote.lineItems[index].record['Length_UOM__c'] = this.newLengthUOM;
+            if(this.quote.lineItems[index].record['Filtered_Grouping__c'] == 'Cable Assemblies' || this.quote.lineItems[index].record['Product_Type__c'] == 'Patch Panel - Stubbed'){
+                this.quote.lineItems[index].record['Length_UOM__c'] = this.newLengthUOM;
+            } else {
+                this.quote.lineItems[index].record['Length_UOM__c'] = 'NA';
+                const evt = new ShowToastEvent({
+                    title: 'Incorrect Product Type',
+                    message: 'The value will not be saved.',
+                    variant: 'error',
+                    mode: 'dismissable'});
+                this.dispatchEvent(evt);
+            }
+            
             this.turnOnFlagEdit();
             this.closeLengthUomModal();
             this.notChangePageWhenEditing();
@@ -835,9 +875,12 @@ export default class bl_dataTable extends NavigationMixin(LightningElement) {
     // this function updates the net total amount on the parent component
     updateQuoteTotal() {
         try{
+            const {lineItems, ...other} = this.quote;
+            const quoteAlternative = {lineItems: this.quote.lineItems.filter(line => !line.record['SBQQ__Optional__c']), ...other}
             let detail = { record: { SBQQ__NetTotal__c: '0' } }; // initialize to 0
-            if(this.quote.lineItems.length){
-                detail = this.quote.lineItems.reduce((o, line) => {
+            if(quoteAlternative.lineItems.length){
+                
+                detail = quoteAlternative.lineItems.reduce((o, line) => {
                     return {
                         record: {
                             SBQQ__NetTotal__c: o.record['SBQQ__NetTotal__c'] + line.record['SBQQ__NetTotal__c']
@@ -1642,7 +1685,6 @@ export default class bl_dataTable extends NavigationMixin(LightningElement) {
         // produce new QL by setting correct values
         produceNewQL(event, this.quote)
         .then(clone => {
-            console.log(clone);
 
             // if product is a bundle
             if(clone.record['SBQQ__Bundle__c']){

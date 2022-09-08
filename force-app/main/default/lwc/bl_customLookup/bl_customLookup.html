@@ -24,7 +24,7 @@
                         data-level={record.ProdLevel1__c} data-filtergroup={record.Filtered_Grouping__c}>
                             <span class="slds-lookup__item-action slds-lookup__item-action--label" role="option">
                                 <lightning-icon class="slds-icon slds-icon--small slds-icon-text-default" icon-name={iconName} alternative-text={objName} size="small"></lightning-icon>
-                                <span class="slds-truncate">{record.Name}</span>
+                                <span class="slds-truncate"><b>{record.Name}</b>  <template if:true={descriptionDisplay}>&nbsp;/ <i><small style="font-family:courier;">{record.Description}</small></i></template></span>
                                 <template if:true={customerDisplay}>
                                     <template for:each={record.Customer_Part_Cross_References__r} for:item="customer">
                                         <li key={customer.Customer_Item_Number__c}>

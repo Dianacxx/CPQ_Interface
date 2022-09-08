@@ -278,10 +278,10 @@
                                 </lightning-layout>
                                 <lightning-spinner if:false={gettingNspFields} alternative-text="Loading" size="medium"></lightning-spinner>
                                 <template if:true={gettingNspFields}>
-                                    <lightning-layout multiple-rows="false">
+                                    <lightning-layout multiple-rows="false" class="slds-var-m-top_small slds-var-m-bottom_small">
                                     <template for:each={listNspValuesToDisplay} for:item="nspValue">
                                         <div style="background-color: white;" class="slds-var-p-around_xx-small lgc-bg" key={nspValue.label}>
-                                           <p  class="slds-var-m-right_x-small" key={nspValue.label}><b>{nspValue.property}:</b> {nspValue.value}</p>
+                                           <p  class="slds-var-m-right_small slds-var-m-top_small" key={nspValue.label}><b>{nspValue.property}:</b> {nspValue.value}</p>
                                         </div>
                                     </template>
                                     </lightning-layout>
@@ -295,7 +295,7 @@
                                     <lightning-layout multiple-rows="false">
                                     <template for:each={nspPicklist} for:item="nspPicklistItem">
                                         <div key={nspPicklistItem.label}>
-                                            <lightning-combobox style="overflow: initial;" class="slds-var-m-right_x-small" key={nspPicklistItem.label} label={nspPicklistItem.label} 
+                                            <lightning-combobox style="overflow: initial;" class="slds-var-m-right_small" key={nspPicklistItem.label} label={nspPicklistItem.label} 
                                             options={nspPicklistItem.options} name={nspPicklistItem.apiName} onchange={nspPicklistChange} 
                                             value={nspPicklistItem.value}></lightning-combobox>
                                         </div>

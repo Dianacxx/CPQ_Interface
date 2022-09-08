@@ -153,6 +153,13 @@ export default class bl_productSelection extends NavigationMixin(LightningElemen
             let list1 = JSON.parse(JSON.stringify(this.girdDataAcaTabAdd)); 
             for (let list of list1){
                 for (let secondList of list.listOfProducts){
+                    if(secondList.filteredGrouping == 'Cable Assemblies' || secondList.productType =='Patch Panel - Stubbed'){
+                        secondList.lengthuom == null || secondList.lengthuom == '' ? secondList.lengthuom = 'Meters' : secondList.lengthuom = secondList.lengthuom;
+                        secondList.length == null || secondList.length == '' ? secondList.length = '5' : secondList.length = secondList.length;       
+                    } else {
+                        secondList.lengthuom = 'NA';
+                        secondList.length = 'NA';
+                    }
                     if(secondList.minimumorderqty == null && secondList.quantity == null){
                         secondList.quantity = 1;
                     } else if (secondList.quantity < secondList.minimumorderqty){
@@ -186,10 +193,16 @@ export default class bl_productSelection extends NavigationMixin(LightningElemen
             }
         }
         if(this.girdDataConnTabAdd.length > 0){
-            //console.log('CONNECT LIST');
             let list2 = JSON.parse(JSON.stringify(this.girdDataConnTabAdd)); 
             for (let list of list2){
                 for (let secondList of list.listOfProducts){
+                    if(secondList.filteredGrouping == 'Cable Assemblies' || secondList.productType =='Patch Panel - Stubbed'){
+                        secondList.lengthuom == null || secondList.lengthuom == '' ? secondList.lengthuom = 'Meters' : secondList.lengthuom = secondList.lengthuom;
+                        secondList.length == null || secondList.length == '' ? secondList.length = '5' : secondList.length = secondList.length;       
+                    } else {
+                        secondList.lengthuom = 'NA';
+                        secondList.length = 'NA';
+                    }
                     if(secondList.minimumorderqty == null && secondList.quantity == null){
                         secondList.quantity = 1;
                     } else if (secondList.quantity < secondList.minimumorderqty){
@@ -218,11 +231,6 @@ export default class bl_productSelection extends NavigationMixin(LightningElemen
                     if(secondList.prodLevel3 == null || secondList.prodLevel3 == undefined){
                         secondList.prodLevel4 =	null;
                     }
-                    //SPECIAL BEHAVIOR TO AVOID ACTIVATE THE VALIDATION RULE IN PRODUCT
-                    //SELECTION PAGE, SINCE THE QUANTITY HERE IS NOT EDITABLE.
-                    if(secondList.productType == 'Patch Panel - Stubbed' ){
-                        secondList.length = 5;
-                    }
                     this.quotesAdded.push(secondList);
                 }
             }
@@ -232,6 +240,13 @@ export default class bl_productSelection extends NavigationMixin(LightningElemen
             let list3 = JSON.parse(JSON.stringify(this.girdDataFocTabAdd)); 
             for (let list of list3){ 
                 for (let secondList of list.listOfProducts){
+                    if(secondList.filteredGrouping == 'Cable Assemblies' || secondList.productType =='Patch Panel - Stubbed'){
+                        secondList.lengthuom == null || secondList.lengthuom == '' ? secondList.lengthuom = 'Meters' : secondList.lengthuom = secondList.lengthuom;
+                        secondList.length == null || secondList.length == '' ? secondList.length = '5' : secondList.length = secondList.length;       
+                    } else {
+                        secondList.lengthuom = 'NA';
+                        secondList.length = 'NA';
+                    }
                     if(secondList.minimumorderqty == null && secondList.quantity == null){
                         secondList.quantity = 1;
                     } else if (secondList.quantity < secondList.minimumorderqty){
@@ -268,6 +283,13 @@ export default class bl_productSelection extends NavigationMixin(LightningElemen
             let list4 = JSON.parse(JSON.stringify(this.girdDataCableTabAdd)); 
             for (let list of list4){
                 for (let secondList of list.listOfProducts){
+                    if(secondList.filteredGrouping == 'Cable Assemblies' || secondList.productType =='Patch Panel - Stubbed'){
+                        secondList.lengthuom == null || secondList.lengthuom == '' ? secondList.lengthuom = 'Meters' : secondList.lengthuom = secondList.lengthuom;
+                        secondList.length == null || secondList.length == '' ? secondList.length = '5' : secondList.length = secondList.length;       
+                    } else {
+                        secondList.lengthuom = 'NA';
+                        secondList.length = 'NA';
+                    }
                     if(secondList.minimumorderqty == null && secondList.quantity == null){
                         secondList.quantity = 1;
                     } else if (secondList.quantity < secondList.minimumorderqty){
@@ -305,6 +327,13 @@ export default class bl_productSelection extends NavigationMixin(LightningElemen
             let list5 = JSON.parse(JSON.stringify(this.girdDataTandITabAdd)); 
             for (let list of list5){
                 for (let secondList of list.listOfProducts){
+                    if(secondList.filteredGrouping == 'Cable Assemblies' || secondList.productType =='Patch Panel - Stubbed'){
+                        secondList.lengthuom == null || secondList.lengthuom == '' ? secondList.lengthuom = 'Meters' : secondList.lengthuom = secondList.lengthuom;
+                        secondList.length == null || secondList.length == '' ? secondList.length = '5' : secondList.length = secondList.length;       
+                    } else {
+                        secondList.lengthuom = 'NA';
+                        secondList.length = 'NA';
+                    }
                     if(secondList.minimumorderqty == null && secondList.quantity == null){
                         secondList.quantity = 1;
                     } else if (secondList.quantity < secondList.minimumorderqty){
@@ -357,9 +386,14 @@ export default class bl_productSelection extends NavigationMixin(LightningElemen
                 if ((list.isNSP == null) || (list.isNSP == 'null')){
                     list.isNSP = false;
                 }
-                if (!(list.productType == 'Patch Panel - Stubbed') && !(list.productType == 'Cable Assemblies')){
+                if (!(list.productType == 'Patch Panel - Stubbed') && !(list.filteredGrouping == 'Cable Assemblies')){
                     list.length = 'NA';
                     list.lengthuom = 'NA';
+                } else {
+                    if(secondList.filteredGrouping == 'Cable Assemblies' || secondList.productType =='Patch Panel - Stubbed'){
+                        secondList.lengthuom == null || secondList.lengthuom == '' ? secondList.lengthuom = 'Meters' : secondList.lengthuom = secondList.lengthuom;
+                        secondList.length == null || secondList.length == '' ? secondList.length = '5' : secondList.length = secondList.length;       
+                    } 
                 }
                 this.quotesAdded.push(list);
             }
@@ -554,6 +588,13 @@ export default class bl_productSelection extends NavigationMixin(LightningElemen
             let list1 = JSON.parse(JSON.stringify(this.girdDataAcaTabAdd)); 
             for (let list of list1){
                 for (let secondList of list.listOfProducts){
+                    if(secondList.filteredGrouping == 'Cable Assemblies' || secondList.productType =='Patch Panel - Stubbed'){
+                        secondList.lengthuom == null || secondList.lengthuom == '' ? secondList.lengthuom = 'Meters' : secondList.lengthuom = secondList.lengthuom;
+                        secondList.length == null || secondList.length == '' ? secondList.length = '5' : secondList.length = secondList.length;       
+                    } else {
+                        secondList.lengthuom = 'NA';
+                        secondList.length = 'NA';
+                    }
                     if(secondList.minimumorderqty == null && secondList.quantity == null){
                         secondList.quantity = 1;
                     } else if (secondList.quantity < secondList.minimumorderqty){
@@ -564,8 +605,7 @@ export default class bl_productSelection extends NavigationMixin(LightningElemen
                     secondList.stock = false;
                     //console.log('LUPL'+secondList.listunitprice);
                     //if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
-                    //    secondList.listunitprice = 1;
-                    //}
+                    //    secondList.listunitprice = 1;}
                     if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
                         secondList.isNSP = false;
                     }
@@ -588,10 +628,16 @@ export default class bl_productSelection extends NavigationMixin(LightningElemen
             }
         }
         if(this.girdDataConnTabAdd.length > 0){
-            //console.log('CONNECT LIST');
             let list2 = JSON.parse(JSON.stringify(this.girdDataConnTabAdd)); 
             for (let list of list2){
                 for (let secondList of list.listOfProducts){
+                    if(secondList.filteredGrouping == 'Cable Assemblies' || secondList.productType =='Patch Panel - Stubbed'){
+                        secondList.lengthuom == null || secondList.lengthuom == '' ? secondList.lengthuom = 'Meters' : secondList.lengthuom = secondList.lengthuom;
+                        secondList.length == null || secondList.length == '' ? secondList.length = '5' : secondList.length = secondList.length;       
+                    } else {
+                        secondList.lengthuom = 'NA';
+                        secondList.length = 'NA';
+                    }
                     if(secondList.minimumorderqty == null && secondList.quantity == null){
                         secondList.quantity = 1;
                     } else if (secondList.quantity < secondList.minimumorderqty){
@@ -602,8 +648,7 @@ export default class bl_productSelection extends NavigationMixin(LightningElemen
                     secondList.stock = false;
                     //console.log('LUPL'+secondList.listunitprice);
                     //if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
-                    //    secondList.listunitprice = 1;
-                    //}
+                    //    secondList.listunitprice = 1;}
                     if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
                         secondList.isNSP = false;
                     }
@@ -621,11 +666,6 @@ export default class bl_productSelection extends NavigationMixin(LightningElemen
                     if(secondList.prodLevel3 == null || secondList.prodLevel3 == undefined){
                         secondList.prodLevel4 =	null;
                     }
-                    //SPECIAL BEHAVIOR TO AVOID ACTIVATE THE VALIDATION RULE IN PRODUCT
-                    //SELECTION PAGE, SINCE THE QUANTITY HERE IS NOT EDITABLE.
-                    if(secondList.productType == 'Patch Panel - Stubbed' ){
-                        secondList.length = 5;
-                    }
                     this.quotesAdded.push(secondList);
                 }
             }
@@ -635,6 +675,13 @@ export default class bl_productSelection extends NavigationMixin(LightningElemen
             let list3 = JSON.parse(JSON.stringify(this.girdDataFocTabAdd)); 
             for (let list of list3){ 
                 for (let secondList of list.listOfProducts){
+                    if(secondList.filteredGrouping == 'Cable Assemblies' || secondList.productType =='Patch Panel - Stubbed'){
+                        secondList.lengthuom == null || secondList.lengthuom == '' ? secondList.lengthuom = 'Meters' : secondList.lengthuom = secondList.lengthuom;
+                        secondList.length == null || secondList.length == '' ? secondList.length = '5' : secondList.length = secondList.length;       
+                    } else {
+                        secondList.lengthuom = 'NA';
+                        secondList.length = 'NA';
+                    }
                     if(secondList.minimumorderqty == null && secondList.quantity == null){
                         secondList.quantity = 1;
                     } else if (secondList.quantity < secondList.minimumorderqty){
@@ -644,8 +691,7 @@ export default class bl_productSelection extends NavigationMixin(LightningElemen
                     secondList.alternative = false;
                     secondList.stock = false;
                     //if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
-                    //    secondList.listunitprice = 1;
-                    // }
+                    //    secondList.listunitprice = 1; }
                     if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
                         secondList.isNSP = false;
                     }
@@ -672,6 +718,13 @@ export default class bl_productSelection extends NavigationMixin(LightningElemen
             let list4 = JSON.parse(JSON.stringify(this.girdDataCableTabAdd)); 
             for (let list of list4){
                 for (let secondList of list.listOfProducts){
+                    if(secondList.filteredGrouping == 'Cable Assemblies' || secondList.productType =='Patch Panel - Stubbed'){
+                        secondList.lengthuom == null || secondList.lengthuom == '' ? secondList.lengthuom = 'Meters' : secondList.lengthuom = secondList.lengthuom;
+                        secondList.length == null || secondList.length == '' ? secondList.length = '5' : secondList.length = secondList.length;       
+                    } else {
+                        secondList.lengthuom = 'NA';
+                        secondList.length = 'NA';
+                    }
                     if(secondList.minimumorderqty == null && secondList.quantity == null){
                         secondList.quantity = 1;
                     } else if (secondList.quantity < secondList.minimumorderqty){
@@ -682,8 +735,7 @@ export default class bl_productSelection extends NavigationMixin(LightningElemen
                     secondList.stock = false;
                     //console.log('LUPL'+secondList.listunitprice);
                     //if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
-                    //    secondList.listunitprice = 1;
-                    //}
+                    //    secondList.listunitprice = 1; }
                     if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
                         secondList.isNSP = false;
                     }
@@ -710,6 +762,13 @@ export default class bl_productSelection extends NavigationMixin(LightningElemen
             let list5 = JSON.parse(JSON.stringify(this.girdDataTandITabAdd)); 
             for (let list of list5){
                 for (let secondList of list.listOfProducts){
+                    if(secondList.filteredGrouping == 'Cable Assemblies' || secondList.productType =='Patch Panel - Stubbed'){
+                        secondList.lengthuom == null || secondList.lengthuom == '' ? secondList.lengthuom = 'Meters' : secondList.lengthuom = secondList.lengthuom;
+                        secondList.length == null || secondList.length == '' ? secondList.length = '5' : secondList.length = secondList.length;       
+                    } else {
+                        secondList.lengthuom = 'NA';
+                        secondList.length = 'NA';
+                    }
                     if(secondList.minimumorderqty == null && secondList.quantity == null){
                         secondList.quantity = 1;
                     } else if (secondList.quantity < secondList.minimumorderqty){
@@ -720,8 +779,7 @@ export default class bl_productSelection extends NavigationMixin(LightningElemen
                     secondList.stock = false;
                     //console.log('LUPL'+secondList.listunitprice);
                     //if ((secondList.listunitprice == null) || (secondList.listunitprice == 'null')){
-                    //    secondList.listunitprice = 1;
-                    //}
+                    //    secondList.listunitprice = 1; }
                     if ((secondList.isNSP == null) || (secondList.isNSP == 'null')){
                         secondList.isNSP = false;
                     }
@@ -748,11 +806,9 @@ export default class bl_productSelection extends NavigationMixin(LightningElemen
             let list6 = JSON.parse(JSON.stringify(this.girdDataManualItemTabAdd)); 
             for (let list of list6){
                 //if ((list.netunitprice == null) || (list.netunitprice == 'null')){
-                //    list.netunitprice = 1;
-                //}
+                //    list.netunitprice = 1; }
                 //if ((list.listunitprice == null) || (list.listunitprice == 'null')){
-                //    list.listunitprice = 1;
-                //}
+                //    list.listunitprice = 1; }
                 if((list.stock == null) || (list.stock == 'null')){
                     list.stock = false;
                 }
@@ -765,9 +821,14 @@ export default class bl_productSelection extends NavigationMixin(LightningElemen
                 if ((list.isNSP == null) || (list.isNSP == 'null')){
                     list.isNSP = false;
                 }
-                if (!(list.productType == 'Patch Panel - Stubbed') && !(list.productType == 'Cable Assemblies')){
+                if (!(list.productType == 'Patch Panel - Stubbed') && !(list.filteredGrouping == 'Cable Assemblies')){
                     list.length = 'NA';
                     list.lengthuom = 'NA';
+                } else {
+                    if(secondList.filteredGrouping == 'Cable Assemblies' || secondList.productType =='Patch Panel - Stubbed'){
+                        secondList.lengthuom == null || secondList.lengthuom == '' ? secondList.lengthuom = 'Meters' : secondList.lengthuom = secondList.lengthuom;
+                        secondList.length == null || secondList.length == '' ? secondList.length = '5' : secondList.length = secondList.length;       
+                    } 
                 }
                 this.quotesAdded.push(list);
             }

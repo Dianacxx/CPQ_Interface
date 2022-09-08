@@ -28,50 +28,51 @@ export default class Bl_customLookup extends LightningElement {
         let startTime = window.performance.now();
         //console.log('Method search searchTerm: '+  this.searchTerm + ' quoteId '+this.recordId+ ' option '+ this.productSelected);
 
-        // search({searchTerm : this.searchTerm, quoteId: this.recordId, option: this.productSelected})
-        // .then((data)=>{
-        //         let endTime = window.performance.now();
-        //         //console.log(`search method took ${endTime - startTime} milliseconds`);
-        //         //console.log('Seacrh data: '+JSON.stringify(data));
-        //         this.error = undefined;
-        //         this.records = data;
-        //         if (this.records.length == 0){
-        //             this.records = [{"Id":"norecords","Name":"NO RECORDS","IsActive":false, level: '', filtergroup: '', }];
-        //         } else {
-        //             //TO SHOW CUTOMER PART OR COMPETITOR REFERENCE IN THE SEARCH
-        //         if (!(this.productSelected == 'name' )) { 
-        //             for (let k = 0; k< this.records.length; k++){
-        //                 if(this.records[k].hasOwnProperty('Customer_Part_Cross_References__r')){
-        //                     this.customerDisplay = true; 
-        //                     this.competitorDisplay = false;
-        //                 }
-        //                 else if(this.records[k].hasOwnProperty('Competitor_Cross_References__r')){
-        //                     this.competitorDisplay = true; 
-        //                     this.customerDisplay = false; 
-        //                 }
-        //             } 
-        //         }
-        //     }
-        // })
-        // .catch((error)=>{
-        //         this.error = error;
-        //         this.records = undefined;
-        //         console.log('Lookup ERROR: '); 
-        //         console.log(this.error);
-        //         const evt = new ShowToastEvent({
-        //             title: 'No products found',
-        //             message: 'This quote has no associated products',
-        //             variant: 'warning',
-        //             mode: 'dismissable'
-        //         });
-        //         this.dispatchEvent(evt);
-        // });
+        search({searchTerm : this.searchTerm, quoteId: this.recordId, option: this.productSelected})
+        .then((data)=>{
+                let endTime = window.performance.now();
+                //console.log(`search method took ${endTime - startTime} milliseconds`);
+                //console.log('Seacrh data: '+JSON.stringify(data));
+                this.error = undefined;
+                this.records = data;
+                if (this.records.length == 0){
+                    this.records = [{"Id":"norecords","Name":"No Products","Description":"Change search type","IsActive":false, level: '', filtergroup: '', }];
+                } else {
+                    //TO SHOW CUTOMER PART OR COMPETITOR REFERENCE IN THE SEARCH
+                if (!(this.productSelected == 'name' || this.productSelected == 'description' )) { 
+                    for (let k = 0; k< this.records.length; k++){
+                        //this.records[k]['Description'] = '';
+                        if(this.records[k].hasOwnProperty('Customer_Part_Cross_References__r')){
+                            this.customerDisplay = true; 
+                            this.competitorDisplay = false;
+                        }
+                        else if(this.records[k].hasOwnProperty('Competitor_Cross_References__r')){
+                            this.competitorDisplay = true; 
+                            this.customerDisplay = false; 
+                        } 
+                    } 
+                }
+            }
+        })
+        .catch((error)=>{
+                this.records = undefined;
+                console.log('Lookup ERROR: '); 
+                console.log(error);
+                const evt = new ShowToastEvent({
+                    title: 'No products found',
+                    message: 'This quote has no associated products',
+                    variant: 'warning',
+                    mode: 'dismissable'
+                });
+                this.dispatchEvent(evt);
+        });
     }
 
     //Lookup field combobox options, handle change to type of search
     get productOptions() {
         return [
             { label: 'Product Name', value: 'name' },
+            { label: 'Description', value: 'description'},
             { label: 'Customer Part Number', value: 'customerPart' },
             { label: 'Competitor Part Number', value: 'competitor' },
         ];
@@ -79,13 +80,15 @@ export default class Bl_customLookup extends LightningElement {
 
     //WHEN THE USER CHANGE THE TYPE OF SEARCH
     @track productSelected = 'name';
-    handleProductSelected(event) {
-        this.productSelected = event.detail.value;
-    }
-
-    @track customerObj; 
     @track customerDisplay = false; 
     @track competitorDisplay = false; 
+    @track descriptionDisplay = true;
+
+    handleProductSelected(event) {
+        this.productSelected = event.detail.value;
+        this.productSelected == 'description' || this.productSelected == 'name' ? this.descriptionDisplay = true : this.descriptionDisplay = false;
+    }
+
 
     //Calling LookUp Search with Default 'Product Name' (name)
     /*
@@ -166,7 +169,7 @@ export default class Bl_customLookup extends LightningElement {
         //console.log('option : '+ this.productSelected);
 
         let startTime = window.performance.now();
-        console.log('Method search searchTerm: '+  this.searchTerm + ' quoteId '+this.recordId+ ' option '+ this.productSelected);
+        //console.log('Method search searchTerm: '+  this.searchTerm + ' quoteId '+this.recordId+ ' option '+ this.productSelected);
 
         search({searchTerm : this.searchTerm, quoteId: this.recordId, option: this.productSelected})
         .then((data)=>{
@@ -176,11 +179,12 @@ export default class Bl_customLookup extends LightningElement {
                 this.error = undefined;
                 this.records = data;
                 if (this.records.length == 0){
-                    this.records = [{"Id":"norecords","Name":"NO RECORDS","IsActive":false, level: '', filtergroup: '', }];
+                    this.records = [{"Id":"norecords","Name":"No Products","Description":"Change search type","IsActive":false, level: '', filtergroup: '', }];
                 } else {
                     //TO SHOW CUTOMER PART OR COMPETITOR REFERENCE IN THE SEARCH
-                if (!(this.productSelected == 'name' )) { 
+                if (!(this.productSelected == 'name' || this.productSelected == 'description' )) { 
                     for (let k = 0; k< this.records.length; k++){
+                        //this.records[k]['Description'] = '';
                         if(this.records[k].hasOwnProperty('Customer_Part_Cross_References__r')){
                             this.customerDisplay = true; 
                             this.competitorDisplay = false;
@@ -188,16 +192,16 @@ export default class Bl_customLookup extends LightningElement {
                         else if(this.records[k].hasOwnProperty('Competitor_Cross_References__r')){
                             this.competitorDisplay = true; 
                             this.customerDisplay = false; 
-                        }
+                        } 
                     } 
                 }
             }
         })
         .catch((error)=>{
-                this.error = error;
+                error;
                 this.records = undefined;
                 console.log('Lookup ERROR: '); 
-                console.log(this.error);
+                console.log(error);
                 const evt = new ShowToastEvent({
                     title: 'No products found',
                     message: 'This quote has no associated products',

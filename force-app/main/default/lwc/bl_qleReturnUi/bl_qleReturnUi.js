@@ -42,6 +42,7 @@ export default class Bl_qleReturnUi extends NavigationMixin(LightningElement) {
                         componentDef: "c:bl_UserInterface",
                         attributes: {
                             quoteId: this.recordId,
+                            comeFromPS: 'true', 
                         }
                     };
                     // Base64 encode the compDefinition JS object
