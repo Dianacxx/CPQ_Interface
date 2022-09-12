@@ -20,3 +20,11 @@ table, th, td {
 .datatable-row-detail { 
     width: 100vw; 
 }
+
+.THIS .slds-table  td:first-child {
+    display: none !important;
+}
+
+.THIS .slds-table  th:first-child {
+    display: none !important;
+}

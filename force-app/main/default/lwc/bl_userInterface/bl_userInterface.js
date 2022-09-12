@@ -37,6 +37,18 @@ export default class bl_userInterface extends NavigationMixin(LightningElement) 
         this.template.querySelector('c-bl_data-table').exit();
     }
 
+    isSaveAndExitDisabled = false;
+    enableSaveAndExit(){
+        this.isSaveAndExitDisabled = false;
+        this.showUncalculateQuote = false;
+    }
+
+    //Show Uncalculated Message and disable save and exit
+    handleUncalcQuote(){
+        this.showUncalculateQuote = true;
+        this.isSaveAndExitDisabled = true;
+    }
+
     handleCloneRows(){
         this.template.querySelector('c-bl_data-table').clonerows();
     }
@@ -101,9 +113,15 @@ export default class bl_userInterface extends NavigationMixin(LightningElement) 
         this.template.querySelector('c-bl_data-table').navigateToProductSelection();
     }
 
-    //Show Uncalculated Message 
-    showUncalMessage(){
-        this.showUncalculateQuote = true;
+    clickBottom(){
+        //console.log('clicking button');
+        setTimeout(() => {
+            this.template.querySelector('[data-id="buttonHidden"]').click();
+        }, 250);
     }
-    
+    goToBottom(){
+        //console.log('down');
+        let containerChoosen = this.template.querySelector('.bottomHere');
+        containerChoosen.scrollIntoView();
+    }
 }

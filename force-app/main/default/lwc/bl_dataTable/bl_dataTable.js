@@ -1,5 +1,6 @@
 import { LightningElement, api, track, wire } from 'lwc';
 import { NavigationMixin } from 'lightning/navigation';
+import { loadStyle } from 'lightning/platformResourceLoader';
 import read from '@salesforce/apex/myQuoteExample.read';
 import save from '@salesforce/apex/myQuoteCalculator.save';
 
@@ -30,7 +31,11 @@ import printNotes from '@salesforce/apex/QuoteController.printNotes';
 //APEX METHOD TO DELETE THE RECORD THAT SAVES THE QUOTE ID 
 import deletingRecordId from '@salesforce/apex/blQuoteIdController.deletingRecordId';
 
+import REMOVECOLUMN from '@salesforce/resourceUrl/removeColumn'
+
+
 const columns = [
+    { fieldName: 'SBQQ__Number__c', editable: false ,hideDefaultActions: true , initialWidth: 50,},
     { label: 'Product', fieldName: 'Quote_Line_Name__c', editable: false ,sortable: true, wrapText: false, initialWidth: 250,}, //References Quote_Line_Name__c in Sandbox
     { label: 'Description', fieldName: 'SBQQ__Description__c', editable: true ,sortable: true, wrapText: false, initialWidth: 100,},
     { label: 'Quantity', fieldName: 'SBQQ__Quantity__c', type: 'number', editable: true },
@@ -54,6 +59,7 @@ const columns = [
 ];
 
 const DETAIL_COLUMNS = [
+    { fieldName: 'SBQQ__Number__c', editable: false ,hideDefaultActions: true , initialWidth: 50,},
     { label: 'Product', fieldName: 'Quote_Line_Name__c', editable: false ,sortable: true, wrapText: false, initialWidth :325,},
     { label: 'Billing Tolerance', fieldName: 'BL_Billing_Tolerance__c', editable: true ,sortable: true, wrapText: false,type: 'number',hideDefaultActions: true },
     { label: 'Source', fieldName: 'BL_Source__c', editable: true ,sortable: true, wrapText: false, hideDefaultActions: true},
@@ -95,19 +101,20 @@ export default class bl_dataTable extends NavigationMixin(LightningElement) {
 
     @track flagEditAdd = false; 
     @track flagUncalculate = false;
+
+
+    renderedCallback(){
+       Promise.all([loadStyle(this, REMOVECOLUMN)]);
+    }
+
     connectedCallback(){
         const load = async() => {
             const quote = await read({quoteId: this.quoteId});
             this.quote = JSON.parse(quote);
-            console.log('Quote Here:')
-            console.log(this.quote)
-            const numbers = this.quote.lineItems.map(line => line.record['SBQQ__Number__c']);
-            console.log('numbers')
-            console.log(numbers)
-            
 
             // Build state of the app
             const payload = await build(this.quote);
+            console.log(payload);
             this.contracts = payload.contracts;
             this.schedules = payload.schedules;
             this.tiers = payload.customerTiers;
@@ -147,15 +154,18 @@ export default class bl_dataTable extends NavigationMixin(LightningElement) {
             this.loading = false;
             this.updateQuoteTotal(); 
             console.log('Script loaded');
+            this.dispatchEvent(new CustomEvent('quotesloaded'));
         });
 
         printNotes({ quoteId: this.quoteId })
         .then(data =>{
             //console.log('notes string SUCCESS');
-            if (data == '[]'){
+            if (data.length == 0){
                 this.prodNotes = [];
             } else {
-                this.prodNotes = JSON.parse(data);
+                this.prodNotes = data.map((item,index) => {
+                    return { ...item, newIndex: index+1 };
+                });
             }
         })
         .catch(error =>{
@@ -437,7 +447,8 @@ export default class bl_dataTable extends NavigationMixin(LightningElement) {
                 console.log(`priceRuleLookup waited ${afterPriceRules - startedPriceRules} milliseconds`);
             }
             //PRICE RULE LOGIC ENDS HERE --------------------
-            this.flagUncalculate = false;
+            //this.flagUncalculate = false;
+            this.turnOffFlagUncalc();
         
         } else if(this.allowSave == false){
             console.log('No save --> Validation rule');
@@ -447,23 +458,40 @@ export default class bl_dataTable extends NavigationMixin(LightningElement) {
         //PRODUCT RULE LOGIC ENDS HERE --------------------     
     }
 
+
     // this functions saves the quote record to the db
     // and navigates back to the quote record page
     @api
     async exit() {
         this.loading = true;
-       if(this.flagUncalculate){
-            this.dispatchEvent(new CustomEvent('uncalculate'));
-            this.loading = false;
+       //if(this.flagUncalculate){
+            //this.dispatchEvent(new CustomEvent('uncalculate'));
+            //this.loading = false;
             //this.flagUncalculate = false;
-       } else {
-            // delete quote lines that were removed from the db
-            await deleteQuoteLines({quoteIds: this.deleteLines});
-            // use save API to update the quote
-            await save({ quoteJSON: JSON.stringify(this.quote) });
-            //Deleting Record Id frm custom object.
-            await deletingRecordId({quoteId: this.quoteId});
-            // redirect user to the quote record page
+       //} else {
+            try{
+                // delete quote lines that were removed from the db
+                await deleteQuoteLines({quoteIds: this.deleteLines});
+                // use save API to update the quote
+                await save({ quoteJSON: JSON.stringify(this.quote) });
+                //Deleting Record Id frm custom object.
+                await deletingRecordId({quoteId: this.quoteId});
+                // redirect user to the quote record page
+            } catch(error){
+                let message; 
+                if(error.body != undefined){
+                    error.body.message != undefined ? message = error.body.message :message = 'Server Error'; 
+                }
+                this.loading = false;
+                const evt = new ShowToastEvent({
+                    title: 'We found a problem saving your quote. Please try again!', 
+                    message: 'Error:'+message,
+                    variant: 'error', mode: 'dismissable'
+                });
+                this.dispatchEvent(evt);
+                return ;
+            }  
+            
             setTimeout(() => {
                 this.loading = false;
                 this[NavigationMixin.Navigate]({
@@ -476,7 +504,7 @@ export default class bl_dataTable extends NavigationMixin(LightningElement) {
             }, 2000);
         }
         
-    }
+    //}
 
     // this function clones the selected quote lines while maintaining
     // the existing relationships
@@ -953,6 +981,12 @@ export default class bl_dataTable extends NavigationMixin(LightningElement) {
         }
 
         this.quote.lineItems = reorderItems;
+
+        // write new sequence order
+        this.quote.lineItems.filter(ql=> !(ql.record['SBQQ__ProductOption__c'])).forEach((line,index) =>{
+            line.record['SBQQ__Number__c'] = index + 1;
+        });
+
         this.regenerateFlatLines(0);
         this.closeReorder();
         const evt = new ShowToastEvent({
@@ -1032,7 +1066,7 @@ export default class bl_dataTable extends NavigationMixin(LightningElement) {
 
     //Alternative Indicator - Optional checkbox
     changingAlternative(){
-        this.turnOnFlagEdit();
+        //this.turnOnFlagEdit();
         let index = this.quote.lineItems.findIndex(x => x.key === this.dataRow.rowId);
         if(index != -1){
             this.quote.lineItems[index].record.SBQQ__Optional__c = !this.quote.lineItems[index].record.SBQQ__Optional__c; 
@@ -1086,7 +1120,7 @@ export default class bl_dataTable extends NavigationMixin(LightningElement) {
     }
 
     saveLineNote(){
-        this.turnOnFlagEdit();
+        //this.turnOnFlagEdit();
         let index = this.quote.lineItems.findIndex(x => x.key === this.dataRow.rowId);
         this.quote.lineItems[index].record['Line_Note__c'] = this.newLineNote;
         this.closeLineNotes();
@@ -1111,10 +1145,20 @@ export default class bl_dataTable extends NavigationMixin(LightningElement) {
     notChangePageWhenEditing(){
         this.inlineEditing = true; 
     }
+
+    changeToLastPage = false;
     //PAGINATION CONTROL FOR ALL 4 TABS
     startingPageControl(){
         if(this.inlineEditing){            
-            if(this.tabSelected == 'Home'){this.assignPageValueByTab(this.pageHome);}
+            if(this.tabSelected == 'Home'){
+                if(this.changeToLastPage){
+                    this.totalPageHome = Math.ceil(this.flatLines.length / this.pageSize);
+                    this.changeToLastPage = false;
+                    this.lastHandler();
+                } else {
+                    this.assignPageValueByTab(this.pageHome);
+                }
+            }
             else if (this.tabSelected == 'Detail'){this.assignPageValueByTab(this.pageDetail);}
         } else {
             this.assignPageValueByTab(1);
@@ -1149,9 +1193,22 @@ export default class bl_dataTable extends NavigationMixin(LightningElement) {
         this.endingRecord = this.pageSize;
 
         if(this.inlineEditing){
-            if(this.tabSelected == 'Home'){this.displayRecordPerPage(this.pageHome); this.inlineEditing = false;}
-            else if (this.tabSelected == 'Detail'){this.displayRecordPerPage(this.pageDetail); this.inlineEditing = false;}
+            if(this.tabSelected == 'Home'){ 
+                this.inlineEditing = false;
+                if((this.pageHome > this.totalPageHome) && (this.totalPageHome > 0)){
+                        this.pageHome = this.pageHome -1; 
+                }
+                this.displayRecordPerPage(this.pageHome);
+                }
+            else if (this.tabSelected == 'Detail'){
+                this.inlineEditing = false;
+                if((this.pageDetail > this.totalPageDetail) && (this.totalPageDetail > 0)){
+                    this.pageDetail = this.pageDetail -1; 
+                }
+                 this.displayRecordPerPage(this.pageDetail);
+                }
         }
+
         
     }
 
@@ -1243,7 +1300,7 @@ export default class bl_dataTable extends NavigationMixin(LightningElement) {
     @api
     applyDiscountInLines(discountValue){
         console.log('The Discount Value: '+discountValue);
-        this.turnOnFlagEdit();
+        //this.turnOnFlagEdit();
         try{
             const rows = this.selectedRows;
             this.loading = true;
@@ -1633,6 +1690,12 @@ export default class bl_dataTable extends NavigationMixin(LightningElement) {
     turnOnFlagEdit(){
         this.flagEditAdd = true;
         this.flagUncalculate = true; 
+        this.dispatchEvent(new CustomEvent('uncalculate'));
+    }
+
+    turnOffFlagUncalc(){
+        this.flagUncalculate = false; 
+        this.dispatchEvent(new CustomEvent('calculated'));
     }
 
     closeDeleteModal(){
@@ -1674,6 +1737,11 @@ export default class bl_dataTable extends NavigationMixin(LightningElement) {
             }
         }
         this.quote.lineItems = lines;
+        // write new sequence order
+        this.quote.lineItems.filter(ql=> !(ql.record['SSBQQ__ProductOption__c'])).forEach((line,index) =>{
+            line.record['SBQQ__Number__c'] = index + 1;
+        });
+        this.notChangePageWhenEditing();
         this.regenerateFlatLines(0);
         this.deleteClick = false;
     }
@@ -1725,7 +1793,11 @@ export default class bl_dataTable extends NavigationMixin(LightningElement) {
 
             this.flatLines = flatLines;
             this.turnOnFlagEdit();
+            this.notChangePageWhenEditing();
+            this.changeToLastPage = true; 
             this.regenerateFlatLines(0);
+            this.dispatchEvent(new CustomEvent('quotesloaded'));
+
 
         })
         .catch(error => {

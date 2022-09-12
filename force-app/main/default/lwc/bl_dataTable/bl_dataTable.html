@@ -28,7 +28,7 @@
             <div class="slds-align_absolute-center slds-var-m-top_small">
                 <lightning-datatable
                 key-field="id"
-                class="slds-var-m-left_x-small slds-var-m-right_x-small"
+                class="slds-var-m-left_x-small slds-var-m-right_x-small bricklanedt"
                 style="width:92vw !important;" data={dataPages}
                 columns={columns}
                 oncellchange={handleCellChange}
@@ -58,7 +58,7 @@
 
             <lightning-datatable
                 key-field="id"
-                class="slds-var-m-left_x-small slds-var-m-right_x-small"
+                class="slds-var-m-left_x-small slds-var-m-right_x-small bricklanedt"
                 style="width:91vw !important;"
                 data={dataPages}
                 columns={detailColumns}
@@ -86,14 +86,11 @@
                 </div>
                 <!--PAGINATION CONTROL END-->
                 <div class="slds-var-m-right_small slds-var-m-left_small slds-var-m-top_small slds-align_absolute-center">  
-                    <table class='slds-table css-serial slds-var-m-left_x-small' style="width:90vw !important;">
+                    <table class='slds-table slds-var-m-left_x-small' style="width:90vw !important;">
                         <thead>
-                            <tr>     
-                                <th></th>
+                            <tr class="slds-line-height_reset">     
                                 <th>
-                                    <a data-id="name" onclick={sort}>
-                                        <div>Product</div>
-                                    </a>
+                                    <a data_id="newIndex"></a>
                                 </th>
                                 <th>
                                     <a data-id="notetext" onclick={sort}>
@@ -104,13 +101,12 @@
                         </thead>
                         <tbody>
                             <template for:each={dataPages} for:item="productnotes">
-                                <tr key={productnotes.name}>     
-                                    <td></td>           
-                                    <td width ="30%" class="slds-cell-wrap">                                
-                                        {productnotes.name}
-                                    </td>
-                                    <td width ="70%" class="slds-cell-wrap">                                
-                                        {productnotes.notetext}
+                                <tr class="slds-hint-parent" key={productnotes.Note_Text__c}>     
+                                    <td class="slds-cell-wrap">
+                                        {productnotes.newIndex}
+                                    </td>  
+                                    <td class="slds-cell-wrap">                                
+                                        {productnotes.Note_Text__c}
                                     </td>          
                                 </tr>                                                                     
                             </template>
@@ -137,10 +133,15 @@
                 <!--PAGINATION CONTROL END-->
             </div>
             <div class="slds-var-m-right_small slds-var-m-left_small slds-var-m-top_small slds-align_absolute-center">  
-                <table class='slds-table css-serial slds-var-m-left_x-small' style="width:90vw !important;">
+                <table class='slds-table slds-var-m-left_x-small' style="width:90vw !important;">
                     <thead>
                         <tr>     
-                            <th></th>
+                            <!-- <th></th> -->
+                            <th>
+                                <a data-id="SBQQ__Number__c">
+                                    <div>test</div>
+                                </a>
+                            </th>
                             <th>
                                 <a data-id="Quote_Line_Name__c" onclick={sort}>
                                     <div>Product</div>
@@ -161,7 +162,10 @@
                     <tbody>
                         <template for:each={dataPages} for:item="linenotes">
                             <tr key={linenotes.Quote_Line_Name__c}>     
-                                <td></td>           
+                                <!-- <td></td>         -->
+                                <td class="slds-cell-wrap">
+                                    {linenotes.SBQQ__Number__c}
+                                </td>   
                                 <td width ="20%" class="slds-cell-wrap">                                
                                     {linenotes.Quote_Line_Name__c}
                                 </td>
@@ -328,9 +332,10 @@
                     <div class="slds-grid slds-grid_vertical slds-var-m-left_small slds-var-m-right_small">
                         <div class="slds-scrollable slds-grow">
                             <div class="slds-scrollable_none">
-                            <table aria-multiselectable="true" class="slds-table slds-no-row-hover slds-table_bordered slds-table_fixed-layout slds-table_resizable-cols" role="grid" >
+                            <table aria-multiselectable="true" class="slds-table css-serial slds-no-row-hover slds-table_bordered slds-table_fixed-layout slds-table_resizable-cols" role="grid" >
                                 <thead>
                                 <tr class="slds-line-height_reset">
+                                    <th></th>
                                     <th>Product</th>
                                     <th>Description</th>
                                 </tr>
@@ -339,6 +344,7 @@
                                 <template for:each={ElementList} for:item="qlorder" for:index="index">
                                     <!--NOT qlorder.record.Quote_Line_Name__c because is the flatLines object in Datatable and not quote model-->
                                     <tr key={qlorder.Quote_Line_Name__c} onchange={Change} draggable="true" ondrop={Drop} ondragstart={DragStart} ondragover={DragOver} title={index}>
+                                    <td></td>
                                     <td role="gridcell">
                                         <div class="slds-cell-wrap" title={index}>{qlorder.Quote_Line_Name__c}</div>
                                     </td>
@@ -413,7 +419,7 @@
                                 <div class="slds-form__row">
                                     <div class="slds-form__item">
                                         <div class="slds-form-element_horizontal">
-                                            <h1><b>Quote Line UOM:</b>&nbsp;{dataRow.UOM__c}&nbsp;-&nbsp;<b>Quoted Lead Time:</b>&nbsp;{dataRow.Quoted_Lead_Time__c}</h1>
+                                            <h1><b>Quote Line UOM:</b>&nbsp;{dataRow.UOM__c}&nbsp;-&nbsp;<b>Default System Lead Time:</b>&nbsp;{dataRow.Quoted_Lead_Time__c}&nbsp;-&nbsp;<b>Default Customer Tier:</b>&nbsp;{dataRow.Tier__c}</h1>
                                         </div>
                                     </div>
                                 </div>
@@ -426,7 +432,7 @@
                                             <template if:true={quotedLeadTimes.data.values}>
                                                 <lightning-combobox
                                                     name="overrideleadtime"
-                                                    label="Lead Time"
+                                                    label="Override Lead Time"
                                                     value={_overrideQuotedLeadTime}
                                                     placeholder="Override Lead Time"
                                                     options={quotedLeadTimes.data.values}

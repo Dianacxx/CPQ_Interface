@@ -125,6 +125,9 @@ const convertUOM = (numToConvert, fromUOM, toUOM, productId, productLevel1, prod
 }
 
 const productPricingTierScript = (prodTiers, quoteModel, uomConvertMap) => {
+
+
+
     // if the query returned rows then build the keys else we still need to set all lines to List.
     log('begin product pricing tier script');
     let pricingTierMap = {};
@@ -149,6 +152,12 @@ const productPricingTierScript = (prodTiers, quoteModel, uomConvertMap) => {
     });
     
     quoteModel.lineItems.forEach(line => {
+
+        //manual items exception
+
+        if(line.record.SBQQ__Product__r.Name == 'Product2'){
+            return;
+        }
         let pricingTierMapQtyRecs = [];
         let tier = line.record['Tier__c'];
 
@@ -244,6 +253,7 @@ const productPricingTierScript = (prodTiers, quoteModel, uomConvertMap) => {
 
 const customerTierScript = (tiers, quote) => {
 
+
     // if the query returned rows then build the keys else we still need to set all lines to List.
     log('Begin Tier Script');
     let customerTierObj = {};
@@ -253,6 +263,12 @@ const customerTierScript = (tiers, quote) => {
 
     //now loop through lines and first try to get the prod level 1 and prod level 2 specific , if not try to get prod level 1 specific , if not then List
     quote.lineItems.forEach(line => {
+
+         //manual items exception
+
+        if(line.record.SBQQ__Product__r.Name == 'Product2'){
+            return;
+        }
 
         //if tier was overriden by user, skip over this line
         if (line.record['New_Customer_Tier__c']) {
@@ -282,6 +298,12 @@ const customerTierScript = (tiers, quote) => {
 }
 
 const setLeadTimeTier = async (line, quoteModel) => {
+
+   //manual items exception
+
+   if(line.record.SBQQ__Product__r.Name == 'Product2'){
+    return line;
+}
 
     let custLeadTimeTier = await getCustLeadTimeTier(quoteModel.record['End_User__c'], line.record['Product_Lead_Time_Category__c'])
     
@@ -321,6 +343,12 @@ const setLeadTimeTier = async (line, quoteModel) => {
 
 const getOverriddenContractPrice = async(line, discountMap) => {
     
+    //manual items exception
+
+    if(line.record.SBQQ__Product__r.Name == 'Product2'){
+        return line;
+    }
+
     const productId = line.record['SBQQ__Product__c'];
     let uom = line.record['UOM__c'];
     const { scheduleMap, tierMap } = discountMap;
@@ -383,6 +411,12 @@ const getOverriddenContractPrice = async(line, discountMap) => {
 }
 
 const getContractPrice = async(line, discountMap) => {
+
+    //manual items exception
+
+    if(line.record.SBQQ__Product__r.Name == 'Product2'){
+        return line;
+    }
     
     const productId = line.record['SBQQ__Product__c'];
     let uom = line.record['UOM__c'];
@@ -471,6 +505,12 @@ const getCustLeadTimeTier = async(endUser, lineProdLeadTimeCat) => {
 }
 
 const setCableAssemblyName = (line, ascendPackagingList) => {
+
+    //manual items exception
+
+    if(line.record.SBQQ__Product__r.Name == 'Product2'){
+        return line;
+    }
         
     let uomSuffix = '';
     let AttUomSuffix = '';
@@ -478,6 +518,7 @@ const setCableAssemblyName = (line, ascendPackagingList) => {
     let convFactor = 1;
     let itemDesc = '';
 
+            
         //when line.record['Product_Name_Key_Field_Text__c'] is blank that indicates that the product was just added to the line
         if (!line.record['Product_Name_Key_Field_Text__c']) {
             //backup the list price to the original price field. so it can be used to recalculate if the user changes qty 
@@ -564,6 +605,12 @@ const setCableAssemblyName = (line, ascendPackagingList) => {
 }
 
 const setBusConductorPrice = line => {
+
+    //manual items exception
+
+    if(line.record.SBQQ__Product__r.Name == 'Product2'){
+        return line;
+    }
     
     let RegionAdder = 0;
     let PieceCount = 0;	
@@ -622,6 +669,12 @@ const setBusConductorPrice = line => {
 
 const setPatchPanelStubbedPrice = line => {
 
+    //manual items exception
+
+    if(line.record.SBQQ__Product__r.Name == 'Product2'){
+        return line;
+    }
+
     var itemDesc;
 
     //when keyFieldText is blank that indicates that the product was just added to the line
@@ -666,6 +719,12 @@ const setPatchPanelStubbedPrice = line => {
 
 }
 const setPremiseCableName = (line, premiseMaps) => {
+
+    //manual items exception
+
+    if(line.record.SBQQ__Product__r.Name == 'Product2'){
+        return line;
+    }
     
     const { premiseJacketColorMap, premiseJacketPrintMap, premiseSubunitColorMap } = premiseMaps;
     try{
@@ -772,6 +831,10 @@ const onBeforePriceRules = async(quoteModel, ascendPackagingMap, tiers, prodTier
 
     // Build UOM Convert Map
     const uomConvertMap = buildUOMConvertMap(uomRecords);
+    console.log(premiseMaps);
+    console.log(overridesDiscountMap);
+    console.log(discountMap);
+    console.log(uomConvertMap);
 
     // Wait until all line specific calculations have resolved
     await Promise.all(quoteModel.lineItems.map(line => {

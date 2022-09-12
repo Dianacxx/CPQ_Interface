@@ -37,6 +37,17 @@ export default class EmpApiLWC extends NavigationMixin(LightningElement) {
         this.template.querySelector('c-emp-child').exit();
     }
 
+    isSaveAndExitDisabled = true;
+    enableSaveAndExit(){
+        this.isSaveAndExitDisabled = false;
+    }
+
+    //Show Uncalculated Message and disable save and exit
+    handleUncalcQuote(){
+        this.showUncalculateQuote = true;
+        this.isSaveAndExitDisabled = true;
+    }
+
     handleCloneRows(){
         this.template.querySelector('c-emp-child').clonerows();
     }
@@ -101,9 +112,17 @@ export default class EmpApiLWC extends NavigationMixin(LightningElement) {
         this.template.querySelector('c-emp-child').navigateToProductSelection();
     }
 
-    //Show Uncalculated Message 
-    showUncalMessage(){
-        this.showUncalculateQuote = true;
+    notTrue = false;
+    clickBottom(){
+        console.log('clicking button');
+        setTimeout(() => {
+            this.template.querySelector('[data-id="caro2"]').click();
+        }, 250);
+    }
+    goToBottom(){
+        console.log('down');
+        let containerChoosen = this.template.querySelector('.caro');
+        containerChoosen.scrollIntoView();
     }
     
 }

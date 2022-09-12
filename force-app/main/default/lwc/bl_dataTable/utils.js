@@ -16,7 +16,7 @@ import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 //Function to check error conditions of a product rule
 const conditionsCheck = (errorConditions, quote, conditionsMet, evaluateQuoteLines) => {
     //console.log('entered conditions');
-    const lines = evaluateQuoteLines.filter(ql=> !(ql['SBQQ__BundledQuantity__c']));   //doesn't consider bundle childs
+    const lines = evaluateQuoteLines.filter(ql=> !(ql['SBQQ__ProductOption__c']));   //doesn't consider bundle childs
     //console.log(lines);
     const lineResults=[];
     for(let line of lines){
@@ -51,7 +51,7 @@ const conditionsCheck = (errorConditions, quote, conditionsMet, evaluateQuoteLin
 //Function to check price conditions on a PRICE rule
 const priceConditionsCheck = (priceConditions,quote, conditionsMet) => {
     //console.log('Entered price conditions');
-    const lines = quote.lineItems.filter(ql=> !(ql.record['SBQQ__BundledQuantity__c']));   //doesn't considerate bundle childs
+    const lines = quote.lineItems.filter(ql=> !(ql.record['SBQQ__ProductOption__c']));   //doesn't considerate bundle childs
     //console.log(lines);
     const lineResults=[];
     const sucessIndex=[];
@@ -64,12 +64,14 @@ const priceConditionsCheck = (priceConditions,quote, conditionsMet) => {
                 let fieldAPI = labelsToAPI(condition['SBQQ__Field__c']); //function that checks if the field is a default value set by the object
                 //Retrieve the first value to compare --> depends on object and if its formula or value (no support on variables)
                 if(condition['SBQQ__Object__c'] === "Quote Line"){
-                    condition['SBQQ__TestedFormula__c'] ? operand1 = formulaConverter(condition['SBQQ__TestedFormula__c'], 'QL', line, quote) : operand1 = line.record[fieldAPI];
+                    condition['SBQQ__TestedFormula__c'] ? operand1 = formulaConverter(condition['SBQQ__TestedFormula__c'], 'QL', line, quote) 
+                    : operand1 = line.record[fieldAPI] ? operand1 = line.record[fieldAPI] : 'ignore-x';
                 } else if (condition['SBQQ__Object__c'] === "Quote"){
-                    condition['SBQQ__TestedFormula__c'] ? operand1 = formulaConverter(condition['SBQQ__TestedFormula__c'], 'Q', line, quote) : operand1 = quote.record[fieldAPI];
+                    condition['SBQQ__TestedFormula__c'] ? operand1 = formulaConverter(condition['SBQQ__TestedFormula__c'], 'Q', line, quote) 
+                    : operand1 = quote.record[fieldAPI] ? operand1 = quote.record[fieldAPI] : 'ignore-x';
                 } else{
                     console.log('Price conditions not supported for objects other than Quote or Quote Line');
-                    operand1= 'ignore';
+                    operand1= 'ignore-x'; 
                 }
                 //console.log('operand1 '+ operand1);
                 //Retrieve the second value to compare can be a value or formula (no support on variables) --> then perform the condition check
@@ -105,6 +107,7 @@ const priceConditionsCheck = (priceConditions,quote, conditionsMet) => {
     return sucessIndex;
 }
 const priceActionExecuter = (priceActions,quote,actionLines) =>{
+    //console.log('entered price actions');
     const lines=quote.lineItems.filter(line => !line.record['SBQQ__ProductOption__c']);
     if(priceActions){
         //console.log(priceActions);
@@ -112,16 +115,30 @@ const priceActionExecuter = (priceActions,quote,actionLines) =>{
             let fieldAPI = labelsToAPI(action['SBQQ__Field__c']); //function that checks if the field is a default value set by the object
             if(action['SBQQ__TargetObject__c']=== "Quote Line"){
                 for(let actLine of actionLines){
-                    if(action['SBQQ__Value__c']){
-                        let newVal = action['SBQQ__Value__c'];
-                        newVal == "TRUE" || newVal == "True" || newVal == "true" ? newVal = true : newVal = newVal;
-                        newVal == "FALSE" || newVal == "False" || newVal == "false" ? newVal = false : newVal = newVal;
-                        lines[actLine].record[fieldAPI] = newVal;
-                    } else if (action['SBQQ__ValueField__c']){
-                        typeof lines[actLine].record[action['SBQQ__ValueField__c']] != 'undefined' ? lines[actLine].record[fieldAPI] = lines[actLine].record[action['SBQQ__ValueField__c']] : console.log('Price Action ignored --> source field invalid');
-                    } else if (action['SBQQ__Formula__c']){
-                        let formulaResult = formulaConverter(action['SBQQ__Formula__c'], 'QL',lines[actLine],quote);
-                        formulaResult !== 'ignore' ? lines[actLine].record[fieldAPI] = formulaResult : console.log('Price Action ignored --> formula failed');
+                    try{
+                        if(action['SBQQ__Value__c']){
+                            let newVal = action['SBQQ__Value__c'];
+                            newVal == "TRUE" || newVal == "True" || newVal == "true" ? newVal = true : newVal = newVal;
+                            newVal == "FALSE" || newVal == "False" || newVal == "false" ? newVal = false : newVal = newVal;
+                            lines[actLine].record[fieldAPI] = newVal;
+                        } else if (action['SBQQ__ValueField__c']){
+                            typeof lines[actLine].record[action['SBQQ__ValueField__c']] != 'undefined' ? lines[actLine].record[fieldAPI] = lines[actLine].record[action['SBQQ__ValueField__c']] : console.log('Price Action ignored --> source field invalid');
+                        } else if (action['SBQQ__Formula__c']){
+                            let formulaResult = formulaConverter(action['SBQQ__Formula__c'], 'QL',lines[actLine],quote);
+                            formulaResult !== 'ignore' ? lines[actLine].record[fieldAPI] = formulaResult : console.log('Price Action ignored --> formula failed');
+                        }
+                        else if(action['SBQQ__SourceVariable__c'] || action['SBQQ__SourceLookupField__c']){
+                            console.log('No support on variables or lookup fields for price actions');
+                        }
+                        else{
+                            console.log(lines[actLine]);
+                            console.log(fieldAPI);
+                            console.log(lines[actLine].record[fieldAPI]);
+                            lines[actLine].record[fieldAPI] = '';
+                        }
+                    }
+                    catch(error){
+                        console.log('Had to ignore a price action --> check price action execution and syntax');
                     }
                 }
             } else if (action['SBQQ__TargetObject__c']=== "Quote"){
@@ -305,11 +322,8 @@ const priceRuleLookup = (priceRules,quote) => {
 const produceNewQL = async(event, quote) => {
     
     // Create shell quote with only key fields
-    let numberQL = quote.lineItems.length
-    console.log('number of QL:')
-    console.log(numberQL)
+    let numberQL = quote.lineItems.filter(ql=> !(ql.record['SBQQ__ProductOption__c'])).length;
     let shellQuote = JSON.parse(JSON.stringify(quote));
-    
     const {
         lineItems,
         record,
@@ -320,16 +334,15 @@ const produceNewQL = async(event, quote) => {
         ...other } = shellQuote;
     const { attributes, ...fields } = record;
     shellQuote = { lineItems: [], record: {attributes: { type: "SBQQ__Quote__c" }, ...fields}, ...other };
-    console.log('shell quote2:')
-    console.log(shellQuote)
+    
     // get new QuoteModel from apex
     const modelJSON = await retrieveQLM({productId: event.detail.Id, modelJSON: JSON.stringify(shellQuote) });
     const model = JSON.parse(modelJSON);
-    console.log('model:')
-    console.log(model)
+    console.log(model.lineItems[0]);
 
     // get QLM from new QuoteModel and clone first line in UI quote
     const clone = model.lineItems[0];
+
     // get nsp fields
     try{
         const nspFieldsJSON = await NSPAdditionalFields({productId: event.detail.Id });
@@ -377,11 +390,10 @@ const produceNewQL = async(event, quote) => {
     clone.record['SBQQ__UpliftAmount__c'] = 0;
     clone.record['SBQQ__Uplift__c'] = 0;
     clone.record['Alternative_Icon__c'] = 'utility:close';
-    clone.record['SBQQ__Number__c'] = numberQL+1
+    clone.record['SBQQ__Number__c'] = numberQL + 1;
+    console.log(clone.record['Primary_UOM__c']);
+    clone.record['UOM__c'] = clone.record['Primary_UOM__c'] ? clone.record['Primary_UOM__c'] : null;
     clone.key = quote.nextKey + 1;
-
-    //Set primary UOM as default UOM if it exists
-    clone.record['Primary_UOM__c'] ? clone.record['UOM__c'] = clone.record['Primary_UOM__c'] : console.log('No primary UOM defined');
 
     // set length and length uom
     if (clone.record['Filtered_Grouping__c'] == 'Cable Assemblies' || clone.record['Product_Type__c'] == 'Patch Panel - Stubbed'){
@@ -397,7 +409,7 @@ const produceNewQL = async(event, quote) => {
         clone.record['Length__c'] = '5';
         clone.record['Length_UOM__c'] = 'Meters';
     }
-
+    
     return clone;
 }
 

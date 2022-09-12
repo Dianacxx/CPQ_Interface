@@ -464,7 +464,17 @@ public with sharing class QuoteController {
 
     //Print Notes - Diana's Method
     @AuraEnabled (cacheable = true)
-    public static String printNotes (String quoteId){
+    public static List<AFL_Note__c> printNotes (String quoteId){
+
+        List<AFL_Note__c> noteList = [SELECT ID, Quote_Note_Type__c, Note_Text__c FROM AFL_Note__c WHERE CPQ_Quote__c =: quoteId AND Quote_Note_Type__c = 'Product Note'];
+        
+        if(!noteList.isEmpty()){
+            System.debug('THE LIST IS NOT EMPTY -- ' + noteList.size());            
+        } 
+        
+        return noteList; 
+        
+        /*
         List<WrappersClass.NoteWrapperClass> noteWrapperList = new List<WrappersClass.NoteWrapperClass>();
         
         Map<String,Product2> prodMap= new Map <String,Product2>();
@@ -514,7 +524,8 @@ public with sharing class QuoteController {
         }
         System.debug('CPU time -- '+ Limits.getCpuTime() + 'Time Limit -- ' + Limits.getLimitCpuTime());
 
-        return JSON.serialize(noteWrapperList);
+        return JSON.serialize(noteWrapperList); 
+        */
     }
 
     @AuraEnabled
@@ -716,6 +727,7 @@ public with sharing class QuoteController {
     public static List<Product2> filteredProductPrinter(String filterValues,String level1,String filteredGrouping){
         List<WrappersClass.FilteringSelectionWrappingClass> untypedfilterValues = (List<WrappersClass.FilteringSelectionWrappingClass>) JSON.deserialize(filterValues, List<WrappersClass.FilteringSelectionWrappingClass>.class );
         Map<String,String> filterValuesMap = new Map<String,String>();
+        Set<Id> prodsWithBooks = new Set<Id>();
         String myQuery;
         String queryAdditions = ' WHERE ';
         System.debug('list: ' + untypedfilterValues);
@@ -723,7 +735,9 @@ public with sharing class QuoteController {
         Map<String, Schema.SObjectField> fieldMap = Product2.sObjectType.getDescribe().fields.getMap();
         Set<String> setFieldNames = fieldMap.keySet();
         list<String> lstFieldNames = new List<String>(setFieldNames);
-
+        for (Product2 p : [SELECT Id FROM Product2 WHERE IsActive = True AND QLE_Search_Method__c = 'FILTERED' AND Id IN (SELECT Product2Id FROM PricebookEntry)]) {
+            prodsWithBooks.add(p.id);
+        }
         
 
         for(WrappersClass.FilteringSelectionWrappingClass w : untypedFilterValues){
@@ -731,6 +745,8 @@ public with sharing class QuoteController {
                 filterValuesMap.put(String.valueOf(w.label),String.valueOf(w.value));
             }
         }
+
+
 
         if(level1 == 'Fiber Optic Cable'){
             if(filterValuesMap.get('Product Type') != null){
@@ -987,7 +1003,7 @@ public with sharing class QuoteController {
         //     'Connector_Source_Type__c,Stock__c,Apex_Closure__c,Closure_Size__c,Basket_Type__c,Tray_Type__c,NumTray__c,NumReliefKits__c,NumLugs__c,Inner_Basket__c,Ru__c FROM Product2'+
         //     queryAdditions+'QLE_Search_Method__c = \'FILTERED\' AND ProdLevel1__c = \''+level1+'\' AND Filtered_Grouping__c = \''+filteredGrouping+'\'';
         
-        myQuery = 'SELECT ' + String.join(lstFieldNames, ',') + ' FROM Product2'+queryAdditions+'QLE_Search_Method__c = \'FILTERED\' AND IsActive = True AND ProdLevel1__c = \''+level1+'\' AND Filtered_Grouping__c = \''+filteredGrouping+'\'';
+        myQuery = 'SELECT ' + String.join(lstFieldNames, ',') + ' FROM Product2'+queryAdditions+'id IN: prodsWithBooks AND ProdLevel1__c = \''+level1+'\' AND Filtered_Grouping__c = \''+filteredGrouping+'\'';
 
         System.debug('additions: ' + myQuery);
 

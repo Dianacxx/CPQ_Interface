@@ -811,10 +811,10 @@ public with sharing class QuoteControllerMethodsHandler {
 
         return linesToPrint;
     }
-    public static List<QuoteLineWrapper> prodToWrapper (String quoteId,Product2 product, String pricebook){
+    public static List<QuoteLineWrapper> prodToWrapper (String quoteId,Product2 product, PricebookEntry pricebook){
         // Used in addQuoteLine in order to avoid the CPQAPI
 
-        SBQQ__QuoteLine__c newLine = new SBQQ__QuoteLine__c(SBQQ__Product__c = product.id,SBQQ__Quote__c = quoteid, SBQQ__PricebookEntryId__c = pricebook);
+        SBQQ__QuoteLine__c newLine = new SBQQ__QuoteLine__c(SBQQ__Product__c = product.id,SBQQ__Quote__c = quoteid, SBQQ__PricebookEntryId__c = pricebook.id);
 
         List<QuoteLineWrapper> linesToPrint = new List<QuoteLineWrapper>();
         QuoteLineWrapper wrapper = new QuoteLineWrapper();
@@ -868,7 +868,7 @@ public with sharing class QuoteControllerMethodsHandler {
          wrapper.groupId=(Id)newLine.SBQQ__Group__c;
          wrapper.guidance=(Decimal)newLine.SBQQ__Guidance__c;
          wrapper.incomplete=(Boolean)newLine.SBQQ__Incomplete__c;
-         wrapper.listunitprice=(Decimal)newLine.SBQQ__ListPrice__c;
+         wrapper.listunitprice=(Decimal)pricebook.UnitPrice;
          wrapper.listTotal=(Decimal)newLine.SBQQ__ListTotal__c;
          wrapper.markupAmount=(Decimal)newLine.SBQQ__MarkupAmount__c;
          wrapper.markupRate=(Decimal)newLine.SBQQ__MarkupRate__c;
@@ -1048,11 +1048,11 @@ public with sharing class QuoteControllerMethodsHandler {
 
         return linesToPrint;
     }
-    public static List<QuoteLineWrapper> prodMapToWrapper (List<Object> untypedProductValues){
+    public static List<QuoteLineWrapper> prodMapToWrapper (List<Object> untypedProductValues, List<PricebookEntry> pricebooks){
         // Used in addSelectorQuoteLine in order to avoid the CPQAPI
 
         List<QuoteLineWrapper> linesToPrint = new List<QuoteLineWrapper>();
-
+        
         for(Object prod : untypedProductValues){ //puts the values of the prod ust that comes from the UI before converting into a quote line
             Map<String, Object> prodMap = (Map<String, Object>)prod;
             
@@ -1110,7 +1110,11 @@ public with sharing class QuoteControllerMethodsHandler {
             wrapper.groupId=(Id)prodMap.get('SBQQ__Group__c');
             wrapper.guidance=(Decimal)prodMap.get('SBQQ__Guidance__c');
             wrapper.incomplete=(Boolean)prodMap.get('SBQQ__Incomplete__c');
-            wrapper.listunitprice=(Decimal)prodMap.get('SBQQ__ListPrice__c');
+            for (PricebookEntry book : pricebooks) {
+                if (book.Product2Id == (String)prodMap.get('Id')) {
+                    wrapper.listunitprice=book.UnitPrice;       
+                }
+            }
             wrapper.listTotal=(Decimal)prodMap.get('SBQQ__ListTotal__c');
             wrapper.markupAmount=(Decimal)prodMap.get('SBQQ__MarkupAmount__c');
             wrapper.markupRate=(Decimal)prodMap.get('markupRate');
@@ -1294,7 +1298,7 @@ public with sharing class QuoteControllerMethodsHandler {
         return linesToPrint;
     }
 
-    public static List<QuoteLineWrapper> prodMapNSPToWrapper (List<Object> untypedProductValues){
+    public static List<QuoteLineWrapper> prodMapNSPToWrapper (List<Object> untypedProductValues, List<PricebookEntry> pricebooks){
 
         // Used in addNSPProducts
 
@@ -1391,8 +1395,11 @@ public with sharing class QuoteControllerMethodsHandler {
             wrapper.groupId=(Id)prodMap.get('SBQQ__Group__c');
             wrapper.guidance=(Decimal)prodMap.get('SBQQ__Guidance__c');
             wrapper.incomplete=(Boolean)prodMap.get('SBQQ__Incomplete__c');
-            wrapper.listunitprice=(Decimal)prodMap.get('SBQQ__ListPrice__c');
-            wrapper.listTotal=(Decimal)prodMap.get('SBQQ__ListTotal__c');
+            for (PricebookEntry book : pricebooks) {
+                if (book.Product2Id == (String)prodMap.get('Id')) {
+                    wrapper.listunitprice=book.UnitPrice;       
+                }
+            }            wrapper.listTotal=(Decimal)prodMap.get('SBQQ__ListTotal__c');
             wrapper.markupAmount=(Decimal)prodMap.get('SBQQ__MarkupAmount__c');
             wrapper.markupRate=(Decimal)prodMap.get('markupRate');
             wrapper.markup=(Decimal)prodMap.get('SBQQ__Markup__c');
@@ -1833,6 +1840,7 @@ public with sharing class QuoteControllerMethodsHandler {
     public static List<SBQQ__QuoteLine__c> wrapperToQuote (List<QuoteLineWrapper> untypedQuoteLines, Map<Id,Product2> prodMap, Set<String> lengthCodes, Map<String, SBQQ__QuoteLine__c> existentLinesMap, Map<SBQQ__QuoteLine__c, List<SBQQ__QuoteLine__c>> parentWithClone, SBQQ__Quote__c getQuote){
 
         // Used in quoteLineCreator
+        Integer QLSize = existentLinesMap.size();
 
         List<SBQQ__QuoteLine__c> quoteLinerecordsToInsert = new List<SBQQ__QuoteLine__c>();
 
@@ -1886,7 +1894,9 @@ public with sharing class QuoteControllerMethodsHandler {
                     newQuoteLine.SBQQ__MaximumPrice__c=line.maximumListUnitPrice;
                     newQuoteLine.SBQQ__MinimumPrice__c=line.minimumListUnitPrice;
                     newQuoteLine.SBQQ__NetPrice__c=line.netunitprice;
-                    newQuoteLine.SBQQ__Number__c=line.numb;
+                    // newQuoteLine.SBQQ__Number__c=line.numb;
+                    newQuoteLine.SBQQ__Number__c = QLSize+1;
+                    QLSize+=1;
                     newQuoteLine.SBQQ__OptionDiscountAmount__c=line.optionDiscountAmount;
                     newQuoteLine.SBQQ__OptionDiscount__c=line.optionDiscount;
                     newQuoteLine.SBQQ__OptionLevel__c=line.optionLevel;

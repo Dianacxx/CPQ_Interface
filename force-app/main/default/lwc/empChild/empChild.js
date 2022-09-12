@@ -99,11 +99,11 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
         const load = async() => {
             const quote = await read({quoteId: this.quoteId});
             this.quote = JSON.parse(quote);
-            console.log(this.quote);
+            //console.log(this.quote);
 
             // Build state of the app
             const payload = await build(this.quote);
-            console.log(payload);
+            //console.log(payload);
             this.contracts = payload.contracts;
             this.schedules = payload.schedules;
             this.tiers = payload.customerTiers;
@@ -134,16 +134,18 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
             this.startingPageControl();
             this.loading = false;
             this.updateQuoteTotal(); 
-            console.log('Script loaded');
+            console.log('Script loaded')
+            this.dispatchEvent(new CustomEvent('gotobottom'));
+
         });
 
         printNotes({ quoteId: this.quoteId })
         .then(data =>{
             //console.log('notes string SUCCESS');
-            if (data == '[]'){
+            if (data == []){
                 this.prodNotes = [];
             } else {
-                this.prodNotes = JSON.parse(data);
+                this.prodNotes = data;
             }
             console.log(this.prodNotes);
         })
@@ -339,6 +341,8 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
     async calculate() {
         const lines = this.quote.lineItems;
         this.loading = true;
+        console.log('Quote Here:')
+        console.log(this.quote)
 
         //PRODUCT RULE LOGIC STARTS HERE --------------------
         if(this.productRules.length !==0){
@@ -347,7 +351,7 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
             this.allowSave = productRuleResults.allowSave;
             this.event = productRuleResults.event;
             const afterProdRules = window.performance.now();
-            console.log(`productRuleLookup waited ${afterProdRules - beforeProdRules} milliseconds`);
+            console.log(`productRuleLookup2 waited ${afterProdRules - beforeProdRules} milliseconds`);
         }
         
         //Allowing to save if no validation product rules prevent it
@@ -408,14 +412,18 @@ export default class EmpChildCaro extends NavigationMixin(LightningElement) {
                 console.log(`priceRuleLookup waited ${afterPriceRules - startedPriceRules} milliseconds`);
             }
             //PRICE RULE LOGIC ENDS HERE --------------------
-        
+
+            this.flagUncalculate = false;
+
         } else if(this.allowSave == false){
-            console.log('No save --> Validation rule');
+            console.log('No save --> Validation rule & flag');
+            this.turnOnFlagEdit();
+            console.log('Turned on flag here');
             this.loading = false;
             this.dispatchEvent(this.event);
         }
         //PRODUCT RULE LOGIC ENDS HERE --------------------
-        this.flagUncalculate = false;
+        //this.flagUncalculate = false;    //NOT HERE
     }
 
     // this functions saves the quote record to the db
